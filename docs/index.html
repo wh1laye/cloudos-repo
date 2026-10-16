@@ -66,8 +66,8 @@ ping -c1 github.com</code></pre>
 <h3>3.2 файловые системы</h3>
 <p>для uefi раздел /boot форматируется в fat32:</p>
 <pre><code>mkfs.fat -F32 /dev/sda1</code></pre>
-<p>для bios раздел /boot всегда ext4, потому что limine не читает btrfs:</p>
-<pre><code>mkfs.ext4 /dev/sda1</code></pre>
+<p>для bios раздел /boot всегда f32, потому что limine не читает btrfs:</p>
+<pre><code>mkfs.fat -F32 /dev/sda1</code></pre>
 <p>корневой раздел форматируй в ext4:</p>
 <pre><code>mkfs.ext4 /dev/sda2</code></pre>
 <p>или в btrfs:</p>
@@ -123,7 +123,7 @@ make menuconfig
 make -j$(nproc)
 make modules_install
 cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
-<div class="warn"><b>важно</b>включи драйвер своей файловой системы, <code>DEVTMPFS</code>, <code>DEVTMPFS_MOUNT</code> и драйверы диска. для uefi нужен ещё <code>EFI_STUB</code>.</div>
+<div class="warn"><b>важно</b> вам нужно использовать везде имя диска на который вы хотите ставить, узнать можно с помощью команды lsblk(опять же, диск может называться /dev/nvme0n1p1 /dev/sda /dev/sdb  </div>
 
 <h2 id="boot">8. загрузчик</h2>
 <h3 id="initramfs">8.1 initramfs</h3>
@@ -165,7 +165,7 @@ passwd</code></pre>
 <pre><code>exit
 umount -R /mnt/cloudos
 reboot</code></pre>
-<div class="note"><b>заметка</b>других пользователей cloudos не создаёт. обычного пользователя!), пользователя и doas добавишь сам.</div>
+<div class="note"><b>заметка</b>других пользователей cloudos не создаёт!), пользователя и doas добавишь сам.</div>
 <div class="note"><b>важно</b>диск на который вы ставите может быть как NVME так и sda sdb, тестил на 7 5700X(AMD) RX9060XT(AMD) и на sda(не nvme limine выбрал изза скорости и удобства, поддержка grub ВОЗМОЖНО будет. </div>
 <footer>
 <p>© 2026 wh1laye. лицензия mit. </p>
