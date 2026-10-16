@@ -33,12 +33,12 @@ cloudos<span>handbook</span></a>
 <li><a href="#final">9. завершение</a></li>
 </ol></details>
 </nav>
-<main id="top">
+<main id="cloud">
 <h1>cloudos handbook</h1>
-<p class="lead">установка cloudos 1.0 на x86_64. всё делается вручную, шаг за шагом.</p>
+<p class="lead">установка cloudos 1.0 на x86_64. </p>
 
 <h2 id="about">1. о cloudos</h2>
-<p>cloudos это минимальный linux, который ты собираешь сам. после установки в системе только консоль, всё остальное ставишь сам.</p>
+<p>cloudos это минимальный linux, который ты собираешь сам. после установки в системе только консоль.</p>
 <table><tr><th>параметр</th><th>значение</th></tr>
 <tr><td>архитектура</td><td>x86_64</td></tr>
 <tr><td>libc</td><td>glibc</td></tr>
@@ -53,7 +53,7 @@ cloudos<span>handbook</span></a>
 <p>загрузись с live iso cloudos и проверь сеть.</p>
 <pre><code>dhcpcd
 ping -c1 github.com</code></pre>
-<p>определи режим загрузки. от него зависят шаги 3 и 8.3.</p>
+<p>определи режим загрузки. </p>
 <pre><code>[ -d /sys/firmware/efi ] &amp;&amp; echo uefi || echo bios</code></pre>
 
 <h2 id="disk">3. диск и файловые системы</h2>
@@ -62,7 +62,7 @@ ping -c1 github.com</code></pre>
 <div class="sc"><table><tr><th>режим</th><th>таблица</th><th>разделы</th></tr>
 <tr><td>uefi</td><td>gpt</td><td>sda1 512 мб, тип efi system. sda2 остальное</td></tr>
 <tr><td>bios</td><td>dos</td><td>sda1 512 мб, флаг bootable, это /boot. sda2 остальное</td></tr></table></div>
-<div class="warn"><b>важно</b>все данные на выбранном диске будут уничтожены.</div>
+<div class="warn"><b>важно</b>все данные на диске(только на том, который ты выбрал) </div>
 <h3>3.2 файловые системы</h3>
 <p>для uefi раздел /boot форматируется в fat32:</p>
 <pre><code>mkfs.fat -F32 /dev/sda1</code></pre>
@@ -84,7 +84,7 @@ mount /dev/sda1 /mnt/cloudos/boot</code></pre>
 <pre><code>cloudos-stage3-1.0-x86_64.tar.xz
 cloudos-stage3-1.0-x86_64.tar.xz.sha256
 </code></pre>
-<h3>4.1 проверка</h3>
+<h3>4.1 проверка(можно пропустить)</h3>
 <pre><code>sha256sum -c cloudos-stage3-1.0-x86_64.tar.xz.sha256
 </code></pre>
 <h3>4.2 распаковка</h3>
@@ -103,7 +103,7 @@ source /etc/profile</code></pre>
 <h2 id="conf">6. настройка сборки</h2>
 <p>флаги сборки задаются в одном файле, <code>/etc/cloudpkg/make.conf</code>:</p>
 <pre><code>CC="gcc"
-CFLAGS="-O3 -march=native"
+CFLAGS="-O2 -march=native"
 MAKEOPTS="-j12"
 USE=""</code></pre>
 <p>для clang поставь <code>CC="clang"</code>. потом обнови список рецептов:</p>
@@ -116,19 +116,19 @@ echo "LANG=en_US.UTF-8" &gt; /etc/locale.conf</code></pre>
 <h2 id="kernel">7. ядро</h2>
 <p>ядро берётся с kernel.org и настраивается вручную </p>
 <pre><code>cd /usr/src
-curl -LO https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.X.Y.tar.xz
-tar xf linux-6.X.Y.tar.xz
-cd linux-6.X.Y
+curl -LO https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.10.tar.xz
+tar xf linux-6.18.10.tar.xz
+cd linux-6.18.10
 make menuconfig
-make -j12
+make -j$(nproc)
 make modules_install
-cp arch/x86/boot/bzImage /boot/vmlinuz-6.X.Y</code></pre>
+cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
 <div class="warn"><b>важно</b>включи драйвер своей файловой системы, <code>DEVTMPFS</code>, <code>DEVTMPFS_MOUNT</code> и драйверы диска. для uefi нужен ещё <code>EFI_STUB</code>.</div>
 
 <h2 id="boot">8. загрузчик</h2>
 <h3 id="initramfs">8.1 initramfs</h3>
 <pre><code>cloudpkg install dracut
-dracut --kver 6.X.Y /boot/initramfs-6.X.Y.img</code></pre>
+dracut --kver 6.18.10 /boot/initramfs-6.18.10.img</code></pre>
 <h3 id="fstab">8.2 fstab</h3>
 <p>uuid разделов покажет <code>blkid</code>. файл <code>/etc/fstab</code> для uefi:</p>
 <pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
@@ -144,9 +144,9 @@ UUID=BOOT_UUID  /boot  ext4  defaults  0 2</code></pre>
 
 /CloudOS
     protocol: linux
-    path: boot():/vmlinuz-6.X.Y
+    path: boot():/vmlinuz-6.18.10
     cmdline: root=UUID=ROOT_UUID rw
-    module_path: boot():/initramfs-6.X.Y.img</code></pre>
+    module_path: boot():/initramfs-6.18.10.img</code></pre>
 <p>установка для uefi:</p>
 <pre><code>mkdir -p /boot/EFI/BOOT
 cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre>
@@ -161,12 +161,12 @@ cloudpkg install syslog-ng
 rc-update add dhcpcd default
 rc-update add syslog-ng default
 passwd</code></pre>
-<p>выйди из chroot, размонтируй всё и перезагрузись:</p>
+<p>выйди из chroot, размонтируй и перезагрузись:</p>
 <pre><code>exit
 umount -R /mnt/cloudos
 reboot</code></pre>
-<div class="note"><b>заметка</b>других пользователей cloudos не создаёт. обычного пользователя и doas добавишь сам.</div>
-
+<div class="note"><b>заметка</b>других пользователей cloudos не создаёт. обычного пользователя!), пользователя и doas добавишь сам.</div>
+<div class="note"><b>важно</b>диск на который вы ставите может быть как NVME так и sda sdb, тестил на 7 5700X(AMD) RX9060XT(AMD) и на sda(не nvmmine выбрал изза скорости и удобства, поддержка grub ВОЗМОЖНО будет. </div>
 <footer>
 <p>© 2026 wh1laye. лицензия mit. </p>
 <p>рецепты пакетов основаны на gentoo (gpl-2).</p>
