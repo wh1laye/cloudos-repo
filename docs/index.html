@@ -123,7 +123,7 @@ make menuconfig
 make -j$(nproc)
 make modules_install
 cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
-<div class="warn"><b>важно</b> вам нужно использовать везде имя диска на который вы хотите ставить, узнать можно с помощью команды lsblk(опять же, диск может называться /dev/nvme0n1p1 /dev/sda /dev/sdb  </div>
+<div class="warn"><b>важно</b> вам нужно использовать везде имя диска на который вы хотите ставить, узнать можно с помощью команды lsblk(опять же, диск может называться /dev/nvme0n1 /dev/sda /dev/sdb  </div>
 
 <h2 id="boot">8. загрузчик</h2>
 <h3 id="initramfs">8.1 initramfs</h3>
@@ -135,7 +135,7 @@ dracut --kver 6.18.10 /boot/initramfs-6.18.10.img</code></pre>
 UUID=ESP_UUID   /boot  vfat  defaults  0 2</code></pre>
 <p>для bios:</p>
 <pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
-UUID=BOOT_UUID  /boot  ext4  defaults  0 2</code></pre>
+UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
 <p>если корень на btrfs, замени <code>ext4</code> в первой строке на <code>btrfs</code>.</p>
 <h3 id="limine">8.3 limine</h3>
 <pre><code>cloudpkg install limine</code></pre>
@@ -152,7 +152,7 @@ UUID=BOOT_UUID  /boot  ext4  defaults  0 2</code></pre>
 cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre>
 <p>установка для bios, ставь на весь диск, а не на раздел:</p>
 <pre><code>cp /usr/share/limine/limine-bios.sys /boot/
-limine bios-install /dev/sda</code></pre>
+limine bios-install /dev/(твое имя диска /dev/sda1 /dev/sdb1 /dev/nvme0n1)</code></pre>
 
 <h2 id="final">9. завершение</h2>
 <p>включи сеть и журнал, задай пароль root:</p>
