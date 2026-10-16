@@ -83,8 +83,10 @@ mount /dev/sda1 /mnt/cloudos/boot</code></pre>
 <p><a href="https://github.com/wh1laye/cloudos-repo/releases">github.com/wh1laye/cloudos-repo/releases</a></p>
 <pre><code>cloudos-stage3-1.0-x86_64.tar.xz
 cloudos-stage3-1.0-x86_64.tar.xz.sha256
+</code></pre>
 <h3>4.1 проверка</h3>
 <pre><code>sha256sum -c cloudos-stage3-1.0-x86_64.tar.xz.sha256
+</code></pre>
 <h3>4.2 распаковка</h3>
 <pre><code>tar xpvf cloudos-stage3-1.0-x86_64.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
 
