@@ -1,4 +1,42 @@
 const sb=supabase.createClient(CFG.url,CFG.key);
+
+function captcha(){
+  if(!CFG.ts)return Promise.resolve(undefined);
+  return new Promise((res,rej)=>{
+    const o=document.createElement('div');
+    o.className='capb';
+    o.innerHTML='<div class="capc"><p>подтверди, что ты человек</p><div id="capw"></div><button class="btn s" type="button">отмена</button></div>';
+    document.body.appendChild(o);
+    let id;
+    const done=(f,v)=>{
+      try{window.turnstile.remove(id)}catch(x){}
+      o.remove();
+      f(v);
+    };
+    o.querySelector('button').onclick=()=>done(rej,new Error('отменено'));
+    const start=()=>{
+      id=window.turnstile.render('#capw',{
+        sitekey:CFG.ts,
+        callback:t=>done(res,t),
+        'error-callback':()=>done(rej,new Error('капча не прошла, обнови страницу'))
+      });
+    };
+    if(window.turnstile)start();
+    else{const w=setInterval(()=>{if(window.turnstile){clearInterval(w);start()}},100)}
+  });
+}
+
+async function anonIn(){
+  let t;
+  try{t=await captcha()}catch(x){return {error:x}}
+  return sb.auth.signInAnonymously(t?{options:{captchaToken:t}}:undefined);
+}
+
+async function passIn(email,password){
+  let t;
+  try{t=await captcha()}catch(x){return {error:x}}
+  return sb.auth.signInWithPassword(t?{email,password,options:{captchaToken:t}}:{email,password});
+}
 const app=document.getElementById('app'),bar=document.getElementById('bar');
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -27,13 +65,13 @@ function drawBar(){
   if(me){
     bar.innerHTML='<span>'+who(prof)+'</span><button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+'<button class="lk" data-a="out">выйти</button>';
   }else{
-    bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button></form>';
+    bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button><button class="btn s" type="button" data-a="signup">регистрация</button></form>';
   }
 }
 
 async function need(){
   if(me)return true;
-  const r=await sb.auth.signInAnonymously();
+  const r=await anonIn();
   if(r.error){alert(r.error.message);return false}
   await auth();
   return true;
@@ -161,8 +199,11 @@ async function admin(){
   pv();
   const du=()=>{
     const q=$('#uq').value.trim().toLowerCase();
-    const l=users.filter(u=>u.id!==me.id&&!u.is_admin&&String(u.name||'').toLowerCase().includes(q)).slice(0,30);
-    $('#ul').innerHTML=l.map(u=>'<div class="ur"><span>'+esc(u.name)+' <span class="mu">'+esc(String(u.id).slice(0,8))+'</span></span><button class="lk" data-a="udel" data-i="'+u.id+'" data-v="'+esc(u.name)+'">удалить навсегда</button></div>').join('')||'<p class="mu">никого не найдено</p>';
+    const l=users.filter(u=>String(u.name||'').toLowerCase().includes(q)).slice(0,50);
+    $('#ul').innerHTML=l.map(u=>{
+      const act=u.id===me.id?'<span class="tag">это ты</span>':u.is_admin?'<span class="tag">админ</span>':'<button class="lk" data-a="udel" data-i="'+u.id+'" data-v="'+esc(u.name)+'">удалить навсегда</button>';
+      return '<div class="ur"><span>'+esc(u.name)+' <span class="mu">'+esc(String(u.id).slice(0,8))+'</span></span>'+act+'</div>';
+    }).join('')||'<p class="mu">никого не найдено</p>';
   };
   $('#uq').oninput=du;
   du();
@@ -199,8 +240,19 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-a]');
   if(!b||b.tagName==='SELECT')return;
   const a=b.dataset.a,i=b.dataset.i,v=b.dataset.v;
-  if(a==='anon'){const r=await sb.auth.signInAnonymously();if(r.error)return alert(r.error.message);await auth();route()}
+  if(a==='anon'){const r=await anonIn();if(r.error)return alert(r.error.message);await auth();route()}
   else if(a==='oauth'){const r=await sb.auth.signInWithOAuth({provider:i,options:{redirectTo:location.href.split('#')[0]}});if(r.error)alert(r.error.message)}
+  else if(a==='signup'){
+    const em=$('#em').value.trim(),pw=$('#pw').value;
+    if(!em||pw.length<6)return alert('введи email и пароль от 6 символов');
+    let t;
+    try{t=await captcha()}catch(x){return alert(x.message)}
+    const r=await sb.auth.signUp(t?{email:em,password:pw,options:{captchaToken:t}}:{email:em,password:pw});
+    if(r.error)return alert(r.error.message);
+    if(!r.data.session)return alert('аккаунт создан, подтверди почту по ссылке из письма и потом войди');
+    await auth();
+    route();
+  }
   else if(a==='emailf'){const f=$('#ef');f.hidden=!f.hidden;if(!f.hidden)$('#em').focus()}
   else if(a==='out'){await sb.auth.signOut();await auth();route()}
   else if(a==='rename'){const n=prompt('новое имя (2-24 символа)',prof?prof.name:'');if(n){const r=await sb.rpc('set_name',{n});if(r.error)return alert(r.error.message);await auth();route()}}
@@ -265,7 +317,7 @@ document.addEventListener('submit',async e=>{
   }
   if(e.target.id!=='ef')return;
   e.preventDefault();
-  const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
+  const r=await passIn($('#em').value.trim(),$('#pw').value);
   if(r.error)return alert(r.error.message);
   await auth();
   route();
