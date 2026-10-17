@@ -1,3 +1,7 @@
+if(typeof supabase==='undefined'){
+  document.getElementById('app').innerHTML='<div class="warn"><b>ошибка</b>не загрузился supabase.js, обнови страницу</div>';
+  throw new Error('supabase missing');
+}
 const sb=supabase.createClient(CFG.url,CFG.key);
 
 function captcha(){
