@@ -39,6 +39,19 @@ async function need(){
   return true;
 }
 
+async function withProf(rows){
+  if(!rows.length)return rows;
+  const k=['author','user_id','created_by','author_id'].find(x=>x in rows[0]);
+  const ids=[...new Set(rows.map(r=>r[k]).filter(Boolean))];
+  const m={};
+  if(ids.length){
+    const {data}=await sb.from('profiles').select('id,name,roles(*)').in('id',ids);
+    (data||[]).forEach(x=>m[x.id]=x);
+  }
+  rows.forEach(r=>r.profiles=m[r[k]]||null);
+  return rows;
+}
+
 async function home(){
   const {data,error}=await sb.from('boards').select('*,threads(count)').order('pos');
   if(error)throw error;
@@ -53,11 +66,12 @@ async function board(id){
     '<div class="row"><input id="q" placeholder="поиск по темам"><button class="btn p" data-a="newt">новая тема</button></div>'+
     '<form id="nf" hidden><input id="nt" maxlength="150" minlength="3" placeholder="заголовок" required><textarea id="nb" rows="6" maxlength="10000" placeholder="текст" required></textarea><button class="btn p">создать тему</button></form><div id="tl"></div>';
   const draw=async()=>{
-    let r=sb.from('threads').select('*,profiles!author(name,roles(*)),posts(count)').eq('board_id',id).order('pinned',{ascending:false}).order('bumped_at',{ascending:false}).limit(100);
+    let r=sb.from('threads').select('*,posts(count)').eq('board_id',id).order('pinned',{ascending:false}).order('bumped_at',{ascending:false}).limit(100);
     const v=$('#q').value.trim().replace(/[%_,]/g,'');
     if(v)r=r.ilike('title','%'+v+'%');
     const {data:ts,error:e}=await r;
     if(e){$('#tl').innerHTML='<p class="mu">'+esc(e.message)+'</p>';return}
+    await withProf(ts);
     $('#tl').innerHTML=ts.map(t=>'<a class="trow" href="#/t/'+t.id+'"><div><strong>'+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+who(t.profiles)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>').join('')||'<p class="mu">тем пока нет</p>';
   };
   $('#q').oninput=draw;
@@ -81,8 +95,9 @@ async function board(id){
 async function thread(id){
   const {data:t,error}=await sb.from('threads').select('*,boards(id,title)').eq('id',id).single();
   if(error)throw error;
-  const {data:ps,error:e2}=await sb.from('posts').select('*,profiles!author(name,roles(*)),likes(count)').eq('thread_id',id).order('created_at');
+  const {data:ps,error:e2}=await sb.from('posts').select('*,likes(count)').eq('thread_id',id).order('created_at');
   if(e2)throw e2;
+  await withProf(ps);
   let mine=new Set();
   if(me&&ps.length){
     const l=await sb.from('likes').select('post_id').eq('user_id',me.id).in('post_id',ps.map(p=>p.id));
