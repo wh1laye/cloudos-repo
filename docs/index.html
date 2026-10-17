@@ -63,11 +63,11 @@ ping -c1 github.com</code></pre>
 <div class="sc"><table><tr><th>режим</th><th>таблица</th><th>разделы</th></tr>
 <tr><td>uefi</td><td>gpt</td><td>sda1 512 мб, тип efi system. sda2 остальное</td></tr>
 <tr><td>bios</td><td>dos</td><td>sda1 512 мб, флаг bootable, это /boot. sda2 остальное</td></tr></table></div>
-<div class="warn"><b>важно</b>все данные на диске(только на том, который ты выбрал) </div>
+<div class="warn"><b>ВАЖНО</b>все данные на диске сотруться (только на том, который ты выбрал) </div>
 <h3>3.2 файловые системы</h3>
 <p>для uefi раздел /boot форматируется в fat32:</p>
 <pre><code>mkfs.fat -F32 /dev/sda1</code></pre>
-<p>для bios раздел /boot всегда f32, потому что limine не читает btrfs:</p>
+<p>для bios раздел /boot всегда fat32:</p>
 <pre><code>mkfs.fat -F32 /dev/sda1</code></pre>
 <p>корневой раздел форматируй в ext4:</p>
 <pre><code>mkfs.ext4 /dev/sda2</code></pre>
@@ -105,7 +105,7 @@ source /etc/profile</code></pre>
 <p>флаги сборки задаются в одном файле, <code>/etc/cloudpkg/make.conf</code>:</p>
 <pre><code>CC="gcc"
 CFLAGS="-O2 -march=native"
-MAKEOPTS="-j12"
+MAKEOPTS="-j$(nproc)"
 USE=""</code></pre>
 <p>для clang поставь <code>CC="clang"</code>. потом обнови список рецептов:</p>
 <pre><code>cloudpkg sync</code></pre>
@@ -124,7 +124,7 @@ make menuconfig
 make -j$(nproc)
 make modules_install
 cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
-<div class="warn"><b>важно</b> вам нужно использовать везде имя диска на который вы хотите ставить, узнать можно с помощью команды lsblk(опять же, диск может называться /dev/nvme0n1 /dev/sda /dev/sdb  </div>
+<div class="warn"><b>ВАЖНО</b> вам нужно использовать везде имя диска на который вы хотите ставить, узнать можно с помощью команды lsblk(опять же, диск может называться /dev/nvme0n1 /dev/sda /dev/sdb  </div>
 
 <h2 id="boot">8. загрузчик</h2>
 <h3 id="initramfs">8.1 initramfs</h3>
@@ -151,9 +151,9 @@ UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
 <p>установка для uefi:</p>
 <pre><code>mkdir -p /boot/EFI/BOOT
 cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre>
-<p>установка для bios, ставь на весь диск, а не на раздел:</p>
+<p>установка для bios, ставь на раздел:</p>
 <pre><code>cp /usr/share/limine/limine-bios.sys /boot/
-limine bios-install /dev/(твое имя диска /dev/sda1 /dev/sdb1 /dev/nvme0n1)</code></pre>
+limine bios-install /dev/ (твое имя диска /dev/sda1 /dev/sdb1 /dev/nvme0n1)</code></pre>
 
 <h2 id="final">9. завершение</h2>
 <p>включи сеть и журнал, задай пароль root:</p>
