@@ -43,3 +43,6 @@ textarea{width:100%;resize:vertical}
 .stat div{border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:#fff}
 .stat b{display:block;font-size:20px;color:var(--ac)}
 .stat span{font-size:14px;color:var(--mute)}
+.cm{margin:12px 0 0;padding:8px 0 0 14px;border-left:2px solid var(--line)}
+.ch{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.cwrap form{margin:10px 0 0}

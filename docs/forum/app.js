@@ -53,7 +53,7 @@ async function board(id){
     '<div class="row"><input id="q" placeholder="поиск по темам"><button class="btn p" data-a="newt">новая тема</button></div>'+
     '<form id="nf" hidden><input id="nt" maxlength="150" minlength="3" placeholder="заголовок" required><textarea id="nb" rows="6" maxlength="10000" placeholder="текст" required></textarea><button class="btn p">создать тему</button></form><div id="tl"></div>';
   const draw=async()=>{
-    let r=sb.from('threads').select('*,profiles(name,roles(*)),posts(count)').eq('board_id',id).order('pinned',{ascending:false}).order('bumped_at',{ascending:false}).limit(100);
+    let r=sb.from('threads').select('*,profiles!author(name,roles(*)),posts(count)').eq('board_id',id).order('pinned',{ascending:false}).order('bumped_at',{ascending:false}).limit(100);
     const v=$('#q').value.trim().replace(/[%_,]/g,'');
     if(v)r=r.ilike('title','%'+v+'%');
     const {data:ts,error:e}=await r;
@@ -81,7 +81,7 @@ async function board(id){
 async function thread(id){
   const {data:t,error}=await sb.from('threads').select('*,boards(id,title)').eq('id',id).single();
   if(error)throw error;
-  const {data:ps,error:e2}=await sb.from('posts').select('*,profiles(name,roles(*)),likes(count)').eq('thread_id',id).order('created_at');
+  const {data:ps,error:e2}=await sb.from('posts').select('*,profiles!author(name,roles(*)),likes(count)').eq('thread_id',id).order('created_at');
   if(e2)throw e2;
   let mine=new Set();
   if(me&&ps.length){
@@ -89,11 +89,16 @@ async function thread(id){
     mine=new Set((l.data||[]).map(x=>x.post_id));
   }
   const adm=prof&&prof.is_admin;
+  const closed=t.locked&&!adm;
+  const acts=(p,c)=>{
+    const own=me&&p.author===me.id;
+    return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button><button class="lk" data-a="delp" data-i="'+p.id+'">удалить</button>':'')+'</div>';
+  };
   const ctl=adm?'<div class="acts"><button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button><button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button><button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.boards.id+'">удалить тему</button></div>':'';
   app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+ctl+
-    ps.map(p=>{
-      const own=me&&p.author===me.id;
-      return '<article class="post"><div class="side">'+who(p.profiles)+'<span class="mu">'+fmt(p.created_at)+'</span></div><div><div class="txt">'+esc(p.body)+'</div><div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button><button class="lk" data-a="delp" data-i="'+p.id+'">удалить</button>':'')+'</div></div></article>';
+    ps.filter(p=>!p.parent_id).map(p=>{
+      const kids=ps.filter(c=>c.parent_id===p.id);
+      return '<article class="post item"><div class="side">'+who(p.profiles)+'<span class="mu">'+fmt(p.created_at)+'</span></div><div><div class="txt">'+esc(p.body)+'</div>'+acts(p)+kids.map(c=>'<div class="cm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt">'+esc(c.body)+'</div>'+acts(c,true)+'</div>').join('')+'<div class="cwrap" data-w="'+p.id+'"></div></div></article>';
     }).join('')+
     (t.locked&&!adm?'<p class="mu">тема закрыта, отвечать нельзя.</p>':'<form id="rf"><textarea id="rb" rows="5" maxlength="10000" placeholder="ответ" required></textarea><button class="btn p">ответить</button></form>');
   const rf=$('#rf');
@@ -176,6 +181,12 @@ document.addEventListener('click',async e=>{
   else if(a==='emailf'){const f=$('#ef');f.hidden=!f.hidden;if(!f.hidden)$('#em').focus()}
   else if(a==='out'){await sb.auth.signOut();await auth();route()}
   else if(a==='rename'){const n=prompt('новое имя (2-24 символа)',prof?prof.name:'');if(n){const r=await sb.rpc('set_name',{n});if(r.error)return alert(r.error.message);await auth();route()}}
+  else if(a==='cm'){
+    const w=b.closest('article').querySelector('.cwrap');
+    if(w.firstChild){w.innerHTML='';return}
+    w.innerHTML='<form class="cf" data-p="'+i+'"><textarea rows="3" maxlength="5000" placeholder="комментарий" required></textarea><button class="btn s p">отправить</button></form>';
+    w.querySelector('textarea').focus();
+  }
   else if(a==='newt'){const f=$('#nf');f.hidden=!f.hidden}
   else if(a==='like'){
     if(!await need())return;
@@ -187,7 +198,7 @@ document.addEventListener('click',async e=>{
     sp.textContent=v==='1'?Math.max(0,c-1):c+1;
   }
   else if(a==='editp'){
-    const old=b.closest('article').querySelector('.txt').textContent;
+    const old=b.closest('.item').querySelector('.txt').textContent;
     const n=prompt('изменить сообщение',old);
     if(n&&n.trim()){const r=await sb.from('posts').update({body:n.trim()}).eq('id',i);if(r.error)return alert(r.error.message);thread(+app.dataset.t)}
   }
@@ -210,6 +221,19 @@ document.addEventListener('change',async e=>{
 });
 
 document.addEventListener('submit',async e=>{
+  if(e.target.classList.contains('cf')){
+    e.preventDefault();
+    const f=e.target,btn=f.querySelector('button');
+    btn.disabled=true;
+    try{
+      if(!await need())return;
+      const r=await sb.from('posts').insert({thread_id:+app.dataset.t,parent_id:+f.dataset.p,body:f.querySelector('textarea').value.trim()});
+      if(r.error)return alert(r.error.message);
+      thread(+app.dataset.t);
+    }catch(x){alert(x.message||x)}
+    finally{btn.disabled=false}
+    return;
+  }
   if(e.target.id!=='ef')return;
   e.preventDefault();
   const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
