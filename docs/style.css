@@ -36,3 +36,7 @@ th,td{text-align:left;padding:8px 10px;border:1px solid var(--line)}th{backgroun
 footer{border-top:1px solid var(--line);margin-top:50px;padding-top:18px;color:var(--mute);font-size:14px}
 footer p{margin:0 0 6px}
 @media(max-width:860px){.layout{display:block}.toc{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}main{padding:24px 18px 50px}.top{padding:0 16px}}
+
+.hl{display:flex;gap:8px}
+@media(max-width:520px){.hl .gh span{display:none}.hl .gh{padding:7px 10px}.brand span{display:none}}
+.gh.on{background:var(--soft)}
