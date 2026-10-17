@@ -27,7 +27,7 @@ function drawBar(){
   if(me){
     bar.innerHTML='<span>'+who(prof)+'</span><button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+'<button class="lk" data-a="out">выйти</button>';
   }else{
-    bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="google">google</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="oauth" data-i="gitlab">gitlab</button>';
+    bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button></form>';
   }
 }
 
@@ -63,12 +63,17 @@ async function board(id){
   $('#q').oninput=draw;
   $('#nf').onsubmit=async e=>{
     e.preventDefault();
-    if(!await need())return;
-    const t=await sb.from('threads').insert({board_id:id,title:$('#nt').value.trim()}).select().single();
-    if(t.error)return alert(t.error.message);
-    const p=await sb.from('posts').insert({thread_id:t.data.id,body:$('#nb').value.trim()});
-    if(p.error)return alert(p.error.message);
-    location.hash='#/t/'+t.data.id;
+    const btn=$('#nf button');
+    btn.disabled=true;
+    try{
+      if(!await need())return;
+      const t=await sb.from('threads').insert({board_id:id,title:$('#nt').value.trim()}).select('id').single();
+      if(t.error)return alert('не удалось создать тему: '+t.error.message);
+      const p=await sb.from('posts').insert({thread_id:t.data.id,body:$('#nb').value.trim()});
+      if(p.error){await sb.from('threads').delete().eq('id',t.data.id);return alert('не удалось создать сообщение: '+p.error.message)}
+      location.hash='#/t/'+t.data.id;
+    }catch(x){alert(x.message||x)}
+    finally{btn.disabled=false}
   };
   await draw();
 }
@@ -88,7 +93,7 @@ async function thread(id){
   app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+ctl+
     ps.map(p=>{
       const own=me&&p.author===me.id;
-      return '<article class="post"><div class="side">'+who(p.profiles)+'<span class="mu">'+fmt(p.created_at)+'</span></div><div><div class="txt">'+esc(p.body)+'</div><div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'">нравится '+p.likes[0].count+'</button>'+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button><button class="lk" data-a="delp" data-i="'+p.id+'">удалить</button>':'')+'</div></div></article>';
+      return '<article class="post"><div class="side">'+who(p.profiles)+'<span class="mu">'+fmt(p.created_at)+'</span></div><div><div class="txt">'+esc(p.body)+'</div><div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button><button class="lk" data-a="delp" data-i="'+p.id+'">удалить</button>':'')+'</div></div></article>';
     }).join('')+
     (t.locked&&!adm?'<p class="mu">тема закрыта, отвечать нельзя.</p>':'<form id="rf"><textarea id="rb" rows="5" maxlength="10000" placeholder="ответ" required></textarea><button class="btn p">ответить</button></form>');
   const rf=$('#rf');
@@ -104,19 +109,24 @@ async function thread(id){
 
 async function admin(){
   if(!(prof&&prof.is_admin)){app.innerHTML='<div class="warn"><b>нет доступа</b>эта страница только для администратора.</div>';return}
-  const [r1,r2,r3]=await Promise.all([
+  const cnt=t=>sb.from(t).select('id',{count:'exact',head:true});
+  const [r1,r2,r3,r4,c1,c2,c3]=await Promise.all([
     sb.from('roles').select('*').order('id'),
     sb.from('profiles').select('id,name,role_id').order('created_at',{ascending:false}).limit(100),
-    sb.from('boards').select('*').order('pos')
+    sb.from('boards').select('*').order('pos'),
+    sb.from('threads').select('id,title,pinned,locked,board_id,boards(title)').order('bumped_at',{ascending:false}).limit(50),
+    cnt('profiles'),cnt('threads'),cnt('posts')
   ]);
-  const roles=r1.data||[],users=r2.data||[],boards=r3.data||[];
+  const roles=r1.data||[],users=r2.data||[],boards=r3.data||[],threads=r4.data||[];
   const er=roles.find(r=>r.id===editing)||{name:'',c1:'#3b5fa8',c2:'#9cc8f2',angle:90};
-  app.innerHTML='<h1>управление</h1><h2>роли</h2>'+
+  app.innerHTML='<h1>управление</h1><div class="stat"><div><b>'+(c1.count||0)+'</b><span>участников</span></div><div><b>'+(c2.count||0)+'</b><span>тем</span></div><div><b>'+(c3.count||0)+'</b><span>сообщений</span></div></div><h2>роли</h2>'+
     '<form id="rf2"><div class="adm"><label>название<input id="rn" maxlength="24" value="'+esc(er.name)+'" required></label><label>цвет 1<input id="c1" type="color" value="'+esc(er.c1)+'"></label><label>цвет 2<input id="c2" type="color" value="'+esc(er.c2)+'"></label><label>угол <span id="av">'+er.angle+'</span>°<input id="an" type="range" min="0" max="360" value="'+er.angle+'"></label></div>'+
     '<div class="pv"><span id="pv" class="badge"></span></div><div class="row"><button class="btn p">'+(editing?'сохранить роль':'создать роль')+'</button>'+(editing?'<button type="button" class="btn" data-a="rcancel">отмена</button>':'')+'</div></form>'+
     roles.map(r=>'<div class="ur"><span><span class="badge" style="background-image:'+bg(r)+'">'+esc(r.name)+'</span></span><span><button class="lk" data-a="redit" data-i="'+r.id+'">изменить</button><button class="lk" data-a="rdel" data-i="'+r.id+'">удалить</button></span></div>').join('')+
     '<h2>участники</h2>'+
     users.map(u=>'<div class="ur"><span>'+esc(u.name)+'</span><select data-a="setrole" data-i="'+u.id+'"><option value="">без роли</option>'+roles.map(r=>'<option value="'+r.id+'"'+(u.role_id===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select></div>').join('')+
+    '<h2>темы</h2>'+
+    (threads.map(t=>'<div class="ur"><span><a href="#/t/'+t.id+'">'+esc(t.title)+'</a> <span class="mu">'+esc(t.boards?t.boards.title:'')+'</span>'+(t.pinned?' <span class="tag">закреплено</span>':'')+(t.locked?' <span class="tag">закрыто</span>':'')+'</span><span><button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button><button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button><button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.board_id+'">удалить</button></span></div>').join('')||'<p class="mu">тем пока нет</p>')+
     '<h2>разделы</h2>'+
     boards.map(b=>'<div class="ur"><span>'+esc(b.title)+'</span><span><button class="lk" data-a="bren" data-i="'+b.id+'" data-v="'+esc(b.title)+'">переименовать</button><button class="lk" data-a="bdel" data-i="'+b.id+'">удалить</button></span></div>').join('')+
     '<form id="bf"><div class="row"><input id="bt" placeholder="название раздела" required><input id="bd" placeholder="описание"><button class="btn p">добавить раздел</button></div></form>';
@@ -163,6 +173,7 @@ document.addEventListener('click',async e=>{
   const a=b.dataset.a,i=b.dataset.i,v=b.dataset.v;
   if(a==='anon'){const r=await sb.auth.signInAnonymously();if(r.error)return alert(r.error.message);await auth();route()}
   else if(a==='oauth'){const r=await sb.auth.signInWithOAuth({provider:i,options:{redirectTo:location.href.split('#')[0]}});if(r.error)alert(r.error.message)}
+  else if(a==='emailf'){const f=$('#ef');f.hidden=!f.hidden;if(!f.hidden)$('#em').focus()}
   else if(a==='out'){await sb.auth.signOut();await auth();route()}
   else if(a==='rename'){const n=prompt('новое имя (2-24 символа)',prof?prof.name:'');if(n){const r=await sb.rpc('set_name',{n});if(r.error)return alert(r.error.message);await auth();route()}}
   else if(a==='newt'){const f=$('#nf');f.hidden=!f.hidden}
@@ -170,7 +181,10 @@ document.addEventListener('click',async e=>{
     if(!await need())return;
     const r=v==='1'?await sb.from('likes').delete().eq('post_id',i).eq('user_id',me.id):await sb.from('likes').insert({post_id:+i});
     if(r.error)return alert(r.error.message);
-    thread(+app.dataset.t);
+    const sp=b.querySelector('span'),c=+sp.textContent;
+    b.dataset.v=v==='1'?'0':'1';
+    b.classList.toggle('on',v!=='1');
+    sp.textContent=v==='1'?Math.max(0,c-1):c+1;
   }
   else if(a==='editp'){
     const old=b.closest('article').querySelector('.txt').textContent;
@@ -178,8 +192,8 @@ document.addEventListener('click',async e=>{
     if(n&&n.trim()){const r=await sb.from('posts').update({body:n.trim()}).eq('id',i);if(r.error)return alert(r.error.message);thread(+app.dataset.t)}
   }
   else if(a==='delp'){if(confirm('удалить сообщение?')){const r=await sb.from('posts').delete().eq('id',i);if(r.error)return alert(r.error.message);thread(+app.dataset.t)}}
-  else if(a==='pin'||a==='lock'){const r=await sb.from('threads').update(a==='pin'?{pinned:v!=='1'}:{locked:v!=='1'}).eq('id',i);if(r.error)return alert(r.error.message);thread(+i)}
-  else if(a==='delt'){if(confirm('удалить тему целиком?')){const r=await sb.from('threads').delete().eq('id',i);if(r.error)return alert(r.error.message);location.hash='#/b/'+b.dataset.b}}
+  else if(a==='pin'||a==='lock'){const r=await sb.from('threads').update(a==='pin'?{pinned:v!=='1'}:{locked:v!=='1'}).eq('id',i);if(r.error)return alert(r.error.message);if(location.hash==='#/admin')admin();else thread(+i)}
+  else if(a==='delt'){if(confirm('удалить тему целиком?')){const r=await sb.from('threads').delete().eq('id',i);if(r.error)return alert(r.error.message);if(location.hash==='#/admin')admin();else location.hash='#/b/'+b.dataset.b}}
   else if(a==='redit'){editing=+i;admin()}
   else if(a==='rcancel'){editing=null;admin()}
   else if(a==='rdel'){if(confirm('удалить роль?')){const r=await sb.from('roles').delete().eq('id',i);if(r.error)return alert(r.error.message);admin()}}
@@ -193,6 +207,15 @@ document.addEventListener('change',async e=>{
     const r=await sb.rpc('set_role',{u:s.dataset.i,r:s.value?+s.value:null});
     if(r.error)alert(r.error.message);
   }
+});
+
+document.addEventListener('submit',async e=>{
+  if(e.target.id!=='ef')return;
+  e.preventDefault();
+  const r=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
+  if(r.error)return alert(r.error.message);
+  await auth();
+  route();
 });
 
 window.addEventListener('hashchange',route);

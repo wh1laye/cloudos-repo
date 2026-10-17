@@ -34,3 +34,12 @@ textarea{width:100%;resize:vertical}
 .pv{margin:8px 0 14px}
 .ur{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
 @media(max-width:640px){.post{grid-template-columns:1fr;gap:8px}.bar{padding:10px 16px}}
+[hidden]{display:none!important}
+#ef{flex-direction:row;flex-wrap:wrap;align-items:center;margin:0;gap:8px}
+#ef input{padding:4px 10px;font-size:14px;min-width:150px}
+.lk svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px;margin-right:4px}
+.lk.on svg{fill:currentColor}
+.stat{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.stat div{border:1px solid var(--line);border-radius:10px;padding:10px 16px;background:#fff}
+.stat b{display:block;font-size:20px;color:var(--ac)}
+.stat span{font-size:14px;color:var(--mute)}
