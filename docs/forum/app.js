@@ -55,7 +55,8 @@ const who=p=>{
 let me=null,prof=null,editing=null;
 
 async function auth(){
-  const {data}=await sb.auth.getSession();
+  const wait=new Promise(r=>setTimeout(()=>r({data:{session:null}}),4000));
+  const {data}=await Promise.race([sb.auth.getSession().catch(()=>({data:{session:null}})),wait]);
   me=data.session?data.session.user:null;
   prof=null;
   if(me){
@@ -328,4 +329,5 @@ document.addEventListener('submit',async e=>{
 });
 
 window.addEventListener('hashchange',route);
-auth().then(route);
+route();
+auth().catch(()=>{}).then(()=>{drawBar();if(me)route()});
