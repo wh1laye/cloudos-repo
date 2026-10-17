@@ -125,6 +125,6 @@ cloudos-repo/
 
 <div align="center">
 
-Сделано с ☁️ и терпением, автор [wh1laye](https://github.com/wh1laye)
+Автор [wh1laye](https://github.com/wh1laye)
 
 </div>
