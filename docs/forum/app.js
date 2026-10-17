@@ -132,7 +132,7 @@ async function admin(){
   const cnt=t=>sb.from(t).select('id',{count:'exact',head:true});
   const [r1,r2,r3,r4,c1,c2,c3]=await Promise.all([
     sb.from('roles').select('*').order('id'),
-    sb.from('profiles').select('id,name,role_id').order('created_at',{ascending:false}).limit(100),
+    sb.from('profiles').select('id,name,role_id,is_admin').order('created_at',{ascending:false}).limit(100),
     sb.from('boards').select('*').order('pos'),
     sb.from('threads').select('id,title,pinned,locked,board_id,boards(title)').order('bumped_at',{ascending:false}).limit(50),
     cnt('profiles'),cnt('threads'),cnt('posts')
@@ -145,6 +145,7 @@ async function admin(){
     roles.map(r=>'<div class="ur"><span><span class="badge" style="background-image:'+bg(r)+'">'+esc(r.name)+'</span></span><span><button class="lk" data-a="redit" data-i="'+r.id+'">изменить</button><button class="lk" data-a="rdel" data-i="'+r.id+'">удалить</button></span></div>').join('')+
     '<h2>участники</h2>'+
     users.map(u=>'<div class="ur"><span>'+esc(u.name)+'</span><select data-a="setrole" data-i="'+u.id+'"><option value="">без роли</option>'+roles.map(r=>'<option value="'+r.id+'"'+(u.role_id===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select></div>').join('')+
+    '<h2>удаление пользователей</h2><div class="row"><input id="uq" placeholder="поиск по нику"></div><div id="ul"></div>'+
     '<h2>темы</h2>'+
     (threads.map(t=>'<div class="ur"><span><a href="#/t/'+t.id+'">'+esc(t.title)+'</a> <span class="mu">'+esc(t.boards?t.boards.title:'')+'</span>'+(t.pinned?' <span class="tag">закреплено</span>':'')+(t.locked?' <span class="tag">закрыто</span>':'')+'</span><span><button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button><button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button><button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.board_id+'">удалить</button></span></div>').join('')||'<p class="mu">тем пока нет</p>')+
     '<h2>разделы</h2>'+
@@ -158,6 +159,13 @@ async function admin(){
   };
   ['rn','c1','c2','an'].forEach(i=>$('#'+i).oninput=pv);
   pv();
+  const du=()=>{
+    const q=$('#uq').value.trim().toLowerCase();
+    const l=users.filter(u=>u.id!==me.id&&!u.is_admin&&String(u.name||'').toLowerCase().includes(q)).slice(0,30);
+    $('#ul').innerHTML=l.map(u=>'<div class="ur"><span>'+esc(u.name)+' <span class="mu">'+esc(String(u.id).slice(0,8))+'</span></span><button class="lk" data-a="udel" data-i="'+u.id+'" data-v="'+esc(u.name)+'">удалить навсегда</button></div>').join('')||'<p class="mu">никого не найдено</p>';
+  };
+  $('#uq').oninput=du;
+  du();
   $('#rf2').onsubmit=async e=>{
     e.preventDefault();
     const v={name:$('#rn').value.trim(),c1:$('#c1').value,c2:$('#c2').value,angle:+$('#an').value};
@@ -222,6 +230,12 @@ document.addEventListener('click',async e=>{
   else if(a==='delt'){if(confirm('удалить тему целиком?')){const r=await sb.from('threads').delete().eq('id',i);if(r.error)return alert(r.error.message);if(location.hash==='#/admin')admin();else location.hash='#/b/'+b.dataset.b}}
   else if(a==='redit'){editing=+i;admin()}
   else if(a==='rcancel'){editing=null;admin()}
+  else if(a==='udel'){
+    if(!confirm('удалить '+v+' полностью из базы вместе с темами и сообщениями? это нельзя отменить'))return;
+    const r=await sb.rpc('admin_delete_user',{uid:i});
+    if(r.error)return alert('не удалось удалить: '+r.error.message);
+    admin();
+  }
   else if(a==='rdel'){if(confirm('удалить роль?')){const r=await sb.from('roles').delete().eq('id',i);if(r.error)return alert(r.error.message);admin()}}
   else if(a==='bren'){const n=prompt('новое название',v);if(n){const r=await sb.from('boards').update({title:n.trim()}).eq('id',i);if(r.error)return alert(r.error.message);admin()}}
   else if(a==='bdel'){if(confirm('удалить раздел со всеми темами?')){const r=await sb.from('boards').delete().eq('id',i);if(r.error)return alert(r.error.message);admin()}}
