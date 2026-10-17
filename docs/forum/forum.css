@@ -83,3 +83,6 @@ textarea{width:100%;resize:vertical}
 .pe{border:1px solid var(--line);border-radius:10px;background:var(--side);padding:10px 14px;margin:4px 0 8px}
 .ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .ctl select{max-width:170px}
+.tabs{display:flex;gap:8px;margin:10px 0 14px}
+.tabs a{border:1px solid var(--line);border-radius:8px;padding:6px 16px;text-decoration:none;background:#fff}
+.tabs a.on{background:var(--soft);border-color:var(--ac)}

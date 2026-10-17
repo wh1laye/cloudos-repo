@@ -63,8 +63,23 @@ const who=(p,ln)=>{
 };
 let me=null,prof=null,editing=null;
 const can=k=>!!(prof&&(prof.is_admin||(prof.perms||[]).includes(k)||((prof.roles&&prof.roles.perms)||[]).includes(k)));
-const PERMS=[['pin','закреплять темы'],['lock','закрывать и открывать темы'],['delete_threads','удалять темы'],['delete_posts','удалять чужие сообщения'],['delete_comments','удалять комментарии в профилях'],['assign_roles','выдавать роли без прав']];
+const PERMS=[['pin','закреплять темы'],['lock','закрывать и открывать темы'],['delete_threads','удалять темы'],['delete_posts','удалять чужие сообщения'],['delete_comments','удалять комментарии в профилях'],['assign_roles','выдавать роли без прав'],['mute','мутить участников'],['ban','банить участников']];
 const permBoxes=(cls,sel)=>PERMS.map(x=>'<label class="pm"><input type="checkbox" class="'+cls+'" value="'+x[0]+'"'+((sel||[]).includes(x[0])?' checked':'')+'>'+x[1]+'</label>').join('');
+const active=t=>!!t&&new Date(t)>new Date();
+const till=t=>new Date(t).getFullYear()>=9999?'навсегда':fmt(t);
+const parseDur=s=>{
+  s=String(s).trim().toLowerCase();
+  if(/^(навсегда|perm|forever)$/.test(s))return -1;
+  const m=s.match(/^(\d{1,4})\s*([mhdмчд])$/);
+  if(!m)return null;
+  return +m[1]*({m:1,'м':1,h:60,'ч':60,d:1440,'д':1440}[m[2]]);
+};
+const restricted=()=>{
+  if(!prof)return '';
+  if(active(prof.banned_until))return 'ваш аккаунт заблокирован: '+till(prof.banned_until)+(prof.ban_reason?'. причина: '+prof.ban_reason:'');
+  if(active(prof.muted_until))return 'вы в муте: '+till(prof.muted_until)+(prof.mute_reason?'. причина: '+prof.mute_reason:'');
+  return '';
+};
 const missing=m=>/function|schema cache|does not exist/i.test(m||'');
 async function mod(name,args,fb){
   const r=await sb.rpc(name,args);
@@ -118,17 +133,23 @@ async function auth(){
 
 function drawBar(){
   if(me){
-    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+'<button class="lk" data-a="out">выйти</button>';
+    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
   }else{
     bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button><button class="btn s" type="button" data-a="signup">регистрация</button></form>';
   }
 }
 
 async function need(){
-  if(me)return true;
-  const r=await anonIn();
-  if(r.error){alert(r.error.message);return false}
-  await auth();
+  if(!me){
+    const r=await anonIn();
+    if(r.error){alert(r.error.message);return false}
+    await auth();
+  }else if(prof){
+    const x=await sb.from('profiles').select('muted_until,mute_reason,banned_until,ban_reason').eq('id',me.id).maybeSingle();
+    if(x.data)Object.assign(prof,x.data);
+  }
+  const w=restricted();
+  if(w){alert(w);return false}
   return true;
 }
 
@@ -242,11 +263,14 @@ async function profile(id){
     '<div class="adm"><label>баннер, цвет 1<input id="pb1" type="color" value="'+col(u.b1)+'"></label><label>баннер, цвет 2<input id="pb2" type="color" value="'+col(u.b2)+'"></label><label>угол <span id="pav2">'+((+u.bangle)||90)+'</span>°<input id="pan" type="range" min="0" max="360" value="'+((+u.bangle)||90)+'"></label></div>'+
     '<label>картинка баннера (ссылка https, необязательно)<input id="pbu" maxlength="500" value="'+esc(safeUrl(u.burl))+'" placeholder="https://..."></label><div class="row"><button class="btn p">сохранить</button><button type="button" class="btn" data-a="pedit">отмена</button></div></form>':'';
   const modrow=prof&&prof.is_admin&&!own?'<div class="row mod"><select data-a="setrole" data-i="'+esc(id)+'"><option value="">без роли</option>'+rl.map(x=>'<option value="'+x.id+'"'+(u.role_id===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select><button class="btn s" data-a="adm" data-i="'+esc(id)+'" data-v="'+(u.is_admin?1:0)+'">'+(u.is_admin?'снять админа':'сделать админом')+'</button>'+(u.is_admin?'':'<button class="btn s" data-a="udel" data-i="'+esc(id)+'" data-v="'+esc(u.name)+'">удалить</button>')+'</div>':'';
+  const canS=!own&&!u.is_admin&&(can('mute')||can('ban'));
+  const sb1=(k,label,undo,un)=>'<button class="btn s" data-a="'+(un?'unsanc':'sanc')+'" data-k="'+k+'" data-i="'+esc(id)+'" data-v="'+esc(u.name)+'">'+(un?undo:label)+'</button>';
+  const sanrow=canS?'<div class="row mod">'+(can('mute')?sb1('mute','замутить','снять мут',active(u.muted_until)):'')+(can('ban')?sb1('ban','забанить','снять бан',active(u.banned_until)):'')+'</div>':'';
   const clist=cs.map(c=>'<div class="pcm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt">'+fmtBody(c.body)+'</div>'+((me&&(c.author===me.id||own))||can('delete_comments')?'<div class="acts"><button class="lk" data-a="pcdel" data-i="'+c.id+'">удалить</button></div>':'')+'</div>').join('')||'<p class="mu">комментариев пока нет</p>';
-  app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="background-image:'+bgB(u)+'">'+esc(String(u.name||'?').slice(0,1).toUpperCase())+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+'</div>'+
+  app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="background-image:'+bgB(u)+'">'+esc(String(u.name||'?').slice(0,1).toUpperCase())+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
     (u.bio?'<p class="bio">'+esc(u.bio)+'</p>':'<p class="mu">пока ничего о себе не написал.</p>')+
     '<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
-    (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':'')+modrow+'</div></div>'+edit+
+    (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':'')+modrow+sanrow+'</div></div>'+edit+
     '<h2>комментарии</h2>'+(cerr?'<div class="warn"><b>комментарии недоступны</b>'+esc(cerr)+'</div>':'<form id="pcf"><textarea id="pcb" rows="3" maxlength="1000" placeholder="написать участнику" required></textarea>'+tools('pcb')+'<button class="btn p">отправить</button></form>'+clist);
   app.dataset.u=id;
   if(own){
@@ -272,7 +296,7 @@ async function admin(){
   ]);
   const roles=r1.data||[],boards=r3.data||[],threads=r4.data||[];
   const er=roles.find(r=>r.id===editing)||{name:'',c1:'#3b5fa8',c2:'#9cc8f2',angle:90,perms:[]};
-  app.innerHTML='<h1>управление</h1><div class="stat"><div><b>'+(c1.count||0)+'</b><span>участников</span></div><div><b>'+(c2.count||0)+'</b><span>тем</span></div><div><b>'+(c3.count||0)+'</b><span>сообщений</span></div></div>'+
+  app.innerHTML='<h1>управление</h1><p class="mu"><a href="#/mod/mutes">панель мутов</a> · <a href="#/mod/bans">панель банов</a></p><div class="stat"><div><b>'+(c1.count||0)+'</b><span>участников</span></div><div><b>'+(c2.count||0)+'</b><span>тем</span></div><div><b>'+(c3.count||0)+'</b><span>сообщений</span></div></div>'+
     '<h2>участники</h2><div class="row"><input id="uq" placeholder="поиск по нику"></div><div id="ul"></div>'+
     '<h2>роли</h2>'+
     '<form id="rf2"><div class="adm"><label>название<input id="rn" maxlength="24" value="'+esc(er.name)+'" required></label><label>цвет 1<input id="c1" type="color" value="'+col(er.c1)+'"></label><label>цвет 2<input id="c2" type="color" value="'+col(er.c2)+'"></label><label>угол <span id="av">'+((+er.angle)||0)+'</span>°<input id="an" type="range" min="0" max="360" value="'+((+er.angle)||0)+'"></label></div>'+
@@ -328,13 +352,57 @@ async function admin(){
   };
 }
 
+let selUser=null;
+
+async function modPanel(kind){
+  if(!(can('mute')||can('ban'))){app.innerHTML='<div class="warn"><b>нет доступа</b>нужно право мутить или банить.</div>';return}
+  const k=kind==='bans'?'ban':'mute';
+  if(!can(k)){app.innerHTML='<div class="warn"><b>нет доступа</b>у тебя нет права '+(k==='ban'?'банить':'мутить')+'.</div>';return}
+  const f=k==='ban'?'banned_until':'muted_until',rf=k==='ban'?'ban_reason':'mute_reason';
+  const [a,l]=await Promise.all([
+    sb.from('profiles').select('id,name,'+f+','+rf).gt(f,new Date().toISOString()).order(f,{ascending:true}).limit(100),
+    sb.from('sanction_log').select('*').in('kind',k==='ban'?['ban','unban']:['mute','unmute']).order('created_at',{ascending:false}).limit(40)
+  ]);
+  if(a.error||l.error){app.innerHTML='<div class="warn"><b>панель недоступна</b>'+esc((a.error||l.error).message)+'. запусти forum_v3.sql в supabase.</div>';return}
+  const act=a.data||[],log=l.data||[];
+  const ids=[...new Set(log.flatMap(r=>[r.actor,r.target]).filter(Boolean))];
+  const nm={};
+  if(ids.length){const x=await sb.from('profiles').select('id,name').in('id',ids);(x.data||[]).forEach(y=>nm[y.id]=y.name)}
+  const lnk=id=>'<a href="#/u/'+esc(id)+'">'+esc(nm[id]||'удалён')+'</a>';
+  const kinds={mute:'мут',unmute:'снят мут',ban:'бан',unban:'снят бан'};
+  const tabs='<p class="tabs">'+(can('mute')?'<a class="'+(k==='mute'?'on':'')+'" href="#/mod/mutes">муты</a>':'')+(can('ban')?'<a class="'+(k==='ban'?'on':'')+'" href="#/mod/bans">баны</a>':'')+'</p>';
+  app.innerHTML='<h1>'+(k==='ban'?'панель банов':'панель мутов')+'</h1>'+tabs+
+    '<h2>'+(k==='ban'?'забанить':'замутить')+'</h2><div class="row"><input id="msq" placeholder="найти участника по нику"></div><div id="msr"></div>'+
+    '<form id="msf" data-k="'+k+'"><div id="msel" class="mu">никто не выбран</div><div class="row"><select id="mdur"><option value="10">10 минут</option><option value="60">1 час</option><option value="1440" selected>1 день</option><option value="10080">7 дней</option><option value="43200">30 дней</option><option value="-1">навсегда</option></select><input id="mrs" maxlength="200" placeholder="причина"><button class="btn p">применить</button></div></form>'+
+    '<h2>сейчас активны</h2>'+
+    (act.map(u=>'<div class="ur"><span><a href="#/u/'+esc(u.id)+'">'+esc(u.name)+'</a> <span class="tag">до '+till(u[f])+'</span> <span class="mu">'+esc(u[rf]||'')+'</span></span><button class="lk" data-a="unsanc" data-k="'+k+'" data-i="'+esc(u.id)+'">снять</button></div>').join('')||'<p class="mu">никого</p>')+
+    '<h2>история</h2>'+
+    (log.map(r=>'<div class="ur"><span>'+lnk(r.target)+' <span class="tag">'+kinds[r.kind]+'</span> '+(r.until&&(r.kind==='mute'||r.kind==='ban')?'<span class="mu">до '+till(r.until)+'</span> ':'')+'<span class="mu">'+esc(r.reason||'')+'</span></span><span class="mu">'+lnk(r.actor)+', '+fmt(r.created_at)+'</span></div>').join('')||'<p class="mu">пока пусто</p>');
+  let tm=null;
+  $('#msq').oninput=()=>{
+    clearTimeout(tm);
+    tm=setTimeout(async()=>{
+      const q=$('#msq').value.trim().replace(/[%_,]/g,'');
+      if(!q){$('#msr').innerHTML='';return}
+      const x=await sb.from('profiles').select('id,name,is_admin').ilike('name','%'+q+'%').limit(8);
+      $('#msr').innerHTML=(x.data||[]).filter(u=>!u.is_admin&&u.id!==me.id).map(u=>'<div class="ur"><span>'+esc(u.name)+'</span><button class="lk" data-a="msel" data-i="'+esc(u.id)+'" data-v="'+esc(u.name)+'">выбрать</button></div>').join('')||'<p class="mu">никого не найдено</p>';
+    },250);
+  };
+}
+
 async function route(){
   const k=location.hash.slice(1).split('/');
   app.innerHTML='<p class="mu">загрузка</p>';
+  selUser=null;
+  if(prof&&active(prof.banned_until)){
+    app.innerHTML='<div class="warn"><b>аккаунт заблокирован</b>'+esc(restricted())+'</div><div class="row"><button class="btn" data-a="out">выйти</button></div>';
+    return;
+  }
   try{
     if(k[1]==='b')await board(+k[2]);
     else if(k[1]==='t')await thread(+k[2]);
     else if(k[1]==='u')await profile(k[2]);
+    else if(k[1]==='mod')await modPanel(k[2]);
     else if(k[1]==='admin')await admin();
     else await home();
   }catch(e){
@@ -402,6 +470,27 @@ document.addEventListener('click',async e=>{
     if(r.error)return alert(r.error.message);
     if(location.hash==='#/admin')admin();else location.hash='#/b/'+b.dataset.b;
   }
+  else if(a==='sanc'){
+    const kind=b.dataset.k;
+    const d=prompt('срок: 10m, 1h, 1d, 7d, 30d или навсегда','1d');
+    if(d===null)return;
+    const mins=parseDur(d);
+    if(mins===null)return alert('неверный срок, пример: 30m, 2h, 3d, навсегда');
+    const why=prompt('причина (необязательно)','')||'';
+    const r=await sb.rpc(kind==='ban'?'mod_ban':'mod_mute',{uid:i,minutes:mins,reason:why});
+    if(r.error)return alert(r.error.message);
+    route();
+  }
+  else if(a==='unsanc'){
+    if(!confirm('снять ограничение?'))return;
+    const r=await sb.rpc(b.dataset.k==='ban'?'mod_unban':'mod_unmute',{uid:i});
+    if(r.error)return alert(r.error.message);
+    route();
+  }
+  else if(a==='msel'){
+    selUser={id:i,name:v};
+    $('#msel').innerHTML='выбран: <b>'+esc(v)+'</b>';
+  }
   else if(a==='pedit'){const f=$('#pf');if(f)f.hidden=!f.hidden}
   else if(a==='pcdel'){if(confirm('удалить комментарий?')){const r=await sb.from('profile_comments').delete().eq('id',i);if(r.error)return alert(r.error.message);route()}}
   else if(a==='perms'){const e2=document.getElementById('pe-'+i);if(e2)e2.hidden=!e2.hidden}
@@ -451,6 +540,15 @@ document.addEventListener('submit',async e=>{
       thread(+app.dataset.t);
     }catch(x){alert(x.message||x)}
     finally{btn.disabled=false}
+    return;
+  }
+  if(e.target.id==='msf'){
+    e.preventDefault();
+    if(!selUser)return alert('сначала выбери участника из поиска');
+    const kind=e.target.dataset.k;
+    const r=await sb.rpc(kind==='ban'?'mod_ban':'mod_mute',{uid:selUser.id,minutes:+$('#mdur').value,reason:$('#mrs').value.trim()});
+    if(r.error)return alert(r.error.message);
+    route();
     return;
   }
   if(e.target.id==='pcf'){
