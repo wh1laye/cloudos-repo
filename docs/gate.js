@@ -1,5 +1,5 @@
 (function(){
-  var KEY="";
+  var KEY="0x4AAAAAAFZBzrWgvn-Lz9Eb";
   var HOURS=6;
   if(!KEY)return;
   try{
