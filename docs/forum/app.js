@@ -388,16 +388,17 @@ const GP={
 function settings(){
   const T=window.CloudTheme,g=T.getGrad(),th=T.get();
   const grad=(c1,c2,a)=>'linear-gradient('+a+'deg,'+c1+','+c2+')';
-  app.innerHTML='<p><a href="#/">форум</a> / настройки</p><h1>настройки</h1>'+
-    '<h2>тема</h2><div class="row"><button class="btn s'+(th==='light'?' p':'')+'" data-a="th" data-i="light">светлая</button><button class="btn s'+(th==='gray'?' p':'')+'" data-a="th" data-i="gray">серая</button></div>'+
-    '<h2>градиент</h2><div class="gset">'+
-    '<label class="chk"><input id="gon" type="checkbox"'+(g.on?' checked':'')+'> включить градиент</label>'+
-    '<div class="gc"><label>цвет 1<input id="gc1" type="color" value="'+g.c1+'"></label><label>цвет 2<input id="gc2" type="color" value="'+g.c2+'"></label></div>'+
-    '<label>угол: <b id="gav">'+g.a+'</b>°<input id="ga" type="range" min="0" max="360" value="'+g.a+'"></label>'+
-    '<div id="gpv" class="gpv" style="background:'+grad(g.c1,g.c2,g.a)+'"></div>'+
-    '<div class="row">'+GP[th].map((q,n)=>'<button class="btn s" data-a="gp" data-i="'+n+'">'+q[0]+'</button>').join('')+'</div>'+
-    '<div class="row"><button class="btn s" data-a="gr">сбросить</button></div></div>'+
-    '<p class="mu">градиент применяется ко всему сайту на этом устройстве: форум, справочник и релизы.</p>';
+  app.innerHTML='<p><a href="#/">форум</a> / настройки</p><h1>настройки</h1><div class="sg2">'+
+    '<section class="sc"><h3>тема</h3><div class="seg">'+['light','gray'].map(v=>'<button class="sgb'+(th===v?' on':'')+'" data-a="th" data-i="'+v+'"><span class="tp tp-'+v+'"><b>Aa</b></span>'+(v==='light'?'светлая':'серая')+'</button>').join('')+'</div></section>'+
+    '<section class="sc"><h3>градиент сайта</h3>'+
+    '<label class="sw"><input id="gon" type="checkbox"'+(g.on?' checked':'')+'><i></i><span>включить градиент</span></label>'+
+    '<div id="gpv" class="gpv" style="background:'+grad(g.c1,g.c2,g.a)+'"><div class="mk"><b>предпросмотр</b><span>так будут выглядеть фон и шапка</span></div></div>'+
+    '<div class="gc"><label class="cp"><input id="gc1" type="color" value="'+g.c1+'"><span>цвет 1</span></label><label class="cp"><input id="gc2" type="color" value="'+g.c2+'"><span>цвет 2</span></label></div>'+
+    '<label class="rg"><span>угол <b id="gav">'+g.a+'</b>°</span><input id="ga" type="range" min="0" max="360" value="'+g.a+'"></label>'+
+    '<div class="chips">'+[0,45,90,135,180,270].map(n=>'<button class="chip" data-a="gang" data-i="'+n+'">'+n+'°</button>').join('')+'</div>'+
+    '<h4>пресеты</h4><div class="pre">'+GP[th].map((q,n)=>'<button class="pr" data-a="gp" data-i="'+n+'"><i style="background:'+grad(q[1],q[2],q[3])+'"></i><span>'+q[0]+'</span></button>').join('')+'</div>'+
+    '<div class="row"><button class="btn s" data-a="gr">сбросить</button></div></section></div>'+
+    '<p class="mu">градиент и тема сохраняются в аккаунте и действуют на форуме, в справочнике и на релизах.</p>';
   const up=()=>{
     const o=T.setGrad({on:$('#gon').checked,c1:$('#gc1').value,c2:$('#gc2').value,a:+$('#ga').value});
     $('#gav').textContent=o.a;
@@ -567,7 +568,7 @@ const pollHtml=po=>{
   }).join('')+'</div>';
 };
 async function badgesAdmin(){
-  const head='<p><a href="#/admin">управление</a> / значки</p><h1>значки</h1>';
+  const head='<h1>управление</h1>'+adminTabs('badges');
   if(!(prof&&prof.is_admin)){app.innerHTML=head+'<p class="mu">нет доступа.</p>';return}
   const r=await sb.from('badges').select('*').order('id');
   if(r.error){app.innerHTML=head+'<div class="warn"><b>значки недоступны</b>'+esc(r.error.message)+'</div>';return}
@@ -686,7 +687,7 @@ async function profile(id){
   }
   const edit=own?'<form id="pf" hidden><label>о себе<textarea id="pbio" rows="4" maxlength="500">'+esc(u.bio||'')+'</textarea></label><label>статус (эмодзи или пара слов)<input id="pst" maxlength="16" value="'+esc(u.status||'')+'"></label>'+tools('pst',true)+
     '<div class="adm"><label>баннер, цвет 1<input id="pb1" type="color" value="'+col(u.b1)+'"></label><label>баннер, цвет 2<input id="pb2" type="color" value="'+col(u.b2)+'"></label><label>угол <span id="pav2">'+((+u.bangle)||90)+'</span>°<input id="pan" type="range" min="0" max="360" value="'+((+u.bangle)||90)+'"></label></div>'+
-    '<label class="chk"><input id="nkon" type="checkbox"'+(u.nk_on?' checked':'')+'> градиент ника</label><div class="adm"><label>ник, цвет 1<input id="nk1" type="color" value="'+col(u.nk1)+'"></label><label>ник, цвет 2<input id="nk2" type="color" value="'+col(u.nk2)+'"></label><label>угол <span id="nka2">'+((+u.nkangle)||90)+'</span>°<input id="nkan" type="range" min="0" max="360" value="'+((+u.nkangle)||90)+'"></label></div><p>предпросмотр: <span id="nkpv"></span></p>'+
+    '<label class="sw"><input id="nkon" type="checkbox"'+(u.nk_on?' checked':'')+'><i></i><span>градиент ника</span></label><div class="adm"><label>ник, цвет 1<input id="nk1" type="color" value="'+col(u.nk1)+'"></label><label>ник, цвет 2<input id="nk2" type="color" value="'+col(u.nk2)+'"></label><label>угол <span id="nka2">'+((+u.nkangle)||90)+'</span>°<input id="nkan" type="range" min="0" max="360" value="'+((+u.nkangle)||90)+'"></label></div><p>предпросмотр: <span id="nkpv"></span></p>'+
     '<div class="adm"><label>аватар (файл)<input id="pavf" type="file" accept="image/*"></label><label>баннер (файл)<input id="pbf" type="file" accept="image/*"></label></div>'+(safeUrl(u.avatar_url)?'<div class="row"><button type="button" class="btn s" data-a="avx">убрать аватар</button></div>':'')+'<label>картинка баннера (ссылка https, необязательно)<input id="pbu" maxlength="500" value="'+esc(safeUrl(u.burl))+'" placeholder="https://..."></label><div class="row"><button class="btn p">сохранить</button><button type="button" class="btn" data-a="pedit">отмена</button></div></form>':'';
   const modrow=prof&&prof.is_admin&&!own?'<div class="row mod"><select data-a="setrole" data-i="'+esc(id)+'"><option value="">без роли</option>'+rl.map(x=>'<option value="'+x.id+'"'+(u.role_id===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select><button class="btn s" data-a="adm" data-i="'+esc(id)+'" data-v="'+(u.is_admin?1:0)+'">'+(u.is_admin?'снять админа':'сделать админом')+'</button>'+(u.is_admin?'':'<button class="btn s" data-a="udel" data-i="'+esc(id)+'" data-v="'+esc(u.name)+'">удалить</button>')+'</div>':'';
   const canS=!own&&!u.is_admin&&(can('mute')||can('ban'));
@@ -726,28 +727,91 @@ async function profile(id){
   }
 }
 
+const ATABS=[['','обзор'],['users','участники'],['roles','роли'],['threads','темы'],['boards','разделы'],['ann','объявление'],['log','журнал'],['badges','значки']];
+const LOGT={mute:'выдал мут',unmute:'снял мут',ban:'выдал бан',unban:'снял бан',role:'сменил роль',admin:'изменил статус админа',perms:'изменил права',pin:'закрепил тему',unpin:'открепил тему',lock:'закрыл тему',unlock:'открыл тему',delete_thread:'удалил тему',delete_post:'удалил сообщение',delete_user:'удалил пользователя',reset_profile:'сбросил профиль',board_access:'изменил доступ к разделу'};
+function adminTabs(cur){
+  return '<div class="atabs">'+ATABS.map(t=>'<a'+(t[0]===cur?' class="on"':'')+' href="#/admin'+(t[0]?'/'+t[0]:'')+'">'+t[1]+'</a>').join('')+'<a href="#/reports">жалобы</a><a href="#/mod/mutes">муты</a><a href="#/mod/bans">баны</a></div>';
+}
+async function logHtml(rows){
+  if(!rows.length)return '<p class="mu">записей пока нет</p>';
+  const aa=rows.map(x=>({author:x.actor})),tt=rows.map(x=>({author:x.target}));
+  await withProf(aa);
+  await withProf(tt);
+  return rows.map((x,n)=>{
+    const d=x.details||{},bits=[];
+    if(d.role)bits.push('роль «'+esc(d.role)+'»');
+    if(d.title)bits.push('«'+esc(d.title)+'»');
+    if(d.text)bits.push(esc(d.text));
+    if(d.until)bits.push('до '+esc(till(d.until)));
+    if(d.reason)bits.push('причина: '+esc(d.reason));
+    if(d.on!==undefined)bits.push(d.on?'назначен':'снят');
+    return '<div class="item lg"><div class="ch">'+(x.actor?who(aa[n].profiles,false):'<b>система</b>')+' <span>'+esc(LOGT[x.action]||x.action)+'</span>'+(x.target?' '+who(tt[n].profiles,false):'')+'<span class="mu">'+fmt(x.created_at)+'</span></div>'+(bits.length?'<p class="mu">'+bits.join(' · ')+'</p>':'')+'</div>';
+  }).join('');
+}
 async function admin(){
   if(!(prof&&prof.is_admin)){app.innerHTML='<div class="warn"><b>нет доступа</b>эта страница только для администратора.</div>';return}
-  const cnt=t=>sb.from(t).select('id',{count:'exact',head:true});
-  const [r1,r3,r4,c1,c2,c3]=await Promise.all([
-    sb.from('roles').select('*').order('id'),
-    sb.from('boards').select('*').order('pos'),
-    sb.from('threads').select('id,title,pinned,locked,board_id,boards(title)').order('bumped_at',{ascending:false}).limit(50),
-    cnt('profiles'),cnt('threads'),cnt('posts')
+  const tab=location.hash.split('/')[2]||'';
+  const head='<h1>управление</h1>'+adminTabs(tab);
+  if(tab==='users')return adminUsers(head);
+  if(tab==='roles')return adminRoles(head);
+  if(tab==='threads')return adminThreads(head);
+  if(tab==='boards')return adminBoards(head);
+  if(tab==='ann')return adminAnn(head);
+  if(tab==='log')return adminLog(head);
+  return adminOverview(head);
+}
+async function adminOverview(head){
+  const cnt=(t,f)=>{const q=sb.from(t).select('id',{count:'exact',head:true});return f?f(q):q};
+  const d7=new Date(Date.now()-7*864e5).toISOString(),now=new Date().toISOString();
+  const [u,t,p,nu,np,rp,mt,bn,lg]=await Promise.all([
+    cnt('profiles'),cnt('threads'),cnt('posts'),
+    cnt('profiles',q=>q.gte('created_at',d7)),cnt('posts',q=>q.gte('created_at',d7)),
+    cnt('reports',q=>q.eq('status','open')),
+    cnt('profiles',q=>q.gt('muted_until',now)),cnt('profiles',q=>q.gt('banned_until',now)),
+    sb.from('mod_log').select('*').order('id',{ascending:false}).limit(6)
   ]);
-  const roles=r1.data||[],boards=r3.data||[],threads=r4.data||[];
+  const cd=(n,s,h)=>(h?'<a class="cd" href="'+h+'">':'<div class="cd">')+'<b>'+(n||0)+'</b><span>'+s+'</span>'+(h?'</a>':'</div>');
+  app.innerHTML=head+'<div class="cards">'+cd(u.count,'участников')+cd(t.count,'тем')+cd(p.count,'сообщений')+cd(nu.count,'новых участников за 7 дней')+cd(np.count,'сообщений за 7 дней')+cd(rp.count,'открытых жалоб','#/reports')+cd(mt.count,'активных мутов','#/mod/mutes')+cd(bn.count,'активных банов','#/mod/bans')+'</div>'+
+    '<h2>последние действия</h2>'+await logHtml(lg.data||[])+'<p><a href="#/admin/log">весь журнал</a></p>';
+}
+async function adminUsers(head){
+  const r1=await sb.from('roles').select('*').order('id');
+  const roles=r1.data||[];
+  app.innerHTML=head+'<div class="row"><input id="uq" placeholder="поиск по нику"><select id="uf"><option value="">все</option><option value="adm">админы</option><option value="mute">замученные</option><option value="ban">забаненные</option></select></div><div id="ul"></div>';
+  const loadUsers=async()=>{
+    const q=$('#uq').value.trim().replace(/[%_,]/g,''),fl=$('#uf').value,iso=new Date().toISOString();
+    const mk=f=>{
+      let r=sb.from('profiles').select(f).order('created_at',{ascending:false}).limit(50);
+      if(q)r=r.ilike('name','%'+q+'%');
+      if(fl==='adm')r=r.eq('is_admin',true);
+      if(fl==='mute')r=r.gt('muted_until',iso);
+      if(fl==='ban')r=r.gt('banned_until',iso);
+      return r;
+    };
+    let x=await mk('id,name,role_id,is_admin,perms,muted_until,banned_until');
+    if(x.error)x=await mk('id,name,role_id,is_admin');
+    const l=x.data||[];
+    $('#ul').innerHTML=l.map(u=>{
+      const self=u.id===me.id;
+      return '<div class="ur"><span><a href="#/u/'+esc(u.id)+'">'+esc(u.name)+'</a> '+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут</span>':'')+(active(u.banned_until)?'<span class="tag">бан</span>':'')+((u.perms||[]).length?'<span class="tag">прав: '+u.perms.length+'</span>':'')+'</span><span class="ctl">'+
+        '<select data-a="setrole" data-i="'+esc(u.id)+'"><option value="">без роли</option>'+roles.map(r=>'<option value="'+r.id+'"'+(u.role_id===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select>'+
+        (self?'<span class="tag">это ты</span>':'<button class="lk" data-a="perms" data-i="'+esc(u.id)+'">права</button><button class="lk" data-a="adm" data-i="'+esc(u.id)+'" data-v="'+(u.is_admin?1:0)+'">'+(u.is_admin?'снять админа':'сделать админом')+'</button><button class="lk" data-a="ureset" data-i="'+esc(u.id)+'">сбросить профиль</button>'+(u.is_admin?'':'<button class="lk" data-a="udel" data-i="'+esc(u.id)+'" data-v="'+esc(u.name)+'">удалить</button>'))+
+        '</span></div>'+(self?'':'<div class="pe" id="pe-'+esc(u.id)+'" hidden><div class="pms">'+permBoxes('up',u.perms)+'</div><button class="btn s p" data-a="psave" data-i="'+esc(u.id)+'">сохранить права</button></div>');
+    }).join('')||'<p class="mu">никого не найдено</p>';
+  };
+  let tm=null;
+  $('#uq').oninput=()=>{clearTimeout(tm);tm=setTimeout(loadUsers,250)};
+  $('#uf').onchange=loadUsers;
+  await loadUsers();
+}
+async function adminRoles(head){
+  const r1=await sb.from('roles').select('*').order('id');
+  const roles=r1.data||[];
   const er=roles.find(r=>r.id===editing)||{name:'',c1:'#3b5fa8',c2:'#9cc8f2',angle:90,perms:[]};
-  app.innerHTML='<h1>управление</h1><p class="mu"><a href="#/mod/mutes">панель мутов</a> · <a href="#/mod/bans">панель банов</a> · <a href="#/admin/badges">значки</a></p><div class="stat"><div><b>'+(c1.count||0)+'</b><span>участников</span></div><div><b>'+(c2.count||0)+'</b><span>тем</span></div><div><b>'+(c3.count||0)+'</b><span>сообщений</span></div></div>'+
-    '<h2>участники</h2><div class="row"><input id="uq" placeholder="поиск по нику"></div><div id="ul"></div>'+
-    '<h2>роли</h2>'+
-    '<form id="rf2"><div class="adm"><label>название<input id="rn" maxlength="24" value="'+esc(er.name)+'" required></label><label>цвет 1<input id="c1" type="color" value="'+col(er.c1)+'"></label><label>цвет 2<input id="c2" type="color" value="'+col(er.c2)+'"></label><label>угол <span id="av">'+((+er.angle)||0)+'</span>°<input id="an" type="range" min="0" max="360" value="'+((+er.angle)||0)+'"></label></div>'+
+  app.innerHTML=head+
+    '<form id="rf2"><div class="adm"><label>название<input id="rn" maxlength="24" value="'+esc(er.name)+'" required></label><label class="cp"><input id="c1" type="color" value="'+col(er.c1)+'"><span>цвет 1</span></label><label class="cp"><input id="c2" type="color" value="'+col(er.c2)+'"><span>цвет 2</span></label><label class="rg"><span>угол <b id="av">'+((+er.angle)||0)+'</b>°</span><input id="an" type="range" min="0" max="360" value="'+((+er.angle)||0)+'"></label></div>'+
     '<div class="pv"><span id="pv" class="badge"></span></div><p class="mu">права этой роли</p><div class="pms">'+permBoxes('rp',er.perms)+'</div><div class="row"><button class="btn p">'+(editing?'сохранить роль':'создать роль')+'</button>'+(editing?'<button type="button" class="btn" data-a="rcancel">отмена</button>':'')+'</div></form>'+
-    roles.map(r=>'<div class="ur"><span><span class="badge" style="background-image:'+bg(r)+'">'+esc(r.name)+'</span> <span class="mu">'+((r.perms||[]).length?'прав: '+r.perms.length:'без прав')+'</span></span><span><button class="lk" data-a="redit" data-i="'+r.id+'">изменить</button><button class="lk" data-a="rdel" data-i="'+r.id+'">удалить</button></span></div>').join('')+
-    '<h2>темы</h2>'+
-    (threads.map(t=>'<div class="ur"><span><a href="#/t/'+t.id+'">'+esc(t.title)+'</a> <span class="mu">'+esc(t.boards?t.boards.title:'')+'</span>'+(t.pinned?' <span class="tag">закреплено</span>':'')+(t.locked?' <span class="tag">закрыто</span>':'')+'</span><span><button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button><button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button><button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.board_id+'">удалить</button></span></div>').join('')||'<p class="mu">тем пока нет</p>')+
-    '<h2>разделы</h2>'+
-    boards.map(b=>'<div class="ur"><span>'+esc(b.title)+'</span><span><button class="lk" data-a="bren" data-i="'+b.id+'" data-v="'+esc(b.title)+'">переименовать</button><button class="lk" data-a="bdel" data-i="'+b.id+'">удалить</button></span></div>').join('')+
-    '<form id="bf"><div class="row"><input id="bt" placeholder="название раздела" required><input id="bd" placeholder="описание"><button class="btn p">добавить раздел</button></div></form>';
+    roles.map(r=>'<div class="ur"><span><span class="badge" style="background-image:'+bg(r)+'">'+esc(r.name)+'</span> <span class="mu">'+((r.perms||[]).length?'прав: '+r.perms.length:'без прав')+'</span></span><span><button class="lk" data-a="redit" data-i="'+r.id+'">изменить</button><button class="lk" data-a="rdel" data-i="'+r.id+'">удалить</button></span></div>').join('');
   const pv=()=>{
     $('#av').textContent=$('#an').value;
     const p=$('#pv');
@@ -756,23 +820,6 @@ async function admin(){
   };
   ['rn','c1','c2','an'].forEach(i=>$('#'+i).oninput=pv);
   pv();
-  const loadUsers=async()=>{
-    const q=$('#uq').value.trim().replace(/[%_,]/g,'');
-    const mk=f=>{let r=sb.from('profiles').select(f).order('created_at',{ascending:false}).limit(50);if(q)r=r.ilike('name','%'+q+'%');return r};
-    let x=await mk('id,name,role_id,is_admin,perms');
-    if(x.error)x=await mk('id,name,role_id,is_admin');
-    const l=x.data||[];
-    $('#ul').innerHTML=l.map(u=>{
-      const self=u.id===me.id;
-      return '<div class="ur"><span><a href="#/u/'+esc(u.id)+'">'+esc(u.name)+'</a> '+(u.is_admin?'<span class="tag">админ</span>':'')+((u.perms||[]).length?'<span class="tag">прав: '+u.perms.length+'</span>':'')+'</span><span class="ctl">'+
-        '<select data-a="setrole" data-i="'+esc(u.id)+'"><option value="">без роли</option>'+roles.map(r=>'<option value="'+r.id+'"'+(u.role_id===r.id?' selected':'')+'>'+esc(r.name)+'</option>').join('')+'</select>'+
-        (self?'<span class="tag">это ты</span>':'<button class="lk" data-a="perms" data-i="'+esc(u.id)+'">права</button><button class="lk" data-a="adm" data-i="'+esc(u.id)+'" data-v="'+(u.is_admin?1:0)+'">'+(u.is_admin?'снять админа':'сделать админом')+'</button>'+(u.is_admin?'':'<button class="lk" data-a="udel" data-i="'+esc(u.id)+'" data-v="'+esc(u.name)+'">удалить</button>'))+
-        '</span></div>'+(self?'':'<div class="pe" id="pe-'+esc(u.id)+'" hidden><div class="pms">'+permBoxes('up',u.perms)+'</div><button class="btn s p" data-a="psave" data-i="'+esc(u.id)+'">сохранить права</button></div>');
-    }).join('')||'<p class="mu">никого не найдено</p>';
-  };
-  let tm=null;
-  $('#uq').oninput=()=>{clearTimeout(tm);tm=setTimeout(loadUsers,250)};
-  await loadUsers();
   $('#rf2').onsubmit=async e=>{
     e.preventDefault();
     const v={name:$('#rn').value.trim(),c1:$('#c1').value,c2:$('#c2').value,angle:+$('#an').value};
@@ -785,12 +832,75 @@ async function admin(){
     editing=null;
     admin();
   };
+}
+async function adminThreads(head){
+  app.innerHTML=head+'<div class="row"><input id="tq" placeholder="поиск по названию темы"></div><div id="tl"></div>';
+  const load=async()=>{
+    const q=$('#tq').value.trim().replace(/[%_,]/g,'');
+    let r=sb.from('threads').select('id,title,pinned,locked,solved,board_id,boards(title)').order('bumped_at',{ascending:false}).limit(50);
+    if(q)r=r.ilike('title','%'+q+'%');
+    let x=await r;
+    if(x.error){
+      r=sb.from('threads').select('id,title,pinned,locked,board_id,boards(title)').order('bumped_at',{ascending:false}).limit(50);
+      if(q)r=r.ilike('title','%'+q+'%');
+      x=await r;
+    }
+    $('#tl').innerHTML=(x.data||[]).map(t=>'<div class="ur"><span><a href="#/t/'+t.id+'">'+esc(t.title)+'</a> <span class="mu">'+esc(t.boards?t.boards.title:'')+'</span>'+(t.pinned?' <span class="tag">закреплено</span>':'')+(t.locked?' <span class="tag">закрыто</span>':'')+(t.solved?' <span class="tag sv">решено</span>':'')+'</span><span><button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button><button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button><button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.board_id+'">удалить</button></span></div>').join('')||'<p class="mu">тем не найдено</p>';
+  };
+  let tm=null;
+  $('#tq').oninput=()=>{clearTimeout(tm);tm=setTimeout(load,250)};
+  await load();
+}
+async function adminBoards(head){
+  const [r3,r1]=await Promise.all([sb.from('boards').select('*').order('pos'),sb.from('roles').select('id,name').order('id')]);
+  const boards=r3.data||[],roles=r1.data||[];
+  app.innerHTML=head+
+    boards.map((b,n)=>'<div class="ur"><span>'+esc(b.title)+(b.allowed_roles&&b.allowed_roles.length?' <span class="tag">закрытый</span>':'')+'<br><span class="mu">'+esc(b.descr||'')+'</span></span><span><button class="lk" data-a="bup" data-i="'+b.id+'">выше</button><button class="lk" data-a="bdown" data-i="'+b.id+'">ниже</button><button class="lk" data-a="bren" data-i="'+b.id+'" data-v="'+esc(b.title)+'">название</button><button class="lk" data-a="bdesc" data-i="'+b.id+'" data-v="'+esc(b.descr||'')+'">описание</button><button class="lk" data-a="bacc" data-i="'+b.id+'">доступ</button><button class="lk" data-a="bdel" data-i="'+b.id+'">удалить</button></span></div>'+
+      '<div class="pe" id="ba-'+b.id+'" hidden><p class="mu">раздел видят только выбранные роли и админы. если ничего не выбрано, раздел открыт для всех.</p><div class="pms">'+roles.map(r=>'<label><input type="checkbox" class="bx-'+b.id+'" value="'+r.id+'"'+((b.allowed_roles||[]).includes(r.id)?' checked':'')+'> '+esc(r.name)+'</label>').join('')+'</div><button class="btn s p" data-a="bsave" data-i="'+b.id+'">сохранить доступ</button></div>').join('')+
+    '<h2>новый раздел</h2><form id="bf"><div class="row"><input id="bt" placeholder="название раздела" required><input id="bd" placeholder="описание"><button class="btn p">добавить раздел</button></div></form>';
   $('#bf').onsubmit=async e=>{
     e.preventDefault();
     const r=await sb.from('boards').insert({title:$('#bt').value.trim(),descr:$('#bd').value.trim(),pos:boards.length+1});
     if(r.error)return alert(r.error.message);
     admin();
   };
+}
+async function adminAnn(head){
+  const r=await sb.from('site_settings').select('value').eq('key','announcement').maybeSingle();
+  const v=(r.data&&r.data.value)||{on:false,text:'',kind:'info'};
+  app.innerHTML=head+'<form id="anf" class="annf"><label class="sw"><input id="ano" type="checkbox"'+(v.on?' checked':'')+'><i></i><span>показывать объявление</span></label><textarea id="ant" rows="4" maxlength="500" placeholder="текст объявления"></textarea><label>вид<select id="ank"><option value="info">обычное</option><option value="warn">важное</option></select></label><div class="row"><button class="btn p">сохранить</button></div></form><p class="mu">после сохранения объявление снова покажется всем, кто его скрыл.</p>';
+  $('#ant').value=v.text||'';
+  $('#ank').value=v.kind||'info';
+  $('#anf').onsubmit=async e=>{
+    e.preventDefault();
+    const x=await sb.from('site_settings').upsert({key:'announcement',value:{on:$('#ano').checked,text:$('#ant').value.trim(),kind:$('#ank').value,id:Date.now()}});
+    if(x.error)return alert(x.error.message);
+    loadAnn();
+    alert('сохранено');
+  };
+}
+async function adminLog(head){
+  app.innerHTML=head+'<div class="row"><select id="lf"><option value="">все действия</option>'+Object.keys(LOGT).map(k=>'<option value="'+k+'">'+LOGT[k]+'</option>').join('')+'</select></div><div id="ll"></div>';
+  const load=async()=>{
+    let r=sb.from('mod_log').select('*').order('id',{ascending:false}).limit(100);
+    if($('#lf').value)r=r.eq('action',$('#lf').value);
+    const x=await r;
+    $('#ll').innerHTML=x.error?'<div class="warn"><b>журнал недоступен</b>'+esc(x.error.message)+'</div>':await logHtml(x.data||[]);
+  };
+  $('#lf').onchange=load;
+  await load();
+}
+async function loadAnn(){
+  let el=document.getElementById('ann');
+  if(!el){el=document.createElement('div');el.id='ann';app.parentNode.insertBefore(el,app)}
+  try{
+    const r=await sb.from('site_settings').select('value').eq('key','announcement').maybeSingle();
+    const v=r.data&&r.data.value;
+    let seen='';
+    try{seen=localStorage.getItem('ann_x')||''}catch(x){}
+    if(!v||!v.on||!v.text||seen===String(v.id)){el.innerHTML='';return}
+    el.innerHTML='<div class="ann '+(v.kind==='warn'?'aw':'ai')+'"><span>'+esc(v.text).replace(/\n/g,'<br>')+'</span><button class="lk" data-a="annx" data-i="'+esc(String(v.id))+'">скрыть</button></div>';
+  }catch(x){}
 }
 
 let selUser=null;
@@ -1045,6 +1155,36 @@ document.addEventListener('click',async e=>{
     if(r.error)return alert(r.error.message);
     thread(+app.dataset.t);
   }
+  else if(a==='gang'){window.CloudTheme.setGrad({a:+i});settings()}
+  else if(a==='annx'){try{localStorage.setItem('ann_x',i)}catch(x){}const el=$('#ann');if(el)el.innerHTML=''}
+  else if(a==='ureset'){
+    if(!confirm('сбросить аватар, баннер, о себе и статус этого участника?'))return;
+    const r=await sb.rpc('admin_reset_profile',{uid:i});
+    if(r.error)return alert(r.error.message);
+    alert('профиль сброшен');
+  }
+  else if(a==='bup'||a==='bdown'){
+    const r=await sb.from('boards').select('id,pos').order('pos');
+    const l=r.data||[],n=l.findIndex(x=>x.id==+i),m=a==='bup'?n-1:n+1;
+    if(n<0||m<0||m>=l.length)return;
+    [l[n],l[m]]=[l[m],l[n]];
+    await Promise.all(l.map((x,k)=>sb.from('boards').update({pos:k+1}).eq('id',x.id)));
+    admin();
+  }
+  else if(a==='bdesc'){
+    const d=prompt('описание раздела',b.dataset.v||'');
+    if(d===null)return;
+    const r=await sb.from('boards').update({descr:d.trim()}).eq('id',+i);
+    if(r.error)return alert(r.error.message);
+    admin();
+  }
+  else if(a==='bacc'){const p=$('#ba-'+i);if(p)p.hidden=!p.hidden}
+  else if(a==='bsave'){
+    const rids=[...document.querySelectorAll('.bx-'+i+':checked')].map(x=>+x.value);
+    const r=await sb.rpc('set_board_access',{bid:+i,rids});
+    if(r.error)return alert(r.error.message);
+    admin();
+  }
   else if(a==='th'){window.CloudTheme.set(i);settings()}
   else if(a==='gr'){window.CloudTheme.resetGrad();settings()}
   else if(a==='gp'){const q=GP[window.CloudTheme.get()][+i];window.CloudTheme.setGrad({on:true,c1:q[1],c2:q[2],a:q[3]});settings()}
@@ -1154,3 +1294,4 @@ document.addEventListener('submit',async e=>{
 window.addEventListener('hashchange',route);
 route();
 auth().catch(()=>{}).then(()=>{drawBar();if(me)route()});
+loadAnn();
