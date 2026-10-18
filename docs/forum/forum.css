@@ -89,7 +89,7 @@ textarea{width:100%;resize:vertical}
 
 .av{display:inline-block;flex:none;width:22px;height:22px;border-radius:50%;background-color:var(--soft);background-size:cover;background-position:center;vertical-align:middle;margin-right:6px}
 .pav{background-size:cover;background-position:center}
-#nbc{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:#b3261e;color:#fff;font-size:12px;font-weight:600;line-height:18px;text-align:center;font-style:normal;margin-left:6px}
+#nbadge{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:#b3261e;color:#fff;font-size:12px;font-weight:600;line-height:18px;text-align:center;font-style:normal;margin-left:6px}
 .nls{display:flex;flex-direction:column}
 .ni{display:flex;justify-content:space-between;gap:12px;padding:12px 8px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;border-left:3px solid transparent}
 .ni:hover{background:var(--side)}

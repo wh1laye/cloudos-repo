@@ -270,7 +270,7 @@ async function upImg(file,name,w,h){
   return sb.storage.from('avatars').getPublicUrl(p).data.publicUrl+'?v='+Date.now();
 }
 async function refreshBell(){
-  const a=$('#nb'),c=$('#nbc');
+  const a=$('#nbell'),c=$('#nbadge');
   if(!a||!c)return;
   if(!me){a.hidden=true;return}
   a.hidden=false;
