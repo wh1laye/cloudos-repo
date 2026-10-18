@@ -55,6 +55,15 @@ const bannerStyle=u=>{
 };
 const av=p=>{const l=p&&safeUrl(p.avatar_url);return l?'<span class="av" style="background-image:url(\''+l+'\')"></span>':''};
 const avStyle=u=>{const l=safeUrl(u.avatar_url);return l?"background-image:url('"+l+"');background-size:cover;background-position:center":'background-image:'+bgB(u)};
+const PFX=['вопрос','баг','предложение','обсуждение'];
+const pfx=t=>t&&t.prefix?'<span class="tag px">'+esc(t.prefix)+'</span>':'';
+let uiT=null;
+function pushUi(){
+  if(!me)return;
+  clearTimeout(uiT);
+  uiT=setTimeout(()=>{const T=window.CloudTheme;sb.rpc('set_ui',{j:{t:T.get(),g:T.getGrad()}})},700);
+}
+window.CloudTheme.onChange=pushUi;
 const who=(p,ln)=>{
   const r=p&&p.roles;
   let nm='<b class="un'+(r?' g':'')+'"'+(r?' style="background-image:'+bg(r)+'"':'')+'>'+esc(p?p.name:'удалён')+'</b>';
@@ -128,6 +137,8 @@ async function auth(){
   if(me){
     const r=await sb.from('profiles').select('*,roles(*)').eq('id',me.id).maybeSingle();
     prof=r.data;
+    if(prof&&prof.ui)window.CloudTheme.apply(prof.ui);
+    else pushUi();
   }
   drawBar();
   presence();
@@ -136,7 +147,7 @@ async function auth(){
 
 function drawBar(){
   if(me){
-    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/settings">настройки</a><button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
+    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/settings">настройки</a><a href="#/bookmarks">закладки</a>'+(can('delete_posts')||can('mute')||can('ban')?'<a href="#/reports">жалобы</a>':'')+'<button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
   }else{
     bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button><button class="btn s" type="button" data-a="signup">регистрация</button></form>';
   }
@@ -184,7 +195,7 @@ async function board(id){
   if(error)throw error;
   app.innerHTML='<p><a href="#/">форум</a> / '+esc(b.title)+'</p><h1>'+esc(b.title)+'</h1><p class="mu">'+esc(b.descr)+'</p>'+
     '<div class="row"><input id="q" placeholder="поиск по темам"><button class="btn p" data-a="newt">новая тема</button></div>'+
-    '<form id="nf" hidden><input id="nt" maxlength="150" minlength="3" placeholder="заголовок" required><textarea id="nb" rows="6" maxlength="10000" placeholder="текст" required></textarea>'+tools('nb')+'<button class="btn p">создать тему</button></form><div id="tl"></div>';
+    '<form id="nf" hidden><select id="npx"><option value="">без префикса</option>'+PFX.map(x=>'<option>'+x+'</option>').join('')+'</select><input id="nt" maxlength="150" minlength="3" placeholder="заголовок" required><textarea id="nb" rows="6" maxlength="10000" placeholder="текст" required></textarea>'+tools('nb')+'<button class="btn p">создать тему</button></form><div id="tl"></div>';
   const draw=async()=>{
     let r=sb.from('threads').select('*,posts(count)').eq('board_id',id).order('pinned',{ascending:false}).order('bumped_at',{ascending:false}).limit(100);
     const v=$('#q').value.trim().replace(/[%_,]/g,'');
@@ -192,7 +203,7 @@ async function board(id){
     const {data:ts,error:e}=await r;
     if(e){$('#tl').innerHTML='<p class="mu">'+esc(e.message)+'</p>';return}
     await withProf(ts);
-    $('#tl').innerHTML=ts.map(t=>'<a class="trow" href="#/t/'+t.id+'"><div><strong>'+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>').join('')||'<p class="mu">тем пока нет</p>';
+    $('#tl').innerHTML=ts.map(t=>'<a class="trow" href="#/t/'+t.id+'"><div><strong>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>').join('')||'<p class="mu">тем пока нет</p>';
   };
   $('#q').oninput=draw;
   $('#nf').onsubmit=async e=>{
@@ -201,7 +212,7 @@ async function board(id){
     btn.disabled=true;
     try{
       if(!await need())return;
-      const t=await sb.from('threads').insert({board_id:id,title:$('#nt').value.trim()}).select('id').single();
+      const t=await sb.from('threads').insert({board_id:id,title:$('#nt').value.trim(),prefix:$('#npx').value||null}).select('id').single();
       if(t.error)return alert('не удалось создать тему: '+t.error.message);
       const p=await sb.from('posts').insert({thread_id:t.data.id,body:$('#nb').value.trim()});
       if(p.error){await sb.from('threads').delete().eq('id',t.data.id);return alert('не удалось создать сообщение: '+p.error.message)}
@@ -218,6 +229,14 @@ async function thread(id){
   const {data:ps,error:e2}=await sb.from('posts').select('*,likes(count)').eq('thread_id',id).order('created_at');
   if(e2)throw e2;
   await withProf(ps);
+  let sub=false;
+  const bm=new Set();
+  if(me){
+    const s=await sb.from('subs').select('thread_id').eq('thread_id',id).eq('user_id',me.id).maybeSingle();
+    sub=!!s.data;
+    const b=await sb.from('bookmarks').select('kind,ref_id').eq('thread_id',id).eq('user_id',me.id);
+    (b.data||[]).forEach(x=>bm.add(x.kind+x.ref_id));
+  }
   let mine=new Set();
   if(me&&ps.length){
     const l=await sb.from('likes').select('post_id').eq('user_id',me.id).in('post_id',ps.map(p=>p.id));
@@ -227,10 +246,10 @@ async function thread(id){
   const closed=t.locked&&!(adm||can('lock'));
   const acts=(p,c)=>{
     const own=me&&p.author===me.id;
-    return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button>':'')+(own||can('delete_posts')?'<button class="lk" data-a="delp" data-i="'+p.id+'" data-o="'+(own?1:0)+'">удалить</button>':'')+'</div>';
+    return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button>':'')+(own||can('delete_posts')?'<button class="lk" data-a="delp" data-i="'+p.id+'" data-o="'+(own?1:0)+'">удалить</button>':'')+(me?'<button class="lk'+(bm.has('post'+p.id)?' on':'')+'" data-a="bmp" data-i="'+p.id+'" data-v="'+(bm.has('post'+p.id)?1:0)+'">'+(bm.has('post'+p.id)?'убрать из закладок':'в закладки')+'</button>':'')+(me&&!own?'<button class="lk" data-a="rep" data-i="'+p.id+'">пожаловаться</button>':'')+'</div>';
   };
   const ctl=can('pin')||can('lock')||can('delete_threads')?'<div class="acts">'+(can('pin')?'<button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button>':'')+(can('lock')?'<button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button>':'')+(can('delete_threads')?'<button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.boards.id+'">удалить тему</button>':'')+'</div>':'';
-  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+ctl+
+  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button></div>':'')+ctl+
     ps.filter(p=>!p.parent_id).map(p=>{
       const kids=ps.filter(c=>c.parent_id===p.id);
       return '<article class="post item"><div class="side">'+who(p.profiles)+'<span class="mu">'+fmt(p.created_at)+'</span></div><div><div class="txt" data-raw="'+esc(p.body)+'">'+fmtBody(p.body)+'</div>'+acts(p)+kids.map(c=>'<div class="cm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt" data-raw="'+esc(c.body)+'">'+fmtBody(c.body)+'</div>'+acts(c,true)+'</div>').join('')+'<div class="cwrap" data-w="'+p.id+'"></div></div></article>';
@@ -315,6 +334,7 @@ async function notifs(){
     switch(n.kind){
       case 'reply':return w+' ответил в вашей теме';
       case 'comment':return w+' прокомментировал ваше сообщение';
+      case 'sub':return w+' ответил в теме, на которую вы подписаны';
       case 'like':return w+' оценил ваше сообщение';
       case 'pcomment':return w+' написал в вашем профиле';
       case 'role':return d.role?'вам выдана роль «'+esc(d.role)+'»':'ваша роль снята';
@@ -357,12 +377,53 @@ function settings(){
   ['gon','gc1','gc2','ga'].forEach(k=>$('#'+k).oninput=up);
 }
 
+async function bookmarks(){
+  const head='<p><a href="#/">форум</a> / закладки</p><h1>закладки</h1>';
+  if(!me){app.innerHTML=head+'<p class="mu">войди, чтобы видеть закладки.</p>';return}
+  const r=await sb.from('bookmarks').select('*').eq('user_id',me.id).order('created_at',{ascending:false}).limit(200);
+  if(r.error){app.innerHTML=head+'<div class="warn"><b>закладки недоступны</b>'+esc(r.error.message)+'</div>';return}
+  const rows=r.data||[];
+  const tids=[...new Set(rows.map(x=>x.thread_id))],pids=rows.filter(x=>x.kind==='post').map(x=>x.ref_id);
+  const tm={},pm={};
+  if(tids.length)((await sb.from('threads').select('id,title,prefix').in('id',tids)).data||[]).forEach(x=>tm[x.id]=x);
+  if(pids.length)((await sb.from('posts').select('id,body').in('id',pids)).data||[]).forEach(x=>pm[x.id]=x);
+  app.innerHTML=head+(rows.map(x=>{
+    const t=tm[x.thread_id];
+    if(!t)return '';
+    const sn=x.kind==='post'&&pm[x.ref_id]?'<span class="mu">'+esc(pm[x.ref_id].body.slice(0,160))+'</span>':'';
+    return '<a class="trow" href="#/t/'+x.thread_id+'"><div><strong>'+pfx(t)+esc(t.title)+'</strong>'+sn+'</div><div class="n">'+(x.kind==='post'?'сообщение':'тема')+'<br>'+fmt(x.created_at)+'</div></a>';
+  }).join('')||'<p class="mu">закладок пока нет</p>');
+}
+
+async function reports(){
+  const head='<p><a href="#/">форум</a> / жалобы</p><h1>жалобы</h1>';
+  if(!(can('delete_posts')||can('mute')||can('ban'))){app.innerHTML=head+'<p class="mu">нет доступа.</p>';return}
+  const r=await sb.from('reports').select('*').order('status',{ascending:false}).order('created_at',{ascending:false}).limit(100);
+  if(r.error){app.innerHTML=head+'<div class="warn"><b>жалобы недоступны</b>'+esc(r.error.message)+'</div>';return}
+  const rows=r.data||[];
+  const pids=[...new Set(rows.map(x=>x.post_id))],pm={};
+  if(pids.length){
+    const x=await sb.from('posts').select('id,body,author,thread_id').in('id',pids);
+    const ps=x.data||[];
+    await withProf(ps);
+    ps.forEach(y=>pm[y.id]=y);
+  }
+  const rr=rows.map(x=>({author:x.reporter}));
+  await withProf(rr);
+  app.innerHTML=head+(rows.map((x,n)=>{
+    const p=pm[x.post_id];
+    return '<div class="item rpi"><div class="ch"><span class="tag">'+(x.status==='open'?'новая':'закрыта')+'</span>жалоба от '+who(rr[n].profiles)+'<span class="mu">'+fmt(x.created_at)+'</span></div><p><b>причина:</b> '+esc(x.reason)+'</p>'+
+      (p?'<div class="txt"><span class="mu">сообщение от </span>'+who(p.profiles)+'<br>'+esc(p.body.slice(0,400))+'</div><div class="acts"><a href="#/t/'+x.thread_id+'">открыть тему</a>'+(x.status==='open'?'<button class="lk" data-a="rpdone" data-i="'+x.id+'">закрыть жалобу</button>':'')+(can('delete_posts')?'<button class="lk" data-a="rpdelpost" data-i="'+x.post_id+'">удалить сообщение</button>':'')+'<button class="lk" data-a="rpdel" data-i="'+x.id+'">удалить жалобу</button></div>':'<p class="mu">сообщение уже удалено.</p><div class="acts"><button class="lk" data-a="rpdel" data-i="'+x.id+'">удалить жалобу</button></div>')+'</div>';
+  }).join('')||'<p class="mu">жалоб пока нет</p>');
+}
+
 async function profile(id){
   const r=await sb.from('profiles').select('*,roles(*)').eq('id',id).maybeSingle();
   if(r.error)throw r.error;
   const u=r.data;
   if(!u){app.innerHTML='<div class="warn"><b>не найдено</b>такого участника нет.</div>';return}
   const pc=await sb.from('posts').select('id',{count:'exact',head:true}).eq('author',id);
+  const rtg=await sb.rpc('user_rating',{uid:id});
   const cm=await sb.from('profile_comments').select('*').eq('profile_id',id).order('created_at',{ascending:false}).limit(100);
   let cs=[],cerr='';
   if(cm.error)cerr=cm.error.message;
@@ -384,7 +445,7 @@ async function profile(id){
   const clist=cs.map(c=>'<div class="pcm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt">'+fmtBody(c.body)+'</div>'+((me&&(c.author===me.id||own))||can('delete_comments')?'<div class="acts"><button class="lk" data-a="pcdel" data-i="'+c.id+'">удалить</button></div>':'')+'</div>').join('')||'<p class="mu">комментариев пока нет</p>';
   app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="'+avStyle(u)+'">'+(safeUrl(u.avatar_url)?'':esc(String(u.name||'?').slice(0,1).toUpperCase()))+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
     (u.bio?'<p class="bio">'+esc(u.bio)+'</p>':'<p class="mu">пока ничего о себе не написал.</p>')+
-    '<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
+    '<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span><b>'+(+rtg.data||0)+'</b> рейтинг</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
     (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':'')+modrow+sanrow+'</div></div>'+edit+
     '<h2>комментарии</h2>'+(cerr?'<div class="warn"><b>комментарии недоступны</b>'+esc(cerr)+'</div>':'<form id="pcf"><textarea id="pcb" rows="3" maxlength="1000" placeholder="написать участнику" required></textarea>'+tools('pcb')+'<button class="btn p">отправить</button></form>'+clist);
   app.dataset.u=id;
@@ -520,6 +581,8 @@ async function route(){
     else if(k[1]==='t')await thread(+k[2]);
     else if(k[1]==='u')await profile(k[2]);
     else if(k[1]==='mod')await modPanel(k[2]);
+    else if(k[1]==='bookmarks')await bookmarks();
+    else if(k[1]==='reports')await reports();
     else if(k[1]==='settings')settings();
     else if(k[1]==='notifications')await notifs();
     else if(k[1]==='admin')await admin();
@@ -611,6 +674,36 @@ document.addEventListener('click',async e=>{
     $('#msel').innerHTML='выбран: <b>'+esc(v)+'</b>';
   }
   else if(a==='avx'){avx=true;b.hidden=true;const el=document.querySelector('.pav');if(el&&prof){el.style.backgroundImage=bgB(prof);el.style.backgroundSize='';el.textContent=String(prof.name||'?').slice(0,1).toUpperCase()}}
+  else if(a==='sub'){
+    if(!await need())return;
+    const r=v==='1'?await sb.from('subs').delete().eq('thread_id',+i).eq('user_id',me.id):await sb.from('subs').insert({thread_id:+i});
+    if(r.error)return alert(r.error.message);
+    thread(+app.dataset.t);
+  }
+  else if(a==='bmt'||a==='bmp'){
+    if(!await need())return;
+    const kind=a==='bmt'?'thread':'post',tid=+app.dataset.t;
+    const r=v==='1'?await sb.from('bookmarks').delete().eq('user_id',me.id).eq('kind',kind).eq('ref_id',+i):await sb.from('bookmarks').insert({kind,ref_id:+i,thread_id:tid});
+    if(r.error)return alert(r.error.message);
+    thread(tid);
+  }
+  else if(a==='rep'){
+    if(!await need())return;
+    const why=prompt('причина жалобы (3-300 символов)');
+    if(!why||why.trim().length<3)return;
+    const r=await sb.from('reports').insert({post_id:+i,thread_id:+app.dataset.t,reason:why.trim().slice(0,300)});
+    if(r.error)return alert(r.error.code==='23505'?'вы уже жаловались на это сообщение':r.error.message);
+    alert('жалоба отправлена');
+  }
+  else if(a==='rpdone'){const r=await sb.from('reports').update({status:'done'}).eq('id',+i);if(r.error)return alert(r.error.message);reports()}
+  else if(a==='rpdel'){const r=await sb.from('reports').delete().eq('id',+i);if(r.error)return alert(r.error.message);reports()}
+  else if(a==='rpdelpost'){
+    if(!confirm('удалить сообщение?'))return;
+    const direct=()=>sb.from('posts').delete().eq('id',+i);
+    const r=await mod('mod_delete_post',{pid:+i},direct);
+    if(r.error)return alert(r.error.message);
+    reports();
+  }
   else if(a==='th'){window.CloudTheme.set(i);settings()}
   else if(a==='gr'){window.CloudTheme.resetGrad();settings()}
   else if(a==='gp'){const q=GP[window.CloudTheme.get()][+i];window.CloudTheme.setGrad({on:true,c1:q[1],c2:q[2],a:q[3]});settings()}
