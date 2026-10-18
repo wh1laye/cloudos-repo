@@ -53,15 +53,17 @@ const bannerStyle=u=>{
   const l=safeUrl(u.burl);
   return 'background-image:'+(l?"url('"+l+"'),":'')+bgB(u)+';background-size:cover;background-position:center';
 };
+const av=p=>{const l=p&&safeUrl(p.avatar_url);return l?'<span class="av" style="background-image:url(\''+l+'\')"></span>':''};
+const avStyle=u=>{const l=safeUrl(u.avatar_url);return l?"background-image:url('"+l+"');background-size:cover;background-position:center":'background-image:'+bgB(u)};
 const who=(p,ln)=>{
   const r=p&&p.roles;
   let nm='<b class="un'+(r?' g':'')+'"'+(r?' style="background-image:'+bg(r)+'"':'')+'>'+esc(p?p.name:'удалён')+'</b>';
   if(ln!==false&&p&&p.id)nm='<a class="nl" href="#/u/'+esc(p.id)+'">'+nm+'</a>';
   const st=p&&p.status?'<span class="st">'+esc(p.status)+'</span>':'';
   const bd=r?'<span class="badge" style="background-image:'+bg(r)+'">'+esc(r.name)+'</span>':'';
-  return nm+st+bd;
+  return av(p)+nm+st+bd;
 };
-let me=null,prof=null,editing=null;
+let me=null,prof=null,editing=null,avx=false,nch=null,nuid=null;
 const can=k=>!!(prof&&(prof.is_admin||(prof.perms||[]).includes(k)||((prof.roles&&prof.roles.perms)||[]).includes(k)));
 const PERMS=[['pin','закреплять темы'],['lock','закрывать и открывать темы'],['delete_threads','удалять темы'],['delete_posts','удалять чужие сообщения'],['delete_comments','удалять комментарии в профилях'],['assign_roles','выдавать роли без прав'],['mute','мутить участников'],['ban','банить участников']];
 const permBoxes=(cls,sel)=>PERMS.map(x=>'<label class="pm"><input type="checkbox" class="'+cls+'" value="'+x[0]+'"'+((sel||[]).includes(x[0])?' checked':'')+'>'+x[1]+'</label>').join('');
@@ -91,7 +93,7 @@ let ch=null,pk=null,online={};
 function meta(){
   if(me&&prof){
     const r=prof.roles;
-    return {id:me.id,name:prof.name,status:prof.status||'',roles:r?{name:r.name,c1:r.c1,c2:r.c2,angle:r.angle}:null};
+    return {id:me.id,name:prof.name,status:prof.status||'',avatar_url:prof.avatar_url||'',roles:r?{name:r.name,c1:r.c1,c2:r.c2,angle:r.angle}:null};
   }
   return {guest:1};
 }
@@ -129,6 +131,7 @@ async function auth(){
   }
   drawBar();
   presence();
+  watchNotifs();
 }
 
 function drawBar(){
@@ -159,7 +162,8 @@ async function withProf(rows){
   const ids=[...new Set(rows.map(r=>r[k]).filter(Boolean))];
   const m={};
   if(ids.length){
-    let x=await sb.from('profiles').select('id,name,status,roles(*)').in('id',ids);
+    let x=await sb.from('profiles').select('id,name,status,avatar_url,roles(*)').in('id',ids);
+    if(x.error)x=await sb.from('profiles').select('id,name,status,roles(*)').in('id',ids);
     if(x.error)x=await sb.from('profiles').select('id,name,roles(*)').in('id',ids);
     (x.data||[]).forEach(y=>m[y.id]=y);
   }
@@ -243,6 +247,91 @@ async function thread(id){
   app.dataset.t=id;
 }
 
+function resizeImg(file,w,h){
+  return new Promise((ok,no)=>{
+    const u=URL.createObjectURL(file),im=new Image();
+    im.onload=()=>{
+      const c=document.createElement('canvas');
+      c.width=w;c.height=h;
+      const k=Math.max(w/im.width,h/im.height),dw=im.width*k,dh=im.height*k;
+      c.getContext('2d').drawImage(im,(w-dw)/2,(h-dh)/2,dw,dh);
+      URL.revokeObjectURL(u);
+      c.toBlob(b=>b?ok(b):no(new Error('не удалось сжать картинку')),'image/webp',0.85);
+    };
+    im.onerror=()=>no(new Error('это не картинка'));
+    im.src=u;
+  });
+}
+async function upImg(file,name,w,h){
+  const blob=await resizeImg(file,w,h);
+  const p=me.id+'/'+name+'.webp';
+  const r=await sb.storage.from('avatars').upload(p,blob,{upsert:true,contentType:'image/webp',cacheControl:'3600'});
+  if(r.error)throw r.error;
+  return sb.storage.from('avatars').getPublicUrl(p).data.publicUrl+'?v='+Date.now();
+}
+async function refreshBell(){
+  const a=$('#nb'),c=$('#nbc');
+  if(!a||!c)return;
+  if(!me){a.hidden=true;return}
+  a.hidden=false;
+  const r=await sb.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',me.id).eq('read',false);
+  const n=r.count||0;
+  c.textContent=n>99?'99+':String(n);
+  c.hidden=!n;
+}
+function watchNotifs(){
+  try{
+    if(!me){
+      if(nch){sb.removeChannel(nch);nch=null;nuid=null}
+      refreshBell();
+      return;
+    }
+    if(nch&&nuid===me.id){refreshBell();return}
+    if(nch)sb.removeChannel(nch);
+    nuid=me.id;
+    nch=sb.channel('n-'+me.id).on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+me.id},()=>{
+      refreshBell();
+      if(location.hash==='#/notifications')notifs();
+    }).subscribe();
+    refreshBell();
+  }catch(x){}
+}
+async function notifs(){
+  const head='<p><a href="#/">форум</a> / уведомления</p><h1>уведомления</h1>';
+  if(!me){app.innerHTML=head+'<p class="mu">войди, чтобы видеть уведомления.</p>';return}
+  const r=await sb.from('notifications').select('*').eq('user_id',me.id).order('created_at',{ascending:false}).limit(100);
+  if(r.error){app.innerHTML=head+'<div class="warn"><b>уведомления недоступны</b>'+esc(r.error.message)+'</div>';return}
+  const rows=r.data||[];
+  const ids=[...new Set(rows.map(x=>x.actor).filter(Boolean))];
+  const m={};
+  if(ids.length){
+    let x=await sb.from('profiles').select('id,name,avatar_url,roles(*)').in('id',ids);
+    if(x.error)x=await sb.from('profiles').select('id,name,roles(*)').in('id',ids);
+    (x.data||[]).forEach(y=>m[y.id]=y);
+  }
+  const line=n=>{
+    const d=n.data||{},p=m[n.actor],w=p?who(p,false):'<b>администрация</b>';
+    const why=d.reason?' (причина: '+esc(d.reason)+')':'';
+    switch(n.kind){
+      case 'reply':return w+' ответил в вашей теме';
+      case 'comment':return w+' прокомментировал ваше сообщение';
+      case 'like':return w+' оценил ваше сообщение';
+      case 'pcomment':return w+' написал в вашем профиле';
+      case 'role':return d.role?'вам выдана роль «'+esc(d.role)+'»':'ваша роль снята';
+      case 'admin':return d.on?'вы назначены администратором':'права администратора сняты';
+      case 'perms':return 'ваши права изменены';
+      case 'mute':return 'вы замучены до '+esc(d.until?till(d.until):'?')+why;
+      case 'unmute':return 'мут снят';
+      case 'ban':return 'вы забанены до '+esc(d.until?till(d.until):'?')+why;
+      case 'unban':return 'бан снят';
+    }
+    return esc(n.kind);
+  };
+  const link=n=>n.thread_id?'#/t/'+n.thread_id:'#/u/'+me.id;
+  app.innerHTML=head+(rows.length?'<div class="row"><button class="btn s" data-a="nreadall">прочитать все</button><button class="btn s" data-a="nclear">очистить</button></div>':'')+
+    '<div class="nls">'+(rows.map(n=>'<a class="ni'+(n.read?'':' new')+'" href="'+link(n)+'" data-a="nopen" data-i="'+n.id+'"><div>'+line(n)+'</div><span class="mu">'+fmt(n.created_at)+'</span></a>').join('')||'<p class="mu">уведомлений пока нет</p>')+'</div>';
+}
+
 async function profile(id){
   const r=await sb.from('profiles').select('*,roles(*)').eq('id',id).maybeSingle();
   if(r.error)throw r.error;
@@ -253,6 +342,7 @@ async function profile(id){
   let cs=[],cerr='';
   if(cm.error)cerr=cm.error.message;
   else{cs=cm.data||[];await withProf(cs)}
+  avx=false;
   const own=me&&me.id===id;
   let rl=[];
   if(prof&&prof.is_admin&&!own){
@@ -261,13 +351,13 @@ async function profile(id){
   }
   const edit=own?'<form id="pf" hidden><label>о себе<textarea id="pbio" rows="4" maxlength="500">'+esc(u.bio||'')+'</textarea></label><label>статус (эмодзи или пара слов)<input id="pst" maxlength="16" value="'+esc(u.status||'')+'"></label>'+tools('pst',true)+
     '<div class="adm"><label>баннер, цвет 1<input id="pb1" type="color" value="'+col(u.b1)+'"></label><label>баннер, цвет 2<input id="pb2" type="color" value="'+col(u.b2)+'"></label><label>угол <span id="pav2">'+((+u.bangle)||90)+'</span>°<input id="pan" type="range" min="0" max="360" value="'+((+u.bangle)||90)+'"></label></div>'+
-    '<label>картинка баннера (ссылка https, необязательно)<input id="pbu" maxlength="500" value="'+esc(safeUrl(u.burl))+'" placeholder="https://..."></label><div class="row"><button class="btn p">сохранить</button><button type="button" class="btn" data-a="pedit">отмена</button></div></form>':'';
+    '<div class="adm"><label>аватар (файл)<input id="pavf" type="file" accept="image/*"></label><label>баннер (файл)<input id="pbf" type="file" accept="image/*"></label></div>'+(safeUrl(u.avatar_url)?'<div class="row"><button type="button" class="btn s" data-a="avx">убрать аватар</button></div>':'')+'<label>картинка баннера (ссылка https, необязательно)<input id="pbu" maxlength="500" value="'+esc(safeUrl(u.burl))+'" placeholder="https://..."></label><div class="row"><button class="btn p">сохранить</button><button type="button" class="btn" data-a="pedit">отмена</button></div></form>':'';
   const modrow=prof&&prof.is_admin&&!own?'<div class="row mod"><select data-a="setrole" data-i="'+esc(id)+'"><option value="">без роли</option>'+rl.map(x=>'<option value="'+x.id+'"'+(u.role_id===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select><button class="btn s" data-a="adm" data-i="'+esc(id)+'" data-v="'+(u.is_admin?1:0)+'">'+(u.is_admin?'снять админа':'сделать админом')+'</button>'+(u.is_admin?'':'<button class="btn s" data-a="udel" data-i="'+esc(id)+'" data-v="'+esc(u.name)+'">удалить</button>')+'</div>':'';
   const canS=!own&&!u.is_admin&&(can('mute')||can('ban'));
   const sb1=(k,label,undo,un)=>'<button class="btn s" data-a="'+(un?'unsanc':'sanc')+'" data-k="'+k+'" data-i="'+esc(id)+'" data-v="'+esc(u.name)+'">'+(un?undo:label)+'</button>';
   const sanrow=canS?'<div class="row mod">'+(can('mute')?sb1('mute','замутить','снять мут',active(u.muted_until)):'')+(can('ban')?sb1('ban','забанить','снять бан',active(u.banned_until)):'')+'</div>':'';
   const clist=cs.map(c=>'<div class="pcm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt">'+fmtBody(c.body)+'</div>'+((me&&(c.author===me.id||own))||can('delete_comments')?'<div class="acts"><button class="lk" data-a="pcdel" data-i="'+c.id+'">удалить</button></div>':'')+'</div>').join('')||'<p class="mu">комментариев пока нет</p>';
-  app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="background-image:'+bgB(u)+'">'+esc(String(u.name||'?').slice(0,1).toUpperCase())+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
+  app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="'+avStyle(u)+'">'+(safeUrl(u.avatar_url)?'':esc(String(u.name||'?').slice(0,1).toUpperCase()))+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
     (u.bio?'<p class="bio">'+esc(u.bio)+'</p>':'<p class="mu">пока ничего о себе не написал.</p>')+
     '<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
     (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':'')+modrow+sanrow+'</div></div>'+edit+
@@ -279,9 +369,11 @@ async function profile(id){
       const pn=document.querySelector('.pbn'),pa=document.querySelector('.pav');
       const o={b1:$('#pb1').value,b2:$('#pb2').value,bangle:$('#pan').value,burl:$('#pbu').value};
       pn.style.cssText=bannerStyle(o);
-      pa.style.backgroundImage=bgB(o);
+      if(!safeUrl(u.avatar_url)&&!$('#pavf').files[0])pa.style.backgroundImage=bgB(o);
     };
     ['pb1','pb2','pan','pbu'].forEach(k=>$('#'+k).oninput=up);
+    const pv=(inp,sel)=>{$(inp).onchange=()=>{const f=$(inp).files[0];if(!f)return;const el=document.querySelector(sel);el.style.backgroundImage="url('"+URL.createObjectURL(f)+"')";el.style.backgroundSize='cover';el.style.backgroundPosition='center';if(sel==='.pav')el.textContent=''}};
+    pv('#pavf','.pav');pv('#pbf','.pbn');
   }
 }
 
@@ -403,6 +495,7 @@ async function route(){
     else if(k[1]==='t')await thread(+k[2]);
     else if(k[1]==='u')await profile(k[2]);
     else if(k[1]==='mod')await modPanel(k[2]);
+    else if(k[1]==='notifications')await notifs();
     else if(k[1]==='admin')await admin();
     else await home();
   }catch(e){
@@ -491,6 +584,10 @@ document.addEventListener('click',async e=>{
     selUser={id:i,name:v};
     $('#msel').innerHTML='выбран: <b>'+esc(v)+'</b>';
   }
+  else if(a==='avx'){avx=true;b.hidden=true;const el=document.querySelector('.pav');if(el&&prof){el.style.backgroundImage=bgB(prof);el.style.backgroundSize='';el.textContent=String(prof.name||'?').slice(0,1).toUpperCase()}}
+  else if(a==='nopen'){await sb.from('notifications').update({read:true}).eq('id',i);refreshBell()}
+  else if(a==='nreadall'){await sb.from('notifications').update({read:true}).eq('user_id',me.id).eq('read',false);await refreshBell();notifs()}
+  else if(a==='nclear'){if(confirm('удалить все уведомления?')){await sb.from('notifications').delete().eq('user_id',me.id);await refreshBell();notifs()}}
   else if(a==='pedit'){const f=$('#pf');if(f)f.hidden=!f.hidden}
   else if(a==='pcdel'){if(confirm('удалить комментарий?')){const r=await sb.from('profile_comments').delete().eq('id',i);if(r.error)return alert(r.error.message);route()}}
   else if(a==='perms'){const e2=document.getElementById('pe-'+i);if(e2)e2.hidden=!e2.hidden}
@@ -566,10 +663,21 @@ document.addEventListener('submit',async e=>{
   }
   if(e.target.id==='pf'){
     e.preventDefault();
-    const r=await sb.rpc('update_my_profile',{p_bio:$('#pbio').value.trim(),p_status:$('#pst').value.trim(),p_b1:$('#pb1').value,p_b2:$('#pb2').value,p_bangle:+$('#pan').value,p_burl:safeUrl($('#pbu').value.trim())});
-    if(r.error)return alert(r.error.message);
-    await auth();
-    route();
+    const sbtn=e.target.querySelector('button.p');
+    if(sbtn)sbtn.disabled=true;
+    try{
+      let au=(prof&&prof.avatar_url)||'',bu=safeUrl($('#pbu').value.trim());
+      const fa=$('#pavf').files[0],fb=$('#pbf').files[0];
+      if(avx)au='';
+      if(fa)au=await upImg(fa,'avatar',256,256);
+      if(fb)bu=await upImg(fb,'banner',1200,400);
+      const r=await sb.rpc('update_my_profile',{p_bio:$('#pbio').value.trim(),p_status:$('#pst').value.trim(),p_b1:$('#pb1').value,p_b2:$('#pb2').value,p_bangle:+$('#pan').value,p_burl:bu,p_avatar_url:au});
+      if(r.error)throw r.error;
+      avx=false;
+      await auth();
+      route();
+    }catch(x){alert(x.message||x)}
+    finally{if(sbtn)sbtn.disabled=false}
     return;
   }
   if(e.target.id!=='ef')return;
