@@ -96,3 +96,12 @@ textarea{width:100%;resize:vertical}
 .ni.new{background:var(--soft);border-left-color:var(--ac)}
 .ni .mu{font-size:14px;white-space:nowrap}
 input[type=file]{padding:6px 8px;font-size:14px}
+
+.gset{display:flex;flex-direction:column;gap:12px;max-width:420px}
+.gset label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--mute)}
+.gset .chk{flex-direction:row;align-items:center;gap:8px;font-size:16px;color:var(--ink)}
+.gc{display:flex;gap:16px}
+input[type=color]{padding:2px;height:40px;width:90px;cursor:pointer}
+input[type=range]{padding:0;width:100%;border:0;background:none}
+input[type=checkbox]{padding:0;width:18px;height:18px}
+.gpv{height:90px;border:1px solid var(--line);border-radius:10px}

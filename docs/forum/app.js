@@ -136,7 +136,7 @@ async function auth(){
 
 function drawBar(){
   if(me){
-    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
+    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/settings">настройки</a><button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
   }else{
     bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button><button class="btn s" type="button" data-a="signup">регистрация</button></form>';
   }
@@ -332,6 +332,31 @@ async function notifs(){
     '<div class="nls">'+(rows.map(n=>'<a class="ni'+(n.read?'':' new')+'" href="'+link(n)+'" data-a="nopen" data-i="'+n.id+'"><div>'+line(n)+'</div><span class="mu">'+fmt(n.created_at)+'</span></a>').join('')||'<p class="mu">уведомлений пока нет</p>')+'</div>';
 }
 
+const GP={
+  light:[['облако','#dbeafe','#f4f8fd',160],['рассвет','#fde7d9','#e8e4fb',135],['мята','#d6f1e6','#e3f0fb',120],['лаванда','#e9e1fb','#fdf0f6',200]],
+  gray:[['сумрак','#2b3350','#1b1e26',160],['лес','#1f3a33','#202226',150],['ночь','#2a2540','#16181d',210],['уголь','#34373d','#1a1c20',135]]
+};
+function settings(){
+  const T=window.CloudTheme,g=T.getGrad(),th=T.get();
+  const grad=(c1,c2,a)=>'linear-gradient('+a+'deg,'+c1+','+c2+')';
+  app.innerHTML='<p><a href="#/">форум</a> / настройки</p><h1>настройки</h1>'+
+    '<h2>тема</h2><div class="row"><button class="btn s'+(th==='light'?' p':'')+'" data-a="th" data-i="light">светлая</button><button class="btn s'+(th==='gray'?' p':'')+'" data-a="th" data-i="gray">серая</button></div>'+
+    '<h2>градиент</h2><div class="gset">'+
+    '<label class="chk"><input id="gon" type="checkbox"'+(g.on?' checked':'')+'> включить градиент</label>'+
+    '<div class="gc"><label>цвет 1<input id="gc1" type="color" value="'+g.c1+'"></label><label>цвет 2<input id="gc2" type="color" value="'+g.c2+'"></label></div>'+
+    '<label>угол: <b id="gav">'+g.a+'</b>°<input id="ga" type="range" min="0" max="360" value="'+g.a+'"></label>'+
+    '<div id="gpv" class="gpv" style="background:'+grad(g.c1,g.c2,g.a)+'"></div>'+
+    '<div class="row">'+GP[th].map((q,n)=>'<button class="btn s" data-a="gp" data-i="'+n+'">'+q[0]+'</button>').join('')+'</div>'+
+    '<div class="row"><button class="btn s" data-a="gr">сбросить</button></div></div>'+
+    '<p class="mu">градиент применяется ко всему сайту на этом устройстве: форум, справочник и релизы.</p>';
+  const up=()=>{
+    const o=T.setGrad({on:$('#gon').checked,c1:$('#gc1').value,c2:$('#gc2').value,a:+$('#ga').value});
+    $('#gav').textContent=o.a;
+    $('#gpv').style.background=grad(o.c1,o.c2,o.a);
+  };
+  ['gon','gc1','gc2','ga'].forEach(k=>$('#'+k).oninput=up);
+}
+
 async function profile(id){
   const r=await sb.from('profiles').select('*,roles(*)').eq('id',id).maybeSingle();
   if(r.error)throw r.error;
@@ -495,6 +520,7 @@ async function route(){
     else if(k[1]==='t')await thread(+k[2]);
     else if(k[1]==='u')await profile(k[2]);
     else if(k[1]==='mod')await modPanel(k[2]);
+    else if(k[1]==='settings')settings();
     else if(k[1]==='notifications')await notifs();
     else if(k[1]==='admin')await admin();
     else await home();
@@ -585,6 +611,9 @@ document.addEventListener('click',async e=>{
     $('#msel').innerHTML='выбран: <b>'+esc(v)+'</b>';
   }
   else if(a==='avx'){avx=true;b.hidden=true;const el=document.querySelector('.pav');if(el&&prof){el.style.backgroundImage=bgB(prof);el.style.backgroundSize='';el.textContent=String(prof.name||'?').slice(0,1).toUpperCase()}}
+  else if(a==='th'){window.CloudTheme.set(i);settings()}
+  else if(a==='gr'){window.CloudTheme.resetGrad();settings()}
+  else if(a==='gp'){const q=GP[window.CloudTheme.get()][+i];window.CloudTheme.setGrad({on:true,c1:q[1],c2:q[2],a:q[3]});settings()}
   else if(a==='nopen'){await sb.from('notifications').update({read:true}).eq('id',i);refreshBell()}
   else if(a==='nreadall'){await sb.from('notifications').update({read:true}).eq('user_id',me.id).eq('read',false);await refreshBell();notifs()}
   else if(a==='nclear'){if(confirm('удалить все уведомления?')){await sb.from('notifications').delete().eq('user_id',me.id);await refreshBell();notifs()}}
