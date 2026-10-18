@@ -1,0 +1,13 @@
+button.gh{background:none;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
+html[data-theme=gray]{color-scheme:dark;--bg:#202226;--side:#272a2f;--line:#3b3f46;--ink:#e4e7eb;--mute:#9ba4af;--ac:#8db3ea;--soft:#2f343c;--code:#26292e}
+html[data-theme=gray] .top,html[data-theme=gray] .rlist,html[data-theme=gray] .card,html[data-theme=gray] input,html[data-theme=gray] textarea,html[data-theme=gray] select,html[data-theme=gray] .btn,html[data-theme=gray] .stat div,html[data-theme=gray] .capc,html[data-theme=gray] .pop,html[data-theme=gray] .oc,html[data-theme=gray] .pb,html[data-theme=gray] .tabs a{background:var(--bg)}
+html[data-theme=gray] .card,html[data-theme=gray] .stat div,html[data-theme=gray] .pb,html[data-theme=gray] .pop{background:var(--side)}
+html[data-theme=gray] .btn.p{background:var(--ac);color:#15181d}
+html[data-theme=gray] .btn.p:hover{background:#a9c6f0}
+html[data-theme=gray] .btn:hover,html[data-theme=gray] .gh:hover,html[data-theme=gray] .card:hover{background:var(--soft)}
+html[data-theme=gray] .gh.on{background:var(--soft)}
+html[data-theme=gray] .warn{background:#3a3226;border-left-color:#d9a441}
+html[data-theme=gray] .pav{border-color:var(--bg)}
+html[data-theme=gray] .capb{background:rgba(0,0,0,.55)}
+html[data-theme=gray] .lk.on{color:#f08a82}
+html[data-theme=gray] ::selection{background:#41506a}
