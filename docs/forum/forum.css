@@ -124,3 +124,12 @@ form .chk{flex-direction:row;align-items:center;gap:8px}
 .dmm{max-width:80%;align-self:flex-start;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--side)}
 .dmm.me{align-self:flex-end;background:var(--soft)}
 .dmm .mu{font-size:12px}
+.qt{margin:6px 0;padding:6px 12px;border-left:3px solid var(--ac);background:var(--soft);color:var(--mute);border-radius:0 8px 8px 0}
+.code{background:#1e2126;color:#e4e7eb;padding:12px 14px;border-radius:8px;overflow-x:auto;margin:8px 0;font:14px/1.5 'IBM Plex Mono',monospace;white-space:pre}
+.code code{font:inherit}
+.ic{background:var(--soft);padding:1px 6px;border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:.92em}
+.mn{color:var(--ac);font-weight:600;text-decoration:none}
+.sv{border-color:#2e9e6b;color:#2e9e6b}
+.lv{font-size:13px}
+.edf{display:flex;flex-direction:column;gap:8px}
+#nmb2{font-style:normal}

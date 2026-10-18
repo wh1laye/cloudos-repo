@@ -56,7 +56,10 @@ const bannerStyle=u=>{
 const av=p=>{const l=p&&safeUrl(p.avatar_url);return l?'<span class="av" style="background-image:url(\''+l+'\')"></span>':''};
 const avStyle=u=>{const l=safeUrl(u.avatar_url);return l?"background-image:url('"+l+"');background-size:cover;background-position:center":'background-image:'+bgB(u)};
 const PFX=['вопрос','баг','предложение','обсуждение'];
-const pfx=t=>t&&t.prefix?'<span class="tag px">'+esc(t.prefix)+'</span>':'';
+const pfx=t=>(t&&t.prefix?'<span class="tag px">'+esc(t.prefix)+'</span>':'')+(t&&t.solved?'<span class="tag sv">решено</span>':'');
+const LV=[[100,'ветеран'],[50,'опытный'],[20,'свой'],[5,'участник'],[0,'новичок']];
+const lvl=n=>{const x=LV.find(q=>n>=q[0]);return x?x[1]:''};
+const tAuth=t=>t.author||t.user_id||t.created_by||t.author_id;
 let uiT=null;
 function pushUi(){
   if(!me)return;
@@ -150,7 +153,7 @@ async function auth(){
 
 function drawBar(){
   if(me){
-    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/settings">настройки</a><a href="#/bookmarks">закладки</a>'+(can('delete_posts')||can('mute')||can('ban')?'<a href="#/reports">жалобы</a>':'')+'<button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
+    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/messages">сообщения<i id="nmb2"></i></a><a href="#/settings">настройки</a><a href="#/bookmarks">закладки</a>'+(can('delete_posts')||can('mute')||can('ban')?'<a href="#/reports">жалобы</a>':'')+'<button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
   }else{
     bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button><button class="btn s" type="button" data-a="signup">регистрация</button></form>';
   }
@@ -189,8 +192,9 @@ async function withProf(rows){
 async function home(){
   const {data,error}=await sb.from('boards').select('*,threads(count)').order('pos');
   if(error)throw error;
+  const fd=await feed();
   app.innerHTML='<h1>форум</h1><p class="mu">предложения, вопросы и обсуждение cloudos.</p><div class="grid">'+
-    (data.map(b=>'<a class="card" href="#/b/'+b.id+'"><strong>'+esc(b.title)+'</strong><span>'+esc(b.descr)+'</span><em>тем: '+b.threads[0].count+'</em></a>').join('')||'<p class="mu">разделов пока нет</p>')+'</div><div id="onl" class="onlw"></div>';
+    (data.map(b=>'<a class="card" href="#/b/'+b.id+'"><strong>'+esc(b.title)+'</strong><span>'+esc(b.descr)+'</span><em>тем: '+b.threads[0].count+'</em></a>').join('')||'<p class="mu">разделов пока нет</p>')+'</div>'+fd+'<div id="onl" class="onlw"></div>';
   renderOnline();
 }
 
@@ -243,6 +247,14 @@ async function thread(id){
   const {data:ps,error:e2}=await sb.from('posts').select('*,likes(count)').eq('thread_id',id).order('created_at');
   if(e2)throw e2;
   await withProf(ps);
+  const RT={};
+  try{
+    const aid=[...new Set(ps.map(x=>x.author).filter(Boolean))];
+    const ra=await sb.rpc('user_ratings',{ids:aid});
+    (ra.data||[]).forEach(x=>RT[x.id]=+x.r);
+    if(!ra.error)aid.forEach(x=>{if(RT[x]===undefined)RT[x]=0});
+  }catch(x){}
+  const lv=u=>RT[u]!==undefined?'<span class="mu lv">'+lvl(RT[u])+'</span>':'';
   const pj=await sb.rpc('poll_info',{tid:id});
   const poll=pj.data||null;
   let sub=false;
@@ -262,13 +274,13 @@ async function thread(id){
   const closed=t.locked&&!(adm||can('lock'));
   const acts=(p,c)=>{
     const own=me&&p.author===me.id;
-    return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button>':'')+(own||can('delete_posts')?'<button class="lk" data-a="delp" data-i="'+p.id+'" data-o="'+(own?1:0)+'">удалить</button>':'')+(me?'<button class="lk'+(bm.has('post'+p.id)?' on':'')+'" data-a="bmp" data-i="'+p.id+'" data-v="'+(bm.has('post'+p.id)?1:0)+'">'+(bm.has('post'+p.id)?'убрать из закладок':'в закладки')+'</button>':'')+(me&&!own?'<button class="lk" data-a="rep" data-i="'+p.id+'">пожаловаться</button>':'')+'</div>';
+    return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button>':'')+(own||can('delete_posts')?'<button class="lk" data-a="delp" data-i="'+p.id+'" data-o="'+(own?1:0)+'">удалить</button>':'')+(me?'<button class="lk'+(bm.has('post'+p.id)?' on':'')+'" data-a="bmp" data-i="'+p.id+'" data-v="'+(bm.has('post'+p.id)?1:0)+'">'+(bm.has('post'+p.id)?'убрать из закладок':'в закладки')+'</button>':'')+(own?'<button class="lk" data-a="ped" data-i="'+p.id+'">изменить</button>':'')+(me?'<button class="lk" data-a="qt" data-n="'+esc(p.profiles?p.profiles.name:'')+'">цитата</button>':'')+(me&&!own?'<button class="lk" data-a="rep" data-i="'+p.id+'">пожаловаться</button>':'')+'</div>';
   };
   const ctl=can('pin')||can('lock')||can('delete_threads')?'<div class="acts">'+(can('pin')?'<button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button>':'')+(can('lock')?'<button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button>':'')+(can('delete_threads')?'<button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.boards.id+'">удалить тему</button>':'')+'</div>':'';
-  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button></div>':'')+ctl+pollHtml(poll)+
+  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button>'+(me&&(tAuth(t)===me.id||can('delete_posts'))?'<button class="lk" data-a="sol" data-i="'+t.id+'" data-v="'+(t.solved?1:0)+'">'+(t.solved?'снять отметку «решено»':'отметить решённой')+'</button>':'')+'</div>':'')+ctl+pollHtml(poll)+
     ps.filter(p=>!p.parent_id).map(p=>{
       const kids=ps.filter(c=>c.parent_id===p.id);
-      return '<article class="post item"><div class="side">'+who(p.profiles)+'<span class="mu">'+fmt(p.created_at)+'</span></div><div><div class="txt" data-raw="'+esc(p.body)+'">'+fmtBody(p.body)+'</div>'+acts(p)+kids.map(c=>'<div class="cm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt" data-raw="'+esc(c.body)+'">'+fmtBody(c.body)+'</div>'+acts(c,true)+'</div>').join('')+'<div class="cwrap" data-w="'+p.id+'"></div></div></article>';
+      return '<article class="post item"><div class="side">'+who(p.profiles)+lv(p.author)+'<span class="mu">'+fmt(p.created_at)+(p.edited_at?' · изменено':'')+'</span></div><div><div class="txt" data-raw="'+esc(p.body)+'">'+fmtBody(p.body)+'</div>'+acts(p)+kids.map(c=>'<div class="cm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+(c.edited_at?' · изменено':'')+'</span></div><div class="txt" data-raw="'+esc(c.body)+'">'+fmtBody(c.body)+'</div>'+acts(c,true)+'</div>').join('')+'<div class="cwrap" data-w="'+p.id+'"></div></div></article>';
     }).join('')+
     (closed?'<p class="mu">тема закрыта, отвечать нельзя.</p>':'<form id="rf"><textarea id="rb" rows="5" maxlength="10000" placeholder="ответ" required></textarea>'+tools('rb')+'<button class="btn p">ответить</button></form>');
   const rf=$('#rf');
@@ -350,6 +362,7 @@ async function notifs(){
     switch(n.kind){
       case 'reply':return w+' ответил в вашей теме';
       case 'comment':return w+' прокомментировал ваше сообщение';
+      case 'mention':return w+' упомянул вас';
       case 'sub':return w+' ответил в теме, на которую вы подписаны';
       case 'like':return w+' оценил ваше сообщение';
       case 'pcomment':return w+' написал в вашем профиле';
@@ -435,16 +448,84 @@ async function reports(){
 
 const SU=((window.CFG&&window.CFG.url)||'').replace(/\/$/,'');
 const IMGRE=new RegExp('\\[img:('+SU.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'/storage/v1/object/public/posts/[0-9a-f-]{36}/[0-9]{10,16}\\.webp)\\]','g');
-function decorate(){
-  document.querySelectorAll('#app .txt').forEach(el=>{
-    if(el.innerHTML.indexOf('[img:')>-1)el.innerHTML=el.innerHTML.replace(IMGRE,(m,u)=>'<a href="'+u+'" target="_blank" rel="noopener"><img class="pimg" loading="lazy" src="'+u+'" alt=""></a>');
+const MNRE=/(^|[\s>(])@([^\s@<>,;:!?()&]{2,24})/g;
+const outside=(h,fn)=>h.split(/(<pre[\s\S]*?<\/pre>)/).map((s,n)=>n%2?s:fn(s)).join('');
+function quotify(h){
+  const parts=h.split(/(<br\s*\/?>|\n)/i);
+  let out='',q=[];
+  const flush=()=>{if(q.length){out+='<blockquote class="qt">'+q.join('<br>')+'</blockquote>';q=[]}};
+  for(let n=0;n<parts.length;n+=2){
+    const line=parts[n],sep=parts[n+1]||'';
+    if(/^&gt; ?/.test(line))q.push(line.replace(/^&gt; ?/,''));
+    else{flush();out+=line+sep}
+  }
+  flush();
+  return out;
+}
+function fx(el){
+  let h=el.innerHTML;
+  const codes=[];
+  h=h.replace(/```[a-zA-Z0-9]*(?:<br\s*\/?>|\n)?([\s\S]*?)```/g,(m,c)=>{
+    codes.push('<pre class="code"><code>'+c.replace(/<br\s*\/?>/gi,'\n')+'</code></pre>');
+    return '\u0000'+(codes.length-1)+'\u0000';
   });
+  h=h.replace(/`([^`<\n]+)`/g,'<code class="ic">$1</code>');
+  h=quotify(h);
+  h=h.replace(IMGRE,(m,u)=>'<a href="'+u+'" target="_blank" rel="noopener"><img class="pimg" loading="lazy" src="'+u+'" alt=""></a>');
+  h=h.replace(/\u0000(\d+)\u0000/g,(m,n)=>codes[+n]);
+  el.innerHTML=h;
+}
+async function mentions(els){
+  const set=new Set();
+  els.forEach(el=>outside(el.innerHTML,s=>{s.replace(MNRE,(m,p,n)=>{set.add(n.toLowerCase());return m});return s}));
+  if(!set.size)return;
+  const r=await sb.rpc('resolve_names',{names:[...set]});
+  const mp={};
+  (r.data||[]).forEach(x=>mp[x.name.toLowerCase()]=x);
+  els.forEach(el=>{
+    el.innerHTML=outside(el.innerHTML,s=>s.replace(MNRE,(m,p,n)=>{
+      const u=mp[n.toLowerCase()];
+      return u?p+'<a class="mn" href="#/u/'+u.id+'">@'+esc(u.name)+'</a>':m;
+    }));
+  });
+}
+async function feed(){
+  try{
+    const r=await sb.from('posts').select('id,body,author,thread_id,created_at').is('parent_id',null).order('created_at',{ascending:false}).limit(8);
+    const ps=r.data||[];
+    if(!ps.length)return '';
+    const ids=[...new Set(ps.map(x=>x.thread_id))],tm={};
+    ((await sb.from('threads').select('id,title,prefix,solved').in('id',ids)).data||[]).forEach(x=>tm[x.id]=x);
+    await withProf(ps);
+    return '<h2>новое</h2>'+ps.map(p=>{
+      const t=tm[p.thread_id];
+      if(!t)return '';
+      return '<a class="trow" href="#/t/'+p.thread_id+'"><div><strong>'+pfx(t)+esc(t.title)+'</strong><span class="mu">'+esc(p.body.replace(/\[img:[^\]]*\]/g,'[картинка]').slice(0,140))+'</span></div><div class="n">'+who(p.profiles,false)+'<br>'+fmt(p.created_at)+'</div></a>';
+    }).join('');
+  }catch(x){return ''}
+}
+function decorate(){
+  const list=[];
+  document.querySelectorAll('#app .txt').forEach(el=>{
+    if(el.dataset.fx)return;
+    el.dataset.fx='1';
+    fx(el);
+    list.push(el);
+  });
+  if(list.length)mentions(list).catch(()=>{});
   document.querySelectorAll('#app form textarea').forEach(t=>{
     if(t.dataset.ib||t.id==='pbio')return;
     t.dataset.ib='1';
     const bt=document.createElement('button');
     bt.type='button';bt.className='lk';bt.dataset.a='img';bt.textContent='картинка';
-    t.insertAdjacentElement('afterend',bt);
+    const nx=t.nextElementSibling;
+    if(nx&&nx.classList.contains('tb'))nx.appendChild(bt);
+    else{
+      const w=document.createElement('div');
+      w.className='tb';
+      w.appendChild(bt);
+      t.insertAdjacentElement('afterend',w);
+    }
   });
 }
 new MutationObserver(decorate).observe(app,{childList:true,subtree:true});
@@ -514,6 +595,8 @@ async function refreshMsgs(){
   const n=r.count||0;
   c.textContent=n>99?'99+':String(n);
   c.hidden=!n;
+  const bb=$('#nmb2');
+  if(bb)bb.textContent=n?' ('+n+')':'';
 }
 function watchDms(){
   try{
@@ -619,7 +702,7 @@ async function profile(id){
   const bgrow=isAdm&&bgAll.length?'<div class="row mod"><select id="bgsel">'+bgAll.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select><button class="btn s" data-a="bgive" data-i="'+esc(id)+'">выдать значок</button></div>':'';
   app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="'+avStyle(u)+'">'+(safeUrl(u.avatar_url)?'':esc(String(u.name||'?').slice(0,1).toUpperCase()))+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
     (u.bio?'<p class="bio">'+esc(u.bio)+'</p>':'<p class="mu">пока ничего о себе не написал.</p>')+
-    bdgHtml+'<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span><b>'+(+rtg.data||0)+'</b> рейтинг</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
+    bdgHtml+'<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span><b>'+(+rtg.data||0)+'</b> рейтинг · '+lvl(+rtg.data||0)+'</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
     (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':(me?'<div class="row"><button class="btn" data-a="dm" data-i="'+esc(id)+'">сообщения</button></div>':''))+modrow+bgrow+sanrow+'</div></div>'+edit+
     '<h2>комментарии</h2>'+(cerr?'<div class="warn"><b>комментарии недоступны</b>'+esc(cerr)+'</div>':'<form id="pcf"><textarea id="pcb" rows="3" maxlength="1000" placeholder="написать участнику" required></textarea>'+tools('pcb')+'<button class="btn p">отправить</button></form>'+clist);
   app.dataset.u=id;
@@ -914,7 +997,8 @@ document.addEventListener('click',async e=>{
   }
   else if(a==='img'){
     if(!await need())return;
-    const ta=b.previousElementSibling;
+    const tbx=b.closest('.tb'),ta=tbx&&tbx.dataset.for?document.getElementById(tbx.dataset.for):(b.closest('form')||document).querySelector('textarea');
+    if(!ta)return;
     const inp=document.createElement('input');
     inp.type='file';inp.accept='image/*';
     inp.onchange=async()=>{
@@ -928,6 +1012,38 @@ document.addEventListener('click',async e=>{
       finally{b.disabled=false}
     };
     inp.click();
+  }
+  else if(a==='ped'){
+    const tx=b.parentElement.previousElementSibling;
+    if(!tx||!tx.classList.contains('txt'))return;
+    const f=document.createElement('form');
+    f.className='edf';
+    f.innerHTML='<textarea rows="5" maxlength="10000" required></textarea><div class="row"><button class="btn p s">сохранить</button><button type="button" class="btn s" data-a="edx">отмена</button></div>';
+    f.querySelector('textarea').value=tx.dataset.raw||'';
+    tx.hidden=true;
+    b.parentElement.hidden=true;
+    tx.insertAdjacentElement('afterend',f);
+    f.onsubmit=async e=>{
+      e.preventDefault();
+      const r=await sb.rpc('edit_post',{pid:+i,b:f.querySelector('textarea').value});
+      if(r.error)return alert(r.error.message);
+      thread(+app.dataset.t);
+    };
+  }
+  else if(a==='edx'){thread(+app.dataset.t)}
+  else if(a==='qt'){
+    const tx=b.parentElement.previousElementSibling,ta=$('#rb');
+    if(!tx||!ta)return;
+    const raw=(tx.dataset.raw||'').split('\n').filter(l=>!/^\s*>/.test(l)&&!/^\[img:/.test(l.trim())).slice(0,8).map(l=>'> '+l).join('\n');
+    ta.value+=(ta.value?'\n':'')+'> '+(b.dataset.n||'')+' писал(а):\n'+raw+'\n\n';
+    ta.focus();
+    ta.scrollIntoView({block:'center'});
+  }
+  else if(a==='sol'){
+    if(!await need())return;
+    const r=await sb.rpc('set_solved',{tid:+i,v:v!=='1'});
+    if(r.error)return alert(r.error.message);
+    thread(+app.dataset.t);
   }
   else if(a==='th'){window.CloudTheme.set(i);settings()}
   else if(a==='gr'){window.CloudTheme.resetGrad();settings()}
