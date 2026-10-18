@@ -3,6 +3,7 @@
   function get(){try{return localStorage.getItem(K)==='gray'?'gray':'light'}catch(e){return 'light'}}
   function set(t){h.setAttribute('data-theme',t);try{localStorage.setItem(K,t)}catch(e){}}
   h.setAttribute('data-theme',get());
+  function fire(){if(window.CloudTheme&&typeof window.CloudTheme.onChange==='function')window.CloudTheme.onChange()}
   var GK='grad',DEF={on:false,c1:'#dbeafe',c2:'#f4f8fd',a:160},HEX=/^#[0-9a-fA-F]{6}$/;
   function getGrad(){
     try{
@@ -24,11 +25,13 @@
     for(var k in p)o[k]=p[k];
     try{localStorage.setItem(GK,JSON.stringify(o))}catch(e){}
     applyGrad(o);
+    fire();
     return o;
   }
   function resetGrad(){
     try{localStorage.removeItem(GK)}catch(e){}
     applyGrad(getGrad());
+    fire();
   }
   applyGrad(getGrad());
   var MOON='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>';
@@ -45,7 +48,7 @@
     var b=d.createElement('button');
     b.id='tb';b.type='button';b.className='gh';
     paint(b);
-    b.onclick=function(){set(h.getAttribute('data-theme')==='gray'?'light':'gray');paint(b)};
+    b.onclick=function(){set(h.getAttribute('data-theme')==='gray'?'light':'gray');paint(b);fire()};
     n.insertBefore(b,n.firstChild);
   }
   window.addEventListener('storage',function(e){
@@ -56,7 +59,17 @@
   });
   window.CloudTheme={
     get:get,
-    set:function(v){set(v);var b=d.getElementById('tb');if(b)paint(b)},
+    set:function(v){set(v);var b=d.getElementById('tb');if(b)paint(b);fire()},
+    apply:function(ui){
+      if(!ui)return;
+      if(ui.t==='gray'||ui.t==='light'){set(ui.t);var b=d.getElementById('tb');if(b)paint(b)}
+      if(ui.g&&HEX.test(ui.g.c1)&&HEX.test(ui.g.c2)){
+        var o={on:!!ui.g.on,c1:ui.g.c1,c2:ui.g.c2,a:Math.max(0,Math.min(360,+ui.g.a||0))};
+        try{localStorage.setItem(GK,JSON.stringify(o))}catch(e){}
+        applyGrad(o);
+      }
+    },
+    onChange:null,
     getGrad:getGrad,setGrad:setGrad,resetGrad:resetGrad
   };
   if(d.readyState==='loading')d.addEventListener('DOMContentLoaded',mount);else mount();
