@@ -11,3 +11,5 @@ html[data-theme=gray] .pav{border-color:var(--bg)}
 html[data-theme=gray] .capb{background:rgba(0,0,0,.55)}
 html[data-theme=gray] .lk.on{color:#f08a82}
 html[data-theme=gray] ::selection{background:#41506a}
+html[data-grad] body{background:linear-gradient(var(--ga),var(--g1),var(--g2)) fixed;min-height:100vh}
+html[data-grad] .top,html[data-grad] .bar{background:linear-gradient(var(--ga),var(--g1),var(--g2)) fixed}
