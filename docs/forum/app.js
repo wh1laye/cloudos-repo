@@ -66,13 +66,15 @@ function pushUi(){
 window.CloudTheme.onChange=pushUi;
 const who=(p,ln)=>{
   const r=p&&p.roles;
-  let nm='<b class="un'+(r?' g':'')+'"'+(r?' style="background-image:'+bg(r)+'"':'')+'>'+esc(p?p.name:'удалён')+'</b>';
+  const hx=/^#[0-9a-fA-F]{6}$/;
+  const ng=p&&p.nk_on&&hx.test(p.nk1||'')&&hx.test(p.nk2||'')?'linear-gradient('+((+p.nkangle)||90)+'deg,'+p.nk1+','+p.nk2+')':(r?bg(r):'');
+  let nm='<b class="un'+(ng?' g':'')+'"'+(ng?' style="background-image:'+ng+'"':'')+'>'+esc(p?p.name:'удалён')+'</b>';
   if(ln!==false&&p&&p.id)nm='<a class="nl" href="#/u/'+esc(p.id)+'">'+nm+'</a>';
   const st=p&&p.status?'<span class="st">'+esc(p.status)+'</span>':'';
   const bd=r?'<span class="badge" style="background-image:'+bg(r)+'">'+esc(r.name)+'</span>':'';
   return av(p)+nm+st+bd;
 };
-let me=null,prof=null,editing=null,avx=false,nch=null,nuid=null;
+let me=null,prof=null,editing=null,avx=false,nch=null,nuid=null,dmch=null,dmuid=null,dmRe=null;
 const can=k=>!!(prof&&(prof.is_admin||(prof.perms||[]).includes(k)||((prof.roles&&prof.roles.perms)||[]).includes(k)));
 const PERMS=[['pin','закреплять темы'],['lock','закрывать и открывать темы'],['delete_threads','удалять темы'],['delete_posts','удалять чужие сообщения'],['delete_comments','удалять комментарии в профилях'],['assign_roles','выдавать роли без прав'],['mute','мутить участников'],['ban','банить участников']];
 const permBoxes=(cls,sel)=>PERMS.map(x=>'<label class="pm"><input type="checkbox" class="'+cls+'" value="'+x[0]+'"'+((sel||[]).includes(x[0])?' checked':'')+'>'+x[1]+'</label>').join('');
@@ -102,7 +104,7 @@ let ch=null,pk=null,online={};
 function meta(){
   if(me&&prof){
     const r=prof.roles;
-    return {id:me.id,name:prof.name,status:prof.status||'',avatar_url:prof.avatar_url||'',roles:r?{name:r.name,c1:r.c1,c2:r.c2,angle:r.angle}:null};
+    return {id:me.id,name:prof.name,status:prof.status||'',avatar_url:prof.avatar_url||'',nk_on:!!prof.nk_on,nk1:prof.nk1||'',nk2:prof.nk2||'',nkangle:prof.nkangle||90,roles:r?{name:r.name,c1:r.c1,c2:r.c2,angle:r.angle}:null};
   }
   return {guest:1};
 }
@@ -143,6 +145,7 @@ async function auth(){
   drawBar();
   presence();
   watchNotifs();
+  watchDms();
 }
 
 function drawBar(){
@@ -173,7 +176,8 @@ async function withProf(rows){
   const ids=[...new Set(rows.map(r=>r[k]).filter(Boolean))];
   const m={};
   if(ids.length){
-    let x=await sb.from('profiles').select('id,name,status,avatar_url,roles(*)').in('id',ids);
+    let x=await sb.from('profiles').select('id,name,status,avatar_url,nk_on,nk1,nk2,nkangle,roles(*)').in('id',ids);
+    if(x.error)x=await sb.from('profiles').select('id,name,status,avatar_url,roles(*)').in('id',ids);
     if(x.error)x=await sb.from('profiles').select('id,name,status,roles(*)').in('id',ids);
     if(x.error)x=await sb.from('profiles').select('id,name,roles(*)').in('id',ids);
     (x.data||[]).forEach(y=>m[y.id]=y);
@@ -195,7 +199,7 @@ async function board(id){
   if(error)throw error;
   app.innerHTML='<p><a href="#/">форум</a> / '+esc(b.title)+'</p><h1>'+esc(b.title)+'</h1><p class="mu">'+esc(b.descr)+'</p>'+
     '<div class="row"><input id="q" placeholder="поиск по темам"><button class="btn p" data-a="newt">новая тема</button></div>'+
-    '<form id="nf" hidden><select id="npx"><option value="">без префикса</option>'+PFX.map(x=>'<option>'+x+'</option>').join('')+'</select><input id="nt" maxlength="150" minlength="3" placeholder="заголовок" required><textarea id="nb" rows="6" maxlength="10000" placeholder="текст" required></textarea>'+tools('nb')+'<button class="btn p">создать тему</button></form><div id="tl"></div>';
+    '<form id="nf" hidden><select id="npx"><option value="">без префикса</option>'+PFX.map(x=>'<option>'+x+'</option>').join('')+'</select><input id="nt" maxlength="150" minlength="3" placeholder="заголовок" required><textarea id="nb" rows="6" maxlength="10000" placeholder="текст" required></textarea>'+tools('nb')+'<label class="chk"><input id="npl" type="checkbox"> добавить опрос</label><div id="npw" hidden><input id="npq" maxlength="200" placeholder="вопрос опроса"><textarea id="npo" rows="4" placeholder="варианты, каждый с новой строки (от 2 до 10)"></textarea><label class="chk"><input id="npm" type="checkbox"> можно выбрать несколько</label></div><button class="btn p">создать тему</button></form><div id="tl"></div>';
   const draw=async()=>{
     let r=sb.from('threads').select('*,posts(count)').eq('board_id',id).order('pinned',{ascending:false}).order('bumped_at',{ascending:false}).limit(100);
     const v=$('#q').value.trim().replace(/[%_,]/g,'');
@@ -206,16 +210,26 @@ async function board(id){
     $('#tl').innerHTML=ts.map(t=>'<a class="trow" href="#/t/'+t.id+'"><div><strong>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>').join('')||'<p class="mu">тем пока нет</p>';
   };
   $('#q').oninput=draw;
+  $('#npl').onchange=()=>{$('#npw').hidden=!$('#npl').checked};
   $('#nf').onsubmit=async e=>{
     e.preventDefault();
     const btn=$('#nf button');
     btn.disabled=true;
     try{
       if(!await need())return;
+      let popts=[];
+      if($('#npl').checked){
+        popts=$('#npo').value.split('\n').map(x=>x.trim()).filter(Boolean);
+        if($('#npq').value.trim().length<3||popts.length<2||popts.length>10)return alert('для опроса нужен вопрос и от 2 до 10 вариантов');
+      }
       const t=await sb.from('threads').insert({board_id:id,title:$('#nt').value.trim(),prefix:$('#npx').value||null}).select('id').single();
       if(t.error)return alert('не удалось создать тему: '+t.error.message);
       const p=await sb.from('posts').insert({thread_id:t.data.id,body:$('#nb').value.trim()});
       if(p.error){await sb.from('threads').delete().eq('id',t.data.id);return alert('не удалось создать сообщение: '+p.error.message)}
+      if($('#npl').checked){
+        const pr=await sb.rpc('create_poll',{tid:t.data.id,q:$('#npq').value.trim(),opts:popts,mlt:$('#npm').checked});
+        if(pr.error)alert('тема создана, но опрос не создался: '+pr.error.message);
+      }
       location.hash='#/t/'+t.data.id;
     }catch(x){alert(x.message||x)}
     finally{btn.disabled=false}
@@ -229,6 +243,8 @@ async function thread(id){
   const {data:ps,error:e2}=await sb.from('posts').select('*,likes(count)').eq('thread_id',id).order('created_at');
   if(e2)throw e2;
   await withProf(ps);
+  const pj=await sb.rpc('poll_info',{tid:id});
+  const poll=pj.data||null;
   let sub=false;
   const bm=new Set();
   if(me){
@@ -249,7 +265,7 @@ async function thread(id){
     return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button>':'')+(own||can('delete_posts')?'<button class="lk" data-a="delp" data-i="'+p.id+'" data-o="'+(own?1:0)+'">удалить</button>':'')+(me?'<button class="lk'+(bm.has('post'+p.id)?' on':'')+'" data-a="bmp" data-i="'+p.id+'" data-v="'+(bm.has('post'+p.id)?1:0)+'">'+(bm.has('post'+p.id)?'убрать из закладок':'в закладки')+'</button>':'')+(me&&!own?'<button class="lk" data-a="rep" data-i="'+p.id+'">пожаловаться</button>':'')+'</div>';
   };
   const ctl=can('pin')||can('lock')||can('delete_threads')?'<div class="acts">'+(can('pin')?'<button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button>':'')+(can('lock')?'<button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button>':'')+(can('delete_threads')?'<button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.boards.id+'">удалить тему</button>':'')+'</div>':'';
-  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button></div>':'')+ctl+
+  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button></div>':'')+ctl+pollHtml(poll)+
     ps.filter(p=>!p.parent_id).map(p=>{
       const kids=ps.filter(c=>c.parent_id===p.id);
       return '<article class="post item"><div class="side">'+who(p.profiles)+'<span class="mu">'+fmt(p.created_at)+'</span></div><div><div class="txt" data-raw="'+esc(p.body)+'">'+fmtBody(p.body)+'</div>'+acts(p)+kids.map(c=>'<div class="cm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt" data-raw="'+esc(c.body)+'">'+fmtBody(c.body)+'</div>'+acts(c,true)+'</div>').join('')+'<div class="cwrap" data-w="'+p.id+'"></div></div></article>';
@@ -324,7 +340,7 @@ async function notifs(){
   const ids=[...new Set(rows.map(x=>x.actor).filter(Boolean))];
   const m={};
   if(ids.length){
-    let x=await sb.from('profiles').select('id,name,avatar_url,roles(*)').in('id',ids);
+    let x=await sb.from('profiles').select('id,name,avatar_url,nk_on,nk1,nk2,nkangle,roles(*)').in('id',ids);
     if(x.error)x=await sb.from('profiles').select('id,name,roles(*)').in('id',ids);
     (x.data||[]).forEach(y=>m[y.id]=y);
   }
@@ -417,6 +433,156 @@ async function reports(){
   }).join('')||'<p class="mu">жалоб пока нет</p>');
 }
 
+const SU=((window.CFG&&window.CFG.url)||'').replace(/\/$/,'');
+const IMGRE=new RegExp('\\[img:('+SU.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'/storage/v1/object/public/posts/[0-9a-f-]{36}/[0-9]{10,16}\\.webp)\\]','g');
+function decorate(){
+  document.querySelectorAll('#app .txt').forEach(el=>{
+    if(el.innerHTML.indexOf('[img:')>-1)el.innerHTML=el.innerHTML.replace(IMGRE,(m,u)=>'<a href="'+u+'" target="_blank" rel="noopener"><img class="pimg" loading="lazy" src="'+u+'" alt=""></a>');
+  });
+  document.querySelectorAll('#app form textarea').forEach(t=>{
+    if(t.dataset.ib||t.id==='pbio')return;
+    t.dataset.ib='1';
+    const bt=document.createElement('button');
+    bt.type='button';bt.className='lk';bt.dataset.a='img';bt.textContent='картинка';
+    t.insertAdjacentElement('afterend',bt);
+  });
+}
+new MutationObserver(decorate).observe(app,{childList:true,subtree:true});
+function fitImg(file,max){
+  return new Promise((ok,no)=>{
+    const u=URL.createObjectURL(file),im=new Image();
+    im.onload=()=>{
+      const k=Math.min(1,max/Math.max(im.width,im.height)),w=Math.round(im.width*k),h=Math.round(im.height*k),c=document.createElement('canvas');
+      c.width=w;c.height=h;
+      c.getContext('2d').drawImage(im,0,0,w,h);
+      URL.revokeObjectURL(u);
+      c.toBlob(b=>b?ok(b):no(new Error('не удалось сжать картинку')),'image/webp',0.85);
+    };
+    im.onerror=()=>no(new Error('это не картинка'));
+    im.src=u;
+  });
+}
+async function upPostImg(file){
+  const blob=await fitImg(file,1280);
+  const p=me.id+'/'+Date.now()+'.webp';
+  const r=await sb.storage.from('posts').upload(p,blob,{contentType:'image/webp',cacheControl:'31536000'});
+  if(r.error)throw new Error(r.error.message+' (картинки доступны только участникам с аккаунтом, не анонимам)');
+  return sb.storage.from('posts').getPublicUrl(p).data.publicUrl;
+}
+async function upBadge(file){
+  if(!file)throw new Error('выбери картинку');
+  const blob=await resizeImg(file,128,128);
+  const p='b'+Date.now()+Math.random().toString(36).slice(2,6)+'.webp';
+  const r=await sb.storage.from('badges').upload(p,blob,{contentType:'image/webp'});
+  if(r.error)throw r.error;
+  return sb.storage.from('badges').getPublicUrl(p).data.publicUrl;
+}
+const pollHtml=po=>{
+  if(!po)return '';
+  const tot=po.options.reduce((s,o)=>s+(+o.votes),0),mine=new Set(po.mine||[]);
+  return '<div class="poll"><b>'+esc(po.question)+'</b><span class="mu">'+(po.multi?'можно выбрать несколько':'один вариант')+' · голосов: '+tot+'</span>'+po.options.map(o=>{
+    const pc=tot?Math.round(o.votes*100/tot):0;
+    return '<button class="po'+(mine.has(o.id)?' on':'')+'" data-a="pv" data-i="'+o.id+'"><i style="width:'+pc+'%"></i><span>'+esc(o.text)+'</span><em>'+o.votes+' · '+pc+'%</em></button>';
+  }).join('')+'</div>';
+};
+async function badgesAdmin(){
+  const head='<p><a href="#/admin">управление</a> / значки</p><h1>значки</h1>';
+  if(!(prof&&prof.is_admin)){app.innerHTML=head+'<p class="mu">нет доступа.</p>';return}
+  const r=await sb.from('badges').select('*').order('id');
+  if(r.error){app.innerHTML=head+'<div class="warn"><b>значки недоступны</b>'+esc(r.error.message)+'</div>';return}
+  app.innerHTML=head+'<form id="bgf"><input id="bgn" maxlength="40" placeholder="название" required><input id="bgd" maxlength="200" placeholder="описание (необязательно)"><label>картинка (файл)<input id="bgi" type="file" accept="image/*" required></label><button class="btn p">создать значок</button></form><div>'+
+    (r.data.map(x=>'<div class="item rpi"><span class="bd big"><img src="'+esc(safeUrl(x.img))+'" alt=""></span> <b>'+esc(x.name)+'</b> <span class="mu">'+esc(x.descr)+'</span><div class="acts"><button class="lk" data-a="bgdel" data-i="'+x.id+'">удалить значок</button></div></div>').join('')||'<p class="mu">значков пока нет</p>')+'</div>';
+  $('#bgf').onsubmit=async e=>{
+    e.preventDefault();
+    const btn=$('#bgf button');
+    btn.disabled=true;
+    try{
+      const url=await upBadge($('#bgi').files[0]);
+      const x=await sb.from('badges').insert({name:$('#bgn').value.trim(),descr:$('#bgd').value.trim(),img:url});
+      if(x.error)throw x.error;
+      badgesAdmin();
+    }catch(z){alert(z.message||z)}
+    finally{btn.disabled=false}
+  };
+}
+async function refreshMsgs(){
+  const a=$('#nmsg'),c=$('#nmsgb');
+  if(!a||!c)return;
+  if(!me){a.hidden=true;return}
+  a.hidden=false;
+  const r=await sb.from('dms').select('id',{count:'exact',head:true}).eq('recipient',me.id).eq('read',false);
+  const n=r.count||0;
+  c.textContent=n>99?'99+':String(n);
+  c.hidden=!n;
+}
+function watchDms(){
+  try{
+    if(!me){
+      if(dmch){sb.removeChannel(dmch);dmch=null;dmuid=null}
+      refreshMsgs();
+      return;
+    }
+    if(dmch&&dmuid===me.id){refreshMsgs();return}
+    if(dmch)sb.removeChannel(dmch);
+    dmuid=me.id;
+    dmch=sb.channel('dm-'+me.id).on('postgres_changes',{event:'*',schema:'public',table:'dms',filter:'recipient=eq.'+me.id},p=>{
+      refreshMsgs();
+      if(p.eventType==='INSERT'&&dmRe)dmRe();
+    }).subscribe();
+    refreshMsgs();
+  }catch(x){}
+}
+async function dmList(){
+  const head='<h1>сообщения</h1>';
+  if(!me){app.innerHTML=head+'<p class="mu">войди, чтобы писать сообщения.</p>';return}
+  dmRe=dmList;
+  const r=await sb.from('dms').select('*').or('sender.eq.'+me.id+',recipient.eq.'+me.id).order('created_at',{ascending:false}).limit(300);
+  if(r.error){app.innerHTML=head+'<div class="warn"><b>сообщения недоступны</b>'+esc(r.error.message)+'</div>';return}
+  const cv=new Map();
+  (r.data||[]).forEach(x=>{
+    const o=x.sender===me.id?x.recipient:x.sender;
+    if(!cv.has(o))cv.set(o,{o,last:x,un:0});
+    if(x.recipient===me.id&&!x.read)cv.get(o).un++;
+  });
+  const list=[...cv.values()],pp=list.map(x=>({author:x.o}));
+  await withProf(pp);
+  app.innerHTML=head+'<p class="mu">чтобы написать участнику, открой его профиль и нажми «сообщения».</p>'+
+    (list.map((x,n)=>'<a class="trow" href="#/messages/'+x.o+'"><div><strong>'+who(pp[n].profiles,false)+'</strong><span class="mu">'+(x.last.sender===me.id?'вы: ':'')+esc(x.last.body.slice(0,120))+'</span></div><div class="n">'+(x.un?'<span class="tag">новых: '+x.un+'</span><br>':'')+fmt(x.last.created_at)+'</div></a>').join('')||'<p class="mu">диалогов пока нет</p>');
+}
+async function dmChat(uid){
+  if(!me){app.innerHTML='<h1>сообщения</h1><p class="mu">войди, чтобы писать сообщения.</p>';return}
+  if(uid===me.id){location.hash='#/messages';return}
+  let pr=await sb.from('profiles').select('id,name,status,avatar_url,nk_on,nk1,nk2,nkangle,roles(*)').eq('id',uid).maybeSingle();
+  if(pr.error)pr=await sb.from('profiles').select('id,name,roles(*)').eq('id',uid).maybeSingle();
+  const u=pr.data;
+  if(!u){app.innerHTML='<div class="warn"><b>не найдено</b>такого участника нет.</div>';return}
+  app.innerHTML='<p><a href="#/messages">сообщения</a> / '+who(u)+'</p><div id="dml" class="dml"></div><form id="dmf"><textarea id="dmb" rows="3" maxlength="2000" placeholder="сообщение" required></textarea><button class="btn p">отправить</button></form>';
+  const draw=async()=>{
+    const l=$('#dml');
+    if(!l)return;
+    const r=await sb.from('dms').select('*').or('and(sender.eq.'+me.id+',recipient.eq.'+uid+'),and(sender.eq.'+uid+',recipient.eq.'+me.id+')').order('created_at').limit(300);
+    const rows=r.data||[];
+    l.innerHTML=rows.map(x=>'<div class="dmm'+(x.sender===me.id?' me':'')+'"><div class="txt">'+fmtBody(x.body)+'</div><span class="mu">'+fmt(x.created_at)+'</span></div>').join('')||'<p class="mu">сообщений пока нет</p>';
+    l.scrollTop=l.scrollHeight;
+    if(rows.some(x=>x.recipient===me.id&&!x.read)){
+      await sb.from('dms').update({read:true}).eq('recipient',me.id).eq('sender',uid).eq('read',false);
+      refreshMsgs();
+    }
+  };
+  dmRe=draw;
+  $('#dmf').onsubmit=async e=>{
+    e.preventDefault();
+    if(!await need())return;
+    const body=$('#dmb').value.trim();
+    if(!body)return;
+    const r=await sb.from('dms').insert({recipient:uid,body});
+    if(r.error)return alert(r.error.message);
+    $('#dmb').value='';
+    draw();
+  };
+  await draw();
+}
+
 async function profile(id){
   const r=await sb.from('profiles').select('*,roles(*)').eq('id',id).maybeSingle();
   if(r.error)throw r.error;
@@ -437,16 +603,24 @@ async function profile(id){
   }
   const edit=own?'<form id="pf" hidden><label>о себе<textarea id="pbio" rows="4" maxlength="500">'+esc(u.bio||'')+'</textarea></label><label>статус (эмодзи или пара слов)<input id="pst" maxlength="16" value="'+esc(u.status||'')+'"></label>'+tools('pst',true)+
     '<div class="adm"><label>баннер, цвет 1<input id="pb1" type="color" value="'+col(u.b1)+'"></label><label>баннер, цвет 2<input id="pb2" type="color" value="'+col(u.b2)+'"></label><label>угол <span id="pav2">'+((+u.bangle)||90)+'</span>°<input id="pan" type="range" min="0" max="360" value="'+((+u.bangle)||90)+'"></label></div>'+
+    '<label class="chk"><input id="nkon" type="checkbox"'+(u.nk_on?' checked':'')+'> градиент ника</label><div class="adm"><label>ник, цвет 1<input id="nk1" type="color" value="'+col(u.nk1)+'"></label><label>ник, цвет 2<input id="nk2" type="color" value="'+col(u.nk2)+'"></label><label>угол <span id="nka2">'+((+u.nkangle)||90)+'</span>°<input id="nkan" type="range" min="0" max="360" value="'+((+u.nkangle)||90)+'"></label></div><p>предпросмотр: <span id="nkpv"></span></p>'+
     '<div class="adm"><label>аватар (файл)<input id="pavf" type="file" accept="image/*"></label><label>баннер (файл)<input id="pbf" type="file" accept="image/*"></label></div>'+(safeUrl(u.avatar_url)?'<div class="row"><button type="button" class="btn s" data-a="avx">убрать аватар</button></div>':'')+'<label>картинка баннера (ссылка https, необязательно)<input id="pbu" maxlength="500" value="'+esc(safeUrl(u.burl))+'" placeholder="https://..."></label><div class="row"><button class="btn p">сохранить</button><button type="button" class="btn" data-a="pedit">отмена</button></div></form>':'';
   const modrow=prof&&prof.is_admin&&!own?'<div class="row mod"><select data-a="setrole" data-i="'+esc(id)+'"><option value="">без роли</option>'+rl.map(x=>'<option value="'+x.id+'"'+(u.role_id===x.id?' selected':'')+'>'+esc(x.name)+'</option>').join('')+'</select><button class="btn s" data-a="adm" data-i="'+esc(id)+'" data-v="'+(u.is_admin?1:0)+'">'+(u.is_admin?'снять админа':'сделать админом')+'</button>'+(u.is_admin?'':'<button class="btn s" data-a="udel" data-i="'+esc(id)+'" data-v="'+esc(u.name)+'">удалить</button>')+'</div>':'';
   const canS=!own&&!u.is_admin&&(can('mute')||can('ban'));
   const sb1=(k,label,undo,un)=>'<button class="btn s" data-a="'+(un?'unsanc':'sanc')+'" data-k="'+k+'" data-i="'+esc(id)+'" data-v="'+esc(u.name)+'">'+(un?undo:label)+'</button>';
   const sanrow=canS?'<div class="row mod">'+(can('mute')?sb1('mute','замутить','снять мут',active(u.muted_until)):'')+(can('ban')?sb1('ban','забанить','снять бан',active(u.banned_until)):'')+'</div>':'';
   const clist=cs.map(c=>'<div class="pcm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+'</span></div><div class="txt">'+fmtBody(c.body)+'</div>'+((me&&(c.author===me.id||own))||can('delete_comments')?'<div class="acts"><button class="lk" data-a="pcdel" data-i="'+c.id+'">удалить</button></div>':'')+'</div>').join('')||'<p class="mu">комментариев пока нет</p>';
+  const isAdm=!!(prof&&prof.is_admin);
+  let bgs=[],bgAll=[];
+  const ub=await sb.from('user_badges').select('badge_id,badges(id,name,descr,img)').eq('user_id',id);
+  bgs=(ub.data||[]).filter(x=>x.badges);
+  if(isAdm){const ab=await sb.from('badges').select('id,name').order('id');bgAll=ab.data||[]}
+  const bdgHtml=bgs.length?'<div class="bdg">'+bgs.map(x=>'<span class="bd" title="'+esc(x.badges.name+(x.badges.descr?' — '+x.badges.descr:''))+'"><img src="'+esc(safeUrl(x.badges.img))+'" alt="">'+(isAdm?'<button class="lk" data-a="btake" data-i="'+x.badge_id+'" data-u="'+esc(id)+'">×</button>':'')+'</span>').join('')+'</div>':'';
+  const bgrow=isAdm&&bgAll.length?'<div class="row mod"><select id="bgsel">'+bgAll.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select><button class="btn s" data-a="bgive" data-i="'+esc(id)+'">выдать значок</button></div>':'';
   app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="'+avStyle(u)+'">'+(safeUrl(u.avatar_url)?'':esc(String(u.name||'?').slice(0,1).toUpperCase()))+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
     (u.bio?'<p class="bio">'+esc(u.bio)+'</p>':'<p class="mu">пока ничего о себе не написал.</p>')+
-    '<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span><b>'+(+rtg.data||0)+'</b> рейтинг</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
-    (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':'')+modrow+sanrow+'</div></div>'+edit+
+    bdgHtml+'<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span><b>'+(+rtg.data||0)+'</b> рейтинг</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
+    (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':(me?'<div class="row"><button class="btn" data-a="dm" data-i="'+esc(id)+'">сообщения</button></div>':''))+modrow+bgrow+sanrow+'</div></div>'+edit+
     '<h2>комментарии</h2>'+(cerr?'<div class="warn"><b>комментарии недоступны</b>'+esc(cerr)+'</div>':'<form id="pcf"><textarea id="pcb" rows="3" maxlength="1000" placeholder="написать участнику" required></textarea>'+tools('pcb')+'<button class="btn p">отправить</button></form>'+clist);
   app.dataset.u=id;
   if(own){
@@ -458,6 +632,12 @@ async function profile(id){
       if(!safeUrl(u.avatar_url)&&!$('#pavf').files[0])pa.style.backgroundImage=bgB(o);
     };
     ['pb1','pb2','pan','pbu'].forEach(k=>$('#'+k).oninput=up);
+    const nkp=()=>{
+      $('#nka2').textContent=$('#nkan').value;
+      $('#nkpv').innerHTML=who({name:u.name,nk_on:$('#nkon').checked,nk1:$('#nk1').value,nk2:$('#nk2').value,nkangle:$('#nkan').value,roles:u.roles},false);
+    };
+    ['nkon','nk1','nk2','nkan'].forEach(k=>{$('#'+k).oninput=nkp;$('#'+k).onchange=nkp});
+    nkp();
     const pv=(inp,sel)=>{$(inp).onchange=()=>{const f=$(inp).files[0];if(!f)return;const el=document.querySelector(sel);el.style.backgroundImage="url('"+URL.createObjectURL(f)+"')";el.style.backgroundSize='cover';el.style.backgroundPosition='center';if(sel==='.pav')el.textContent=''}};
     pv('#pavf','.pav');pv('#pbf','.pbn');
   }
@@ -474,7 +654,7 @@ async function admin(){
   ]);
   const roles=r1.data||[],boards=r3.data||[],threads=r4.data||[];
   const er=roles.find(r=>r.id===editing)||{name:'',c1:'#3b5fa8',c2:'#9cc8f2',angle:90,perms:[]};
-  app.innerHTML='<h1>управление</h1><p class="mu"><a href="#/mod/mutes">панель мутов</a> · <a href="#/mod/bans">панель банов</a></p><div class="stat"><div><b>'+(c1.count||0)+'</b><span>участников</span></div><div><b>'+(c2.count||0)+'</b><span>тем</span></div><div><b>'+(c3.count||0)+'</b><span>сообщений</span></div></div>'+
+  app.innerHTML='<h1>управление</h1><p class="mu"><a href="#/mod/mutes">панель мутов</a> · <a href="#/mod/bans">панель банов</a> · <a href="#/admin/badges">значки</a></p><div class="stat"><div><b>'+(c1.count||0)+'</b><span>участников</span></div><div><b>'+(c2.count||0)+'</b><span>тем</span></div><div><b>'+(c3.count||0)+'</b><span>сообщений</span></div></div>'+
     '<h2>участники</h2><div class="row"><input id="uq" placeholder="поиск по нику"></div><div id="ul"></div>'+
     '<h2>роли</h2>'+
     '<form id="rf2"><div class="adm"><label>название<input id="rn" maxlength="24" value="'+esc(er.name)+'" required></label><label>цвет 1<input id="c1" type="color" value="'+col(er.c1)+'"></label><label>цвет 2<input id="c2" type="color" value="'+col(er.c2)+'"></label><label>угол <span id="av">'+((+er.angle)||0)+'</span>°<input id="an" type="range" min="0" max="360" value="'+((+er.angle)||0)+'"></label></div>'+
@@ -570,6 +750,7 @@ async function modPanel(kind){
 
 async function route(){
   const k=location.hash.slice(1).split('/');
+  dmRe=null;
   app.innerHTML='<p class="mu">загрузка</p>';
   selUser=null;
   if(prof&&active(prof.banned_until)){
@@ -581,10 +762,12 @@ async function route(){
     else if(k[1]==='t')await thread(+k[2]);
     else if(k[1]==='u')await profile(k[2]);
     else if(k[1]==='mod')await modPanel(k[2]);
+    else if(k[1]==='messages'){if(k[2]&&/^[0-9a-f-]{36}$/i.test(k[2]))await dmChat(k[2]);else await dmList()}
     else if(k[1]==='bookmarks')await bookmarks();
     else if(k[1]==='reports')await reports();
     else if(k[1]==='settings')settings();
     else if(k[1]==='notifications')await notifs();
+    else if(k[1]==='admin'&&k[2]==='badges')await badgesAdmin();
     else if(k[1]==='admin')await admin();
     else await home();
   }catch(e){
@@ -704,6 +887,48 @@ document.addEventListener('click',async e=>{
     if(r.error)return alert(r.error.message);
     reports();
   }
+  else if(a==='dm'){location.hash='#/messages/'+i}
+  else if(a==='pv'){
+    if(!await need())return;
+    const r=await sb.rpc('poll_vote',{oid:+i});
+    if(r.error)return alert(r.error.message);
+    thread(+app.dataset.t);
+  }
+  else if(a==='bgive'){
+    const bid=+$('#bgsel').value;
+    if(!bid)return;
+    const r=await sb.from('user_badges').insert({user_id:i,badge_id:bid});
+    if(r.error)return alert(r.error.code==='23505'?'этот значок уже выдан':r.error.message);
+    route();
+  }
+  else if(a==='btake'){
+    const r=await sb.from('user_badges').delete().eq('user_id',b.dataset.u).eq('badge_id',+i);
+    if(r.error)return alert(r.error.message);
+    route();
+  }
+  else if(a==='bgdel'){
+    if(!confirm('удалить значок у всех?'))return;
+    const r=await sb.from('badges').delete().eq('id',+i);
+    if(r.error)return alert(r.error.message);
+    badgesAdmin();
+  }
+  else if(a==='img'){
+    if(!await need())return;
+    const ta=b.previousElementSibling;
+    const inp=document.createElement('input');
+    inp.type='file';inp.accept='image/*';
+    inp.onchange=async()=>{
+      const f=inp.files[0];
+      if(!f)return;
+      b.disabled=true;
+      try{
+        const url=await upPostImg(f);
+        ta.value+=(ta.value&&!ta.value.endsWith('\n')?'\n':'')+'[img:'+url+']\n';
+      }catch(x){alert(x.message||x)}
+      finally{b.disabled=false}
+    };
+    inp.click();
+  }
   else if(a==='th'){window.CloudTheme.set(i);settings()}
   else if(a==='gr'){window.CloudTheme.resetGrad();settings()}
   else if(a==='gp'){const q=GP[window.CloudTheme.get()][+i];window.CloudTheme.setGrad({on:true,c1:q[1],c2:q[2],a:q[3]});settings()}
@@ -793,7 +1018,7 @@ document.addEventListener('submit',async e=>{
       if(avx)au='';
       if(fa)au=await upImg(fa,'avatar',256,256);
       if(fb)bu=await upImg(fb,'banner',1200,400);
-      const r=await sb.rpc('update_my_profile',{p_bio:$('#pbio').value.trim(),p_status:$('#pst').value.trim(),p_b1:$('#pb1').value,p_b2:$('#pb2').value,p_bangle:+$('#pan').value,p_burl:bu,p_avatar_url:au});
+      const r=await sb.rpc('update_my_profile',{p_bio:$('#pbio').value.trim(),p_status:$('#pst').value.trim(),p_b1:$('#pb1').value,p_b2:$('#pb2').value,p_bangle:+$('#pan').value,p_burl:bu,p_avatar_url:au,p_nk_on:$('#nkon').checked,p_nk1:$('#nk1').value,p_nk2:$('#nk2').value,p_nkangle:+$('#nkan').value});
       if(r.error)throw r.error;
       avx=false;
       await auth();
