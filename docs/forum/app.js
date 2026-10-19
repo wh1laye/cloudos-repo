@@ -64,7 +64,7 @@ let uiT=null;
 function pushUi(){
   if(!me)return;
   clearTimeout(uiT);
-  uiT=setTimeout(()=>{const T=window.CloudTheme;sb.rpc('set_ui',{j:{t:T.get(),g:T.getGrad()}})},700);
+  uiT=setTimeout(()=>{const T=window.CloudTheme;sb.rpc('set_ui',{j:{t:T.get(),g:T.getGrad(),ts:T.ts()}}).then(r=>{if(r&&r.error)console.warn(r.error.message)})},700);
 }
 window.CloudTheme.onChange=pushUi;
 const who=(p,ln)=>{
@@ -142,7 +142,7 @@ async function auth(){
   if(me){
     const r=await sb.from('profiles').select('*,roles(*)').eq('id',me.id).maybeSingle();
     prof=r.data;
-    if(prof&&prof.ui)window.CloudTheme.apply(prof.ui);
+    if(prof&&prof.ui&&(+prof.ui.ts||0)>=window.CloudTheme.ts())window.CloudTheme.apply(prof.ui);
     else pushUi();
   }
   drawBar();
@@ -153,7 +153,8 @@ async function auth(){
 
 function drawBar(){
   if(me){
-    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/messages">сообщения<i id="nmb2"></i></a><a href="#/settings">настройки</a><a href="#/bookmarks">закладки</a>'+(can('delete_posts')||can('mute')||can('ban')?'<a href="#/reports">жалобы</a>':'')+'<button class="lk" data-a="rename">сменить имя</button>'+(prof&&prof.is_admin?'<a href="#/admin">управление</a>':'')+(can('mute')||can('ban')?'<a href="#/mod/'+(can('mute')?'mutes':'bans')+'">модерация</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'')+'<button class="lk" data-a="out">выйти</button>';
+    const ctl=prof&&prof.is_admin?'#/admin':(can('delete_posts')||can('mute')||can('ban')?'#/reports':'');
+    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/settings">настройки</a><a href="#/bookmarks">закладки</a>'+(ctl?'<a href="'+ctl+'">управление</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'');
   }else{
     bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button><button class="btn s" type="button" data-a="signup">регистрация</button></form>';
   }
@@ -194,7 +195,7 @@ async function home(){
   if(error)throw error;
   const fd=await feed();
   app.innerHTML='<h1>форум</h1><p class="mu">предложения, вопросы и обсуждение cloudos.</p><div class="grid">'+
-    (data.map(b=>'<a class="card" href="#/b/'+b.id+'"><strong>'+esc(b.title)+'</strong><span>'+esc(b.descr)+'</span><em>тем: '+b.threads[0].count+'</em></a>').join('')||'<p class="mu">разделов пока нет</p>')+'</div>'+fd+'<div id="onl" class="onlw"></div>';
+    (data.map(b=>'<a class="card" href="#/b/'+b.id+'"><i class="ci"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></i><strong>'+esc(b.title)+'</strong><span>'+esc(b.descr)+'</span><em>тем: '+b.threads[0].count+'</em></a>').join('')||'<p class="mu">разделов пока нет</p>')+'</div>'+fd+'<div id="onl" class="onlw"></div>';
   renderOnline();
 }
 
@@ -426,7 +427,7 @@ async function bookmarks(){
 }
 
 async function reports(){
-  const head='<p><a href="#/">форум</a> / жалобы</p><h1>жалобы</h1>';
+  const head='<p><a href="#/">форум</a> / жалобы</p><h1>жалобы</h1>'+modTabs('reports');
   if(!(can('delete_posts')||can('mute')||can('ban'))){app.innerHTML=head+'<p class="mu">нет доступа.</p>';return}
   const r=await sb.from('reports').select('*').order('status',{ascending:false}).order('created_at',{ascending:false}).limit(100);
   if(r.error){app.innerHTML=head+'<div class="warn"><b>жалобы недоступны</b>'+esc(r.error.message)+'</div>';return}
@@ -667,6 +668,17 @@ async function dmChat(uid){
   await draw();
 }
 
+function renameBtn(u){
+  if(prof&&prof.is_admin)return '<button class="btn" data-a="rename">сменить имя</button>';
+  const left=u.name_changed_at?Math.ceil((new Date(u.name_changed_at).getTime()+6048e5-Date.now())/864e5):0;
+  if(left>0&&Date.now()-new Date(u.created_at).getTime()>=36e5)return '<span class="mu">имя можно сменить через '+left+' дн.</span>';
+  return '<button class="btn" data-a="rename">сменить имя</button>';
+}
+function modTabs(cur){
+  const a=(h,t,k)=>'<a'+(cur===k?' class="on"':'')+' href="'+h+'">'+t+'</a>';
+  const any=can('delete_posts')||can('mute')||can('ban');
+  return '<p class="tabs">'+(prof&&prof.is_admin?a('#/admin','управление',''):'')+(any?a('#/reports','жалобы','reports'):'')+(can('mute')?a('#/mod/mutes','муты','mute'):'')+(can('ban')?a('#/mod/bans','баны','ban'):'')+'</p>';
+}
 async function profile(id){
   const r=await sb.from('profiles').select('*,roles(*)').eq('id',id).maybeSingle();
   if(r.error)throw r.error;
@@ -704,7 +716,7 @@ async function profile(id){
   app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="'+avStyle(u)+'">'+(safeUrl(u.avatar_url)?'':esc(String(u.name||'?').slice(0,1).toUpperCase()))+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
     (u.bio?'<p class="bio">'+esc(u.bio)+'</p>':'<p class="mu">пока ничего о себе не написал.</p>')+
     bdgHtml+'<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span><b>'+(+rtg.data||0)+'</b> рейтинг · '+lvl(+rtg.data||0)+'</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
-    (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button></div>':(me?'<div class="row"><button class="btn" data-a="dm" data-i="'+esc(id)+'">сообщения</button></div>':''))+modrow+bgrow+sanrow+'</div></div>'+edit+
+    (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button>'+renameBtn(u)+'<button class="btn" data-a="out">выйти</button></div>':(me?'<div class="row"><button class="btn" data-a="dm" data-i="'+esc(id)+'">сообщения</button></div>':''))+modrow+bgrow+sanrow+'</div></div>'+edit+
     '<h2>комментарии</h2>'+(cerr?'<div class="warn"><b>комментарии недоступны</b>'+esc(cerr)+'</div>':'<form id="pcf"><textarea id="pcb" rows="3" maxlength="1000" placeholder="написать участнику" required></textarea>'+tools('pcb')+'<button class="btn p">отправить</button></form>'+clist);
   app.dataset.u=id;
   if(own){
@@ -921,7 +933,7 @@ async function modPanel(kind){
   if(ids.length){const x=await sb.from('profiles').select('id,name').in('id',ids);(x.data||[]).forEach(y=>nm[y.id]=y.name)}
   const lnk=id=>'<a href="#/u/'+esc(id)+'">'+esc(nm[id]||'удалён')+'</a>';
   const kinds={mute:'мут',unmute:'снят мут',ban:'бан',unban:'снят бан'};
-  const tabs='<p class="tabs">'+(can('mute')?'<a class="'+(k==='mute'?'on':'')+'" href="#/mod/mutes">муты</a>':'')+(can('ban')?'<a class="'+(k==='ban'?'on':'')+'" href="#/mod/bans">баны</a>':'')+'</p>';
+  const tabs=modTabs(k);
   app.innerHTML='<h1>'+(k==='ban'?'панель банов':'панель мутов')+'</h1>'+tabs+
     '<h2>'+(k==='ban'?'забанить':'замутить')+'</h2><div class="row"><input id="msq" placeholder="найти участника по нику"></div><div id="msr"></div>'+
     '<form id="msf" data-k="'+k+'"><div id="msel" class="mu">никто не выбран</div><div class="row"><select id="mdur"><option value="10">10 минут</option><option value="60">1 час</option><option value="1440" selected>1 день</option><option value="10080">7 дней</option><option value="43200">30 дней</option><option value="-1">навсегда</option></select><input id="mrs" maxlength="200" placeholder="причина"><button class="btn p">применить</button></div></form>'+
@@ -987,7 +999,7 @@ document.addEventListener('click',async e=>{
   }
   else if(a==='emailf'){const f=$('#ef');f.hidden=!f.hidden;if(!f.hidden)$('#em').focus()}
   else if(a==='out'){await sb.auth.signOut();await auth();route()}
-  else if(a==='rename'){const n=prompt('новое имя (2-24 символа)',prof?prof.name:'');if(n){const r=await sb.rpc('set_name',{n});if(r.error)return alert(r.error.message);await auth();route()}}
+  else if(a==='rename'){const n=prompt('новое имя (2-24 символа). менять можно раз в 7 дней',prof?prof.name:'');if(n){const r=await sb.rpc('set_name',{n});if(r.error)return alert(r.error.message);await auth();route()}}
   else if(a==='cm'){
     const w=b.closest('article').querySelector('.cwrap');
     if(w.firstChild){w.innerHTML='';return}
