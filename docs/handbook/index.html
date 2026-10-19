@@ -1,1 +1,773 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>справочник cloudos</title>
+<meta name="description" content="пошаговая установка cloudos: разметка диска, stage 3, ядро, limine, настройка системы, ошибки и решения">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'><path d='M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z' fill='%233b5fa8'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=9">
+<link rel="stylesheet" href="handbook.css?v=1">
+<link rel="stylesheet" href="../theme.css?v=5">
+<script>(function(){var m=null;try{m=localStorage.getItem('hbmode')}catch(e){}document.documentElement.setAttribute('data-mode',m==='bios'?'bios':'uefi')})()</script>
+<script src="../theme.js?v=6"></script>
+<script src="../gate.js?v=2"></script>
+</head>
+<body>
+<header class="top">
+<a class="brand" href="../" aria-label="cloudos"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z" fill="url(#g)"/></svg>cloudos<span>справочник</span></a>
+<nav class="hl"><a class="gh" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>главная</span></a><a class="gh on" aria-current="page" href="../handbook/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>справочник</span></a><a class="gh" href="../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg><span>новое</span></a><a class="gh" href="../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>форум</span></a><a class="gh" href="../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>релизы</span></a></nav>
+</header>
+<div class="layout">
+<nav class="toc" aria-label="содержание">
+<div class="tmode" role="group" aria-label="режим загрузки"><span class="tl">режим загрузки</span><div class="seg2"><button type="button" data-m="uefi">uefi</button><button type="button" data-m="bios">bios</button></div></div>
+<button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>поиск</span><kbd>ctrl k</kbd></button>
+<details open><summary>содержание</summary>
+<ol><li class="tg">установка</li><li><a href="#about">1. о cloudos</a><ol><li><a href="#s1-1">1.1 что нужно</a></li><li><a href="#s1-2">1.2 что внутри stage 3</a></li><li><a href="#s1-3">1.3 чего в системе нет</a></li><li><a href="#s1-4">1.4 порядок установки</a></li><li><a href="#s1-5">1.5 как пользоваться справочником</a></li></ol></li><li><a href="#prep">2. подготовка</a><ol><li><a href="#s2-1">2.1 дата и время</a></li><li><a href="#s2-2">2.2 диски</a></li><li><a href="#s2-3">2.3 сеть</a></li><li><a href="#s2-4">2.4 если сайты не открываются</a></li></ol></li><li><a href="#disk">3. диск и файловые системы</a><ol><li><a href="#s3-1">3.1 разметка</a></li><li><a href="#s3-2">3.2 файловые системы</a></li><li><a href="#s3-3">3.3 монтирование</a></li><li><a href="#s3-4">3.4 пример схемы</a></li><li><a href="#s3-5">3.5 проверка</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 проверка(можно пропустить)</a></li><li><a href="#s4-2">4.2 распаковка</a></li><li><a href="#s4-3">4.3 скачивание</a></li><li><a href="#s4-4">4.4 после распаковки</a></li></ol></li><li><a href="#chroot">5. вход в chroot</a><ol><li><a href="#s5-1">5.1 что делают команды</a></li><li><a href="#s5-2">5.2 приглашение</a></li><li><a href="#s5-3">5.3 войти повторно</a></li><li><a href="#s5-4">5.4 выход</a></li></ol></li><li><a href="#conf">6. настройка сборки</a><ol><li><a href="#s6-1">6.1 локали</a></li><li><a href="#s6-2">6.2 флаги сборки</a></li><li><a href="#s6-3">6.3 параллельная сборка</a></li><li><a href="#s6-4">6.4 gcc 15 и ошибки сборки</a></li></ol></li><li><a href="#kernel">7. ядро</a><ol><li><a href="#s7-1">7.1 что включить в menuconfig</a></li><li><a href="#s7-2">7.2 что делают команды сборки</a></li><li><a href="#s7-3">7.3 зеркала ядра</a></li><li><a href="#s7-4">7.4 другая версия ядра</a></li></ol></li><li><a href="#boot">8. загрузчик</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 проверка перед перезагрузкой</a></li><li><a href="#s8-5">8.5 запись в nvram (только uefi, по желанию)</a></li><li><a href="#s8-6">8.6 несколько ядер</a></li></ol></li><li><a href="#final">9. завершение</a><ol><li><a href="#s9-1">9.1 проверка служб</a></li><li><a href="#s9-2">9.2 первая загрузка</a></li></ol></li><li class="tg">после установки</li><li><a href="#first">10. первая загрузка</a><ol><li><a href="#s10-1">10.1 вход</a></li><li><a href="#s10-2">10.2 пользователь и doas</a></li><li><a href="#s10-3">10.3 имя компьютера</a></li><li><a href="#s10-4">10.4 часовой пояс</a></li><li><a href="#s10-5">10.5 сеть</a></li><li><a href="#s10-6">10.6 службы openrc</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. пакеты и cloudpkg</a><ol><li><a href="#s11-1">11.1 команды</a></li><li><a href="#s11-2">11.2 как проходит установка</a></li><li><a href="#s11-3">11.3 примеры</a></li><li><a href="#s11-4">11.4 если пакет не собрался</a></li></ol></li><li><a href="#maint">12. обслуживание</a><ol><li><a href="#s12-1">12.1 обновление пакетов</a></li><li><a href="#s12-2">12.2 обновление ядра</a></li><li><a href="#s12-3">12.3 резервная копия</a></li><li><a href="#s12-4">12.4 очистка места</a></li></ol></li><li><a href="#next">13. что дальше</a><ol><li><a href="#s13-1">13.1 другие локали</a></li><li><a href="#s13-2">13.2 помощь и обратная связь</a></li></ol></li><li class="tg">помощь</li><li><a href="#errors">14. ошибки и решения</a><ol><li><a href="#s14-1">14.1 live iso, сеть и время</a></li><li><a href="#s14-2">14.2 разметка и файловые системы</a></li><li><a href="#s14-3">14.3 скачивание и распаковка</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 сборка пакетов</a></li><li><a href="#s14-6">14.6 ядро</a></li><li><a href="#s14-7">14.7 загрузка</a></li><li><a href="#s14-8">14.8 после загрузки</a></li><li><a href="#s14-9">14.9 аварийный вход в систему</a></li><li><a href="#s14-10">14.10 как сообщить об ошибке</a></li></ol></li><li><a href="#cheat">15. шпаргалка</a><ol><li><a href="#s15-1">15.1 диски</a></li><li><a href="#s15-2">15.2 сеть</a></li><li><a href="#s15-3">15.3 система</a></li><li><a href="#s15-4">15.4 файлы и архивы</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. вопросы и ответы</a></li><li class="tg">приложения</li><li><a href="#appa">приложение а. имена дисков</a></li><li><a href="#appb">приложение б. btrfs с подтомами</a></li><li><a href="#appc">приложение в. словарь</a></li></ol></details>
+</nav>
+<main id="cloud">
+<h1>cloudos справочник</h1>
+<p class="lead">установка cloudos 1.0 на x86_64. </p>
+<h2 id="about">1. о cloudos</h2>
+<p>cloudos это минимальный linux, который ты собираешь сам. после установки в системе только консоль.</p>
+<table><tr><th>параметр</th><th>значение</th></tr>
+<tr><td>архитектура</td><td>x86_64</td></tr>
+<tr><td>libc</td><td>glibc</td></tr>
+<tr><td>init</td><td>openrc</td></tr>
+<tr><td>ядро</td><td>ванильное с kernel.org</td></tr>
+<tr><td>загрузчик</td><td>limine</td></tr>
+<tr><td>файловые системы</td><td>ext4 и btrfs</td></tr>
+<tr><td>пакеты</td><td>только из исходников, команда <code>cloudpkg</code></td></tr></table>
+<div class="note"><b>заметка</b>handbook рассчитан на тех, кто готов разбираться. скриптов и  автоустановки нет.</div>
+<h3 id="s1-1">1.1 что нужно</h3>
+<div class="sc"><table><tr><th>что</th><th>ориентир</th></tr>
+<tr><td>процессор</td><td>x86_64. arm не поддерживается</td></tr>
+<tr><td>озу</td><td>от 2 гб, для сборки ядра и пакетов лучше 4 гб и больше</td></tr>
+<tr><td>диск</td><td>от 10 гб, под сборку пакетов лучше 20 гб и больше</td></tr>
+<tr><td>загрузка</td><td>uefi или старый bios</td></tr>
+<tr><td>сеть</td><td>проводная, адрес по dhcp</td></tr>
+<tr><td>носитель</td><td>флешка с live iso cloudos</td></tr></table></div>
+<p>цифры примерные, жёстких проверок нет.</p>
+<h3 id="s1-2">1.2 что внутри stage 3</h3>
+<p>stage 3 собран с нуля по lfs 12.4 (sysv-вариант) и дополнен всем, что нужно для установки и сборки пакетов. версии указаны для cloudos 1.0.</p>
+<div class="sc"><table><tr><th>часть</th><th>что внутри</th></tr>
+<tr><td>инструментарий</td><td>gcc 15.2.0, glibc 2.42, binutils 2.45, python 3.13.7</td></tr>
+<tr><td>init</td><td>openrc 0.63, <code>/sbin/init</code> указывает на <code>openrc-init</code></td></tr>
+<tr><td>устройства и консоль</td><td>udev, agetty на tty1</td></tr>
+<tr><td>журнал</td><td>sysklogd</td></tr>
+<tr><td>сеть</td><td>dhcpcd 10.1.0, curl 8.15.0, git 2.51.0, ca-certificates</td></tr>
+<tr><td>права</td><td>opendoas 6.8.2 вместо sudo</td></tr>
+<tr><td>редактор</td><td>nano 8.4</td></tr>
+<tr><td>диски</td><td>dosfstools 4.2, btrfs-progs 6.16.1, ext4 из e2fsprogs</td></tr>
+<tr><td>загрузка</td><td>dracut-ng для initramfs. ядра и загрузчика в stage 3 нет</td></tr></table></div>
+<h3 id="s1-3">1.3 чего в системе нет</h3>
+<ul>
+<li>графики и окружений рабочего стола. после установки только консоль</li>
+<li>man-страниц. справка это этот справочник и ключ <code>--help</code></li>
+<li>ssh-сервера и фаервола</li>
+<li>sudo. вместо него doas</li>
+<li>пользователей кроме root, локалей и swap. их создаёшь сам</li>
+<li>загрузчика и ядра. ядро собираешь, загрузчик ставишь через пакетный менеджер</li>
+</ul>
+<h3 id="s1-4">1.4 порядок установки</h3>
+<ol class="steps">
+<li><a href="#prep">загрузись с live iso</a>, проверь сеть и режим загрузки</li>
+<li><a href="#disk">размеч диск</a> и создай файловые системы</li>
+<li><a href="#stage">скачай и распакуй stage 3</a></li>
+<li><a href="#chroot">зайди в chroot</a> и <a href="#conf">настрой сборку</a></li>
+<li><a href="#kernel">собери ядро</a></li>
+<li><a href="#boot">сделай initramfs, fstab и поставь limine</a></li>
+<li><a href="#final">задай пароль, включи службы</a> и перезагрузись</li>
+<li><a href="#first">настрой систему после первой загрузки</a></li>
+</ol>
+<h3 id="s1-5">1.5 как пользоваться справочником</h3>
+<p>в левой панели сверху переключатель <b>uefi</b> и <b>bios</b>. выбери свой режим, и в справочнике останутся только нужные команды. выбор запоминается в браузере.</p>
+<p>поиск открывается кнопкой в шапке или клавишами <kbd>ctrl</kbd> + <kbd>k</kbd>. у каждого блока с командой справа сверху кнопка копирования.</p>
+<p>в командах встречаются заглушки, их надо заменить на свои значения:</p>
+<div class="sc"><table><tr><th>заглушка</th><th>что подставить</th></tr>
+<tr><td><code>/dev/sda</code>, <code>/dev/sda1</code>, <code>/dev/sda2</code></td><td>свой диск и разделы из <code>lsblk</code>. у nvme имена другие, смотри <a href="#appa">приложение а</a></td></tr>
+<tr><td><code>ROOT_UUID</code></td><td>uuid корневого раздела из <code>blkid</code></td></tr>
+<tr><td><code>ESP_UUID</code>, <code>BOOT_UUID</code></td><td>uuid раздела /boot из <code>blkid</code></td></tr>
+<tr><td><code>6.18.10</code></td><td>версия ядра, если собираешь другую</td></tr></table></div>
 
+<h2 id="prep">2. подготовка</h2>
+<p>загрузись с live iso cloudos и проверь сеть.</p>
+<pre><code>dhcpcd
+ping -c1 github.com</code></pre>
+<p>определи режим загрузки. </p>
+<pre><code>[ -d /sys/firmware/efi ] &amp;&amp; echo uefi || echo bios</code></pre>
+<h3 id="s2-1">2.1 дата и время</h3>
+<p>если дата в системе неверная, https-сертификаты не пройдут проверку и скачивание будет падать с непонятными ошибками. проверь дату:</p>
+<pre><code>date</code></pre>
+<p>если она сильно отличается от настоящей, выставь вручную (формат год-месяц-день час:минуты:секунды):</p>
+<pre><code>date -s "YYYY-MM-DD HH:MM:SS"</code></pre>
+<h3 id="s2-2">2.2 диски</h3>
+<p>посмотри диски и разделы. нужное имя диска дальше подставляется везде вместо <code>/dev/sda</code>.</p>
+<pre><code>lsblk -f</code></pre>
+<p>sata и usb диски называются <code>sda</code>, <code>sdb</code>, nvme это <code>nvme0n1</code>, виртуальные <code>vda</code>. узнать, какой из них флешка с live iso, можно по размеру.</p>
+<div class="warn"><b>ВАЖНО</b>не перепутай диск. команды разметки и форматирования необратимо стирают данные.</div>
+<h3 id="s2-3">2.3 сеть</h3>
+<p>проверь, что интерфейс виден и получил адрес:</p>
+<pre><code>ip link
+ip addr</code></pre>
+<p>если адреса нет, запусти dhcpcd ещё раз для нужного интерфейса (имя смотри в <code>ip link</code>):</p>
+<pre><code>dhcpcd eth0</code></pre>
+<p>из коробки настроена только проводная сеть. wifi в live iso не настраивается.</p>
+<h3 id="s2-4">2.4 если сайты не открываются</h3>
+<p>github, kernel.org и некоторые зеркала могут быть недоступны из твоей сети. тогда скачай файл на другом устройстве и перенеси на флешку:</p>
+<pre><code>mkdir -p /mnt/usb
+mount /dev/sdb1 /mnt/usb
+ls /mnt/usb</code></pre>
+<p>вместо <code>/dev/sdb1</code> подставь раздел своей второй флешки из <code>lsblk</code>. для ядра есть зеркала, смотри <a href="#s7-3">7.3</a>.</p>
+
+<h2 id="disk">3. диск и файловые системы</h2>
+<h3 id="s3-1">3.1 разметка</h3>
+<pre><code>cfdisk /dev/sda</code></pre>
+<div class="sc"><table><tr><th>режим</th><th>таблица</th><th>разделы</th></tr>
+<tr class="m-uefi"><td>uefi</td><td>gpt</td><td>sda1 512 мб, тип efi system. sda2 остальное</td></tr>
+<tr class="m-bios"><td>bios</td><td>dos</td><td>sda1 512 мб, флаг bootable, это /boot. sda2 остальное</td></tr></table></div>
+<div class="warn"><b>ВАЖНО</b>все данные на диске сотруться (только на том, который ты выбрал) </div>
+<h3 id="s3-2">3.2 файловые системы</h3>
+<div class="m-uefi"><p>для uefi раздел /boot форматируется в fat32:</p>
+<pre><code>mkfs.fat -F32 /dev/sda1</code></pre></div>
+<div class="m-bios"><p>для bios раздел /boot всегда fat32:</p>
+<pre><code>mkfs.fat -F32 /dev/sda1</code></pre></div>
+<p>корневой раздел форматируй в ext4:</p>
+<pre><code>mkfs.ext4 /dev/sda2</code></pre>
+<p>или в btrfs:</p>
+<pre><code>mkfs.btrfs /dev/sda2</code></pre>
+<h3 id="s3-3">3.3 монтирование</h3>
+<pre><code>mkdir -p /mnt/cloudos
+mount /dev/sda2 /mnt/cloudos
+mkdir -p /mnt/cloudos/boot
+mount /dev/sda1 /mnt/cloudos/boot</code></pre>
+<h3 id="s3-4">3.4 пример схемы</h3>
+<div class="m-uefi sc"><table><tr><th>раздел</th><th>размер</th><th>тип</th><th>точка монтирования</th><th>файловая система</th></tr>
+<tr><td>sda1</td><td>512 мб</td><td>efi system</td><td>/boot</td><td>fat32</td></tr>
+<tr><td>sda2</td><td>остальное</td><td>linux filesystem</td><td>/</td><td>ext4 или btrfs</td></tr></table></div>
+<div class="m-bios sc"><table><tr><th>раздел</th><th>размер</th><th>флаг</th><th>точка монтирования</th><th>файловая система</th></tr>
+<tr><td>sda1</td><td>512 мб</td><td>bootable</td><td>/boot</td><td>fat32</td></tr>
+<tr><td>sda2</td><td>остальное</td><td>-</td><td>/</td><td>ext4 или btrfs</td></tr></table></div>
+<p>если нужен swap-раздел, сделай его третьим, а не первым. подробнее про swap в <a href="#s10-7">10.7</a>. swap можно сделать и файлом уже после установки, тогда отдельный раздел не нужен.</p>
+<h3 id="s3-5">3.5 проверка</h3>
+<p>убедись, что всё смонтировано как надо:</p>
+<pre><code>lsblk -f
+findmnt /mnt/cloudos
+findmnt /mnt/cloudos/boot</code></pre>
+<p>корень должен быть на втором разделе, <code>/boot</code> на первом. если одна из команд ничего не вывела, раздел не смонтирован.</p>
+<div class="note"><b>заметка</b>если корень на btrfs и ты хочешь подтома, смотри <a href="#appb">приложение б</a> до монтирования.</div>
+
+<h2 id="stage">4. stage 3</h2>
+<p>stage 3 это готовая базовая система cloudos без ядра и загрузчика. файлы лежат в разделе releases репозитория.</p>
+<p><a href="https://github.com/wh1laye/cloudos-repo/releases">github.com/wh1laye/cloudos-repo/releases</a></p>
+<pre><code>cloudos-stage3-1.0-x86_64.tar.xz
+cloudos-stage3-1.0-x86_64.tar.xz.sha256
+</code></pre>
+<h3 id="s4-1">4.1 проверка(можно пропустить)</h3>
+<pre><code>sha256sum -c cloudos-stage3-1.0-x86_64.tar.xz.sha256
+</code></pre>
+<h3 id="s4-2">4.2 распаковка</h3>
+<pre><code>tar xpvf cloudos-stage3-1.0-x86_64.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
+<h3 id="s4-3">4.3 скачивание</h3>
+<p>скачивай прямо на корневой раздел, в live-системе мало места в памяти:</p>
+<pre><code>cd /mnt/cloudos
+curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/cloudos/cloudos-stage3-1.0-x86_64.tar.xz
+curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/cloudos/cloudos-stage3-1.0-x86_64.tar.xz.sha256</code></pre>
+<p>потом сделай проверку из <a href="#s4-1">4.1</a> и распаковку из <a href="#s4-2">4.2</a>. распаковку запускай из той же папки, где лежит архив.</p>
+<h3 id="s4-4">4.4 после распаковки</h3>
+<p>архив больше не нужен, удали его, чтобы не занимал место:</p>
+<pre><code>rm /mnt/cloudos/cloudos-stage3-1.0-x86_64.tar.xz*
+ls /mnt/cloudos</code></pre>
+<p>в списке должны быть <code>bin</code>, <code>boot</code>, <code>etc</code>, <code>usr</code>, <code>var</code> и другие системные папки. если папка пустая, архив распаковался не туда.</p>
+<div class="note"><b>заметка</b>архив можно всегда скачать вручную со страницы <a href="../releases/">релизов</a> и положить на диск через флешку.</div>
+
+<h2 id="chroot">5. вход в chroot</h2>
+<pre><code>mount --types proc /proc /mnt/cloudos/proc
+mount --rbind /sys /mnt/cloudos/sys
+mount --make-rslave /mnt/cloudos/sys
+mount --rbind /dev /mnt/cloudos/dev
+mount --make-rslave /mnt/cloudos/dev
+cp --dereference /etc/resolv.conf /mnt/cloudos/etc/
+chroot /mnt/cloudos /bin/bash
+source /etc/profile</code></pre>
+<h3 id="s5-1">5.1 что делают команды</h3>
+<div class="sc"><table><tr><th>команда</th><th>зачем</th></tr>
+<tr><td><code>mount --types proc</code></td><td>даёт системе в chroot доступ к информации о процессах</td></tr>
+<tr><td><code>mount --rbind /sys</code>, <code>/dev</code></td><td>пробрасывает устройства и sysfs из live-системы внутрь</td></tr>
+<tr><td><code>--make-rslave</code></td><td>чтобы размонтирование внутри chroot не затронуло live-систему</td></tr>
+<tr><td><code>cp --dereference /etc/resolv.conf</code></td><td>переносит настройки dns, без них внутри chroot не будет имён сайтов</td></tr>
+<tr><td><code>chroot /mnt/cloudos /bin/bash</code></td><td>делает /mnt/cloudos корнем и запускает в нём bash</td></tr>
+<tr><td><code>source /etc/profile</code></td><td>подтягивает пути и переменные окружения cloudos</td></tr></table></div>
+<h3 id="s5-2">5.2 приглашение</h3>
+<p>чтобы не забыть, что ты в chroot, поменяй приглашение:</p>
+<pre><code>export PS1="(cloudos chroot) $PS1"</code></pre>
+<h3 id="s5-3">5.3 войти повторно</h3>
+<p>если ты перезагрузил live iso или вышел из chroot, снова смонтируй разделы и повтори вход. архив заново распаковывать не нужно:</p>
+<pre><code>mount /dev/sda2 /mnt/cloudos
+mount /dev/sda1 /mnt/cloudos/boot
+mount --types proc /proc /mnt/cloudos/proc
+mount --rbind /sys /mnt/cloudos/sys
+mount --make-rslave /mnt/cloudos/sys
+mount --rbind /dev /mnt/cloudos/dev
+mount --make-rslave /mnt/cloudos/dev
+cp --dereference /etc/resolv.conf /mnt/cloudos/etc/
+chroot /mnt/cloudos /bin/bash
+source /etc/profile</code></pre>
+<p>так же заходишь в систему для починки, если она перестала грузиться, смотри <a href="#s14-9">14.9</a>.</p>
+<h3 id="s5-4">5.4 выход</h3>
+<pre><code>exit
+umount -R /mnt/cloudos</code></pre>
+<p>если размонтирование пишет <code>target is busy</code>, закрой все окна терминала, где ты был в chroot, и повтори.</p>
+
+<h2 id="conf">6. настройка сборки</h2>
+<p>флаги сборки задаются в одном файле, <code>/etc/cloudpkg/make.conf</code>:</p>
+<pre><code>CC="gcc"
+CFLAGS="-O2 -march=native"
+MAKEOPTS="-j$(nproc)"
+USE=""</code></pre>
+<p>для clang поставь <code>CC="clang"</code>. потом обнови список рецептов:</p>
+<pre><code>cloudpkg sync</code></pre>
+<h3 id="s6-1">6.1 локали</h3>
+<pre><code>echo "en_US.UTF-8 UTF-8" &gt; /etc/locale.gen
+localedef -i en_US -f UTF-8 en_US.UTF-8
+echo "LANG=en_US.UTF-8" &gt; /etc/locale.conf</code></pre>
+<h3 id="s6-2">6.2 флаги сборки</h3>
+<div class="sc"><table><tr><th>параметр</th><th>что значит</th></tr>
+<tr><td><code>CC</code></td><td>компилятор: <code>gcc</code> или <code>clang</code></td></tr>
+<tr><td><code>CFLAGS</code></td><td>флаги компиляции. <code>-O2</code> это обычная оптимизация</td></tr>
+<tr><td><code>-march=native</code></td><td>код под процессор этой машины. быстрее, но не запустится на более старом процессоре</td></tr>
+<tr><td><code>-march=x86-64</code></td><td>универсальный код, запустится на любом x86_64</td></tr>
+<tr><td><code>MAKEOPTS</code></td><td>параметры make. <code>-j</code> это число параллельных задач</td></tr>
+<tr><td><code>USE</code></td><td>переключатели возможностей пакетов, по умолчанию пусто</td></tr></table></div>
+<p>если собираешь на той же машине, где будешь работать, оставь <code>-march=native</code>. если потом перенесёшь диск на другой компьютер, замени на <code>-march=x86-64</code>. сам stage 3 собран с универсальными флагами.</p>
+<h3 id="s6-3">6.3 параллельная сборка</h3>
+<p><code>-j$(nproc)</code> запускает столько задач, сколько у процессора потоков. при малом объёме озу сборка может упасть с сообщением <code>killed</code>. тогда уменьши число:</p>
+<pre><code>MAKEOPTS="-j2"</code></pre>
+<h3 id="s6-4">6.4 gcc 15 и ошибки сборки</h3>
+<p>gcc 15 по умолчанию использует стандарт c23, и некоторые старые пакеты с ним не собираются. типичные признаки: ошибки про <code>bool</code>, <code>true</code>, <code>false</code> или объявления функций без аргументов. в этом случае верни прежний стандарт:</p>
+<pre><code>CC="gcc -std=gnu17"</code></pre>
+<p>меняй значение <code>CC</code> в <code>/etc/cloudpkg/make.conf</code> и повтори установку пакета.</p>
+
+<h2 id="kernel">7. ядро</h2>
+<p>ядро берётся с kernel.org и настраивается вручную </p>
+<pre><code>cd /usr/src
+curl -LO https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.10.tar.xz
+tar xf linux-6.18.10.tar.xz
+cd linux-6.18.10
+make menuconfig
+make -j$(nproc)
+make modules_install
+cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
+<div class="warn"><b>ВАЖНО</b> вам нужно использовать везде имя диска на который вы хотите ставить, узнать можно с помощью команды lsblk(опять же, диск может называться /dev/nvme0n1 /dev/sda /dev/sdb  </div>
+<h3 id="s7-1">7.1 что включить в menuconfig</h3>
+<p>в <code>make menuconfig</code> поиск открывается клавишей <kbd>/</kbd>, там можно найти любую опцию по имени. ядро без нужных драйверов не загрузится, поэтому проверь хотя бы эти пункты. звёздочка <code>[*]</code> значит встроено в ядро, <code>M</code> значит модуль.</p>
+<div class="sc"><table><tr><th>опция</th><th>зачем</th></tr>
+<tr><td><code>DEVTMPFS</code>, <code>DEVTMPFS_MOUNT</code></td><td>каталог /dev, нужен udev</td></tr>
+<tr><td><code>BLK_DEV_INITRD</code></td><td>загрузка с initramfs</td></tr>
+<tr><td><code>RD_GZIP</code>, <code>RD_XZ</code>, <code>RD_ZSTD</code></td><td>распаковка initramfs. включи все три, чтобы не гадать, как его сжал dracut</td></tr>
+<tr><td><code>EXT4_FS</code>, <code>BTRFS_FS</code></td><td>корневая файловая система. включай <b>встроенно</b>, не модулем</td></tr>
+<tr><td><code>VFAT_FS</code>, <code>FAT_FS</code>, <code>NLS_CODEPAGE_437</code>, <code>NLS_ISO8859_1</code></td><td>раздел /boot на fat32</td></tr>
+<tr><td><code>TMPFS</code>, <code>PROC_FS</code>, <code>SYSFS</code></td><td>базовые виртуальные файловые системы</td></tr>
+<tr><td><code>BLK_DEV_NVME</code></td><td>nvme диски</td></tr>
+<tr><td><code>ATA</code>, <code>SATA_AHCI</code>, <code>BLK_DEV_SD</code></td><td>sata диски</td></tr>
+<tr><td><code>USB_XHCI_HCD</code>, <code>USB_XHCI_PCI</code>, <code>USB_HID</code></td><td>usb порты и клавиатура</td></tr>
+<tr><td><code>NET</code>, <code>INET</code>, <code>PACKET</code>, <code>UNIX</code></td><td>сеть. без <code>PACKET</code> не заработает dhcpcd</td></tr>
+<tr><td>драйвер сетевой карты</td><td>например <code>E1000E</code> у intel, <code>R8169</code> у realtek. узнай свою карту командой <code>lspci</code> в live iso</td></tr>
+<tr><td><code>INOTIFY_USER</code>, <code>SIGNALFD</code>, <code>TIMERFD</code>, <code>EPOLL</code>, <code>FHANDLE</code></td><td>нужны udev</td></tr>
+<tr><td><code>CGROUPS</code></td><td>нужны openrc</td></tr>
+<tr><td><code>VT</code>, <code>VT_CONSOLE</code>, <code>FRAMEBUFFER_CONSOLE</code>, <code>DRM_SIMPLEDRM</code></td><td>вывод консоли на экран без драйвера видеокарты</td></tr></table></div>
+<div class="note"><b>заметка</b>драйверы видеокарт (amdgpu, i915, nouveau) требуют файлы прошивок <code>firmware</code>, которых в stage 3 нет. без драйвера консоль всё равно работает через <code>DRM_SIMPLEDRM</code>.</div>
+<p>удобный старт: если live iso собран с поддержкой <code>/proc/config.gz</code>, возьми его конфиг за основу и дополни:</p>
+<pre><code>zcat /proc/config.gz &gt; .config
+make olddefconfig
+make menuconfig</code></pre>
+<h3 id="s7-2">7.2 что делают команды сборки</h3>
+<div class="sc"><table><tr><th>команда</th><th>зачем</th></tr>
+<tr><td><code>make menuconfig</code></td><td>настройка ядра, результат пишется в файл <code>.config</code></td></tr>
+<tr><td><code>make -j$(nproc)</code></td><td>сборка ядра, занимает от нескольких минут до часа в зависимости от процессора</td></tr>
+<tr><td><code>make modules_install</code></td><td>ставит модули в <code>/lib/modules/6.18.10</code>, они нужны dracut</td></tr>
+<tr><td><code>cp arch/x86/boot/bzImage</code></td><td>кладёт само ядро в /boot</td></tr></table></div>
+<p>сохрани конфиг и карту символов, они пригодятся при обновлении ядра:</p>
+<pre><code>cp .config /boot/config-6.18.10
+cp System.map /boot/System.map-6.18.10</code></pre>
+<h3 id="s7-3">7.3 зеркала ядра</h3>
+<p>если <code>cdn.kernel.org</code> не открывается, скачай тот же архив с зеркала:</p>
+<pre><code>curl -LO https://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.18.10.tar.xz
+curl -LO https://mirrors.ustc.edu.cn/kernel.org/linux/kernel/v6.x/linux-6.18.10.tar.xz</code></pre>
+<p>пути на зеркалах иногда меняются. если ссылка не работает, открой каталог зеркала в браузере и найди файл вручную.</p>
+<h3 id="s7-4">7.4 другая версия ядра</h3>
+<p>во всех командах замени <code>6.18.10</code> на свою версию. имена файлов в /boot, в initramfs и в limine.conf должны совпадать.</p>
+
+<h2 id="boot">8. загрузчик</h2>
+<h3 id="initramfs">8.1 initramfs</h3>
+<pre><code>cloudpkg install dracut
+dracut --kver 6.18.10 /boot/initramfs-6.18.10.img</code></pre>
+<h3 id="fstab">8.2 fstab</h3>
+<p>uuid разделов покажет <code>blkid</code>. файл <code>/etc/fstab</code> для uefi:</p>
+<pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
+UUID=ESP_UUID   /boot  vfat  defaults  0 2</code></pre>
+<p>для bios:</p>
+<pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
+UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
+<p>если корень на btrfs, замени <code>ext4</code> в первой строке на <code>btrfs</code>.</p>
+<h3 id="limine">8.3 limine</h3>
+<pre><code>cloudpkg install limine</code></pre>
+<p>файл <code>/boot/limine.conf</code> одинаковый для uefi и bios:</p>
+<pre><code>timeout: 5
+
+/CloudOS
+    protocol: linux
+    path: boot():/vmlinuz-6.18.10
+    cmdline: root=UUID=ROOT_UUID rw
+    module_path: boot():/initramfs-6.18.10.img</code></pre>
+<div class="m-uefi"><p>установка для uefi:</p>
+<pre><code>mkdir -p /boot/EFI/BOOT
+cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre></div>
+<div class="m-bios"><p>установка для bios, ставь на раздел:</p>
+<pre><code>cp /usr/share/limine/limine-bios.sys /boot/
+limine bios-install /dev/ (твое имя диска /dev/sda1 /dev/sdb1 /dev/nvme0n1)</code></pre></div>
+<h3 id="s8-4">8.4 проверка перед перезагрузкой</h3>
+<p>посмотри, что лежит в <code>/boot</code>:</p>
+<pre><code>ls -l /boot</code></pre>
+<div class="m-uefi"><p>должны быть <code>vmlinuz-6.18.10</code>, <code>initramfs-6.18.10.img</code>, <code>limine.conf</code> и папка <code>EFI/BOOT</code> с файлом <code>BOOTX64.EFI</code>.</p></div>
+<div class="m-bios"><p>должны быть <code>vmlinuz-6.18.10</code>, <code>initramfs-6.18.10.img</code>, <code>limine.conf</code> и <code>limine-bios.sys</code>.</p></div>
+<p>сверь uuid в конфигах с настоящими:</p>
+<pre><code>blkid
+grep UUID /etc/fstab /boot/limine.conf</code></pre>
+<p>uuid корневого раздела в <code>limine.conf</code> и в <code>fstab</code> должны совпадать с выводом <code>blkid</code>. большинство неудачных первых загрузок из-за опечатки здесь.</p>
+<h3 id="s8-5">8.5 запись в nvram (только uefi, по желанию)</h3>
+<div class="m-bios"><p>в режиме bios этот шаг не нужен.</p></div>
+<div class="m-uefi">
+<p>файл <code>BOOTX64.EFI</code> в <code>EFI/BOOT</code> прошивка находит сама, и этого достаточно. если хочешь отдельный пункт в меню загрузки, создай его командой из live iso (не из chroot):</p>
+<pre><code>efibootmgr --create --disk /dev/sda --part 1 --loader '\EFI\BOOT\BOOTX64.EFI' --label CloudOS</code></pre>
+<p>для диска nvme: <code>--disk /dev/nvme0n1 --part 1</code>. в настройках прошивки отключи secure boot, limine без подписи не загрузится.</p>
+</div>
+<h3 id="s8-6">8.6 несколько ядер</h3>
+<p>перед обновлением ядра добавь второй пункт в <code>/boot/limine.conf</code>, а старый не удаляй. если новое ядро не загрузится, выберешь старое в меню:</p>
+<pre><code>timeout: 5
+
+/CloudOS
+    protocol: linux
+    path: boot():/vmlinuz-NEW
+    cmdline: root=UUID=ROOT_UUID rw
+    module_path: boot():/initramfs-NEW.img
+
+/CloudOS (старое ядро)
+    protocol: linux
+    path: boot():/vmlinuz-OLD
+    cmdline: root=UUID=ROOT_UUID rw
+    module_path: boot():/initramfs-OLD.img</code></pre>
+<p>вместо <code>NEW</code> и <code>OLD</code> подставь версии ядер.</p>
+
+<h2 id="final">9. завершение</h2>
+<p>включи сеть и журнал, задай пароль root:</p>
+<pre><code>cloudpkg install dhcpcd
+cloudpkg install syslog-ng
+rc-update add dhcpcd default
+rc-update add syslog-ng default
+passwd</code></pre>
+<p>выйди из chroot, размонтируй и перезагрузись:</p>
+<pre><code>exit
+umount -R /mnt/cloudos
+reboot</code></pre>
+<div class="note"><b>заметка</b>других пользователей cloudos не создаёт!), пользователя и doas добавишь сам.</div>
+<div class="note"><b>важно</b>диск на который вы ставите может быть как NVME так и sda sdb, тестил на 7 5700X(AMD) RX9060XT(AMD) и на sda(не nvme limine выбрал изза скорости и удобства, поддержка grub ВОЗМОЖНО будет. </div>
+<h3 id="s9-1">9.1 проверка служб</h3>
+<p>перед перезагрузкой убедись, что службы добавлены:</p>
+<pre><code>rc-update show</code></pre>
+<p>в списке должны быть <code>dhcpcd</code> и журнал в уровне <code>default</code>.</p>
+<h3 id="s9-2">9.2 первая загрузка</h3>
+<p>после перезагрузки вытащи флешку и выбери диск в меню загрузки, если он не выбрался сам. появится приглашение <code>login:</code> на tty1. введи <code>root</code> и пароль, который задал командой <code>passwd</code>.</p>
+<p>дальше настрой систему, это описано в главе <a href="#first">10</a>.</p>
+
+<h2 id="first">10. первая загрузка</h2>
+<p>после установки в системе только консоль и root. эта глава про то, что стоит сделать сразу.</p>
+<h3 id="s10-1">10.1 вход</h3>
+<p>на приглашении <code>login:</code> введи <code>root</code> и пароль, который задал в главе <a href="#final">9</a>. если не задал, пароль пустой, задай его сразу командой <code>passwd</code>.</p>
+<h3 id="s10-2">10.2 пользователь и doas</h3>
+<p>работать под root постоянно небезопасно. создай обычного пользователя и разреши группе wheel пользоваться doas:</p>
+<pre><code>grep wheel /etc/group || groupadd wheel
+useradd -m -G wheel -s /bin/bash имя
+passwd имя
+echo "permit :wheel" &gt; /etc/doas.conf
+chmod 0400 /etc/doas.conf</code></pre>
+<p>вместо <code>имя</code> подставь своё. дальше команды от root выполняются так:</p>
+<pre><code>doas cloudpkg install nano</code></pre>
+<p>если не хочешь вводить пароль каждый раз, замени правило на <code>permit nopass :wheel</code>. это удобнее, но безопаснее с паролем.</p>
+<h3 id="s10-3">10.3 имя компьютера</h3>
+<pre><code>echo "cloudos" &gt; /etc/hostname
+echo 'hostname="cloudos"' &gt; /etc/conf.d/hostname
+rc-update add hostname boot</code></pre>
+<p>если служба <code>hostname</code> уже включена, последняя команда сообщит об этом и ничего не изменит. вместо <code>cloudos</code> можно написать любое имя латиницей.</p>
+<h3 id="s10-4">10.4 часовой пояс</h3>
+<pre><code>ls /usr/share/zoneinfo
+ln -sfv /usr/share/zoneinfo/Europe/Moscow /etc/localtime</code></pre>
+<p>вместо <code>Europe/Moscow</code> выбери свой пояс из списка. проверь результат командой <code>date</code>.</p>
+<h3 id="s10-5">10.5 сеть</h3>
+<p>dhcpcd получает адрес и dns автоматически. проверь:</p>
+<pre><code>ip addr
+ping -c1 github.com</code></pre>
+<p>если нужен постоянный адрес, добавь в <code>/etc/dhcpcd.conf</code> (имя интерфейса смотри в <code>ip link</code>):</p>
+<pre><code>interface eth0
+static ip_address=192.168.1.50/24
+static routers=192.168.1.1
+static domain_name_servers=1.1.1.1 8.8.8.8</code></pre>
+<p>потом перезапусти службу: <code>rc-service dhcpcd restart</code>.</p>
+<h3 id="s10-6">10.6 службы openrc</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>rc-status</code></td><td>показывает запущенные службы</td></tr>
+<tr><td><code>rc-update show</code></td><td>показывает службы и уровни, на которых они включены</td></tr>
+<tr><td><code>rc-update add имя default</code></td><td>включает службу при загрузке</td></tr>
+<tr><td><code>rc-update del имя default</code></td><td>выключает автозапуск</td></tr>
+<tr><td><code>rc-service имя start</code></td><td>запускает службу сейчас</td></tr>
+<tr><td><code>rc-service имя stop</code></td><td>останавливает</td></tr>
+<tr><td><code>rc-service имя restart</code></td><td>перезапускает</td></tr>
+<tr><td><code>rc-service имя status</code></td><td>показывает состояние</td></tr></table></div>
+<p>уровни: <code>boot</code> для того, что нужно на раннем этапе (например имя компьютера), <code>default</code> для обычных служб.</p>
+<h3 id="s10-7">10.7 swap</h3>
+<p>swap не обязателен, но помогает при сборке больших пакетов на малом объёме озу. проще всего файлом.</p>
+<p>для ext4:</p>
+<pre><code>dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile</code></pre>
+<p>для btrfs (подходит и для ext4):</p>
+<pre><code>btrfs filesystem mkswapfile --size 4g /swapfile
+swapon /swapfile</code></pre>
+<p>чтобы swap включался сам, добавь строку в <code>/etc/fstab</code>:</p>
+<pre><code>/swapfile  none  swap  defaults  0 0</code></pre>
+<p>swap-раздел делают так: <code>mkswap /dev/sda3</code>, <code>swapon /dev/sda3</code> и строка в fstab с <code>UUID=...</code> вместо <code>/swapfile</code>.</p>
+
+<h2 id="cpkg">11. пакеты и cloudpkg</h2>
+<p>все пакеты в cloudos собираются из исходников. этим занимается менеджер <code>cloudpkg</code>. рецепты для него берутся из gentoo.</p>
+<div class="warn"><b>ВАЖНО</b>cloudpkg в разработке. подписей пакетов пока нет, целостность исходников проверяется только по sha256 из рецепта. часть рецептов может потребовать правок.</div>
+<h3 id="s11-1">11.1 команды</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>cloudpkg sync</code></td><td>обновляет список рецептов</td></tr>
+<tr><td><code>cloudpkg install имя</code></td><td>собирает и ставит пакет вместе с зависимостями</td></tr>
+<tr><td><code>cloudpkg remove имя</code></td><td>удаляет пакет</td></tr>
+<tr><td><code>cloudpkg upgrade</code></td><td>обновляет установленные пакеты до новых версий</td></tr>
+<tr><td><code>cloudpkg clean</code></td><td>чистит скачанные исходники и временные файлы сборки</td></tr></table></div>
+<h3 id="s11-2">11.2 как проходит установка</h3>
+<ol class="steps">
+<li>читается рецепт пакета и список его зависимостей</li>
+<li>исходники скачиваются через curl</li>
+<li>проверяется sha256</li>
+<li>пакет собирается с твоими флагами из <code>/etc/cloudpkg/make.conf</code></li>
+<li>результат ставится в систему</li>
+</ol>
+<p>сборка занимает время и место на диске. большие пакеты вроде компиляторов собираются долго, это нормально.</p>
+<h3 id="s11-3">11.3 примеры</h3>
+<pre><code>cloudpkg sync
+cloudpkg install limine
+cloudpkg install dracut
+cloudpkg install nano</code></pre>
+<h3 id="s11-4">11.4 если пакет не собрался</h3>
+<ol class="steps">
+<li>прочитай последние строки с <code>error</code></li>
+<li>если ошибка про стандарт си, поставь <code>CC="gcc -std=gnu17"</code>, смотри <a href="#s6-4">6.4</a></li>
+<li>если сборка падает с <code>killed</code>, уменьши <code>-j</code> в <code>MAKEOPTS</code></li>
+<li>попробуй <code>cloudpkg sync</code> и повтори, возможно рецепт уже исправлен</li>
+<li>напиши на <a href="../forum/">форум</a> в раздел с вопросами, приложив последние 10-15 строк вывода</li>
+</ol>
+
+<h2 id="maint">12. обслуживание</h2>
+<h3 id="s12-1">12.1 обновление пакетов</h3>
+<pre><code>cloudpkg sync
+cloudpkg upgrade
+cloudpkg clean</code></pre>
+<h3 id="s12-2">12.2 обновление ядра</h3>
+<p>новую версию ставят рядом со старой. старое ядро не удаляй, пока не убедишься, что новое загружается.</p>
+<ol class="steps">
+<li>скачай и распакуй новое ядро в <code>/usr/src</code>, как в главе <a href="#kernel">7</a></li>
+<li>возьми старый конфиг за основу и подтяни новые опции:</li>
+</ol>
+<pre><code>cd /usr/src/linux-НОВАЯ
+cp /boot/config-СТАРАЯ .config
+make olddefconfig</code></pre>
+<ol class="steps" start="3">
+<li>собери и установи:</li>
+</ol>
+<pre><code>make -j$(nproc)
+make modules_install
+cp arch/x86/boot/bzImage /boot/vmlinuz-НОВАЯ
+cp .config /boot/config-НОВАЯ
+dracut --kver НОВАЯ /boot/initramfs-НОВАЯ.img</code></pre>
+<ol class="steps" start="4">
+<li>добавь второй пункт в <code>/boot/limine.conf</code>, как в <a href="#s8-6">8.6</a>, и перезагрузись</li>
+<li>если всё работает, старые файлы можно удалить:</li>
+</ol>
+<pre><code>rm /boot/vmlinuz-СТАРАЯ /boot/initramfs-СТАРАЯ.img /boot/config-СТАРАЯ
+rm -r /lib/modules/СТАРАЯ</code></pre>
+<p>вместо <code>НОВАЯ</code> и <code>СТАРАЯ</code> подставь версии, например <code>6.18.10</code>.</p>
+<h3 id="s12-3">12.3 резервная копия</h3>
+<p>полная копия системы одним архивом с теми же ключами, что и при распаковке stage 3. сохраняй её на другой диск или флешку:</p>
+<pre><code>tar cpf /mnt/usb/cloudos-backup.tar.xz --xattrs-include='*.*' --numeric-owner --one-file-system -I xz /</code></pre>
+<p>для btrfs есть снимки, они быстрее и занимают меньше места, смотри <a href="#appb">приложение б</a>.</p>
+<h3 id="s12-4">12.4 очистка места</h3>
+<pre><code>df -h
+cloudpkg clean
+du -sh /usr/src/* /var/* 2&gt;/dev/null</code></pre>
+<p>старые папки ядер в <code>/usr/src</code> можно удалять, если у тебя сохранены их конфиги в <code>/boot</code>.</p>
+
+<h2 id="next">13. что дальше</h2>
+<p>cloudos ставится минимальным. всё остальное ты добавляешь по мере необходимости.</p>
+<div class="sc"><table><tr><th>что</th><th>как</th></tr>
+<tr><td>звук</td><td>pipewire ставишь сам через <code>cloudpkg install</code>, если для него есть рецепт</td></tr>
+<tr><td>графика и окружение</td><td>по умолчанию нет. ставь компоненты вручную из рецептов, нужны будут драйвер видеокарты в ядре и файлы прошивок</td></tr>
+<tr><td>ssh-сервер</td><td>по умолчанию нет. поставь пакет и включи службу через <code>rc-update add</code></td></tr>
+<tr><td>фаервол</td><td>по умолчанию нет</td></tr>
+<tr><td>другие редакторы и утилиты</td><td>через <code>cloudpkg install</code></td></tr>
+<tr><td>man-страницы</td><td>не ставятся. используй <code>команда --help</code> и этот справочник</td></tr></table></div>
+<h3 id="s13-1">13.1 другие локали</h3>
+<p>в главе <a href="#s6-1">6.1</a> создана одна локаль. чтобы добавить ещё, например русскую:</p>
+<pre><code>localedef -i ru_RU -f UTF-8 ru_RU.UTF-8
+echo "LANG=ru_RU.UTF-8" &gt; /etc/locale.conf</code></pre>
+<p>в консоли ядра кириллица может отображаться некорректно без отдельного шрифта, поэтому для консоли безопаснее оставить <code>en_US.UTF-8</code>.</p>
+<h3 id="s13-2">13.2 помощь и обратная связь</h3>
+<ul>
+<li>вопросы и обсуждение на <a href="../forum/">форуме</a></li>
+<li>новые версии и образы на странице <a href="../releases/">релизов</a></li>
+<li>ошибки и предложения в <a href="https://github.com/wh1laye/cloudos-repo/issues">issues на github</a></li>
+</ul>
+
+<h2 id="errors">14. ошибки и решения</h2>
+<p>нажми на текст ошибки, чтобы увидеть причину и что делать. если твоей ошибки нет в списке, воспользуйся поиском.</p>
+<h3 id="s14-1">14.1 live iso, сеть и время</h3>
+<details class="err"><summary>ping: connect: network is unreachable или нет ответа</summary><div>
+<p>интерфейс не получил адрес. проверь кабель, потом:</p>
+<pre><code>ip link
+dhcpcd eth0</code></pre>
+<p>имя интерфейса возьми из <code>ip link</code>. если интерфейса нет в списке, в live iso нет драйвера твоей сетевой карты.</p></div></details>
+<details class="err"><summary>ping по ip работает, по имени нет (temporary failure in name resolution)</summary><div>
+<p>не настроен dns. в live iso он берётся от dhcpcd. внутри chroot проверь, что был выполнен <code>cp --dereference /etc/resolv.conf /mnt/cloudos/etc/</code>.</p></div></details>
+<details class="err"><summary>certificate verify failed или ssl certificate problem</summary><div>
+<p>почти всегда неверная дата. выставь её по <a href="#s2-1">2.1</a> и повтори. если не помогает, скачай файл на другом устройстве и перенеси на флешке.</p></div></details>
+<details class="err"><summary>curl: (6) could not resolve host или (7) failed to connect</summary><div>
+<p>нет сети или сайт недоступен из твоей сети. проверь <code>ping</code> на другой сайт. для github и kernel.org см. <a href="#s2-4">2.4</a>.</p></div></details>
+<h3 id="s14-2">14.2 разметка и файловые системы</h3>
+<details class="err"><summary>mount: unknown filesystem type или wrong fs type</summary><div>
+<p>раздел не отформатирован или ты указал не тот раздел. проверь <code>lsblk -f</code>: в колонке <code>FSTYPE</code> должна быть файловая система. если пусто, повтори форматирование из <a href="#s3-2">3.2</a>.</p></div></details>
+<details class="err"><summary>mount: special device does not exist</summary><div>
+<p>неверное имя раздела. nvme называются <code>nvme0n1p1</code>, а не <code>nvme0n11</code>, смотри <a href="#appa">приложение а</a>.</p></div></details>
+<details class="err"><summary>mkfs.fat: command not found или mkfs.btrfs: command not found</summary><div>
+<p>в live iso нет нужной утилиты. dosfstools и btrfs-progs должны входить в образ, проверь, что у тебя актуальный iso.</p></div></details>
+<details class="err"><summary>cfdisk не видит диск</summary><div>
+<p>в live iso нет драйвера контроллера диска. для виртуалки выбери sata или nvme диск, а не нестандартный контроллер.</p></div></details>
+<h3 id="s14-3">14.3 скачивание и распаковка</h3>
+<details class="err"><summary>sha256sum: WARNING: 1 computed checksum did NOT match</summary><div>
+<p>файл скачался не полностью или повреждён. удали архив и скачай заново. убедись, что <code>.sha256</code> файл и архив лежат в одной папке и имена совпадают.</p></div></details>
+<details class="err"><summary>tar: Unexpected EOF in archive или xz: file format not recognized</summary><div>
+<p>архив обрезан. скачай заново и сравни размер с тем, что указан на странице <a href="../releases/">релизов</a>.</p></div></details>
+<details class="err"><summary>tar: No space left on device</summary><div>
+<p>на разделе не хватило места или архив лежал в оперативной памяти live iso. скачивай прямо в <code>/mnt/cloudos</code>, как в <a href="#s4-3">4.3</a>, и проверь размер раздела командой <code>df -h /mnt/cloudos</code>.</p></div></details>
+<h3 id="s14-4">14.4 chroot</h3>
+<details class="err"><summary>chroot: failed to run command '/bin/bash': No such file or directory</summary><div>
+<p>stage 3 не распакован или распакован в другую папку. выполни <code>ls /mnt/cloudos/bin</code>. если папка пуста, вернись к <a href="#s4-2">4.2</a>.</p></div></details>
+<details class="err"><summary>mount: /mnt/cloudos/proc: mount point does not exist</summary><div>
+<p>то же самое, stage 3 не распакован, поэтому папок proc, sys, dev ещё нет.</p></div></details>
+<details class="err"><summary>внутри chroot не открываются сайты</summary><div>
+<p>скопируй dns-настройки ещё раз: <code>cp --dereference /etc/resolv.conf /mnt/cloudos/etc/</code> (выполняется вне chroot).</p></div></details>
+<details class="err"><summary>umount: target is busy</summary><div>
+<p>какая-то программа ещё использует файлы. закрой все терминалы, где ты был в chroot, и повтори <code>umount -R /mnt/cloudos</code>.</p></div></details>
+<h3 id="s14-5">14.5 сборка пакетов</h3>
+<details class="err"><summary>ошибки про bool, true, false, prototype</summary><div>
+<p>старый пакет не собирается со стандартом c23, который включён в gcc 15. добавь в make.conf <code>CC="gcc -std=gnu17"</code>, смотри <a href="#s6-4">6.4</a>.</p></div></details>
+<details class="err"><summary>gcc: fatal error: Killed signal terminated program cc1</summary><div>
+<p>не хватило оперативной памяти. уменьши <code>-j</code> в <code>MAKEOPTS</code> или включи swap, смотри <a href="#s10-7">10.7</a>.</p></div></details>
+<details class="err"><summary>sha256 не совпадает при скачивании исходников</summary><div>
+<p>файл на источнике мог измениться или скачался с ошибкой. запусти <code>cloudpkg sync</code> и повтори установку. если ошибка повторяется, напиши об этом на форуме.</p></div></details>
+<details class="err"><summary>No space left on device во время сборки</summary><div>
+<p>кончилось место. выполни <code>cloudpkg clean</code> и проверь <code>df -h</code>. под сборку пакетов лучше иметь 20 гб и больше.</p></div></details>
+<h3 id="s14-6">14.6 ядро</h3>
+<details class="err"><summary>make menuconfig: Unable to find the ncurses libraries</summary><div>
+<p>в системе нет ncurses с заголовками. поставь пакет через cloudpkg или используй <code>make config</code> (долго) либо перенеси готовый <code>.config</code>.</p></div></details>
+<details class="err"><summary>dracut: Cannot find module directory /lib/modules/6.18.10</summary><div>
+<p>ты не выполнил <code>make modules_install</code> или версия в команде не совпадает с собранной. выполни <code>ls /lib/modules</code> и используй имеющуюся версию.</p></div></details>
+<details class="err"><summary>make: *** No rule to make target ...</summary><div>
+<p>ты запустил make не в папке с исходниками ядра. перейди в <code>/usr/src/linux-6.18.10</code> и повтори.</p></div></details>
+<h3 id="s14-7">14.7 загрузка</h3>
+<details class="err"><summary>после перезагрузки no bootable device или сразу загружается другая система</summary><div>
+<div class="m-uefi"><p>проверь, что есть файл <code>/boot/EFI/BOOT/BOOTX64.EFI</code>, что раздел 1 имеет тип efi system и что в прошивке выключен secure boot. выбери диск в меню загрузки вручную (обычно клавиша <kbd>f12</kbd> или <kbd>esc</kbd> при включении).</p></div>
+<div class="m-bios"><p>проверь, что раздел /boot помечен флагом <code>bootable</code> и что выполнена команда <code>limine bios-install</code> для нужного диска или раздела. в настройках прошивки включи режим legacy или csm.</p></div></div></details>
+<details class="err"><summary>limine показывает меню, но ядро не стартует (file not found)</summary><div>
+<p>путь в <code>limine.conf</code> не совпадает с именем файла. проверь <code>ls /boot</code> и поправь <code>path:</code> и <code>module_path:</code>.</p></div></details>
+<details class="err"><summary>Kernel panic: VFS: Unable to mount root fs on unknown-block</summary><div>
+<p>ядро не нашло корневой раздел. самые частые причины:</p>
+<ul>
+<li>неверный <code>ROOT_UUID</code> в <code>cmdline</code>, сверь с <code>blkid</code></li>
+<li>в ядре нет драйвера диска (<code>BLK_DEV_NVME</code> или <code>SATA_AHCI</code>) или файловой системы (<code>EXT4_FS</code>, <code>BTRFS_FS</code>)</li>
+<li>не указан <code>module_path</code> с initramfs в <code>limine.conf</code></li>
+</ul>
+<p>загрузись с live iso, зайди в chroot (<a href="#s14-9">14.9</a>), поправь и пересобери.</p></div></details>
+<details class="err"><summary>dracut: ждёт root устройство и падает в консоль dracut</summary><div>
+<p>initramfs не нашёл корень. сверь uuid, а также проверь, что в ядре встроены драйвер диска и файловая система корня.</p></div></details>
+<details class="err"><summary>пустой экран после выбора пункта limine</summary><div>
+<p>скорее всего консоль не выводится. включи в ядре <code>DRM_SIMPLEDRM</code>, <code>FRAMEBUFFER_CONSOLE</code>, <code>VT_CONSOLE</code>, смотри <a href="#s7-1">7.1</a>. драйверы видеокарт без файлов прошивок могут давать чёрный экран, тогда не включай их.</p></div></details>
+<details class="err"><summary>Kernel panic: No init found</summary><div>
+<p>корень смонтировался, но в нём нет <code>/sbin/init</code>. проверь, что stage 3 распакован полностью и что раздел с корнем именно тот.</p></div></details>
+<h3 id="s14-8">14.8 после загрузки</h3>
+<details class="err"><summary>login incorrect</summary><div>
+<p>неверный пароль или он не был задан. загрузись с live iso, зайди в chroot и задай пароль заново командой <code>passwd</code>.</p></div></details>
+<details class="err"><summary>нет сети после загрузки</summary><div>
+<p>проверь <code>rc-status</code>. если <code>dhcpcd</code> не запущен, выполни <code>rc-update add dhcpcd default</code> и <code>rc-service dhcpcd start</code>. если интерфейса нет в <code>ip link</code>, в ядре нет драйвера карты.</p></div></details>
+<details class="err"><summary>doas: Operation not permitted</summary><div>
+<p>пользователь не в группе wheel или нет файла <code>/etc/doas.conf</code>. проверь по <a href="#s10-2">10.2</a>: <code>id имя</code> должен показать группу <code>wheel</code>.</p></div></details>
+<details class="err"><summary>setlocale: LC_ALL: cannot change locale</summary><div>
+<p>указанная локаль не создана. создай её командой <code>localedef</code> из <a href="#s6-1">6.1</a> или смени <code>LANG</code> на существующую.</p></div></details>
+<details class="err"><summary>служба не запускается: rc-service ... start</summary><div>
+<p>посмотри вывод команды и журнал. список службы с ошибкой даёт <code>rc-status --crashed</code>.</p></div></details>
+<h3 id="s14-9">14.9 аварийный вход в систему</h3>
+<p>если система не загружается, почти всегда её можно починить из live iso:</p>
+<ol class="steps">
+<li>загрузись с live iso и проверь сеть</li>
+<li>смонтируй разделы и войди в chroot по <a href="#s5-3">5.3</a></li>
+<li>исправь конфиг, пересобери initramfs командой <code>dracut --kver 6.18.10 /boot/initramfs-6.18.10.img --force</code> или поправь <code>limine.conf</code></li>
+<li>выйди из chroot, размонтируй и перезагрузись</li>
+</ol>
+<h3 id="s14-10">14.10 как сообщить об ошибке</h3>
+<p>чтобы тебе быстро помогли, приложи:</p>
+<ul>
+<li>какую главу справочника ты выполнял и на какой команде всё упало</li>
+<li>строки с <code>error</code> или последние 10-15 строк вывода</li>
+<li>режим загрузки (uefi или bios), имя диска (sda или nvme) и файловую систему корня</li>
+<li>вывод <code>dmesg | tail -50</code>, если ошибка после загрузки</li>
+</ul>
+
+<h2 id="cheat">15. шпаргалка</h2>
+<h3 id="s15-1">15.1 диски</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>lsblk -f</code></td><td>диски, разделы, файловые системы, uuid</td></tr>
+<tr><td><code>blkid</code></td><td>uuid и тип файловой системы разделов</td></tr>
+<tr><td><code>fdisk -l</code></td><td>таблицы разделов подробно</td></tr>
+<tr><td><code>cfdisk /dev/sda</code></td><td>разметка диска меню</td></tr>
+<tr><td><code>mount /dev/sda2 /mnt/cloudos</code></td><td>смонтировать раздел</td></tr>
+<tr><td><code>umount -R /mnt/cloudos</code></td><td>размонтировать всё рекурсивно</td></tr>
+<tr><td><code>findmnt</code></td><td>что и куда смонтировано</td></tr>
+<tr><td><code>df -h</code></td><td>свободное место на разделах</td></tr>
+<tr><td><code>du -sh папка</code></td><td>сколько занимает папка</td></tr></table></div>
+<h3 id="s15-2">15.2 сеть</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>ip link</code></td><td>список сетевых интерфейсов</td></tr>
+<tr><td><code>ip addr</code></td><td>адреса интерфейсов</td></tr>
+<tr><td><code>ip route</code></td><td>маршруты и шлюз</td></tr>
+<tr><td><code>dhcpcd eth0</code></td><td>получить адрес на интерфейсе</td></tr>
+<tr><td><code>ping -c1 github.com</code></td><td>проверить связь и имена</td></tr>
+<tr><td><code>curl -LO ссылка</code></td><td>скачать файл</td></tr></table></div>
+<h3 id="s15-3">15.3 система</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>dmesg | tail -50</code></td><td>последние сообщения ядра</td></tr>
+<tr><td><code>free -h</code></td><td>память и swap</td></tr>
+<tr><td><code>top</code></td><td>процессы и загрузка</td></tr>
+<tr><td><code>uname -r</code></td><td>версия запущенного ядра</td></tr>
+<tr><td><code>lsmod</code></td><td>загруженные модули ядра</td></tr>
+<tr><td><code>lspci</code></td><td>устройства pci, видно сетевую и видеокарту</td></tr>
+<tr><td><code>date</code></td><td>дата и время</td></tr>
+<tr><td><code>reboot</code>, <code>poweroff</code></td><td>перезагрузка и выключение</td></tr></table></div>
+<h3 id="s15-4">15.4 файлы и архивы</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>tar xf архив.tar.xz</code></td><td>распаковать архив</td></tr>
+<tr><td><code>tar cf архив.tar.xz папка -I xz</code></td><td>создать архив xz</td></tr>
+<tr><td><code>cp -a что куда</code></td><td>копировать с сохранением прав</td></tr>
+<tr><td><code>nano файл</code></td><td>открыть редактор. сохранить <kbd>ctrl</kbd> + <kbd>o</kbd>, выйти <kbd>ctrl</kbd> + <kbd>x</kbd></td></tr>
+<tr><td><code>grep текст файл</code></td><td>найти строку в файле</td></tr></table></div>
+<h3 id="s15-5">15.5 btrfs</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>btrfs filesystem df /</code></td><td>занятое место по типам данных</td></tr>
+<tr><td><code>btrfs subvolume list /</code></td><td>список подтомов</td></tr>
+<tr><td><code>btrfs subvolume snapshot -r источник цель</code></td><td>снимок подтома только для чтения</td></tr>
+<tr><td><code>btrfs scrub start /</code></td><td>проверка целостности данных</td></tr></table></div>
+<h3 id="s15-6">15.6 cloudpkg</h3>
+<div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
+<tr><td><code>cloudpkg sync</code></td><td>обновить рецепты</td></tr>
+<tr><td><code>cloudpkg install имя</code></td><td>поставить пакет</td></tr>
+<tr><td><code>cloudpkg remove имя</code></td><td>удалить пакет</td></tr>
+<tr><td><code>cloudpkg upgrade</code></td><td>обновить пакеты</td></tr>
+<tr><td><code>cloudpkg clean</code></td><td>очистить кеш сборки</td></tr></table></div>
+<p>службы openrc собраны в таблице <a href="#s10-6">10.6</a>.</p>
+
+<h2 id="faq">16. вопросы и ответы</h2>
+<details class="err"><summary>почему cloudos собирается вручную, нет установщика</summary><div>
+<p>идея в том, чтобы понимать каждый шаг и контролировать систему целиком. установка проходит как в gentoo: разметка, stage 3, chroot, ядро, загрузчик.</p></div></details>
+<details class="err"><summary>какой загрузчик используется и будет ли grub</summary><div>
+<p>сейчас только limine, он выбран за скорость и удобство настройки. поддержка grub возможно появится позже.</p></div></details>
+<details class="err"><summary>почему openrc, а не systemd</summary><div>
+<p>openrc простой, без лишних зависимостей и подходит для минимальной системы. init в cloudos это <code>openrc-init</code>.</p></div></details>
+<details class="err"><summary>можно ли установить на arm</summary><div>
+<p>нет, поддерживается только x86_64, в режимах uefi и старый bios.</p></div></details>
+<details class="err"><summary>какой пароль у root после распаковки stage 3</summary><div>
+<p>пароль пустой. задай его в <a href="#final">главе 9</a> командой <code>passwd</code>.</p></div></details>
+<details class="err"><summary>почему нет man-страниц</summary><div>
+<p>они убраны, чтобы система была меньше. справка это справочник и ключ <code>--help</code> у команд.</p></div></details>
+<details class="err"><summary>можно ли использовать sudo</summary><div>
+<p>вместо него используется doas, он проще и меньше. правила лежат в <code>/etc/doas.conf</code>, смотри <a href="#s10-2">10.2</a>.</p></div></details>
+<details class="err"><summary>как поставить графическую среду</summary><div>
+<p>по умолчанию её нет. её нужно собрать вручную через cloudpkg, а в ядре понадобится драйвер видеокарты с файлами прошивок, смотри <a href="#next">главу 13</a>.</p></div></details>
+<details class="err"><summary>какая лицензия</summary><div>
+<p>собственные части проекта под mit, нужно сохранять имя автора и название проекта. рецепты пакетов основаны на gentoo и остаются под gpl-2.</p></div></details>
+<details class="err"><summary>где взять live iso</summary><div>
+<p>образ готовится после выхода stage 3 и появится на странице <a href="../releases/">релизов</a>. до этого можно использовать любой live linux с набором утилит из <a href="#s1-1">1.1</a>.</p></div></details>
+<details class="err"><summary>что значит beta в названии релиза</summary><div>
+<p>система рабочая, но проект молодой: cloudpkg и живой iso ещё в разработке. подробнее на странице <a href="../news/">нового</a>.</p></div></details>
+
+<h2 id="appa">приложение а. имена дисков</h2>
+<p>имя раздела зависит от типа диска. у nvme перед номером раздела добавляется буква <code>p</code>.</p>
+<div class="sc"><table><tr><th>тип диска</th><th>диск</th><th>первый раздел</th><th>второй раздел</th></tr>
+<tr><td>sata, usb</td><td><code>/dev/sda</code></td><td><code>/dev/sda1</code></td><td><code>/dev/sda2</code></td></tr>
+<tr><td>nvme</td><td><code>/dev/nvme0n1</code></td><td><code>/dev/nvme0n1p1</code></td><td><code>/dev/nvme0n1p2</code></td></tr>
+<tr><td>виртуальный (virtio)</td><td><code>/dev/vda</code></td><td><code>/dev/vda1</code></td><td><code>/dev/vda2</code></td></tr></table></div>
+<p>если ты ставишь на nvme, замени <code>/dev/sda1</code> на <code>/dev/nvme0n1p1</code> и <code>/dev/sda2</code> на <code>/dev/nvme0n1p2</code> во всех командах.</p>
+<h2 id="appb">приложение б. btrfs с подтомами</h2>
+<p>необязательно. подтома позволяют делать быстрые снимки системы и откатываться. описано для схемы из <a href="#s3-4">3.4</a>.</p>
+<h3>б.1 создание подтомов</h3>
+<pre><code>mkfs.btrfs /dev/sda2
+mount /dev/sda2 /mnt/cloudos
+btrfs subvolume create /mnt/cloudos/@
+btrfs subvolume create /mnt/cloudos/@home
+umount /mnt/cloudos</code></pre>
+<h3>б.2 монтирование</h3>
+<pre><code>mount -o subvol=@ /dev/sda2 /mnt/cloudos
+mkdir -p /mnt/cloudos/boot /mnt/cloudos/home
+mount /dev/sda1 /mnt/cloudos/boot
+mount -o subvol=@home /dev/sda2 /mnt/cloudos/home</code></pre>
+<h3>б.3 fstab и загрузчик</h3>
+<pre><code>UUID=ROOT_UUID  /      btrfs  subvol=@,noatime      0 0
+UUID=ROOT_UUID  /home  btrfs  subvol=@home,noatime  0 0
+UUID=ESP_UUID   /boot  vfat   defaults              0 2</code></pre>
+<p>в <code>/boot/limine.conf</code> в строке <code>cmdline</code> добавь параметр подтома:</p>
+<pre><code>cmdline: root=UUID=ROOT_UUID rootflags=subvol=@ rw</code></pre>
+<h3>б.4 снимок системы</h3>
+<pre><code>mkdir -p /mnt/top
+mount -o subvolid=5 /dev/sda2 /mnt/top
+btrfs subvolume snapshot -r /mnt/top/@ /mnt/top/@-snap-1
+umount /mnt/top</code></pre>
+<p>снимок лежит рядом с подтомом <code>@</code> и не занимает места, пока данные не изменятся.</p>
+<h2 id="appc">приложение в. словарь</h2>
+<div class="sc"><table><tr><th>слово</th><th>что значит</th></tr>
+<tr><td>stage 3</td><td>готовая базовая система в одном архиве, без ядра и загрузчика</td></tr>
+<tr><td>chroot</td><td>запуск оболочки с другим корневым каталогом. так ты работаешь в новой системе, пока загружен live iso</td></tr>
+<tr><td>uefi</td><td>современная прошивка. загружается с раздела esp</td></tr>
+<tr><td>bios (legacy, csm)</td><td>старая прошивка, загрузчик пишется в начало диска или раздела</td></tr>
+<tr><td>esp</td><td>efi system partition, раздел fat32 с загрузчиком для uefi</td></tr>
+<tr><td>initramfs</td><td>маленькая временная система, которая загружается перед основной и находит корневой раздел</td></tr>
+<tr><td>uuid</td><td>уникальный идентификатор раздела, не меняется при смене имени диска</td></tr>
+<tr><td>limine</td><td>загрузчик, который читает <code>/boot/limine.conf</code></td></tr>
+<tr><td>dracut</td><td>программа, которая собирает initramfs</td></tr>
+<tr><td>openrc</td><td>система инициализации и управления службами</td></tr>
+<tr><td>doas</td><td>запуск команд от root, замена sudo</td></tr>
+<tr><td>рецепт</td><td>описание пакета для cloudpkg: откуда взять исходники и как собрать</td></tr>
+<tr><td>подтом (subvolume)</td><td>отдельная ветка файловой системы btrfs, для которой можно делать снимки</td></tr></table></div>
+
+<footer>
+<p>© 2026 wh1laye. лицензия mit. </p>
+<p>рецепты пакетов основаны на gentoo (gpl-2).</p>
+<p><a href="https://github.com/wh1laye/cloudos-repo">github.com/wh1laye/cloudos-repo</a></p>
+</footer>
+</main>
+</div>
+<script src="hb.js?v=1"></script>
+</body>
+</html>
