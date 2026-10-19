@@ -3,7 +3,7 @@
   var TK='uits';
   function touch(){try{localStorage.setItem(TK,String(Date.now()))}catch(e){}}
   function ts(){try{return +localStorage.getItem(TK)||0}catch(e){return 0}}
-  function get(){try{return localStorage.getItem(K)==='gray'?'gray':'light'}catch(e){return 'light'}}
+  function get(){try{return localStorage.getItem(K)==='light'?'light':'gray'}catch(e){return 'gray'}}
   function set(t){h.setAttribute('data-theme',t);try{localStorage.setItem(K,t)}catch(e){}}
   h.setAttribute('data-theme',get());
   function fire(){if(window.CloudTheme&&typeof window.CloudTheme.onChange==='function')window.CloudTheme.onChange()}

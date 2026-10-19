@@ -4,178 +4,111 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>cloudos</title>
+<meta name="description" content="cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine, пакеты из исходников. после установки только консоль.">
+<meta property="og:title" content="cloudos">
+<meta property="og:description" content="cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine, пакеты из исходников. после установки только консоль.">
+<meta property="og:type" content="website">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'><path d='M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z' fill='%233b5fa8'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=8">
-<link rel="stylesheet" href="theme.css?v=4">
-<script src="theme.js?v=5"></script>
+<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="site.css?v=1">
+<link rel="stylesheet" href="theme.css?v=5">
+<script src="theme.js?v=6"></script>
 <script src="gate.js?v=2"></script>
 </head>
 <body>
 <header class="top">
-<a class="brand" href="#top" aria-label="cloudos">
-<svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z" fill="url(#g)"/></svg>
-cloudos<span>справочник</span></a>
-<nav class="hl"><a class="gh on" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>справочник</span></a><a class="gh" href="forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>форум</span></a><a class="gh" href="releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>релизы</span></a></nav>
+<a class="brand" href="./" aria-label="cloudos"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z" fill="url(#g)"/></svg>cloudos</a>
+<nav class="hl"><a class="gh on" aria-current="page" href=""><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>главная</span></a><a class="gh" href="handbook/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>справочник</span></a><a class="gh" href="news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg><span>новое</span></a><a class="gh" href="forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>форум</span></a><a class="gh" href="releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>релизы</span></a></nav>
 </header>
-<div class="layout">
-<nav class="toc" aria-label="содержание">
-<details open><summary>содержание</summary>
-<ol>
-<li><a href="#about">1. о cloudos</a></li>
-<li><a href="#prep">2. подготовка</a></li>
-<li><a href="#disk">3. диск и файловые системы</a></li>
-<li><a href="#stage">4. stage 3</a></li>
-<li><a href="#chroot">5. вход в chroot</a></li>
-<li><a href="#conf">6. настройка сборки</a></li>
-<li><a href="#kernel">7. ядро</a></li>
-<li><a href="#boot">8. загрузчик</a>
-<ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li></ol></li>
-<li><a href="#final">9. завершение</a></li>
-</ol></details>
-</nav>
-<main id="cloud">
-<h1>cloudos справочник</h1>
-<p class="lead">установка cloudos 1.0 на x86_64. </p>
-
-<h2 id="about">1. о cloudos</h2>
-<p>cloudos это минимальный linux, который ты собираешь сам. после установки в системе только консоль.</p>
-<table><tr><th>параметр</th><th>значение</th></tr>
-<tr><td>архитектура</td><td>x86_64</td></tr>
-<tr><td>libc</td><td>glibc</td></tr>
-<tr><td>init</td><td>openrc</td></tr>
-<tr><td>ядро</td><td>ванильное с kernel.org</td></tr>
-<tr><td>загрузчик</td><td>limine</td></tr>
-<tr><td>файловые системы</td><td>ext4 и btrfs</td></tr>
-<tr><td>пакеты</td><td>только из исходников, команда <code>cloudpkg</code></td></tr></table>
-<div class="note"><b>заметка</b>handbook рассчитан на тех, кто готов разбираться. скриптов и  автоустановки нет.</div>
-
-<h2 id="prep">2. подготовка</h2>
-<p>загрузись с live iso cloudos и проверь сеть.</p>
-<pre><code>dhcpcd
-ping -c1 github.com</code></pre>
-<p>определи режим загрузки. </p>
-<pre><code>[ -d /sys/firmware/efi ] &amp;&amp; echo uefi || echo bios</code></pre>
-
-<h2 id="disk">3. диск и файловые системы</h2>
-<h3>3.1 разметка</h3>
-<pre><code>cfdisk /dev/sda</code></pre>
-<div class="sc"><table><tr><th>режим</th><th>таблица</th><th>разделы</th></tr>
-<tr><td>uefi</td><td>gpt</td><td>sda1 512 мб, тип efi system. sda2 остальное</td></tr>
-<tr><td>bios</td><td>dos</td><td>sda1 512 мб, флаг bootable, это /boot. sda2 остальное</td></tr></table></div>
-<div class="warn"><b>ВАЖНО</b>все данные на диске сотруться (только на том, который ты выбрал) </div>
-<h3>3.2 файловые системы</h3>
-<p>для uefi раздел /boot форматируется в fat32:</p>
-<pre><code>mkfs.fat -F32 /dev/sda1</code></pre>
-<p>для bios раздел /boot всегда fat32:</p>
-<pre><code>mkfs.fat -F32 /dev/sda1</code></pre>
-<p>корневой раздел форматируй в ext4:</p>
-<pre><code>mkfs.ext4 /dev/sda2</code></pre>
-<p>или в btrfs:</p>
-<pre><code>mkfs.btrfs /dev/sda2</code></pre>
-<h3>3.3 монтирование</h3>
-<pre><code>mkdir -p /mnt/cloudos
-mount /dev/sda2 /mnt/cloudos
-mkdir -p /mnt/cloudos/boot
-mount /dev/sda1 /mnt/cloudos/boot</code></pre>
-
-<h2 id="stage">4. stage 3</h2>
-<p>stage 3 это готовая базовая система cloudos без ядра и загрузчика. файлы лежат в разделе releases репозитория.</p>
-<p><a href="https://github.com/wh1laye/cloudos-repo/releases">github.com/wh1laye/cloudos-repo/releases</a></p>
-<pre><code>cloudos-stage3-1.0-x86_64.tar.xz
-cloudos-stage3-1.0-x86_64.tar.xz.sha256
-</code></pre>
-<h3>4.1 проверка(можно пропустить)</h3>
-<pre><code>sha256sum -c cloudos-stage3-1.0-x86_64.tar.xz.sha256
-</code></pre>
-<h3>4.2 распаковка</h3>
-<pre><code>tar xpvf cloudos-stage3-1.0-x86_64.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
-
-<h2 id="chroot">5. вход в chroot</h2>
-<pre><code>mount --types proc /proc /mnt/cloudos/proc
-mount --rbind /sys /mnt/cloudos/sys
-mount --make-rslave /mnt/cloudos/sys
-mount --rbind /dev /mnt/cloudos/dev
-mount --make-rslave /mnt/cloudos/dev
-cp --dereference /etc/resolv.conf /mnt/cloudos/etc/
-chroot /mnt/cloudos /bin/bash
-source /etc/profile</code></pre>
-
-<h2 id="conf">6. настройка сборки</h2>
-<p>флаги сборки задаются в одном файле, <code>/etc/cloudpkg/make.conf</code>:</p>
-<pre><code>CC="gcc"
-CFLAGS="-O2 -march=native"
-MAKEOPTS="-j$(nproc)"
-USE=""</code></pre>
-<p>для clang поставь <code>CC="clang"</code>. потом обнови список рецептов:</p>
-<pre><code>cloudpkg sync</code></pre>
-<h3>6.1 локали</h3>
-<pre><code>echo "en_US.UTF-8 UTF-8" &gt; /etc/locale.gen
-localedef -i en_US -f UTF-8 en_US.UTF-8
-echo "LANG=en_US.UTF-8" &gt; /etc/locale.conf</code></pre>
-
-<h2 id="kernel">7. ядро</h2>
-<p>ядро берётся с kernel.org и настраивается вручную </p>
-<pre><code>cd /usr/src
-curl -LO https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.10.tar.xz
-tar xf linux-6.18.10.tar.xz
-cd linux-6.18.10
-make menuconfig
-make -j$(nproc)
-make modules_install
-cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
-<div class="warn"><b>ВАЖНО</b> вам нужно использовать везде имя диска на который вы хотите ставить, узнать можно с помощью команды lsblk(опять же, диск может называться /dev/nvme0n1 /dev/sda /dev/sdb  </div>
-
-<h2 id="boot">8. загрузчик</h2>
-<h3 id="initramfs">8.1 initramfs</h3>
-<pre><code>cloudpkg install dracut
-dracut --kver 6.18.10 /boot/initramfs-6.18.10.img</code></pre>
-<h3 id="fstab">8.2 fstab</h3>
-<p>uuid разделов покажет <code>blkid</code>. файл <code>/etc/fstab</code> для uefi:</p>
-<pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
-UUID=ESP_UUID   /boot  vfat  defaults  0 2</code></pre>
-<p>для bios:</p>
-<pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
-UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
-<p>если корень на btrfs, замени <code>ext4</code> в первой строке на <code>btrfs</code>.</p>
-<h3 id="limine">8.3 limine</h3>
-<pre><code>cloudpkg install limine</code></pre>
-<p>файл <code>/boot/limine.conf</code> одинаковый для uefi и bios:</p>
-<pre><code>timeout: 5
-
-/CloudOS
-    protocol: linux
-    path: boot():/vmlinuz-6.18.10
-    cmdline: root=UUID=ROOT_UUID rw
-    module_path: boot():/initramfs-6.18.10.img</code></pre>
-<p>установка для uefi:</p>
-<pre><code>mkdir -p /boot/EFI/BOOT
-cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre>
-<p>установка для bios, ставь на раздел:</p>
-<pre><code>cp /usr/share/limine/limine-bios.sys /boot/
-limine bios-install /dev/ (твое имя диска /dev/sda1 /dev/sdb1 /dev/nvme0n1)</code></pre>
-
-<h2 id="final">9. завершение</h2>
-<p>включи сеть и журнал, задай пароль root:</p>
-<pre><code>cloudpkg install dhcpcd
-cloudpkg install syslog-ng
-rc-update add dhcpcd default
-rc-update add syslog-ng default
-passwd</code></pre>
-<p>выйди из chroot, размонтируй и перезагрузись:</p>
-<pre><code>exit
-umount -R /mnt/cloudos
-reboot</code></pre>
-<div class="note"><b>заметка</b>других пользователей cloudos не создаёт!), пользователя и doas добавишь сам.</div>
-<div class="note"><b>важно</b>диск на который вы ставите может быть как NVME так и sda sdb, тестил на 7 5700X(AMD) RX9060XT(AMD) и на sda(не nvme limine выбрал изза скорости и удобства, поддержка grub ВОЗМОЖНО будет. </div>
+<main class="lp" id="top">
+<section class="hero">
+<div class="hero-t">
+<p class="eyebrow">cloudos 1.0 beta</p>
+<h1>минимальный linux, который ты собираешь сам</h1>
+<p class="lead">cloudos это независимая система на базе lfs: glibc, openrc и ванильное ядро. после установки в ней только консоль и root, всё остальное ты добавляешь сам из исходников.</p>
+<div class="cta"><a class="btn p" href="handbook/">читать справочник</a><a class="btn" id="dl" href="releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>скачать stage 3</span></a></div>
+<p class="mu small" id="dlinfo">x86_64, uefi и bios, ext4 и btrfs</p>
+</div>
+<pre class="cloud" aria-hidden="true">              ####
+           ##########
+         ##############     ######
+        ################  ##########
+    ######################################
+  ############################################
+ ##############################################
+################################################
+ ##############################################
+   ##########################################</pre>
+</section>
+<section class="sec">
+<h2>из чего состоит</h2>
+<div class="feats">
+<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l8-4 8 4-8 4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg></i><h3>собрана с нуля</h3><p>база lfs 12.4 с glibc. никаких готовых бинарников чужих дистрибутивов.</p></div>
+<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></i><h3>openrc</h3><p>простая система инициализации и служб, без systemd.</p></div>
+<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></i><h3>ванильное ядро</h3><p>ты сам настраиваешь ядро через menuconfig под своё железо.</p></div>
+<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i><h3>limine</h3><p>быстрый загрузчик для uefi и bios, настраивается одним файлом.</p></div>
+<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg></i><h3>ext4 и btrfs</h3><p>на выбор, с поддержкой подтомов и снимков.</p></div>
+<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></i><h3>cloudpkg</h3><p>пакеты только из исходников, рецепты основаны на gentoo.</p></div>
+</div>
+</section>
+<section class="sec">
+<h2>установка в восемь шагов</h2>
+<p class="mu">установка ручная, как в gentoo, без мастеров. каждый шаг подробно описан в справочнике.</p>
+<ol class="flow">
+<li><a href="handbook/#prep"><b>1</b><strong>подготовка</strong><span>live iso, сеть, время</span></a></li>
+<li><a href="handbook/#disk"><b>2</b><strong>диск</strong><span>разметка и файловые системы</span></a></li>
+<li><a href="handbook/#stage"><b>3</b><strong>stage 3</strong><span>скачать и распаковать</span></a></li>
+<li><a href="handbook/#chroot"><b>4</b><strong>chroot</strong><span>вход в новую систему</span></a></li>
+<li><a href="handbook/#kernel"><b>5</b><strong>ядро</strong><span>menuconfig и сборка</span></a></li>
+<li><a href="handbook/#boot"><b>6</b><strong>загрузчик</strong><span>initramfs, fstab, limine</span></a></li>
+<li><a href="handbook/#final"><b>7</b><strong>завершение</strong><span>пароль и службы</span></a></li>
+<li><a href="handbook/#first"><b>8</b><strong>первая загрузка</strong><span>пользователь, имя, сеть, swap</span></a></li>
+</ol>
+</section>
+<section class="sec">
+<h2>как это выглядит</h2>
+<div class="term"><div class="tbar">терминал</div><pre><span class="p">$</span> lsblk -f
+<span class="p">$</span> mount /dev/sda2 /mnt/cloudos
+<span class="p">$</span> tar xpvf cloudos-stage3-1.0-x86_64.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos
+<span class="p">$</span> chroot /mnt/cloudos /bin/bash
+<span class="p">$</span> cloudpkg install limine</pre></div>
+</section>
+<section class="sec two">
+<div><h2>что внутри</h2>
+<ul class="chk">
+<li>gcc, glibc, binutils, python</li>
+<li>openrc, udev, dhcpcd</li>
+<li>opendoas вместо sudo</li>
+<li>curl, git, nano</li>
+<li>dracut, btrfs-progs, dosfstools</li>
+</ul></div>
+<div><h2>чего нет</h2>
+<ul class="no">
+<li>графики и окружений</li>
+<li>man-страниц, есть справочник</li>
+<li>ssh-сервера и фаервола</li>
+<li>arm, только x86_64</li>
+<li>установщика с мастерами</li>
+</ul></div>
+</section>
+<section class="sec">
+<h2>дальше</h2>
+<div class="links">
+<a href="handbook/"><strong>справочник</strong><span>полная установка, ошибки и шпаргалка</span></a>
+<a href="news/"><strong>новое</strong><span>что готово и что в планах</span></a>
+<a href="forum/"><strong>форум</strong><span>вопросы и обсуждение</span></a>
+<a href="releases/"><strong>релизы</strong><span>stage 3 и контрольные суммы</span></a>
+</div>
+</section>
 <footer>
 <p>© 2026 wh1laye. лицензия mit. </p>
 <p>рецепты пакетов основаны на gentoo (gpl-2).</p>
 <p><a href="https://github.com/wh1laye/cloudos-repo">github.com/wh1laye/cloudos-repo</a></p>
 </footer>
 </main>
-</div>
+<script src="site.js?v=1"></script>
 </body>
 </html>

@@ -76,7 +76,9 @@ footer p{margin:0 0 6px}
   .top{padding:0 14px}
 }
 @media(max-width:560px){
+  .hl{gap:0}
   .hl .gh span{display:none}
-  .hl .gh{padding:8px 10px}
+  .hl .gh{padding:8px}
   .brand span{display:none}
+  .brand{font-size:0;gap:0}
 }
