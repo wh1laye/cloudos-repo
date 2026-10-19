@@ -61,8 +61,10 @@ thread=async function(id){
 };
 
 function rowHtml(t){
-  return '<a class="trow" href="#/t/'+t.id+'"><div><strong>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>';
+  const u=window.isUnread&&window.isUnread(t);
+  return '<a class="trow'+(u?' unr':'')+'" href="#/t/'+t.id+'"><div><strong>'+(u?'<i class="ud"></i>':'')+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+(window.tagsHtml?window.tagsHtml(t):'')+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>';
 }
+window.rowHtml=rowHtml;
 
 function sortUi(id){
   const q=$('#q');
@@ -273,5 +275,4 @@ document.addEventListener('click',async e=>{
   }
 });
 
-route();
 })();
