@@ -200,5 +200,187 @@ if(hl){
   b.onclick=open;
   hl.insertBefore(b,hl.firstChild);
 }
+
+var DONE=[];
+try{DONE=JSON.parse(localStorage.getItem('hbdone')||'[]')}catch(e){}
+if(!Array.isArray(DONE))DONE=[];
+function saveDone(){try{localStorage.setItem('hbdone',JSON.stringify(DONE))}catch(e){}}
+var chs=h2s.slice(0,13);
+var ftr=main.querySelector('footer');
+var dbtn={},progBox=null;
+function paintDone(){
+  var n=0;
+  chs.forEach(function(c){
+    var on=DONE.indexOf(c.id)>-1;
+    if(on)n++;
+    var b=dbtn[c.id];
+    if(b){b.classList.toggle('on',on);b.textContent=on?'пройдена':'отметить как пройденную';b.setAttribute('aria-pressed',on?'true':'false')}
+    var a=tocLinks[c.id];
+    if(a&&a.parentElement)a.parentElement.classList.toggle('done',on);
+  });
+  if(progBox){
+    progBox.querySelector('em').textContent=n+' / '+chs.length;
+    progBox.querySelector('b').style.width=(chs.length?Math.round(n*100/chs.length):0)+'%';
+  }
+}
+chs.forEach(function(c,i){
+  var nxt=h2s[i+1]||ftr;
+  var nav=nxt?nxt.previousElementSibling:null;
+  var box=d.createElement('div');
+  box.className='hbd2';
+  var b=d.createElement('button');
+  b.type='button';b.className='btn s';
+  b.onclick=function(){
+    var k=DONE.indexOf(c.id);
+    if(k>-1)DONE.splice(k,1);else DONE.push(c.id);
+    saveDone();paintDone();
+  };
+  box.appendChild(b);
+  dbtn[c.id]=b;
+  main.insertBefore(box,nav&&nav.classList.contains('hbn')?nav:nxt);
+});
+var tocOl=d.querySelector('.toc ol,.toc ul');
+if(tocOl&&chs.length){
+  progBox=d.createElement('div');
+  progBox.className='hbp';
+  progBox.innerHTML='<span>пройдено</span><em></em><i><b></b></i>';
+  tocOl.parentNode.insertBefore(progBox,tocOl);
+}
+paintDone();
+window.addEventListener('storage',function(e){
+  if(e.key==='hbdone'){try{DONE=JSON.parse(e.newValue||'[]')}catch(x){DONE=[]}paintDone()}
+});
+
+var VK='hbvals',V={disk:'',root:'',esp:'',boot:'',kver:'',tz:''};
+try{var vv=JSON.parse(localStorage.getItem(VK)||'{}');for(var vk in V)if(typeof vv[vk]==='string')V[vk]=vv[vk]}catch(e){}
+var VRE={disk:/^[a-z][a-z0-9]{1,15}$/i,root:/^[0-9a-f-]{4,40}$/i,esp:/^[0-9a-f-]{4,40}$/i,boot:/^[0-9a-f-]{4,40}$/i,kver:/^[0-9][0-9a-z._-]{0,20}$/i,tz:/^[A-Za-z][A-Za-z0-9_+\/-]{1,40}$/};
+function okv(k){var x=(V[k]||'').trim();return x&&VRE[k].test(x)?x:''}
+var targets=qa('pre,:not(pre)>code',main);
+targets.forEach(function(el){el.dataset.o=el.innerHTML});
+var SUBRE=/\/dev\/sda(\d?)(?!\w)|\bROOT_UUID\b|\bESP_UUID\b|\bBOOT_UUID\b|\b6\.18\.10\b|Europe\/Moscow/g;
+function subText(s){
+  var disk=okv('disk'),parts=[],last=0,m,hit=false;
+  SUBRE.lastIndex=0;
+  while((m=SUBRE.exec(s))){
+    var v=null,t=m[0];
+    if(t.indexOf('/dev/sda')===0){if(disk)v='/dev/'+disk+(m[1]?(/\d$/.test(disk)?'p':'')+m[1]:'')}
+    else if(t==='ROOT_UUID')v=okv('root')||null;
+    else if(t==='ESP_UUID')v=okv('esp')||null;
+    else if(t==='BOOT_UUID')v=okv('boot')||null;
+    else if(t==='6.18.10')v=okv('kver')||null;
+    else if(t==='Europe/Moscow')v=okv('tz')||null;
+    if(v===null)continue;
+    parts.push(s.slice(last,m.index));
+    parts.push({v:v});
+    last=m.index+t.length;hit=true;
+  }
+  if(!hit)return null;
+  parts.push(s.slice(last));
+  var f=d.createDocumentFragment();
+  parts.forEach(function(p){
+    if(typeof p==='string'){if(p)f.appendChild(d.createTextNode(p))}
+    else{var sp=d.createElement('span');sp.className='sv';sp.textContent=p.v;f.appendChild(sp)}
+  });
+  return f;
+}
+function applyVals(){
+  var any=Object.keys(V).some(function(k){return okv(k)});
+  targets.forEach(function(el){
+    el.innerHTML=el.dataset.o;
+    if(!any)return;
+    var w=d.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),n,list=[];
+    while((n=w.nextNode()))list.push(n);
+    list.forEach(function(t){
+      var f=subText(t.data);
+      if(f)t.parentNode.replaceChild(f,t);
+    });
+  });
+  var vb=d.getElementById('hbvl');
+  if(vb)vb.classList.toggle('on',any);
+}
+var vm=null;
+var VF=[['disk','имя диска','sda'],['root','uuid корня','ROOT_UUID'],['esp','uuid esp','ESP_UUID'],['boot','uuid /boot','BOOT_UUID'],['kver','версия ядра','6.18.10'],['tz','часовой пояс','Europe/Moscow']];
+function vOpen(){
+  if(!vm){
+    vm=d.createElement('div');
+    vm.className='sx';vm.hidden=true;
+    vm.innerHTML='<div class="sxb vmb" role="dialog" aria-label="мои значения"><div class="sxi vmh"><b>мои значения</b></div><div class="vmc"><p class="mu">значения подставляются во все команды справочника. пустое поле оставляет значение по умолчанию.</p>'+VF.map(function(f){return '<label>'+f[1]+'<input type="text" data-k="'+f[0]+'" placeholder="'+f[2]+'" autocomplete="off" autocapitalize="off" spellcheck="false"></label>'}).join('')+'<div class="vmr"><button type="button" class="btn p" data-a="ok">применить</button><button type="button" class="btn" data-a="rs">сбросить</button><button type="button" class="btn" data-a="cl">закрыть</button></div></div></div>';
+    d.body.appendChild(vm);
+    vm.addEventListener('mousedown',function(e){if(e.target===vm)vClose()});
+    vm.addEventListener('click',function(e){
+      var a=e.target.closest&&e.target.closest('[data-a]');
+      if(!a)return;
+      var k=a.getAttribute('data-a');
+      if(k==='cl')vClose();
+      else if(k==='rs'){V={disk:'',root:'',esp:'',boot:'',kver:'',tz:''};vSave();vFill();applyVals()}
+      else if(k==='ok'){qa('input[data-k]',vm).forEach(function(i){V[i.getAttribute('data-k')]=i.value.trim()});vSave();applyVals();vClose()}
+    });
+    vm.addEventListener('keydown',function(e){if(e.key==='Escape')vClose();if(e.key==='Enter'){var b=vm.querySelector('[data-a="ok"]');if(b)b.click()}});
+  }
+  vFill();
+  vm.hidden=false;h.style.overflow='hidden';
+  var f=vm.querySelector('input');if(f)f.focus();
+}
+function vFill(){qa('input[data-k]',vm).forEach(function(i){i.value=V[i.getAttribute('data-k')]||''})}
+function vSave(){try{localStorage.setItem(VK,JSON.stringify(V))}catch(e){}}
+function vClose(){if(vm){vm.hidden=true;h.style.overflow=''}}
+if(hl){
+  var vb=d.createElement('button');
+  vb.type='button';vb.className='gh';vb.id='hbvl';
+  vb.setAttribute('aria-label','мои значения');
+  vb.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg><span>мои значения</span>';
+  vb.onclick=vOpen;
+  hl.insertBefore(vb,hl.firstChild);
+}
+applyVals();
+
+var errs=qa('details.err',main);
+if(errs.length){
+  var STOP={'the':1,'and':1,'for':1,'not':1,'with':1,'that':1,'this':1,'error':1,'failed':1};
+  var toks=function(s){
+    var o={};
+    s.toLowerCase().split(/[^a-zа-яё0-9._\/-]+/).forEach(function(w){
+      w=w.replace(/^[._\/-]+|[._\/-]+$/g,'');
+      if(w.length>=3&&!STOP[w])o[w]=1;
+    });
+    return o;
+  };
+  var docs=errs.map(function(e){return {el:e,t:toks(e.textContent)}});
+  var df={};
+  docs.forEach(function(x){for(var w in x.t)df[w]=(df[w]||0)+1});
+  var idf=function(w){return Math.log(1+docs.length/(1+(df[w]||0)))};
+  var dg=d.createElement('div');
+  dg.className='hbdg';
+  dg.innerHTML='<b>диагностика ошибки</b><p class="mu">вставь текст ошибки, страница найдёт подходящую запись.</p><textarea rows="4" placeholder="вставь текст ошибки" spellcheck="false"></textarea><div class="hbdr"></div>';
+  var anchor=errs[0];
+  while(anchor.previousElementSibling&&!/^H[23]$/.test(anchor.tagName))anchor=anchor.previousElementSibling;
+  anchor.parentNode.insertBefore(dg,anchor);
+  var ta=dg.querySelector('textarea'),out=dg.querySelector('.hbdr'),tm=null;
+  var diag=function(){
+    var q=toks(ta.value),keys=Object.keys(q);
+    if(!keys.length){out.innerHTML='';return}
+    var sc=docs.map(function(x,i){
+      var s=0;
+      keys.forEach(function(w){
+        if(x.t[w])s+=idf(w);
+        else{for(var t in x.t){if(t.length>=5&&w.length>=5&&(t.indexOf(w)>-1||w.indexOf(t)>-1)){s+=idf(t)*.5;break}}}
+      });
+      return {i:i,s:s};
+    }).filter(function(x){return x.s>0}).sort(function(a,b){return b.s-a.s}).slice(0,3);
+    if(!sc.length){out.innerHTML='<p class="mu">ничего похожего не нашлось. посмотри главу 14 целиком или спроси на <a href="../forum/">форуме</a>.</p>';return}
+    out.innerHTML='<p class="mu">похожие записи</p>'+sc.map(function(x){
+      var sm=docs[x.i].el.querySelector('summary');
+      return '<button type="button" class="hbdh" data-i="'+x.i+'"><strong>'+esc((sm?sm.textContent:'').replace(/\s+/g,' ').trim())+'</strong><span>открыть</span></button>';
+    }).join('');
+  };
+  ta.addEventListener('input',function(){clearTimeout(tm);tm=setTimeout(diag,200)});
+  out.addEventListener('click',function(e){
+    var b=e.target.closest('.hbdh');
+    if(!b)return;
+    var el=docs[+b.getAttribute('data-i')].el;
+    el.open=true;
+    go(el);
+  });
+}
 hashTarget();
 })();
