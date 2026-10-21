@@ -127,7 +127,7 @@
     b.title=T(g?'светлая тема':'серая тема');
   }
   function paintS(b){
-    b.innerHTML=GEAR;
+    b.innerHTML=GEAR+'<span>'+T('настройки')+'</span>';
     b.setAttribute('aria-label',T('настройки'));
     b.title=T('настройки');
   }
@@ -171,10 +171,12 @@
     e=sp.querySelector('.pv1');
     e.style.background=a.on?(a.g?'linear-gradient(135deg,'+a.c1+','+a.c2+')':a.c1):'var(--ac)';
     q('bon').checked=!!g.on;q('b1').value=g.c1;q('b2').value=g.c2;q('ba').value=g.a;q('bav').textContent=g.a+'°';
+    [].forEach.call(sp.querySelectorAll('[data-ap]'),function(b){var p=APRE[+b.getAttribute('data-ap')];b.classList.toggle('on',a.on&&a.g&&p[0].toLowerCase()===a.c1.toLowerCase()&&p[1].toLowerCase()===a.c2.toLowerCase())});
     box=sp.querySelector('[data-box="bpre"]');
     var arr=BPRE[t],x='';
     for(i=0;i<arr.length;i++)x+='<button type="button" class="pr" data-bp="'+i+'" style="background:linear-gradient('+arr[i][2]+'deg,'+arr[i][0]+','+arr[i][1]+')" aria-label="'+arr[i][0]+'"></button>';
     box.innerHTML=x;
+    [].forEach.call(box.querySelectorAll('[data-bp]'),function(b){var r=arr[+b.getAttribute('data-bp')];b.classList.toggle('on',g.on&&r[0].toLowerCase()===g.c1.toLowerCase()&&r[1].toLowerCase()===g.c2.toLowerCase())});
   }
   function openSettings(){
     if(!sp){
@@ -212,12 +214,14 @@
     refresh();
     sp.hidden=false;
     h.classList.add('sp-open');
+    var gb=d.getElementById('sb');if(gb)gb.classList.add('on');
     var c=sp.querySelector('.spx');if(c)c.focus();
   }
   function closeSettings(){
     if(!sp)return;
     sp.hidden=true;
     h.classList.remove('sp-open');
+    var gb=d.getElementById('sb');if(gb)gb.classList.remove('on');
   }
   d.addEventListener('keydown',function(e){if(e.key==='Escape'&&sp&&!sp.hidden)closeSettings()});
 
@@ -237,7 +241,7 @@
       s.id='sb';s.type='button';s.className='gh';
       paintS(s);
       s.onclick=openSettings;
-      n.insertBefore(s,b.nextSibling);
+      n.appendChild(s);
     }
   }
   window.addEventListener('storage',function(e){
