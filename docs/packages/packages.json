@@ -1,26 +1,242 @@
 [
-{"n":"gcc","v":"15.2.0","c":"dev","s":"stage3","d":"компилятор c и c++","e":"c and c++ compiler"},
-{"n":"glibc","v":"2.42","c":"system","s":"stage3","d":"стандартная библиотека c","e":"the c standard library"},
-{"n":"binutils","v":"2.45","c":"dev","s":"stage3","d":"ассемблер и компоновщик","e":"assembler and linker"},
-{"n":"python","v":"3.13.7","c":"dev","s":"stage3","d":"язык программирования python","e":"the python programming language"},
-{"n":"bash","v":"","c":"system","s":"stage3","d":"командная оболочка по умолчанию","e":"the default shell"},
-{"n":"openrc","v":"0.63","c":"system","s":"stage3","d":"система инициализации и служб, /sbin/init указывает на openrc-init","e":"init and service manager, /sbin/init points to openrc-init"},
-{"n":"udev","v":"","c":"system","s":"stage3","d":"управление устройствами в /dev","e":"device management in /dev"},
-{"n":"agetty","v":"","c":"system","s":"stage3","d":"приглашение входа на tty1","e":"login prompt on tty1"},
-{"n":"sysklogd","v":"","c":"system","s":"stage3","d":"системный журнал, позже будет заменён на syslog-ng","e":"system logger, to be replaced by syslog-ng later"},
-{"n":"dhcpcd","v":"10.1.0","c":"net","s":"stage3","d":"получение адреса по dhcp","e":"dhcp client"},
-{"n":"curl","v":"8.15.0","c":"net","s":"stage3","d":"скачивание файлов по http и https","e":"downloading files over http and https"},
-{"n":"git","v":"2.51.0","c":"tools","s":"stage3","d":"система контроля версий, нужна для cloudpkg sync","e":"version control, needed for cloudpkg sync"},
-{"n":"ca-certificates","v":"","c":"net","s":"stage3","d":"корневые сертификаты для https","e":"root certificates for https"},
-{"n":"opendoas","v":"6.8.2","c":"system","s":"stage3","d":"запуск команд от root, замена sudo","e":"run commands as root, a sudo replacement"},
-{"n":"nano","v":"8.4","c":"tools","s":"stage3","d":"простой текстовый редактор","e":"a simple text editor"},
-{"n":"cpio","v":"2.15","c":"tools","s":"stage3","d":"работа с архивами cpio, нужен dracut","e":"cpio archives, needed by dracut"},
-{"n":"pcre2","v":"10.49","c":"tools","s":"stage3","d":"библиотека регулярных выражений","e":"regular expression library"},
-{"n":"glib","v":"2.84.4","c":"tools","s":"stage3","d":"базовая библиотека, понадобится для syslog-ng","e":"base library, will be needed for syslog-ng"},
-{"n":"lzo","v":"2.10","c":"tools","s":"stage3","d":"библиотека сжатия lzo","e":"lzo compression library"},
-{"n":"dosfstools","v":"4.2","c":"disk","s":"stage3","d":"mkfs.fat и проверка fat32","e":"mkfs.fat and fat32 checks"},
-{"n":"btrfs-progs","v":"6.16.1","c":"disk","s":"stage3","d":"утилиты файловой системы btrfs","e":"btrfs file system tools"},
-{"n":"dracut-ng","v":"","c":"boot","s":"stage3","d":"сборка initramfs","e":"initramfs builder"},
-{"n":"limine","v":"","c":"boot","s":"cloudpkg","d":"загрузчик, ставится пользователем","e":"bootloader, installed by the user"},
-{"n":"pipewire","v":"","c":"system","s":"cloudpkg","d":"звук, по желанию","e":"audio, optional"}
+ {
+  "n": "glibc",
+  "v": "2.42",
+  "c": "system",
+  "d": {
+   "ru": "библиотека c",
+   "en": "c library"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "gcc",
+  "v": "15.2.0",
+  "c": "toolchain",
+  "d": {
+   "ru": "компилятор gcc",
+   "en": "gcc compiler"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "binutils",
+  "v": "2.45",
+  "c": "toolchain",
+  "d": {
+   "ru": "ассемблер, компоновщик и утилиты",
+   "en": "assembler, linker and tools"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "python",
+  "v": "3.13.7",
+  "c": "tools",
+  "d": {
+   "ru": "интерпретатор python",
+   "en": "python interpreter"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "bash",
+  "v": "",
+  "c": "system",
+  "d": {
+   "ru": "шелл по умолчанию",
+   "en": "the default shell"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "openrc",
+  "v": "0.63",
+  "c": "init",
+  "d": {
+   "ru": "система инициализации",
+   "en": "init system"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "udev",
+  "v": "",
+  "c": "system",
+  "d": {
+   "ru": "управление устройствами",
+   "en": "device management"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "sysklogd",
+  "v": "",
+  "c": "system",
+  "d": {
+   "ru": "системный журнал (пока вместо syslog-ng)",
+   "en": "system logger (for now instead of syslog-ng)"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "agetty",
+  "v": "",
+  "c": "system",
+  "d": {
+   "ru": "вход на консоль tty1",
+   "en": "console login on tty1"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "dhcpcd",
+  "v": "10.1.0",
+  "c": "network",
+  "d": {
+   "ru": "dhcp-клиент",
+   "en": "dhcp client"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "opendoas",
+  "v": "6.8.2",
+  "c": "tools",
+  "d": {
+   "ru": "замена sudo, правило permit :wheel",
+   "en": "sudo replacement, rule permit :wheel"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "nano",
+  "v": "8.4",
+  "c": "tools",
+  "d": {
+   "ru": "текстовый редактор",
+   "en": "text editor"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "cpio",
+  "v": "2.15",
+  "c": "tools",
+  "d": {
+   "ru": "работа с архивами cpio, нужен для initramfs",
+   "en": "cpio archives, needed for initramfs"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "pcre2",
+  "v": "10.49",
+  "c": "lib",
+  "d": {
+   "ru": "регулярные выражения, совместимые с perl",
+   "en": "perl-compatible regular expressions"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "glib",
+  "v": "2.84.4",
+  "c": "lib",
+  "d": {
+   "ru": "базовая библиотека для многих программ",
+   "en": "base library for many programs"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "lzo",
+  "v": "2.10",
+  "c": "lib",
+  "d": {
+   "ru": "быстрое сжатие",
+   "en": "fast compression"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "dosfstools",
+  "v": "4.2",
+  "c": "fs",
+  "d": {
+   "ru": "mkfs.fat и fsck.fat для /boot и esp",
+   "en": "mkfs.fat and fsck.fat for /boot and esp"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "btrfs-progs",
+  "v": "6.16.1",
+  "c": "fs",
+  "d": {
+   "ru": "утилиты btrfs",
+   "en": "btrfs utilities"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "dracut-ng",
+  "v": "",
+  "c": "boot",
+  "d": {
+   "ru": "генерация initramfs",
+   "en": "initramfs generation"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "ca-certificates",
+  "v": "",
+  "c": "network",
+  "d": {
+   "ru": "корневые сертификаты (cacert.pem)",
+   "en": "root certificates (cacert.pem)"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "curl",
+  "v": "8.15.0",
+  "c": "network",
+  "d": {
+   "ru": "загрузка файлов по сети",
+   "en": "network file transfer"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "git",
+  "v": "2.51.0",
+  "c": "tools",
+  "d": {
+   "ru": "система контроля версий",
+   "en": "version control"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "limine",
+  "v": "",
+  "c": "boot",
+  "d": {
+   "ru": "загрузчик, ставится самим пользователем",
+   "en": "bootloader, installed by the user"
+  },
+  "s": "cloudpkg"
+ },
+ {
+  "n": "pipewire",
+  "v": "",
+  "c": "tools",
+  "d": {
+   "ru": "звук, ставится самим пользователем",
+   "en": "audio, installed by the user"
+  },
+  "s": "cloudpkg"
+ }
 ]
