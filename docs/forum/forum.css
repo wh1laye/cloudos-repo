@@ -264,3 +264,14 @@ form>.btn,form>button.btn{align-self:flex-start}
 .tabs a,.atabs a{transition:border-color .12s,background .12s,color .12s}
 .row>.btn{align-self:stretch}
 @media(max-width:640px){.fm>h1:first-child{font-size:28px}}
+
+pre.code{background:#16181c;color:#d7dae0}
+pre.code .hl-c{color:#7d8794;font-style:italic}
+pre.code .hl-s{color:#8fd19e}
+pre.code .hl-n{color:#e7b779}
+pre.code .hl-k{color:#8fb4f0}
+pre.code .hl-v{color:#c9a7f0}
+.rtb{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:10px;transform:translateX(-50%);padding:10px 12px 10px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surf);color:var(--ink);font-size:14px;white-space:nowrap}
+.rtb em{font-style:normal;color:var(--mute)}
+.igp{display:flex;align-items:center;gap:10px;margin:6px 0;padding:8px 12px;border:1px dashed var(--line);border-radius:10px;color:var(--mute);font-size:14px}
+#bgf select,#bgf input[type=number]{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--ink);font:inherit}

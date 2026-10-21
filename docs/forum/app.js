@@ -64,7 +64,7 @@ let uiT=null;
 function pushUi(){
   if(!me)return;
   clearTimeout(uiT);
-  uiT=setTimeout(()=>{const T=window.CloudTheme;sb.rpc('set_ui',{j:{t:T.get(),g:T.getGrad(),ts:T.ts()}}).then(r=>{if(r&&r.error)console.warn(r.error.message)})},700);
+  uiT=setTimeout(()=>{const T=window.CloudTheme;sb.rpc('set_ui',{j:T.pack()}).then(r=>{if(r&&r.error)console.warn(r.error.message)})},700);
 }
 window.CloudTheme.onChange=pushUi;
 const who=(p,ln)=>{
@@ -154,7 +154,7 @@ async function auth(){
 function drawBar(){
   if(me){
     const ctl=prof&&prof.is_admin?'#/admin':(can('delete_posts')||can('mute')||can('ban')?'#/reports':'');
-    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/settings">настройки</a><a href="#/bookmarks">закладки</a>'+(ctl?'<a href="'+ctl+'">управление</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'');
+    bar.innerHTML='<span>'+who(prof)+'</span><a href="#/u/'+esc(me.id)+'">профиль</a><a href="#/bookmarks">закладки</a>'+(ctl?'<a href="'+ctl+'">управление</a>':'')+(prof&&active(prof.muted_until)?'<span class="tag">мут до '+esc(till(prof.muted_until))+'</span>':'');
   }else{
     bar.innerHTML='<span class="mu">войти:</span><button class="btn s" data-a="anon">анонимно</button><button class="btn s" data-a="oauth" data-i="github">github</button><button class="btn s" data-a="emailf">email</button><form id="ef" hidden><input id="em" type="email" placeholder="email" autocomplete="username" required><input id="pw" type="password" placeholder="пароль" autocomplete="current-password" required><button class="btn s p">войти</button><button class="btn s" type="button" data-a="signup">регистрация</button></form>';
   }
@@ -573,16 +573,17 @@ async function badgesAdmin(){
   if(!(prof&&prof.is_admin)){app.innerHTML=head+'<p class="mu">нет доступа.</p>';return}
   const r=await sb.from('badges').select('*').order('id');
   if(r.error){app.innerHTML=head+'<div class="warn"><b>значки недоступны</b>'+esc(r.error.message)+'</div>';return}
-  app.innerHTML=head+'<form id="bgf"><input id="bgn" maxlength="40" placeholder="название" required><input id="bgd" maxlength="200" placeholder="описание (необязательно)"><label>картинка (файл)<input id="bgi" type="file" accept="image/*" required></label><button class="btn p">создать значок</button></form><div>'+
-    (r.data.map(x=>'<div class="item rpi"><span class="bd big"><img src="'+esc(safeUrl(x.img))+'" alt=""></span> <b>'+esc(x.name)+'</b> <span class="mu">'+esc(x.descr)+'</span><div class="acts"><button class="lk" data-a="bgdel" data-i="'+x.id+'">удалить значок</button></div></div>').join('')||'<p class="mu">значков пока нет</p>')+'</div>';
+  app.innerHTML=head+'<form id="bgf"><input id="bgn" maxlength="40" placeholder="название" required><input id="bgd" maxlength="200" placeholder="описание (необязательно)"><label>картинка (файл)<input id="bgi" type="file" accept="image/*" required></label><select id="bgk"><option value="">выдаётся вручную</option><option value="posts">за число сообщений</option><option value="likes">за число лайков</option><option value="threads">за число тем</option><option value="solved">за число решённых тем</option><option value="days">за дни на форуме</option></select><input id="bgnn" type="number" min="1" max="100000" placeholder="сколько"><button class="btn p">создать значок</button></form><div>'+
+    (r.data.map(x=>'<div class="item rpi"><span class="bd big"><img src="'+esc(safeUrl(x.img))+'" alt=""></span> <b>'+esc(x.name)+'</b> <span class="mu">'+esc(x.descr)+'</span>'+(x.auto_kind?' <span class="tag">'+esc(x.auto_kind)+' &ge; '+esc(x.auto_n)+'</span>':'')+'<div class="acts"><button class="lk" data-br="'+x.id+'">условие</button><button class="lk" data-a="bgdel" data-i="'+x.id+'">удалить значок</button></div></div>').join('')||'<p class="mu">значков пока нет</p>')+'</div>';
   $('#bgf').onsubmit=async e=>{
     e.preventDefault();
     const btn=$('#bgf button');
     btn.disabled=true;
     try{
       const url=await upBadge($('#bgi').files[0]);
-      const x=await sb.from('badges').insert({name:$('#bgn').value.trim(),descr:$('#bgd').value.trim(),img:url});
+      const x=await sb.from('badges').insert({name:$('#bgn').value.trim(),descr:$('#bgd').value.trim(),img:url,auto_kind:$('#bgk').value||null,auto_n:$('#bgk').value?(+$('#bgnn').value||1):null});
       if(x.error)throw x.error;
+      if($('#bgk').value)await sb.rpc('award_all');
       badgesAdmin();
     }catch(z){alert(z.message||z)}
     finally{btn.disabled=false}
@@ -970,7 +971,7 @@ async function route(){
     else if(k[1]==='messages'){if(k[2]&&/^[0-9a-f-]{36}$/i.test(k[2]))await dmChat(k[2]);else await dmList()}
     else if(k[1]==='bookmarks')await bookmarks();
     else if(k[1]==='reports')await reports();
-    else if(k[1]==='settings')settings();
+    else if(k[1]==='settings'){window.CloudTheme.openSettings();location.replace('#/')}
     else if(k[1]==='notifications')await notifs();
     else if(k[1]==='admin'&&k[2]==='badges')await badgesAdmin();
     else if(k[1]==='admin')await admin();
