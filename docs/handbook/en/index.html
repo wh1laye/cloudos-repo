@@ -5,24 +5,36 @@
 <link rel="alternate" hreflang="ru" data-l="ru" href="../">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>cloudos handbook</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="cloudos">
+<meta property="og:title" content="cloudos handbook">
+<meta property="og:description" content="step by step cloudos installation: disk partitioning, stage 3, kernel, limine, system setup, errors and fixes">
+<meta property="og:url" content="https://wh1laye.github.io/cloudos-repo/handbook/en/">
+<meta property="og:image" content="https://wh1laye.github.io/cloudos-repo/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1a1c20">
+<link rel="alternate" type="application/rss+xml" title="cloudos: новое" href="../../rss.xml">
+<link rel="alternate" type="application/atom+xml" title="cloudos: релизы" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
 <meta name="description" content="step by step cloudos installation: disk partitioning, stage 3, kernel, limine, system setup, errors and fixes">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'><path d='M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z' fill='%233b5fa8'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../style.css?v=9">
+<link rel="stylesheet" href="../../style.css?v=10">
 <link rel="stylesheet" href="../handbook.css?v=3">
 <link rel="stylesheet" href="../../theme.css?v=5">
 <link rel="stylesheet" href="../../settings.css?v=2">
 <script>(function(){var m=null;try{m=localStorage.getItem('hbmode')}catch(e){}document.documentElement.setAttribute('data-mode',m==='bios'?'bios':'uefi')})()</script>
 <script src="../../theme.js?v=8"></script>
-<script src="../../i18n.js?v=1"></script>
+<script src="../../i18n.js?v=2"></script>
 <script src="../../gate.js?v=2"></script>
 </head>
 <body>
 <header class="top">
 <a class="brand" href="../../" aria-label="cloudos"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z" fill="url(#g)"/></svg>cloudos<span>handbook</span></a>
-<nav class="hl"><a class="gh" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>home</span></a><a class="gh on" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>handbook</span></a><a class="gh" href="../../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg><span>news</span></a><a class="gh" href="../../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>forum</span></a><a class="gh" href="../../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>releases</span></a></nav>
+<nav class="hl"><a class="gh" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>home</span></a><a class="gh on" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>handbook</span></a><div class="ddw"><button type="button" class="gh" id="ob" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg><span>more</span></button><div class="ddm" id="om" hidden><a class="ddi" href="../../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg>news</a><a class="ddi" href="../../hardware/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>hardware</a><a class="ddi" href="../../packages/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>packages</a><a class="ddi" href="../../wizard/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM7 9l3 3-3 3M12 15h5"/></svg>install wizard</a></div></div><a class="gh" href="../../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>forum</span></a><a class="gh" href="../../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>releases</span></a></nav>
 </header>
 <div class="layout">
 <nav class="toc" aria-label="contents">
@@ -365,6 +377,22 @@ grep UUID /etc/fstab /boot/limine.conf</code></pre>
     module_path: boot():/initramfs-OLD.img</code></pre>
 <p>instead of <code>NEW</code> and <code>OLD</code> put the kernel versions.</p>
 
+<h3 id="s8-7">8.7 grub instead of limine</h3>
+<p>if you prefer grub, install it instead of limine (inside chroot, after the kernel and initramfs are installed):</p>
+<pre><code>cloudpkg sync
+cloudpkg install sys-boot/grub</code></pre>
+<div class="m-uefi"><p>for uefi:</p>
+<pre><code>grub-install --target=x86_64-efi --efi-directory=/boot --boot-directory=/boot --removable</code></pre></div>
+<div class="m-bios"><p>for bios:</p>
+<pre><code>grub-install --target=i386-pc --boot-directory=/boot /dev/sda</code></pre></div>
+<p>the config is written by hand to <code>/boot/grub/grub.cfg</code>:</p>
+<pre><code>set timeout=5
+menuentry "CloudOS" {
+    search --no-floppy --fs-uuid --set=root ESP_UUID
+    linux /vmlinuz-6.18.10 root=UUID=ROOT_UUID rw
+    initrd /initramfs-6.18.10.img
+}</code></pre>
+<div class="note"><b>note</b>replace ESP_UUID and ROOT_UUID with the values from <code>blkid</code> (the /boot partition and the root partition). with btrfs add the rootflags=subvol=@ parameter to the linux line. the install wizard on the site does all of this for you.</div>
 <h2 id="final">9. finishing</h2>
 <p>enable the network and the log, set the root password:</p>
 <pre><code>cloudpkg install dhcpcd
@@ -386,6 +414,7 @@ reboot</code></pre>
 <p>after the reboot remove the usb stick and choose the disk in the boot menu if it was not chosen by itself. the prompt will appear <code>login:</code> on tty1. enter <code>root</code> and the password you set with the command <code>passwd</code>.</p>
 <p>then set up the system, it is described in chapter <a href="#first">10</a>.</p>
 
+<div class="note"><b>note</b>stage 3 already includes dhcpcd, sysklogd, dracut and doas, so there is no need to install them with cloudpkg. the system uses sysklogd instead of syslog-ng. cloudpkg works on top of portage: <code>cloudpkg sync</code> updates the recipe tree, <code>cloudpkg install name</code> builds from source, <code>cloudpkg doctor</code> checks the setup.</div>
 <h2 id="first">10. first boot</h2>
 <p>after installation the system has only a console and root. this chapter is about what is worth doing right away.</p>
 <h3 id="s10-1">10.1 login</h3>
