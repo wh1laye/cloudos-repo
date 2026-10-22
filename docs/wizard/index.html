@@ -1,1 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>мастер установки: cloudos</title>
+<meta name="description" content="введи диск и режим, получи готовый скрипт установки cloudos.">
+<meta property="og:title" content="мастер установки: cloudos">
+<meta property="og:description" content="введи диск и режим, получи готовый скрипт установки cloudos.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 40'><path d='M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z' fill='%233b5fa8'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=9">
+<link rel="stylesheet" href="../site.css?v=1">
+<link rel="stylesheet" href="../pages.css?v=1">
+<link rel="stylesheet" href="wizard.css?v=1">
+<link rel="stylesheet" href="../theme.css?v=5">
+<link rel="stylesheet" href="../settings.css?v=2">
+<script src="../theme.js?v=8"></script>
+<script>window.I18N_EXTRA={
+'мастер установки':'install wizard','установка':'install','после установки':'after install','восстановление':'recovery',
+'введи диск и режим, получи готовый скрипт установки. всё считается в браузере, ничего не отправляется.':'enter your disk and mode, get a ready install script. everything runs in your browser, nothing is sent.',
+'диск':'disk','режим загрузки':'boot mode','файловая система':'file system','разметка':'partitioning','автоматически':'automatic','вручную (cfdisk)':'manual (cfdisk)',
+'swap, гб (0 без swap)':'swap, gb (0 for none)','версия ядра':'kernel version','часовой пояс':'time zone','имя компьютера':'hostname','пользователь (пусто пропустить)':'user (empty to skip)',
+'разделы':'partitions','шаг 1. запусти в живой системе':'step 1. run in the live system','шаг 2. войди в chroot и запусти':'step 2. enter chroot and run','шаг 3. перезагрузка':'step 3. reboot',
+'скопировать скрипт':'copy script','скопировать ссылку с настройками':'copy link with settings','скопировано':'copied',
+'шаг 1 сотрёт весь диск. в конце скрипта он спросит подтверждение: нужно ввести yes.':'step 1 wipes the whole disk. the script asks for confirmation at the end: type yes.',
+'в шаге 2 откроется menuconfig: настрой ядро под своё железо и выйди с сохранением.':'step 2 opens menuconfig: configure the kernel for your hardware and exit with save.',
+'скрипты можно запускать повторно: сделанные шаги пропускаются.':'scripts can be re-run: finished steps are skipped.',
+'проверь поля: в них есть ошибка.':'check the fields: one of them has an error.',
+'отмечай сделанное, галочки сохраняются в браузере.':'tick what is done, marks are saved in your browser.',
+'пользователь и doas':'user and doas','имя компьютера и часовой пояс':'hostname and time zone','сеть':'network','swap':'swap','локаль':'locale','службы':'services','пакеты':'packages',
+'войти в систему из живого iso':'enter the system from the live iso','переустановить limine':'reinstall limine','пересобрать initramfs':'rebuild initramfs','проверить fstab и uuid':'check fstab and uuid','пересобрать ядро':'rebuild the kernel',
+'справочник':'handbook','главная':'home'
+};</script>
+<script src="../i18n.js?v=1"></script>
+<script src="../gate.js?v=2"></script>
+</head>
+<body>
+<header class="top">
+<a class="brand" href="../" aria-label="cloudos"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z" fill="url(#g)"/></svg>cloudos<span>установка</span></a>
+<nav class="hl"><a class="gh" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>главная</span></a><a class="gh" href="../handbook/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>справочник</span></a><a class="gh" href="../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg><span>новое</span></a><a class="gh" href="../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>форум</span></a><a class="gh" href="../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>релизы</span></a></nav>
+</header>
+<main class="np pg wz">
+<h1>мастер установки</h1>
+<p class="lead">введи диск и режим, получи готовый скрипт установки. всё считается в браузере, ничего не отправляется.</p>
+<div class="wzf" id="wf">
+<label class="wzl">диск<input id="dk" type="text" list="dkl" placeholder="/dev/sda" autocomplete="off" autocapitalize="off" spellcheck="false"><span class="er" id="e-dk"></span></label>
+<datalist id="dkl"><option value="/dev/sda"><option value="/dev/sdb"><option value="/dev/nvme0n1"><option value="/dev/vda"></datalist>
+<div class="wzl">режим загрузки<div class="wzs" data-k="m"><button type="button" data-v="uefi">uefi</button><button type="button" data-v="bios">bios</button></div></div>
+<div class="wzl">файловая система<div class="wzs" data-k="f"><button type="button" data-v="ext4">ext4</button><button type="button" data-v="btrfs">btrfs</button></div></div>
+<div class="wzl">разметка<div class="wzs" data-k="p"><button type="button" data-v="auto">автоматически</button><button type="button" data-v="cfdisk">вручную (cfdisk)</button></div></div>
+<label class="wzl">swap, гб (0 без swap)<input id="sw" type="text" inputmode="numeric" autocomplete="off"><span class="er" id="e-sw"></span></label>
+<label class="wzl">версия ядра<input id="kv" type="text" autocomplete="off" spellcheck="false"><span class="er" id="e-kv"></span></label>
+<label class="wzl">часовой пояс<input id="tz" type="text" autocomplete="off" spellcheck="false"><span class="er" id="e-tz"></span></label>
+<label class="wzl">имя компьютера<input id="hn" type="text" autocomplete="off" spellcheck="false"><span class="er" id="e-hn"></span></label>
+<label class="wzl">пользователь (пусто пропустить)<input id="us" type="text" autocomplete="off" spellcheck="false" autocapitalize="off"><span class="er" id="e-us"></span></label>
+</div>
+<p class="wzp" id="pp"></p>
+<div class="wzt" role="tablist"><button type="button" data-t="i" class="on">установка</button><button type="button" data-t="a">после установки</button><button type="button" data-t="r">восстановление</button></div>
+<section id="ti"></section>
+<section id="ta" hidden></section>
+<section id="tr" hidden></section>
+<footer>
+<p>© 2026 wh1laye. лицензия mit. </p>
+<p>рецепты пакетов основаны на gentoo (gpl-2).</p>
+<p><a href="https://github.com/wh1laye/cloudos-repo">github.com/wh1laye/cloudos-repo</a></p>
+</footer>
+</main>
+<script type="text/plain" id="t1">
+set -e
+M=/mnt/cloudos
+case "$DISK" in *nvme*|*mmcblk*) PS=p;; *) PS="";; esac
+P1="$DISK${PS}1"
+P2="$DISK${PS}2"
+STAGE=cloudos-stage3-1.0-x86_64.tar.xz
+URL=https://github.com/wh1laye/cloudos-repo/releases/download/cloudos
+[ "$(id -u)" = 0 ] || { echo "нужен root"; exit 1; }
+[ -b "$DISK" ] || { echo "нет диска $DISK"; exit 1; }
+if [ "$MODE" = uefi ]; then
+  [ -f /usr/share/limine/BOOTX64.EFI ] || { echo "limine не найден в живой системе"; exit 1; }
+else
+  [ -f /usr/share/limine/limine-bios.sys ] || { echo "limine не найден в живой системе"; exit 1; }
+fi
+if [ ! -f /root/.wz_part ]; then
+  lsblk "$DISK"
+  echo "будет стёрт весь диск $DISK"
+  printf "для продолжения введи yes: "
+  read -r A
+  [ "$A" = yes ] || exit 1
+  umount -R $M 2>/dev/null || true
+  if [ "$PART" = cfdisk ]; then
+    cfdisk "$DISK"
+  elif [ "$MODE" = uefi ]; then
+    printf 'label: gpt\n,512M,U\n,,L\n' | sfdisk "$DISK"
+  else
+    printf 'label: dos\n,512M,c,*\n,,L\n' | sfdisk "$DISK"
+  fi
+  partprobe "$DISK" 2>/dev/null || true
+  sleep 2
+  [ -b "$P1" ] && [ -b "$P2" ] || { echo "нет разделов $P1 и $P2"; exit 1; }
+  mkfs.fat -F32 "$P1"
+  if [ "$FS" = btrfs ]; then mkfs.btrfs -f "$P2"; else mkfs.ext4 -F "$P2"; fi
+  touch /root/.wz_part
+fi
+mkdir -p $M
+if ! mountpoint -q $M; then
+  if [ "$FS" = btrfs ]; then
+    mount "$P2" $M
+    btrfs subvolume create $M/@ || true
+    btrfs subvolume create $M/@home || true
+    umount $M
+    mount -o subvol=@ "$P2" $M
+    mkdir -p $M/boot $M/home
+    mount -o subvol=@home "$P2" $M/home
+  else
+    mount "$P2" $M
+    mkdir -p $M/boot
+  fi
+fi
+mountpoint -q $M/boot || mount "$P1" $M/boot
+if [ ! -f $M/etc/os-release ]; then
+  cd $M
+  [ -f $STAGE ] || curl -fLO $URL/$STAGE
+  [ -f $STAGE.sha256 ] || curl -fLO $URL/$STAGE.sha256
+  sha256sum -c $STAGE.sha256
+  tar xpf $STAGE --xattrs-include='*.*' --numeric-owner -C $M
+  rm -f $M/$STAGE $M/$STAGE.sha256
+  cd /
+fi
+if [ "$MODE" = uefi ]; then
+  mkdir -p $M/boot/EFI/BOOT
+  cp /usr/share/limine/BOOTX64.EFI $M/boot/EFI/BOOT/BOOTX64.EFI
+else
+  cp /usr/share/limine/limine-bios.sys $M/boot/
+  limine bios-install "$DISK"
+fi
+mountpoint -q $M/proc || mount --types proc /proc $M/proc
+mountpoint -q $M/sys || { mount --rbind /sys $M/sys; mount --make-rslave $M/sys; }
+mountpoint -q $M/dev || { mount --rbind /dev $M/dev; mount --make-rslave $M/dev; }
+cp --dereference /etc/resolv.conf $M/etc/
+{
+printf 'DISK=%s\nP1=%s\nP2=%s\nMODE=%s\nFS=%s\nSWAP=%s\nKVER=%s\nTZ=%s\nHOST=%s\nUSR=%s\n' "$DISK" "$P1" "$P2" "$MODE" "$FS" "$SWAP" "$KVER" "$TZ" "$HOST" "$USR"
+cat <<'INNER'
+@S2@
+INNER
+} > $M/root/s2.sh
+echo "шаг 1 готов, дальше шаг 2 из мастера"
+echo WZ1_OK
+</script>
+<script type="text/plain" id="t2">
+set -e
+source /etc/profile
+ROOT_UUID=$(blkid -s UUID -o value "$P2")
+BOOT_UUID=$(blkid -s UUID -o value "$P1")
+echo "$HOST" > /etc/hostname
+echo "hostname=\"$HOST\"" > /etc/conf.d/hostname
+rc-update add hostname boot 2>/dev/null || true
+ln -sfv /usr/share/zoneinfo/$TZ /etc/localtime
+if [ "$FS" = btrfs ]; then
+  printf 'UUID=%s  /      btrfs  subvol=@,noatime      0 0\nUUID=%s  /home  btrfs  subvol=@home,noatime  0 0\nUUID=%s  /boot  vfat   defaults              0 2\n' "$ROOT_UUID" "$ROOT_UUID" "$BOOT_UUID" > /etc/fstab
+  RF=" rootflags=subvol=@"
+else
+  printf 'UUID=%s  /      ext4  defaults  0 1\nUUID=%s  /boot  vfat  defaults  0 2\n' "$ROOT_UUID" "$BOOT_UUID" > /etc/fstab
+  RF=""
+fi
+MAJ=${KVER%%.*}
+cd /usr/src
+if [ ! -d linux-$KVER ]; then
+  for U in https://cdn.kernel.org/pub/linux/kernel/v$MAJ.x https://mirrors.ustc.edu.cn/kernel.org/linux/kernel/v$MAJ.x https://mirrors.aliyun.com/linux-kernel/v$MAJ.x; do
+    curl -fLO --connect-timeout 15 $U/linux-$KVER.tar.xz && break
+  done
+  tar xf linux-$KVER.tar.xz
+fi
+cd linux-$KVER
+[ -f .config ] || make menuconfig
+if [ ! -f /boot/vmlinuz-$KVER ]; then
+  make -j$(nproc)
+  make modules_install
+  cp arch/x86/boot/bzImage /boot/vmlinuz-$KVER
+  cp .config /boot/config-$KVER
+  cp System.map /boot/System.map-$KVER
+fi
+[ -f /boot/initramfs-$KVER.img ] || dracut --kver $KVER /boot/initramfs-$KVER.img
+cat > /boot/limine.conf <<EOF
+timeout: 5
 
+/CloudOS
+    protocol: linux
+    path: boot():/vmlinuz-$KVER
+    cmdline: root=UUID=$ROOT_UUID$RF rw
+    module_path: boot():/initramfs-$KVER.img
+EOF
+if [ "$SWAP" -gt 0 ] && [ ! -f /swapfile ]; then
+  if [ "$FS" = btrfs ]; then
+    btrfs filesystem mkswapfile --size ${SWAP}g /swapfile
+  else
+    dd if=/dev/zero of=/swapfile bs=1M count=$((SWAP*1024)) status=progress
+    chmod 600 /swapfile
+    mkswap /swapfile
+  fi
+  echo "/swapfile  none  swap  defaults  0 0" >> /etc/fstab
+fi
+for S in dhcpcd sysklogd; do
+  [ -e /etc/init.d/$S ] && rc-update add $S default || true
+done
+if [ -n "$USR" ]; then
+  grep -q '^wheel:' /etc/group || groupadd wheel
+  id "$USR" >/dev/null 2>&1 || useradd -m -G wheel -s /bin/bash "$USR"
+  echo "permit :wheel" > /etc/doas.conf
+  chmod 0400 /etc/doas.conf
+  echo "пароль для $USR"
+  passwd "$USR"
+fi
+echo "пароль для root"
+passwd
+echo WZ2_OK
+</script>
+<script src="wizard.js?v=1"></script>
+<script src="../cmdk.js?v=1" defer></script>
+</body>
+</html>
