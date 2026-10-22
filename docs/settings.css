@@ -21,7 +21,7 @@ html.sp-open{overflow:hidden}
 .sps{flex:none;padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--surf)}
 .sps h4{margin:0 0 12px;font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--mute)}
 .spm{margin:-4px 0 12px;color:var(--mute);font-size:14px}
-.sgm{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.sgm{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
 .sgm button{padding:10px 0;border:0;border-radius:9px;background:none;color:var(--mute);font:inherit;font-weight:500;font-size:15px;cursor:pointer}
 .sgm button:hover{color:var(--ink)}
 .sgm button.on,.sgm button.on:hover{color:var(--onac)}
