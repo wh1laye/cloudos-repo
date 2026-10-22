@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>мастер установки: cloudos</title>
+<meta property="og:image" content="https://wh1laye.github.io/cloudos-repo/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#1a1c20">
+<link rel="alternate" type="application/rss+xml" title="cloudos: новое" href="../rss.xml">
+<link rel="alternate" type="application/atom+xml" title="cloudos: релизы" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
 <meta name="description" content="введи диск и режим, получи готовый скрипт установки cloudos.">
 <meta property="og:title" content="мастер установки: cloudos">
 <meta property="og:description" content="введи диск и режим, получи готовый скрипт установки cloudos.">
@@ -12,15 +19,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css?v=9">
+<link rel="stylesheet" href="../style.css?v=10">
 <link rel="stylesheet" href="../site.css?v=1">
 <link rel="stylesheet" href="../pages.css?v=1">
-<link rel="stylesheet" href="wizard.css?v=1">
+<link rel="stylesheet" href="wizard.css?v=2">
 <link rel="stylesheet" href="../theme.css?v=5">
 <link rel="stylesheet" href="../settings.css?v=2">
 <script src="../theme.js?v=8"></script>
 <script>window.I18N_EXTRA={
-'мастер установки':'install wizard','установка':'install','после установки':'after install','восстановление':'recovery',
+'мастер установки':'install wizard','установка':'install','загрузчик':'bootloader','переустановить загрузчик':'reinstall the bootloader','grub не найден в живой системе':'grub not found in the live system','после установки':'after install','восстановление':'recovery',
 'введи диск и режим, получи готовый скрипт установки. всё считается в браузере, ничего не отправляется.':'enter your disk and mode, get a ready install script. everything runs in your browser, nothing is sent.',
 'диск':'disk','режим загрузки':'boot mode','файловая система':'file system','разметка':'partitioning','автоматически':'automatic','вручную (cfdisk)':'manual (cfdisk)',
 'swap, гб (0 без swap)':'swap, gb (0 for none)','версия ядра':'kernel version','часовой пояс':'time zone','имя компьютера':'hostname','пользователь (пусто пропустить)':'user (empty to skip)',
@@ -35,13 +42,13 @@
 'войти в систему из живого iso':'enter the system from the live iso','переустановить limine':'reinstall limine','пересобрать initramfs':'rebuild initramfs','проверить fstab и uuid':'check fstab and uuid','пересобрать ядро':'rebuild the kernel',
 'справочник':'handbook','главная':'home'
 };</script>
-<script src="../i18n.js?v=1"></script>
+<script src="../i18n.js?v=2"></script>
 <script src="../gate.js?v=2"></script>
 </head>
 <body>
 <header class="top">
 <a class="brand" href="../" aria-label="cloudos"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M16 36a12 12 0 0 1-1-24 16 16 0 0 1 30 4 10 10 0 0 1 3 20z" fill="url(#g)"/></svg>cloudos<span>установка</span></a>
-<nav class="hl"><a class="gh" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>главная</span></a><a class="gh" href="../handbook/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>справочник</span></a><a class="gh" href="../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg><span>новое</span></a><a class="gh" href="../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>форум</span></a><a class="gh" href="../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>релизы</span></a></nav>
+<nav class="hl"><a class="gh" href="../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>главная</span></a><a class="gh" href="../handbook/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>справочник</span></a><div class="ddw"><button type="button" class="gh on" id="ob" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg><span>другие</span></button><div class="ddm" id="om" hidden><a class="ddi" href="../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg>новое</a><a class="ddi" href="../hardware/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>железо</a><a class="ddi" href="../packages/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>пакеты</a><a class="ddi on" href="../wizard/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM7 9l3 3-3 3M12 15h5"/></svg>мастер установки</a></div></div><a class="gh" href="../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>форум</span></a><a class="gh" href="../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>релизы</span></a></nav>
 </header>
 <main class="np pg wz">
 <h1>мастер установки</h1>
@@ -51,6 +58,7 @@
 <datalist id="dkl"><option value="/dev/sda"><option value="/dev/sdb"><option value="/dev/nvme0n1"><option value="/dev/vda"></datalist>
 <div class="wzl">режим загрузки<div class="wzs" data-k="m"><button type="button" data-v="uefi">uefi</button><button type="button" data-v="bios">bios</button></div></div>
 <div class="wzl">файловая система<div class="wzs" data-k="f"><button type="button" data-v="ext4">ext4</button><button type="button" data-v="btrfs">btrfs</button></div></div>
+<div class="wzl">загрузчик<div class="wzs" data-k="b"><button type="button" data-v="limine">limine</button><button type="button" data-v="grub">grub</button></div></div>
 <div class="wzl">разметка<div class="wzs" data-k="p"><button type="button" data-v="auto">автоматически</button><button type="button" data-v="cfdisk">вручную (cfdisk)</button></div></div>
 <label class="wzl">swap, гб (0 без swap)<input id="sw" type="text" inputmode="numeric" autocomplete="off"><span class="er" id="e-sw"></span></label>
 <label class="wzl">версия ядра<input id="kv" type="text" autocomplete="off" spellcheck="false"><span class="er" id="e-kv"></span></label>
@@ -79,7 +87,10 @@ STAGE=cloudos-stage3-1.0-x86_64.tar.xz
 URL=https://github.com/wh1laye/cloudos-repo/releases/download/cloudos
 [ "$(id -u)" = 0 ] || { echo "нужен root"; exit 1; }
 [ -b "$DISK" ] || { echo "нет диска $DISK"; exit 1; }
-if [ "$MODE" = uefi ]; then
+if [ "$BOOT" = grub ]; then
+  GI=$(command -v grub-install || command -v grub2-install || true)
+  [ -n "$GI" ] || { echo "grub не найден в живой системе"; exit 1; }
+elif [ "$MODE" = uefi ]; then
   [ -f /usr/share/limine/BOOTX64.EFI ] || { echo "limine не найден в живой системе"; exit 1; }
 else
   [ -f /usr/share/limine/limine-bios.sys ] || { echo "limine не найден в живой системе"; exit 1; }
@@ -130,7 +141,13 @@ if [ ! -f $M/etc/os-release ]; then
   rm -f $M/$STAGE $M/$STAGE.sha256
   cd /
 fi
-if [ "$MODE" = uefi ]; then
+if [ "$BOOT" = grub ]; then
+  if [ "$MODE" = uefi ]; then
+    "$GI" --target=x86_64-efi --efi-directory=$M/boot --boot-directory=$M/boot --removable
+  else
+    "$GI" --target=i386-pc --boot-directory=$M/boot "$DISK"
+  fi
+elif [ "$MODE" = uefi ]; then
   mkdir -p $M/boot/EFI/BOOT
   cp /usr/share/limine/BOOTX64.EFI $M/boot/EFI/BOOT/BOOTX64.EFI
 else
@@ -142,7 +159,7 @@ mountpoint -q $M/sys || { mount --rbind /sys $M/sys; mount --make-rslave $M/sys;
 mountpoint -q $M/dev || { mount --rbind /dev $M/dev; mount --make-rslave $M/dev; }
 cp --dereference /etc/resolv.conf $M/etc/
 {
-printf 'DISK=%s\nP1=%s\nP2=%s\nMODE=%s\nFS=%s\nSWAP=%s\nKVER=%s\nTZ=%s\nHOST=%s\nUSR=%s\n' "$DISK" "$P1" "$P2" "$MODE" "$FS" "$SWAP" "$KVER" "$TZ" "$HOST" "$USR"
+printf 'DISK=%s\nP1=%s\nP2=%s\nMODE=%s\nBOOT=%s\nFS=%s\nSWAP=%s\nKVER=%s\nTZ=%s\nHOST=%s\nUSR=%s\n' "$DISK" "$P1" "$P2" "$MODE" "$BOOT" "$FS" "$SWAP" "$KVER" "$TZ" "$HOST" "$USR"
 cat <<'INNER'
 @S2@
 INNER
@@ -184,7 +201,18 @@ if [ ! -f /boot/vmlinuz-$KVER ]; then
   cp System.map /boot/System.map-$KVER
 fi
 [ -f /boot/initramfs-$KVER.img ] || dracut --kver $KVER /boot/initramfs-$KVER.img
-cat > /boot/limine.conf <<EOF
+if [ "$BOOT" = grub ]; then
+  mkdir -p /boot/grub
+  cat > /boot/grub/grub.cfg <<EOF
+set timeout=5
+menuentry "CloudOS" {
+    search --no-floppy --fs-uuid --set=root $BOOT_UUID
+    linux /vmlinuz-$KVER root=UUID=$ROOT_UUID$RF rw
+    initrd /initramfs-$KVER.img
+}
+EOF
+else
+  cat > /boot/limine.conf <<EOF
 timeout: 5
 
 /CloudOS
@@ -193,6 +221,7 @@ timeout: 5
     cmdline: root=UUID=$ROOT_UUID$RF rw
     module_path: boot():/initramfs-$KVER.img
 EOF
+fi
 if [ "$SWAP" -gt 0 ] && [ ! -f /swapfile ]; then
   if [ "$FS" = btrfs ]; then
     btrfs filesystem mkswapfile --size ${SWAP}g /swapfile
@@ -218,7 +247,7 @@ echo "пароль для root"
 passwd
 echo WZ2_OK
 </script>
-<script src="wizard.js?v=1"></script>
+<script src="wizard.js?v=2"></script>
 <script src="../cmdk.js?v=1" defer></script>
 </body>
 </html>
