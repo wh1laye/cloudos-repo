@@ -94,3 +94,4 @@ details.err .cw,details.err>div>pre{margin-bottom:14px}
 .hbdh:hover{border-color:var(--ac)}
 .hbdh strong{font-weight:500;font-size:14px;line-height:1.4}
 .hbdh span{flex:none;font-size:13px;color:var(--ac)}
+.vmc input.bad{border-color:var(--bad)}

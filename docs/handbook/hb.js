@@ -251,31 +251,21 @@ window.addEventListener('storage',function(e){
   if(e.key==='hbdone'){try{DONE=JSON.parse(e.newValue||'[]')}catch(x){DONE=[]}paintDone()}
 });
 
-var VK='hbvals',V={disk:'',root:'',esp:'',boot:'',kver:'',tz:''};
+var VK='hbv2',V={boot:'',root:'',swap:'',kver:'',tz:''};
 try{var vv=JSON.parse(localStorage.getItem(VK)||'{}');for(var vk in V)if(typeof vv[vk]==='string')V[vk]=vv[vk]}catch(e){}
-var VRE={disk:/^[a-z][a-z0-9]{1,15}$/i,root:/^[0-9a-f-]{4,40}$/i,esp:/^[0-9a-f-]{4,40}$/i,boot:/^[0-9a-f-]{4,40}$/i,kver:/^[0-9][0-9a-z._-]{0,20}$/i,tz:/^[A-Za-z][A-Za-z0-9_+\/-]{1,40}$/};
-function okv(k){var x=(V[k]||'').trim();return x&&VRE[k].test(x)?x:''}
+function partInfo(x){
+  x=(x||'').trim().replace(/^\/dev\//,'');
+  if(!x)return null;
+  var m=x.match(/^((?:nvme\d+n\d+|mmcblk\d+|loop\d+))p(\d+)$/i)||x.match(/^([a-z]+)(\d+)$/i);
+  if(!m)return null;
+  return {dev:'/dev/'+x,disk:m[1],n:m[2]};
+}
+var VRE={kver:/^[0-9][0-9a-z._-]{0,20}$/i,tz:/^[A-Za-z][A-Za-z0-9_+\/-]{1,40}$/};
+function okv(k){var x=(V[k]||'').trim();return x&&VRE[k]&&VRE[k].test(x)?x:''}
 var targets=qa('pre,:not(pre)>code',main);
 targets.forEach(function(el){el.dataset.o=el.innerHTML});
-var SUBRE=/\/dev\/sda(\d?)(?!\w)|\bROOT_UUID\b|\bESP_UUID\b|\bBOOT_UUID\b|\b6\.18\.10\b|Europe\/Moscow/g;
-function subText(s){
-  var disk=okv('disk'),parts=[],last=0,m,hit=false;
-  SUBRE.lastIndex=0;
-  while((m=SUBRE.exec(s))){
-    var v=null,t=m[0];
-    if(t.indexOf('/dev/sda')===0){if(disk)v='/dev/'+disk+(m[1]?(/\d$/.test(disk)?'p':'')+m[1]:'')}
-    else if(t==='ROOT_UUID')v=okv('root')||null;
-    else if(t==='ESP_UUID')v=okv('esp')||null;
-    else if(t==='BOOT_UUID')v=okv('boot')||null;
-    else if(t==='6.18.10')v=okv('kver')||null;
-    else if(t==='Europe/Moscow')v=okv('tz')||null;
-    if(v===null)continue;
-    parts.push(s.slice(last,m.index));
-    parts.push({v:v});
-    last=m.index+t.length;hit=true;
-  }
-  if(!hit)return null;
-  parts.push(s.slice(last));
+var SUBRE=/\/dev\/ \([^)]*\)|\/dev\/sda([12])(?!\w)|\/dev\/sda(?!\w)|--part 1(?!\d)|UUID=ROOT_UUID|UUID=(?:ESP|BOOT)_UUID|\b6\.18\.10\b|Europe\/Moscow|\/swapfile  none  swap/g;
+function mk(parts){
   var f=d.createDocumentFragment();
   parts.forEach(function(p){
     if(typeof p==='string'){if(p)f.appendChild(d.createTextNode(p))}
@@ -283,8 +273,39 @@ function subText(s){
   });
   return f;
 }
+function subText(s){
+  var B=partInfo(V.boot),R=partInfo(V.root),S=partInfo(V.swap),disk=(B||R||S||{}).disk;
+  if(S){
+    if(/^dd if=\/dev\/zero of=\/swapfile/.test(s)||/^btrfs filesystem mkswapfile/.test(s))return mk([{v:'mkswap '+S.dev+'\nswapon '+S.dev}]);
+  }
+  var parts=[],last=0,m,hit=false;
+  SUBRE.lastIndex=0;
+  while((m=SUBRE.exec(s))){
+    var v=null,t=m[0];
+    if(t.indexOf('/dev/ (')===0){if(disk)v='/dev/'+disk}
+    else if(t.indexOf('/dev/sda')===0){
+      if(m[1]==='1'){if(B)v=B.dev}
+      else if(m[1]==='2'){if(R)v=R.dev}
+      else if(disk)v='/dev/'+disk;
+    }
+    else if(t.indexOf('--part')===0){if(B)v='--part '+B.n}
+    else if(t==='UUID=ROOT_UUID'){if(R)v=R.dev}
+    else if(t.indexOf('UUID=')===0){if(B)v=B.dev}
+    else if(t==='6.18.10')v=okv('kver')||null;
+    else if(t==='Europe/Moscow')v=okv('tz')||null;
+    else if(t.indexOf('/swapfile')===0){if(S)v=S.dev+'  none  swap'}
+    if(v===null)continue;
+    parts.push(s.slice(last,m.index));
+    parts.push({v:v});
+    last=m.index+t.length;hit=true;
+  }
+  if(!hit)return null;
+  parts.push(s.slice(last));
+  return mk(parts);
+}
+function anyVal(){return !!(partInfo(V.boot)||partInfo(V.root)||partInfo(V.swap)||okv('kver')||okv('tz'))}
 function applyVals(){
-  var any=Object.keys(V).some(function(k){return okv(k)});
+  var any=anyVal();
   targets.forEach(function(el){
     el.innerHTML=el.dataset.o;
     if(!any)return;
@@ -299,12 +320,25 @@ function applyVals(){
   if(vb)vb.classList.toggle('on',any);
 }
 var vm=null;
-var VF=[['disk','имя диска','sda'],['root','uuid корня','ROOT_UUID'],['esp','uuid esp','ESP_UUID'],['boot','uuid /boot','BOOT_UUID'],['kver','версия ядра','6.18.10'],['tz','часовой пояс','Europe/Moscow']];
+var VF=[['boot','раздел boot','sda1'],['root','раздел root','sda2'],['swap','раздел swap (пусто, если без swap)','sda3'],['kver','версия ядра','6.18.10'],['tz','часовой пояс','Europe/Moscow']];
+function vErr(){
+  var bad=[];
+  qa('input[data-k]',vm).forEach(function(i){
+    var k=i.getAttribute('data-k'),x=i.value.trim(),ok=true;
+    if(x){
+      if(k==='boot'||k==='root'||k==='swap')ok=!!partInfo(x);
+      else ok=VRE[k].test(x);
+    }
+    i.classList.toggle('bad',!ok);
+    if(!ok)bad.push(k);
+  });
+  return bad;
+}
 function vOpen(){
   if(!vm){
     vm=d.createElement('div');
     vm.className='sx';vm.hidden=true;
-    vm.innerHTML='<div class="sxb vmb" role="dialog" aria-label="мои значения"><div class="sxi vmh"><b>мои значения</b></div><div class="vmc"><p class="mu">значения подставляются во все команды справочника. пустое поле оставляет значение по умолчанию.</p>'+VF.map(function(f){return '<label>'+f[1]+'<input type="text" data-k="'+f[0]+'" placeholder="'+f[2]+'" autocomplete="off" autocapitalize="off" spellcheck="false"></label>'}).join('')+'<div class="vmr"><button type="button" class="btn p" data-a="ok">применить</button><button type="button" class="btn" data-a="rs">сбросить</button><button type="button" class="btn" data-a="cl">закрыть</button></div></div></div>';
+    vm.innerHTML='<div class="sxb vmb" role="dialog" aria-label="мои значения"><div class="sxi vmh"><b>мои значения</b></div><div class="vmc"><p class="mu">введи имена разделов, как в lsblk (например sda1, sda2 или nvme0n1p1). диск определится сам. они подставятся во все команды справочника, пустое поле оставляет значение по умолчанию.</p>'+VF.map(function(f){return '<label>'+f[1]+'<input type="text" data-k="'+f[0]+'" placeholder="'+f[2]+'" autocomplete="off" autocapitalize="off" spellcheck="false"></label>'}).join('')+'<p class="mu">в fstab и limine вместо uuid ставится имя раздела. для одного диска это работает так же.</p><div class="vmr"><button type="button" class="btn p" data-a="ok">применить</button><button type="button" class="btn" data-a="rs">сбросить</button><button type="button" class="btn" data-a="cl">закрыть</button></div></div></div>';
     d.body.appendChild(vm);
     vm.addEventListener('mousedown',function(e){if(e.target===vm)vClose()});
     vm.addEventListener('click',function(e){
@@ -312,12 +346,17 @@ function vOpen(){
       if(!a)return;
       var k=a.getAttribute('data-a');
       if(k==='cl')vClose();
-      else if(k==='rs'){V={disk:'',root:'',esp:'',boot:'',kver:'',tz:''};vSave();vFill();applyVals()}
-      else if(k==='ok'){qa('input[data-k]',vm).forEach(function(i){V[i.getAttribute('data-k')]=i.value.trim()});vSave();applyVals();vClose()}
+      else if(k==='rs'){V={boot:'',root:'',swap:'',kver:'',tz:''};vSave();vFill();vErr();applyVals()}
+      else if(k==='ok'){
+        if(vErr().length)return;
+        qa('input[data-k]',vm).forEach(function(i){V[i.getAttribute('data-k')]=i.value.trim()});
+        vSave();applyVals();vClose();
+      }
     });
+    vm.addEventListener('input',vErr);
     vm.addEventListener('keydown',function(e){if(e.key==='Escape')vClose();if(e.key==='Enter'){var b=vm.querySelector('[data-a="ok"]');if(b)b.click()}});
   }
-  vFill();
+  vFill();vErr();
   vm.hidden=false;h.style.overflow='hidden';
   var f=vm.querySelector('input');if(f)f.focus();
 }
