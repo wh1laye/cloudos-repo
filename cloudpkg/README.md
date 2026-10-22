@@ -1,4 +1,4 @@
-cloudpkg: пакетный менеджер cloudos. обёртка над portage, написана на c.
+cloudpkg: пакетный менеджер cloudos. написан на c.
 
 файлы:
 - cloudpkg.c, Makefile: сама программа
