@@ -26,7 +26,7 @@
     'фон сайта':'site background','включить градиент фона':'enable background gradient',
     'угол':'angle','пресеты':'presets','включить светлую тему':'switch to light theme',
     'включить серую тему':'switch to gray theme','светлая тема':'light theme','серая тема':'gray theme',
-    'авто':'auto','предпросмотр':'preview','кнопка':'button'
+    'авто':'auto','чтение':'reading','размер текста':'text size','обычный':'normal','крупнее':'larger','ещё крупнее':'largest','высокий контраст':'high contrast','только команды в справочнике':'commands only in the handbook','предпросмотр':'preview','кнопка':'button'
   };
   function lang(){
     try{var l=localStorage.getItem('lang');if(l==='ru'||l==='en')return l}catch(e){}
@@ -145,12 +145,43 @@
     light:[['#dbeafe','#f4f8fd',160],['#e6f4ea','#f6faf7',160],['#fde8d8','#fbf6f1',160],['#ece4fb','#f7f4fd',160]],
     gray:[['#1f2a3d','#1a1c20',160],['#1e2f27','#1a1c20',160],['#33232b','#1a1c20',160],['#2b2540','#1a1c20',160]]
   };
+  function rdGet(){var o={};try{o=JSON.parse(localStorage.getItem('rd'))||{}}catch(e){}return{fs:+o.fs>=0&&+o.fs<=2?+o.fs:0,hc:o.hc?1:0,cmd:o.cmd?1:0}}
+  function rdApply(o){
+    if(o.fs)h.setAttribute('data-fs',String(o.fs));else h.removeAttribute('data-fs');
+    if(o.hc)h.setAttribute('data-hc','1');else h.removeAttribute('data-hc');
+    if(o.cmd)h.setAttribute('data-cmd','1');else h.removeAttribute('data-cmd');
+  }
+  function rdSet(p){
+    var o=rdGet(),k;
+    for(k in p)o[k]=p[k];
+    o.fs=Math.max(0,Math.min(2,+o.fs||0));
+    try{localStorage.setItem('rd',JSON.stringify(o))}catch(e){}
+    rdApply(o);rdSync();touch();
+  }
+  function rdSync(){
+    if(!sp)return;
+    var o=rdGet();
+    [].forEach.call(sp.querySelectorAll('[data-rfs]'),function(b){b.classList.toggle('on',+b.getAttribute('data-rfs')===o.fs)});
+    var a=sp.querySelector('[data-rk="hc"]'),b=sp.querySelector('[data-rk="cmd"]');
+    if(a)a.checked=!!o.hc;if(b)b.checked=!!o.cmd;
+  }
+  rdApply(rdGet());
+  d.addEventListener('click',function(e){
+    var n=e.target.closest?e.target.closest('[data-rfs]'):null;
+    if(n)rdSet({fs:+n.getAttribute('data-rfs')});
+  });
+  d.addEventListener('change',function(e){
+    var n=e.target;
+    if(n&&n.getAttribute&&n.getAttribute('data-rk'))rdSet(function(){var o={};o[n.getAttribute('data-rk')]=n.checked?1:0;return o}());
+  });
   function build(){
     var i,x='';
     x+='<div class="spb" role="dialog" aria-modal="true" aria-label="'+T('настройки')+'">';
     x+='<div class="sph"><b>'+T('настройки')+'</b><button type="button" class="spx" data-a="close" aria-label="'+T('закрыть')+'">'+XI+'</button></div>';
     x+='<div class="sps"><h4>'+T('тема')+'</h4><div class="sgm"><button type="button" data-th="light">'+T('светлая')+'</button><button type="button" data-th="gray">'+T('серая')+'</button><button type="button" data-th="auto">'+T('авто')+'</button></div></div>';
     x+='<div class="sps"><h4>'+T('язык')+'</h4><div class="sgm"><button type="button" data-lg="ru">Русский</button><button type="button" data-lg="en">English</button></div></div>';
+    x+='<div class="sps"><h4>'+T('чтение')+'</h4><p class="spm">'+T('размер текста')+'</p><div class="sgm"><button type="button" data-rfs="0">'+T('обычный')+'</button><button type="button" data-rfs="1">'+T('крупнее')+'</button><button type="button" data-rfs="2">'+T('ещё крупнее')+'</button></div>';
+    x+='<label class="spc"><input type="checkbox" data-rk="hc"><span>'+T('высокий контраст')+'</span></label><label class="spc"><input type="checkbox" data-rk="cmd"><span>'+T('только команды в справочнике')+'</span></label></div>';
     x+='<div class="sps"><h4>'+T('акцентный цвет')+'</h4><p class="spm">'+T('кнопки и детали')+'</p><div class="spp" data-box="apre">';
     for(i=0;i<APRE.length;i++)x+='<button type="button" class="pr" data-ap="'+i+'" style="background:linear-gradient(135deg,'+APRE[i][0]+','+APRE[i][1]+')" aria-label="'+APRE[i][0]+'"></button>';
     x+='</div><div class="spr"><label>'+T('цвет 1')+'<input type="color" data-k="c1"></label><label>'+T('цвет 2')+'<input type="color" data-k="c2"></label></div>';
@@ -163,7 +194,7 @@
     x+='<p class="spm">'+T('пресеты')+'</p><div class="spp" data-box="bpre"></div>';
     x+='<button type="button" class="spq" data-a="rbg">'+T('сбросить')+'</button></div>';
     x+='</div>';
-    sp.innerHTML=x;
+    sp.innerHTML=x;rdSync();
   }
   function q(k){return sp.querySelector('[data-k="'+k+'"]')}
   function refresh(){
@@ -256,7 +287,7 @@
   function pack(){return {t:get(),g:getGrad(),a:getAcc(),l:lang(),ts:ts()}}
   window.CloudTheme={
     get:get,
-    setAuto:setAuto,
+    setAuto:setAuto,getRd:rdGet,setRd:rdSet,
     set:function(v){set(v);var b=d.getElementById('tb');if(b)paint(b);touch();fire()},
     apply:function(ui){
       if(!ui)return;

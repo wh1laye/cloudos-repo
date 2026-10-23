@@ -88,6 +88,8 @@ footer p{margin:0 0 6px}
 .ddw{position:relative;display:inline-flex}
 .ddm{position:fixed;top:58px;right:12px;z-index:40;display:flex;flex-direction:column;gap:2px;min-width:210px;max-width:calc(100vw - 24px);padding:6px;border:1px solid var(--line);border-radius:12px;background:var(--surf)}
 .ddm[hidden]{display:none}
+.ddm{max-height:calc(100vh - 70px);overflow-y:auto}
+.ddh{padding:8px 12px 4px;color:var(--mute);font-size:12px;font-weight:600}
 .ddi{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;color:var(--ink);text-decoration:none;font-size:14px;font-weight:500}
 .ddi svg{width:17px;height:17px;flex:none;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ddi:hover{background:var(--side)}

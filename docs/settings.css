@@ -42,3 +42,10 @@ html.sp-open{overflow:hidden}
 .spv .pv2{flex:1;height:38px;border-radius:10px}
 .spq{padding:8px 16px;border:1px solid var(--line);border-radius:10px;background:none;color:var(--mute);font:inherit;font-size:14px;cursor:pointer}
 .spq:hover{border-color:var(--ac);color:var(--ac)}
+
+html[data-fs="1"] main{zoom:1.1}
+html[data-fs="2"] main{zoom:1.22}
+html[data-hc="1"][data-theme="gray"]{--mute:#cdd4de;--line:#5d636e;--ink:#fff}
+html[data-hc="1"][data-theme="light"]{--mute:#313d4c;--line:#98a4b6;--ink:#000}
+html[data-cmd="1"] #cloud p,html[data-cmd="1"] #cloud ul,html[data-cmd="1"] #cloud ol,html[data-cmd="1"] #cloud table,html[data-cmd="1"] #cloud .note,html[data-cmd="1"] #cloud .lead{display:none}
+html[data-cmd="1"] #cloud .m-uefi,html[data-cmd="1"] #cloud .m-bios{margin:0}
