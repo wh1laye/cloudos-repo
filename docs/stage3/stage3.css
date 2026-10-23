@@ -1,0 +1,13 @@
+.cr{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0}
+.cr button{padding:5px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surf);color:var(--ink);font:13px var(--mono);cursor:pointer}
+.tm{position:relative;width:100%;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surf)}
+.tc{position:absolute;box-sizing:border-box;margin:1px;padding:6px 8px;overflow:hidden;border-radius:6px;background:var(--c);background:color-mix(in srgb,var(--c) 30%,var(--surf));border:1px solid var(--c);color:var(--ink);font-size:12px;line-height:1.3}
+.tc.dir{cursor:pointer}
+.tc.dir:hover{background:color-mix(in srgb,var(--c) 48%,var(--surf))}
+.tc b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tc span{color:var(--mute)}
+.tt{width:100%;margin:18px 0;border-collapse:collapse;font-size:14px}
+.tt td{padding:7px 10px;border-bottom:1px solid var(--line)}
+.tt td:first-child{font-family:var(--mono)}
+.bar{display:inline-block;width:80px;height:6px;border-radius:3px;background:var(--side);vertical-align:middle;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ac)}
