@@ -1,0 +1,15 @@
+.kg{margin:22px 0}
+.kg h3{margin:0 0 10px;font-size:15px;color:var(--mute);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{padding:7px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--mute);font:inherit;font-size:14px;cursor:pointer}
+.chips button.on{background:var(--abg,var(--ac));border-color:transparent;color:var(--onac)}
+.kvi{padding:10px 12px;width:180px;max-width:100%;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--ink);font:inherit;font-size:15px;outline:0}
+.kvi:focus{border-color:var(--ac)}
+.kvi.bad{border-color:var(--bad)}
+#out{margin-top:28px}
+.wzb{margin:0 0 18px}
+.wzb h3{margin:0 0 8px;font-size:16px}
+.wzb .cw{margin:0}
+#out details{margin:8px 0 22px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surf);font-size:14px}
+#out summary{cursor:pointer;font-weight:500}
+#out li{margin:6px 0;word-break:break-word}
