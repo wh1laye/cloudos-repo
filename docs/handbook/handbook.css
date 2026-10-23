@@ -95,3 +95,7 @@ details.err .cw,details.err>div>pre{margin-bottom:14px}
 .hbdh strong{font-weight:500;font-size:14px;line-height:1.4}
 .hbdh span{flex:none;font-size:13px;color:var(--ac)}
 .vmc input.bad{border-color:var(--bad)}
+
+::highlight(hbq){background:var(--soft);color:var(--ac)}
+.hbt{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);padding:9px 16px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--ink);font-size:14px;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:60}
+.hbt.on{opacity:1;transform:translateX(-50%) translateY(0)}

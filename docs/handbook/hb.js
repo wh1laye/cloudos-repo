@@ -48,8 +48,44 @@ qa('h2[id],h3[id]',main).forEach(function(x){
   var a=d.createElement('a');
   a.className='anc';a.href='#'+x.id;a.textContent='#';
   a.setAttribute('aria-label','ссылка на раздел');
+  a.addEventListener('click',function(){
+    var u=location.origin+location.pathname+'#'+x.id;
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(u).then(function(){toast()},function(){});
+  });
   x.appendChild(a);
 });
+var tt=null;
+function toast(){
+  var t=d.getElementById('hbt');
+  if(!t){t=d.createElement('div');t.id='hbt';t.className='hbt';t.textContent=window.I18N&&window.I18N.t?window.I18N.t('ссылка скопирована'):'ссылка скопирована';d.body.appendChild(t)}
+  t.classList.add('on');
+  clearTimeout(tt);
+  tt=setTimeout(function(){t.classList.remove('on')},1600);
+}
+var hlT=null;
+function hl(el,q){
+  if(!window.CSS||!CSS.highlights||typeof Highlight==='undefined')return;
+  CSS.highlights.delete('hbq');
+  var ws=(q||'').toLowerCase().split(/\s+/).filter(function(w){return w.length>1});
+  if(!ws.length)return;
+  var rs=[],tw=d.createTreeWalker(el,NodeFilter.SHOW_TEXT,null),n;
+  while((n=tw.nextNode())){
+    var s=n.data.toLowerCase();
+    for(var i=0;i<ws.length;i++){
+      var p=s.indexOf(ws[i]);
+      while(p>=0&&rs.length<200){
+        var r=d.createRange();r.setStart(n,p);r.setEnd(n,p+ws[i].length);rs.push(r);
+        p=s.indexOf(ws[i],p+ws[i].length);
+      }
+    }
+  }
+  if(!rs.length)return;
+  var hg=new Highlight();
+  rs.forEach(function(r){hg.add(r)});
+  CSS.highlights.set('hbq',hg);
+  clearTimeout(hlT);
+  hlT=setTimeout(function(){CSS.highlights.delete('hbq')},7000);
+}
 
 var h2s=qa('h2[id]',main);
 h2s.forEach(function(x,i){
@@ -162,8 +198,10 @@ function render(q){
 function pick(n){
   var x=items[n];
   if(!x)return;
+  var q0=inp.value;
   close();
   go(x.r.el);
+  hl(x.r.el,q0);
   if(x.r.el.id)try{history.replaceState(null,'','#'+x.r.el.id)}catch(e){}
 }
 function open(){
