@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wh1laye.github.io/cloudos-repo/sitemap.xml
