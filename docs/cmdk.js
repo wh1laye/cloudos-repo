@@ -2,7 +2,7 @@
 if(/\/handbook\//.test(location.pathname))return;
 var d=document,sc=d.currentScript,root=sc?sc.src.replace(/cmdk\.js.*$/,''):'';
 if(window.I18N&&window.I18N.add)window.I18N.add({'мастер установки':'install wizard'});
-var P=[["", "главная"], ["wizard/", "мастер установки"], ["handbook/", "справочник"], ["news/", "новое"], ["forum/", "форум"], ["releases/", "релизы"], ["packages/", "пакеты"], ["hardware/", "железо"]];
+var P=[["", "главная"], ["wizard/", "мастер установки"],["compare/", "сравнение"], ["handbook/", "справочник"], ["news/", "новое"], ["forum/", "форум"], ["releases/", "релизы"], ["packages/", "пакеты"], ["hardware/", "железо"]];
 var C=[["about", "1. о cloudos"], ["prep", "2. подготовка"], ["disk", "3. диск и файловые системы"], ["stage", "4. stage 3"], ["chroot", "5. вход в chroot"], ["conf", "6. настройка сборки"], ["kernel", "7. ядро"], ["boot", "8. загрузчик"], ["final", "9. завершение"], ["first", "10. первая загрузка"], ["cpkg", "11. пакеты и cloudpkg"], ["maint", "12. обслуживание"], ["next", "13. что дальше"], ["errors", "14. ошибки и решения"], ["cheat", "15. шпаргалка"], ["faq", "16. вопросы и ответы"], ["appa", "приложение а. имена дисков"], ["appb", "приложение б. btrfs с подтомами"], ["appc", "приложение в. словарь"]];
 var el=null,inp=null,ls=null,sel=0,cur=[];
 function lg(){return window.CloudTheme?window.CloudTheme.getLang():'ru'}
