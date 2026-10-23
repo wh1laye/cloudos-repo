@@ -1,0 +1,9 @@
+.cp h2{margin:36px 0 12px}
+.cmp{margin:22px 0 8px;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surf)}
+.cmp table{width:100%;min-width:640px;border-collapse:collapse;font-size:14px}
+.cmp th,.cmp td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.cmp tbody tr:last-child th,.cmp tbody tr:last-child td{border-bottom:0}
+.cmp thead th{color:var(--mute);font-weight:600;font-size:13px}
+.cmp tbody th{color:var(--mute);font-weight:500;white-space:nowrap}
+.cmp .me{background:var(--soft);color:var(--ink)}
+.cmp thead .me{color:var(--ac)}
