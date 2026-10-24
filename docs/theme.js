@@ -400,3 +400,11 @@ d.addEventListener('click',function(e){
 });
 d.addEventListener('keydown',function(e){if(e.key==='Escape')sh(false)});
 })();
+
+(function(){
+var s=document.currentScript;
+if(!s||!s.src)return;
+var e=document.createElement('script');
+e.src=s.src.replace(/theme\.js.*$/,'')+'themes/themes.js?v=1';
+document.head.appendChild(e);
+})();
