@@ -154,7 +154,7 @@ notifs=async function(){
     const a=app.querySelector('a.ni[data-i="'+x.id+'"]');
     if(!a||!a.firstElementChild)return;
     const d=x.data||{};
-    a.firstElementChild.innerHTML='<b>'+esc(d.n||'участник')+'</b> создал тему «'+esc(d.t||'')+'» в разделе «'+esc(d.b||'')+'»';
+    a.firstElementChild.innerHTML='<b>'+esc(d.n||tr('участник'))+'</b> '+tr('создал тему «')+esc(d.t||'')+tr('» в разделе «')+esc(d.b||'')+'»';
   });
 };
 
@@ -247,10 +247,10 @@ document.addEventListener('click',async e=>{
       await navigator.clipboard.writeText(url);
       b.textContent='скопировано';
       setTimeout(()=>{b.textContent='ссылка'},1500);
-    }catch(x){prompt('ссылка на сообщение',url)}
+    }catch(x){prompt(tr('ссылка на сообщение'),url)}
   }
   else if(a==='tgedit'&&m){
-    const n=prompt('теги через запятую, до 5 штук',b.dataset.v||'');
+    const n=prompt(tr('теги через запятую, до 5 штук'),b.dataset.v||'');
     if(n===null)return;
     const r=await sb.rpc('set_tags',{tid:+m[1],tg:parseTags(n)});
     if(r.error)return alert(r.error.message);

@@ -132,13 +132,13 @@ function award(){
 }
 function rule(b){
   var id=b.getAttribute('data-br');
-  var v=prompt('условие: posts, likes, threads, solved или days и число, например posts 10. пусто - убрать условие');
+  var v=prompt(tr('условие: posts, likes, threads, solved или days и число, например posts 10. пусто - убрать условие'));
   if(v===null)return;
   v=v.trim();
   var k='',n=0;
   if(v){
     var m=v.match(/^(posts|likes|threads|solved|days)\s+(\d{1,6})$/);
-    if(!m)return alert('нужен формат: posts 10');
+    if(!m)return alert(tr('нужен формат: posts 10'));
     k=m[1];n=+m[2];
   }
   sb.rpc('set_badge_rule',{bid:String(id),kind:k,n:n}).then(function(r){
