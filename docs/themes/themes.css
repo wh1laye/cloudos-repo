@@ -6,52 +6,59 @@ html[data-season="su"][data-theme="gray"]{--bg:#0a2530;--surf:#103744;--side:#14
 html[data-season="su"][data-theme="light"]{--bg:#e4f8ff;--surf:#fff;--side:#d2f0fb;--line:#aee0f2;--ink:#0b3a4d;--mute:#4a8aa2;--ac:#0aa5c7;--soft:#d4f3fb;--onac:#fff;--code:#dff4fb}
 html[data-season="sp"][data-theme="gray"]{--bg:#1e1723;--surf:#2b2031;--side:#352839;--line:#4d3a58;--ink:#fdeff6;--mute:#d3a9c1;--ac:#ff8fb8;--soft:#3e2639;--onac:#3a0a1f;--code:#231a28}
 html[data-season="sp"][data-theme="light"]{--bg:#fff3f8;--surf:#fff;--side:#ffe6ef;--line:#f5cadb;--ink:#4a1f33;--mute:#a0637f;--ac:#e0507f;--soft:#ffe0ec;--onac:#fff;--code:#ffeaf2}
-.zs{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden}
-.zsb{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.zs{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden;contain:layout style}
+.zsb{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:layout style}
 .zs *,.zsb *{pointer-events:none}
 .zso{position:fixed}
 .zsc{position:fixed;left:0;top:0;width:100%;height:100%}
 html.zs-still .zs *,html.zs-still .zsb *{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){.zs *,.zsb *{animation-play-state:paused!important}}
 @media print{.zs,.zsb{display:none!important}}
+.brand{position:relative}
+.zsl{position:absolute;display:block!important;margin:0;line-height:0;pointer-events:none;z-index:3}
+.brand .zsl svg{width:100%!important;height:auto!important;display:block}
 .zss .zsg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
 .zss .zsg button{padding:9px 4px;border:0;border-radius:9px;background:none;color:var(--mute);font:inherit;font-weight:500;font-size:14px;cursor:pointer}
 .zss .zsg button.on{background:var(--abg,var(--ac));color:var(--onac)}
 .zss .spm{margin:10px 0 6px}
-@keyframes zstw{0%,100%{opacity:.4;transform:scale(.88)}50%{opacity:1;transform:scale(1.08)}}
+@keyframes zstw{0%,100%{opacity:.35}50%{opacity:1}}
 @keyframes zswob{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
 @keyframes zsfloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
-@keyframes zsflick{0%,100%{opacity:1}30%{opacity:.72}55%{opacity:.96}75%{opacity:.62}}
-@keyframes zsdrop{0%,100%{transform:translateY(0)}50%{transform:translateY(64px)}}
+@keyframes zsflick{0%,100%{opacity:.95}30%{opacity:.55}55%{opacity:.9}75%{opacity:.45}}
+@keyframes zsthread{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes zsspd{0%,100%{transform:translateY(-49px)}50%{transform:translateY(0)}}
 @keyframes zsspin{to{transform:rotate(360deg)}}
 @keyframes zsbob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
 @keyframes zswave{to{transform:translateX(-50%)}}
 @keyframes zsdrift{from{transform:translateX(-40vw)}to{transform:translateX(120vw)}}
+@keyframes zsfly{from{transform:translateX(-35vw)}to{transform:translateX(125vw)}}
+@keyframes zsfly2{from{transform:translateX(125vw)}to{transform:translateX(-35vw)}}
 @keyframes zssway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
 @keyframes zsbr{0%,100%{transform:rotate(-.8deg)}50%{transform:rotate(.8deg)}}
-@keyframes zspulse{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
-@keyframes zsblink{0%,92%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
 @keyframes zsfog{from{transform:translateX(-6%)}to{transform:translateX(6%)}}
-@keyframes zsgl{0%,100%{filter:drop-shadow(0 0 6px #ffb347)}50%{filter:drop-shadow(0 0 14px #ffb347)}}
-.zs-bulb,.zs-orn{transform-box:fill-box;transform-origin:center;animation:zstw 1.9s ease-in-out infinite}
-.zs-wob{transform-origin:50% 100%;animation:zswob 5s ease-in-out infinite}
-.zs-ghost{animation:zsfloat 6s ease-in-out infinite}
-.zs-ghost .eye{transform-box:fill-box;transform-origin:center;animation:zsblink 5s infinite}
-.zs-pumpkin .glow{animation:zsflick 2.4s infinite}
-.zs-pumpkin{animation:zsgl 3s ease-in-out infinite}
-.zs-spider{animation:zsdrop 8s ease-in-out infinite}
-.zs-spider i{position:absolute;left:50%;top:-300px;width:2px;height:300px;margin-left:-1px;background:#cfc2ee}
-.zs-fog{left:-10%;right:-10%;bottom:0;height:120px;background:linear-gradient(to top,rgba(170,140,230,.42),rgba(170,140,230,0));animation:zsfog 14s ease-in-out infinite alternate}
-.zs-moon{filter:drop-shadow(0 0 20px rgba(255,236,150,.55))}
-.zs-rays{transform-box:fill-box;transform-origin:center;animation:zsspin 40s linear infinite}
-.zs-cloud{animation:zsdrift 100s linear infinite}
-.zs-rays-w{}
+@keyframes zsrise{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.zs-bulb{position:absolute;width:7px;height:10px;margin:-1px 0 0 -3px;border-radius:50% 50% 55% 55%;border:1.3px solid #1c2a20;animation:zstw 1.9s ease-in-out infinite;will-change:opacity}
+.zs-star{position:absolute;width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 6px 1px rgba(255,255,255,.8);animation:zstw 3s ease-in-out infinite;will-change:opacity}
+html[data-theme="light"] .zs-star{display:none}
+.zs-wob{transform-origin:50% 100%;animation:zswob 5s ease-in-out infinite;will-change:transform}
+.zs-ghost{animation:zsfloat 6s ease-in-out infinite;will-change:transform}
+.zs-pglow{border-radius:50%;background:radial-gradient(circle,rgba(255,170,40,.65),rgba(255,170,40,0) 68%);animation:zsflick 2.4s infinite;will-change:opacity}
+.zs-sp{transform-origin:50% 0}
+.zs-spth{position:absolute;left:50%;top:0;width:2px;height:70px;margin-left:-1px;background:#cfc2ee;transform-origin:50% 0;animation:zsthread 8s ease-in-out infinite;will-change:transform}
+.zs-spbd{position:absolute;left:0;top:64px;width:100%;animation:zsspd 8s ease-in-out infinite;will-change:transform}
+.zs-fog{left:-10%;right:-10%;bottom:0;height:120px;background:linear-gradient(to top,rgba(170,140,230,.42),rgba(170,140,230,0));animation:zsfog 14s ease-in-out infinite alternate;will-change:transform}
+.zs-moon{border-radius:50%;box-shadow:0 0 28px 8px rgba(255,236,150,.45)}
+.zs-rays{animation:zsspin 40s linear infinite;will-change:transform}
+.zs-cloud{animation:zsdrift 100s linear infinite;will-change:transform}
 .zs-wv{overflow:hidden}
-.zs-wv svg{display:block;width:200%;animation:zswave 16s linear infinite}
+.zs-wv svg{display:block;width:200%;animation:zswave 16s linear infinite;will-change:transform}
 .zs-wv.b2 svg{animation-duration:10s;animation-direction:reverse}
-.zs-bob{animation:zsbob 4.2s ease-in-out infinite}
-.zs-spin svg{animation:zsspin 9s linear infinite}
-.zs-brn{animation:zsbr 7s ease-in-out infinite}
-.zs-brn .bl{transform-box:fill-box;transform-origin:center;animation:zspulse 4s ease-in-out infinite}
-.zs-flower{transform-origin:50% 100%;animation:zssway 3.4s ease-in-out infinite}
+.zs-bob{animation:zsbob 4.2s ease-in-out infinite;will-change:transform}
+.zs-spin svg{animation:zsspin 9s linear infinite;will-change:transform}
+.zs-brn{animation:zsbr 7s ease-in-out infinite;will-change:transform}
+.zs-flower{transform-origin:50% 100%;animation:zssway 3.4s ease-in-out infinite;will-change:transform}
+.zs-fly{left:0;animation:zsfly linear infinite;will-change:transform}
+.zs-fly.r{animation-name:zsfly2}
+.zs-fly > div{animation:zsrise 3.6s ease-in-out infinite}
 html[data-theme="light"] .zs-snow path{stroke:#5f9bd0}
 html[data-theme="light"] .zs-snow path[fill="#d3e8fb"]{fill:#c5def5}
