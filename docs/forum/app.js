@@ -3,6 +3,12 @@ if(typeof supabase==='undefined'){
   throw new Error('supabase missing');
 }
 const sb=supabase.createClient(CFG.url,CFG.key);
+(function(){
+  var q=location.hash.replace(/^#/,'')+'&'+location.search.replace(/^\?/,''),m=q.match(/(?:^|&)error_description=([^&]+)/);
+  if(m){var t;try{t=decodeURIComponent(m[1].replace(/\+/g,' '))}catch(e){t=m[1]}
+    history.replaceState(null,'',location.pathname);
+    setTimeout(function(){alert('ошибка входа: '+t)},400)}
+})();
 
 function captcha(){
   if(!CFG.ts)return Promise.resolve(undefined);
@@ -986,7 +992,7 @@ document.addEventListener('click',async e=>{
   if(!b||b.tagName==='SELECT')return;
   const a=b.dataset.a,i=b.dataset.i,v=b.dataset.v;
   if(a==='anon'){const r=await anonIn();if(r.error)return alert(r.error.message);await auth();route()}
-  else if(a==='oauth'){const r=await sb.auth.signInWithOAuth({provider:i,options:{redirectTo:location.href.split('#')[0]}});if(r.error)alert(r.error.message)}
+  else if(a==='oauth'){const r=await sb.auth.signInWithOAuth({provider:i,options:{redirectTo:location.origin+location.pathname.replace(/index\.html$/,'')}});if(r.error)alert(r.error.message)}
   else if(a==='signup'){
     const em=$('#em').value.trim(),pw=$('#pw').value;
     if(!em||pw.length<6)return alert('введи email и пароль от 6 символов');
