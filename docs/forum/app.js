@@ -7,7 +7,7 @@ const sb=supabase.createClient(CFG.url,CFG.key,{auth:{flowType:'pkce',detectSess
   var q=location.hash.replace(/^#/,'')+'&'+location.search.replace(/^\?/,''),m=q.match(/(?:^|&)error_description=([^&]+)/);
   if(m){var t;try{t=decodeURIComponent(m[1].replace(/\+/g,' '))}catch(e){t=m[1]}
     history.replaceState(null,'',location.pathname);
-    setTimeout(function(){alert(tr('ошибка входа: ')+t)},400)}
+    setTimeout(function(){alert('ошибка входа: '+t)},400)}
 })();
 
 function captcha(){
@@ -50,7 +50,7 @@ async function passIn(email,password){
 const app=document.getElementById('app'),bar=document.getElementById('bar');
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt=t=>new Date(t).toLocaleString(LOC(),{dateStyle:'short',timeStyle:'short'});
+const fmt=t=>new Date(t).toLocaleString('ru',{dateStyle:'short',timeStyle:'short'});
 const col=c=>/^#[0-9a-fA-F]{3,8}$/.test(c)?c:'#3b5fa8';
 const bg=r=>'linear-gradient('+((+r.angle)||0)+'deg,'+col(r.c1)+','+col(r.c2)+')';
 const safeUrl=u=>/^https:\/\/[^\s"'()<>\\]{1,500}$/.test(u||'')?u:'';
@@ -62,9 +62,9 @@ const bannerStyle=u=>{
 const av=p=>{const l=p&&safeUrl(p.avatar_url);return l?'<span class="av" style="background-image:url(\''+l+'\')"></span>':''};
 const avStyle=u=>{const l=safeUrl(u.avatar_url);return l?"background-image:url('"+l+"');background-size:cover;background-position:center":'background-image:'+bgB(u)};
 const PFX=['вопрос','баг','предложение','обсуждение'];
-const pfx=t=>(t&&t.prefix?'<span class="tag px">'+esc(tr(t.prefix))+'</span>':'')+(t&&t.solved?'<span class="tag sv">'+tr('решено')+'</span>':'');
+const pfx=t=>(t&&t.prefix?'<span class="tag px">'+esc(t.prefix)+'</span>':'')+(t&&t.solved?'<span class="tag sv">решено</span>':'');
 const LV=[[100,'ветеран'],[50,'опытный'],[20,'свой'],[5,'участник'],[0,'новичок']];
-const lvl=n=>{const x=LV.find(q=>n>=q[0]);return x?tr(x[1]):''};
+const lvl=n=>{const x=LV.find(q=>n>=q[0]);return x?x[1]:''};
 const tAuth=t=>t.author||t.user_id||t.created_by||t.author_id;
 let uiT=null;
 function pushUi(){
@@ -98,8 +98,8 @@ const parseDur=s=>{
 };
 const restricted=()=>{
   if(!prof)return '';
-  if(active(prof.banned_until))return tr('ваш аккаунт заблокирован: ')+till(prof.banned_until)+(prof.ban_reason?tr('. причина: ')+prof.ban_reason:'');
-  if(active(prof.muted_until))return tr('вы в муте: ')+till(prof.muted_until)+(prof.mute_reason?tr('. причина: ')+prof.mute_reason:'');
+  if(active(prof.banned_until))return 'ваш аккаунт заблокирован: '+till(prof.banned_until)+(prof.ban_reason?'. причина: '+prof.ban_reason:'');
+  if(active(prof.muted_until))return 'вы в муте: '+till(prof.muted_until)+(prof.mute_reason?'. причина: '+prof.mute_reason:'');
   return '';
 };
 const missing=m=>/function|schema cache|does not exist/i.test(m||'');
@@ -218,7 +218,7 @@ async function board(id){
     const {data:ts,error:e}=await r;
     if(e){$('#tl').innerHTML='<p class="mu">'+esc(e.message)+'</p>';return}
     await withProf(ts);
-    $('#tl').innerHTML=ts.map(t=>'<a class="trow" href="#/t/'+t.id+'"><div><strong>'+pfx(t)+(t.pinned?'<span class="tag">'+tr('закреплено')+'</span>':'')+(t.locked?'<span class="tag">'+tr('закрыто')+'</span>':'')+esc(t.title)+'</strong>'+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>').join('')||'<p class="mu">тем пока нет</p>';
+    $('#tl').innerHTML=ts.map(t=>'<a class="trow" href="#/t/'+t.id+'"><div><strong>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>').join('')||'<p class="mu">тем пока нет</p>';
   };
   $('#q').oninput=draw;
   $('#npl').onchange=()=>{$('#npw').hidden=!$('#npl').checked};
@@ -231,15 +231,15 @@ async function board(id){
       let popts=[];
       if($('#npl').checked){
         popts=$('#npo').value.split('\n').map(x=>x.trim()).filter(Boolean);
-        if($('#npq').value.trim().length<3||popts.length<2||popts.length>10)return alert(tr('для опроса нужен вопрос и от 2 до 10 вариантов'));
+        if($('#npq').value.trim().length<3||popts.length<2||popts.length>10)return alert('для опроса нужен вопрос и от 2 до 10 вариантов');
       }
       const t=await sb.from('threads').insert({board_id:id,title:$('#nt').value.trim(),prefix:$('#npx').value||null}).select('id').single();
-      if(t.error)return alert(tr('не удалось создать тему: ')+t.error.message);
+      if(t.error)return alert('не удалось создать тему: '+t.error.message);
       const p=await sb.from('posts').insert({thread_id:t.data.id,body:$('#nb').value.trim()});
-      if(p.error){await sb.from('threads').delete().eq('id',t.data.id);return alert(tr('не удалось создать сообщение: ')+p.error.message)}
+      if(p.error){await sb.from('threads').delete().eq('id',t.data.id);return alert('не удалось создать сообщение: '+p.error.message)}
       if($('#npl').checked){
         const pr=await sb.rpc('create_poll',{tid:t.data.id,q:$('#npq').value.trim(),opts:popts,mlt:$('#npm').checked});
-        if(pr.error)alert(tr('тема создана, но опрос не создался: ')+pr.error.message);
+        if(pr.error)alert('тема создана, но опрос не создался: '+pr.error.message);
       }
       location.hash='#/t/'+t.data.id;
     }catch(x){alert(x.message||x)}
@@ -284,7 +284,7 @@ async function thread(id){
     return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button>':'')+(own||can('delete_posts')?'<button class="lk" data-a="delp" data-i="'+p.id+'" data-o="'+(own?1:0)+'">удалить</button>':'')+(me?'<button class="lk'+(bm.has('post'+p.id)?' on':'')+'" data-a="bmp" data-i="'+p.id+'" data-v="'+(bm.has('post'+p.id)?1:0)+'">'+(bm.has('post'+p.id)?'убрать из закладок':'в закладки')+'</button>':'')+(own?'<button class="lk" data-a="ped" data-i="'+p.id+'">изменить</button>':'')+(me?'<button class="lk" data-a="qt" data-n="'+esc(p.profiles?p.profiles.name:'')+'">цитата</button>':'')+(me&&!own?'<button class="lk" data-a="rep" data-i="'+p.id+'">пожаловаться</button>':'')+'</div>';
   };
   const ctl=can('pin')||can('lock')||can('delete_threads')?'<div class="acts">'+(can('pin')?'<button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button>':'')+(can('lock')?'<button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button>':'')+(can('delete_threads')?'<button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.boards.id+'">удалить тему</button>':'')+'</div>':'';
-  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">'+tr('закреплено')+'</span>':'')+(t.locked?'<span class="tag">'+tr('закрыто')+'</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button>'+(me&&(tAuth(t)===me.id||can('delete_posts'))?'<button class="lk" data-a="sol" data-i="'+t.id+'" data-v="'+(t.solved?1:0)+'">'+(t.solved?'снять отметку «решено»':'отметить решённой')+'</button>':'')+'</div>':'')+ctl+pollHtml(poll)+
+  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button>'+(me&&(tAuth(t)===me.id||can('delete_posts'))?'<button class="lk" data-a="sol" data-i="'+t.id+'" data-v="'+(t.solved?1:0)+'">'+(t.solved?'снять отметку «решено»':'отметить решённой')+'</button>':'')+'</div>':'')+ctl+pollHtml(poll)+
     ps.filter(p=>!p.parent_id).map(p=>{
       const kids=ps.filter(c=>c.parent_id===p.id);
       return '<article class="post item"><div class="side">'+who(p.profiles)+lv(p.author)+'<span class="mu">'+fmt(p.created_at)+(p.edited_at?' · изменено':'')+'</span></div><div><div class="txt" data-raw="'+esc(p.body)+'">'+fmtBody(p.body)+'</div>'+acts(p)+kids.map(c=>'<div class="cm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+(c.edited_at?' · изменено':'')+'</span></div><div class="txt" data-raw="'+esc(c.body)+'">'+fmtBody(c.body)+'</div>'+acts(c,true)+'</div>').join('')+'<div class="cwrap" data-w="'+p.id+'"></div></div></article>';
@@ -365,7 +365,7 @@ async function notifs(){
   }
   const line=n=>{
     const d=n.data||{},p=m[n.actor],w=p?who(p,false):'<b>администрация</b>';
-    const why=d.reason?' ('+tr('причина: ')+esc(d.reason)+')':'';
+    const why=d.reason?' (причина: '+esc(d.reason)+')':'';
     switch(n.kind){
       case 'reply':return w+' ответил в вашей теме';
       case 'comment':return w+' прокомментировал ваше сообщение';
@@ -373,7 +373,7 @@ async function notifs(){
       case 'sub':return w+' ответил в теме, на которую вы подписаны';
       case 'like':return w+' оценил ваше сообщение';
       case 'pcomment':return w+' написал в вашем профиле';
-      case 'role':return d.role?tr('вам выдана роль «')+esc(d.role)+'»':'ваша роль снята';
+      case 'role':return d.role?'вам выдана роль «'+esc(d.role)+'»':'ваша роль снята';
       case 'admin':return d.on?'вы назначены администратором':'права администратора сняты';
       case 'perms':return 'ваши права изменены';
       case 'mute':return 'вы замучены до '+esc(d.until?till(d.until):'?')+why;
@@ -741,7 +741,7 @@ async function profile(id){
   const bgrow=isAdm&&bgAll.length?'<div class="row mod"><select id="bgsel">'+bgAll.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join('')+'</select><button class="btn s" data-a="bgive" data-i="'+esc(id)+'">выдать значок</button></div>':'';
   app.innerHTML='<p><a href="#/">форум</a> / участник</p><div class="pb"><div class="pbn" style="'+bannerStyle(u)+'"></div><div class="pbd"><div class="pav" style="'+avStyle(u)+'">'+(safeUrl(u.avatar_url)?'':esc(String(u.name||'?').slice(0,1).toUpperCase()))+'</div><div class="pn">'+who(u,false)+(u.is_admin?'<span class="tag">админ</span>':'')+(active(u.muted_until)?'<span class="tag">мут до '+esc(till(u.muted_until))+'</span>':'')+(active(u.banned_until)?'<span class="tag">бан до '+esc(till(u.banned_until))+'</span>':'')+'</div>'+
     (u.bio?'<p class="bio">'+esc(u.bio)+'</p>':'<p class="mu">пока ничего о себе не написал.</p>')+
-    bdgHtml+'<div class="pst2"><span><b>'+(pc.count||0)+'</b> '+pl(pc.count||0,['сообщение','сообщения','сообщений'],['message','messages'])+'</span><span><b>'+(+rtg.data||0)+'</b> рейтинг · '+lvl(+rtg.data||0)+'</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString(LOC())+'</span></div>'+
+    bdgHtml+'<div class="pst2"><span><b>'+(pc.count||0)+'</b> сообщений</span><span><b>'+(+rtg.data||0)+'</b> рейтинг · '+lvl(+rtg.data||0)+'</span><span>на форуме с '+new Date(u.created_at).toLocaleDateString('ru')+'</span></div>'+
     (own?'<div class="row"><button class="btn" data-a="pedit">изменить профиль</button>'+renameBtn(u)+'<button class="btn" data-a="out">выйти</button></div>':(me?'<div class="row"><button class="btn" data-a="dm" data-i="'+esc(id)+'">сообщения</button></div>':''))+modrow+bgrow+sanrow+'</div></div>'+edit+
     '<h2>комментарии</h2>'+(cerr?'<div class="warn"><b>комментарии недоступны</b>'+esc(cerr)+'</div>':'<form id="pcf"><textarea id="pcb" rows="3" maxlength="1000" placeholder="написать участнику" required></textarea>'+tools('pcb')+'<button class="btn p">отправить</button></form>'+clist);
   app.dataset.u=id;
@@ -777,7 +777,7 @@ async function logHtml(rows){
   await withProf(tt);
   return rows.map((x,n)=>{
     const d=x.details||{},bits=[];
-    if(d.role)bits.push(tr('роль «')+esc(d.role)+'»');
+    if(d.role)bits.push('роль «'+esc(d.role)+'»');
     if(d.title)bits.push('«'+esc(d.title)+'»');
     if(d.text)bits.push(esc(d.text));
     if(d.until)bits.push('до '+esc(till(d.until)));
@@ -883,7 +883,7 @@ async function adminThreads(head){
       if(q)r=r.ilike('title','%'+q+'%');
       x=await r;
     }
-    $('#tl').innerHTML=(x.data||[]).map(t=>'<div class="ur"><span><a href="#/t/'+t.id+'">'+esc(t.title)+'</a> <span class="mu">'+esc(t.boards?t.boards.title:'')+'</span>'+(t.pinned?' <span class="tag">'+tr('закреплено')+'</span>':'')+(t.locked?' <span class="tag">'+tr('закрыто')+'</span>':'')+(t.solved?' <span class="tag sv">решено</span>':'')+'</span><span><button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button><button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button><button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.board_id+'">удалить</button></span></div>').join('')||'<p class="mu">тем не найдено</p>';
+    $('#tl').innerHTML=(x.data||[]).map(t=>'<div class="ur"><span><a href="#/t/'+t.id+'">'+esc(t.title)+'</a> <span class="mu">'+esc(t.boards?t.boards.title:'')+'</span>'+(t.pinned?' <span class="tag">закреплено</span>':'')+(t.locked?' <span class="tag">закрыто</span>':'')+(t.solved?' <span class="tag sv">решено</span>':'')+'</span><span><button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button><button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button><button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.board_id+'">удалить</button></span></div>').join('')||'<p class="mu">тем не найдено</p>';
   };
   let tm=null;
   $('#tq').oninput=()=>{clearTimeout(tm);tm=setTimeout(load,250)};
@@ -914,7 +914,7 @@ async function adminAnn(head){
     const x=await sb.from('site_settings').upsert({key:'announcement',value:{on:$('#ano').checked,text:$('#ant').value.trim(),kind:$('#ank').value,id:Date.now()}});
     if(x.error)return alert(x.error.message);
     loadAnn();
-    alert(tr('сохранено'));
+    alert('сохранено');
   };
 }
 async function adminLog(head){
@@ -1014,18 +1014,18 @@ document.addEventListener('click',async e=>{
   else if(a==='oauth'){const r=await sb.auth.signInWithOAuth({provider:i,options:{redirectTo:location.origin+location.pathname.replace(/index\.html$/,'').replace(/\/?$/,'/')}});if(r.error)alert(r.error.message)}
   else if(a==='signup'){
     const em=$('#em').value.trim(),pw=$('#pw').value;
-    if(!em||pw.length<6)return alert(tr('введи email и пароль от 6 символов'));
+    if(!em||pw.length<6)return alert('введи email и пароль от 6 символов');
     let t;
     try{t=await captcha()}catch(x){return alert(x.message)}
     const r=await sb.auth.signUp(t?{email:em,password:pw,options:{captchaToken:t}}:{email:em,password:pw});
     if(r.error)return alert(r.error.message);
-    if(!r.data.session)return alert(tr('аккаунт создан, подтверди почту по ссылке из письма и потом войди'));
+    if(!r.data.session)return alert('аккаунт создан, подтверди почту по ссылке из письма и потом войди');
     await auth();
     route();
   }
   else if(a==='emailf'){const f=$('#ef');f.hidden=!f.hidden;if(!f.hidden)$('#em').focus()}
   else if(a==='out'){await sb.auth.signOut();await auth();route()}
-  else if(a==='rename'){const n=prompt(tr('новое имя (2-24 символа). менять можно раз в 7 дней'),prof?prof.name:'');if(n){const r=await sb.rpc('set_name',{n});if(r.error)return alert(r.error.message);await auth();route()}}
+  else if(a==='rename'){const n=prompt('новое имя (2-24 символа). менять можно раз в 7 дней',prof?prof.name:'');if(n){const r=await sb.rpc('set_name',{n});if(r.error)return alert(r.error.message);await auth();route()}}
   else if(a==='cm'){
     const w=b.closest('article').querySelector('.cwrap');
     if(w.firstChild){w.innerHTML='';return}
@@ -1044,11 +1044,11 @@ document.addEventListener('click',async e=>{
   }
   else if(a==='editp'){
     const old=b.closest('.item').querySelector('.txt').dataset.raw;
-    const n=prompt(tr('изменить сообщение'),old);
+    const n=prompt('изменить сообщение',old);
     if(n&&n.trim()){const r=await sb.from('posts').update({body:n.trim()}).eq('id',i);if(r.error)return alert(r.error.message);thread(+app.dataset.t)}
   }
   else if(a==='delp'){
-    if(!confirm(tr('удалить сообщение?')))return;
+    if(!confirm('удалить сообщение?'))return;
     const direct=()=>sb.from('posts').delete().eq('id',i);
     const r=b.dataset.o==='1'?await direct():await mod('mod_delete_post',{pid:+i},direct);
     if(r.error)return alert(r.error.message);
@@ -1061,31 +1061,31 @@ document.addEventListener('click',async e=>{
     if(location.hash==='#/admin')admin();else thread(+i);
   }
   else if(a==='delt'){
-    if(!confirm(tr('удалить тему целиком?')))return;
+    if(!confirm('удалить тему целиком?'))return;
     const r=await mod('mod_delete_thread',{tid:+i},()=>sb.from('threads').delete().eq('id',i));
     if(r.error)return alert(r.error.message);
     if(location.hash==='#/admin')admin();else location.hash='#/b/'+b.dataset.b;
   }
   else if(a==='sanc'){
     const kind=b.dataset.k;
-    const d=prompt(tr('срок: 10m, 1h, 1d, 7d, 30d или навсегда'),'1d');
+    const d=prompt('срок: 10m, 1h, 1d, 7d, 30d или навсегда','1d');
     if(d===null)return;
     const mins=parseDur(d);
-    if(mins===null)return alert(tr('неверный срок, пример: 30m, 2h, 3d, навсегда'));
-    const why=prompt(tr('причина (необязательно)'),'')||'';
+    if(mins===null)return alert('неверный срок, пример: 30m, 2h, 3d, навсегда');
+    const why=prompt('причина (необязательно)','')||'';
     const r=await sb.rpc(kind==='ban'?'mod_ban':'mod_mute',{uid:i,minutes:mins,reason:why});
     if(r.error)return alert(r.error.message);
     route();
   }
   else if(a==='unsanc'){
-    if(!confirm(tr('снять ограничение?')))return;
+    if(!confirm('снять ограничение?'))return;
     const r=await sb.rpc(b.dataset.k==='ban'?'mod_unban':'mod_unmute',{uid:i});
     if(r.error)return alert(r.error.message);
     route();
   }
   else if(a==='msel'){
     selUser={id:i,name:v};
-    $('#msel').innerHTML=tr('выбран: ')+'<b>'+esc(v)+'</b>';
+    $('#msel').innerHTML='выбран: <b>'+esc(v)+'</b>';
   }
   else if(a==='avx'){avx=true;b.hidden=true;const el=document.querySelector('.pav');if(el&&prof){el.style.backgroundImage=bgB(prof);el.style.backgroundSize='';el.textContent=String(prof.name||'?').slice(0,1).toUpperCase()}}
   else if(a==='sub'){
@@ -1103,16 +1103,16 @@ document.addEventListener('click',async e=>{
   }
   else if(a==='rep'){
     if(!await need())return;
-    const why=prompt(tr('причина жалобы (3-300 символов)'));
+    const why=prompt('причина жалобы (3-300 символов)');
     if(!why||why.trim().length<3)return;
     const r=await sb.from('reports').insert({post_id:+i,thread_id:+app.dataset.t,reason:why.trim().slice(0,300)});
-    if(r.error)return alert(r.error.code==='23505'?tr('вы уже жаловались на это сообщение'):r.error.message);
-    alert(tr('жалоба отправлена'));
+    if(r.error)return alert(r.error.code==='23505'?'вы уже жаловались на это сообщение':r.error.message);
+    alert('жалоба отправлена');
   }
   else if(a==='rpdone'){const r=await sb.from('reports').update({status:'done'}).eq('id',+i);if(r.error)return alert(r.error.message);reports()}
   else if(a==='rpdel'){const r=await sb.from('reports').delete().eq('id',+i);if(r.error)return alert(r.error.message);reports()}
   else if(a==='rpdelpost'){
-    if(!confirm(tr('удалить сообщение?')))return;
+    if(!confirm('удалить сообщение?'))return;
     const direct=()=>sb.from('posts').delete().eq('id',+i);
     const r=await mod('mod_delete_post',{pid:+i},direct);
     if(r.error)return alert(r.error.message);
@@ -1129,7 +1129,7 @@ document.addEventListener('click',async e=>{
     const bid=+$('#bgsel').value;
     if(!bid)return;
     const r=await sb.from('user_badges').insert({user_id:i,badge_id:bid});
-    if(r.error)return alert(r.error.code==='23505'?tr('этот значок уже выдан'):r.error.message);
+    if(r.error)return alert(r.error.code==='23505'?'этот значок уже выдан':r.error.message);
     route();
   }
   else if(a==='btake'){
@@ -1138,7 +1138,7 @@ document.addEventListener('click',async e=>{
     route();
   }
   else if(a==='bgdel'){
-    if(!confirm(tr('удалить значок у всех?')))return;
+    if(!confirm('удалить значок у всех?'))return;
     const r=await sb.from('badges').delete().eq('id',+i);
     if(r.error)return alert(r.error.message);
     badgesAdmin();
@@ -1196,10 +1196,10 @@ document.addEventListener('click',async e=>{
   else if(a==='gang'){window.CloudTheme.setGrad({a:+i});settings()}
   else if(a==='annx'){try{localStorage.setItem('ann_x',i)}catch(x){}const el=$('#ann');if(el)el.innerHTML=''}
   else if(a==='ureset'){
-    if(!confirm(tr('сбросить аватар, баннер, о себе и статус этого участника?')))return;
+    if(!confirm('сбросить аватар, баннер, о себе и статус этого участника?'))return;
     const r=await sb.rpc('admin_reset_profile',{uid:i});
     if(r.error)return alert(r.error.message);
-    alert(tr('профиль сброшен'));
+    alert('профиль сброшен');
   }
   else if(a==='bup'||a==='bdown'){
     const r=await sb.from('boards').select('id,pos').order('pos');
@@ -1210,7 +1210,7 @@ document.addEventListener('click',async e=>{
     admin();
   }
   else if(a==='bdesc'){
-    const d=prompt(tr('описание раздела'),b.dataset.v||'');
+    const d=prompt('описание раздела',b.dataset.v||'');
     if(d===null)return;
     const r=await sb.from('boards').update({descr:d.trim()}).eq('id',+i);
     if(r.error)return alert(r.error.message);
@@ -1228,9 +1228,9 @@ document.addEventListener('click',async e=>{
   else if(a==='gp'){const q=GP[window.CloudTheme.get()][+i];window.CloudTheme.setGrad({on:true,c1:q[1],c2:q[2],a:q[3]});settings()}
   else if(a==='nopen'){await sb.from('notifications').update({read:true}).eq('id',i);refreshBell()}
   else if(a==='nreadall'){await sb.from('notifications').update({read:true}).eq('user_id',me.id).eq('read',false);await refreshBell();notifs()}
-  else if(a==='nclear'){if(confirm(tr('удалить все уведомления?'))){await sb.from('notifications').delete().eq('user_id',me.id);await refreshBell();notifs()}}
+  else if(a==='nclear'){if(confirm('удалить все уведомления?')){await sb.from('notifications').delete().eq('user_id',me.id);await refreshBell();notifs()}}
   else if(a==='pedit'){const f=$('#pf');if(f)f.hidden=!f.hidden}
-  else if(a==='pcdel'){if(confirm(tr('удалить комментарий?'))){const r=await sb.from('profile_comments').delete().eq('id',i);if(r.error)return alert(r.error.message);route()}}
+  else if(a==='pcdel'){if(confirm('удалить комментарий?')){const r=await sb.from('profile_comments').delete().eq('id',i);if(r.error)return alert(r.error.message);route()}}
   else if(a==='perms'){const e2=document.getElementById('pe-'+i);if(e2)e2.hidden=!e2.hidden}
   else if(a==='psave'){
     const p=[...document.querySelectorAll('#pe-'+i+' .up:checked')].map(x=>x.value);
@@ -1239,7 +1239,7 @@ document.addEventListener('click',async e=>{
     route();
   }
   else if(a==='adm'){
-    if(!confirm(v==='1'?tr('снять права администратора?'):tr('сделать администратором? он получит полный доступ')))return;
+    if(!confirm(v==='1'?'снять права администратора?':'сделать администратором? он получит полный доступ'))return;
     const r=await sb.rpc('admin_set_admin',{uid:i,flag:v!=='1'});
     if(r.error)return alert(r.error.message);
     route();
@@ -1247,14 +1247,14 @@ document.addEventListener('click',async e=>{
   else if(a==='redit'){editing=+i;admin()}
   else if(a==='rcancel'){editing=null;admin()}
   else if(a==='udel'){
-    if(!confirm(tr('удалить ')+v+tr(' полностью из базы вместе с темами и сообщениями? это нельзя отменить')))return;
+    if(!confirm('удалить '+v+' полностью из базы вместе с темами и сообщениями? это нельзя отменить'))return;
     const r=await sb.rpc('admin_delete_user',{uid:i});
-    if(r.error)return alert(tr('не удалось удалить: ')+r.error.message);
+    if(r.error)return alert('не удалось удалить: '+r.error.message);
     if(location.hash.startsWith('#/u/'))location.hash='#/admin';else route();
   }
-  else if(a==='rdel'){if(confirm(tr('удалить роль?'))){const r=await sb.from('roles').delete().eq('id',i);if(r.error)return alert(r.error.message);admin()}}
-  else if(a==='bren'){const n=prompt(tr('новое название'),v);if(n){const r=await sb.from('boards').update({title:n.trim()}).eq('id',i);if(r.error)return alert(r.error.message);admin()}}
-  else if(a==='bdel'){if(confirm(tr('удалить раздел со всеми темами?'))){const r=await sb.from('boards').delete().eq('id',i);if(r.error)return alert(r.error.message);admin()}}
+  else if(a==='rdel'){if(confirm('удалить роль?')){const r=await sb.from('roles').delete().eq('id',i);if(r.error)return alert(r.error.message);admin()}}
+  else if(a==='bren'){const n=prompt('новое название',v);if(n){const r=await sb.from('boards').update({title:n.trim()}).eq('id',i);if(r.error)return alert(r.error.message);admin()}}
+  else if(a==='bdel'){if(confirm('удалить раздел со всеми темами?')){const r=await sb.from('boards').delete().eq('id',i);if(r.error)return alert(r.error.message);admin()}}
 });
 
 document.addEventListener('change',async e=>{
@@ -1282,7 +1282,7 @@ document.addEventListener('submit',async e=>{
   }
   if(e.target.id==='msf'){
     e.preventDefault();
-    if(!selUser)return alert(tr('сначала выбери участника из поиска'));
+    if(!selUser)return alert('сначала выбери участника из поиска');
     const kind=e.target.dataset.k;
     const r=await sb.rpc(kind==='ban'?'mod_ban':'mod_mute',{uid:selUser.id,minutes:+$('#mdur').value,reason:$('#mrs').value.trim()});
     if(r.error)return alert(r.error.message);
