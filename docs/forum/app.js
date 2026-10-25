@@ -470,6 +470,24 @@ function quotify(h){
   flush();
   return out;
 }
+function md(h){
+  h=h.replace(/\[([^\]\n<]{1,200})\]\((https?:\/\/[^\s<>"'()]{1,500})\)|(^|[\s(>])(https?:\/\/[^\s<>"']{1,500})/g,(m,t,u,p,b)=>{
+    if(u)return '<a class="ext" href="'+u+'" target="_blank" rel="noopener noreferrer nofollow ugc">'+t+'</a>';
+    const tr=b.match(/[.,;:!?)]+$/),tail=tr?tr[0]:'',url=tail?b.slice(0,-tail.length):b;
+    return p+'<a class="ext" href="'+url+'" target="_blank" rel="noopener noreferrer nofollow ugc">'+url+'</a>'+tail;
+  });
+  h=h.replace(/\*\*([^*\n<][^*\n<]*?)\*\*/g,'<strong>$1</strong>');
+  h=h.replace(/~~([^~\n<][^~\n<]*?)~~/g,'<s>$1</s>');
+  h=h.replace(/(^|[\s(>])\*([^*\s<][^*\n<]*?)\*(?=[\s).,;:!?<]|$)/g,'$1<em>$2</em>');
+  const parts=h.split(/(<br\s*\/?>|\n)/i);
+  for(let n=0;n<parts.length;n+=2){
+    let l=parts[n],m;
+    if((m=l.match(/^(#{1,3}) (.+)$/)))parts[n]='<strong class="mh mh'+m[1].length+'">'+m[2]+'</strong>';
+    else if((m=l.match(/^[-*] (.+)$/)))parts[n]='<span class="li">\u2022 '+m[1]+'</span>';
+    else if((m=l.match(/^(\d{1,3})[.)] (.+)$/)))parts[n]='<span class="li">'+m[1]+'. '+m[2]+'</span>';
+  }
+  return parts.join('');
+}
 function fx(el){
   let h=el.innerHTML;
   const codes=[];
@@ -478,6 +496,7 @@ function fx(el){
     return '\u0000'+(codes.length-1)+'\u0000';
   });
   h=h.replace(/`([^`<\n]+)`/g,'<code class="ic">$1</code>');
+  h=h.split(/(<code class="ic">[\s\S]*?<\/code>)/).map((x,n)=>n%2?x:md(x)).join('');
   h=quotify(h);
   h=h.replace(IMGRE,(m,u)=>'<a href="'+u+'" target="_blank" rel="noopener"><img class="pimg" loading="lazy" src="'+u+'" alt=""></a>');
   h=h.replace(/\u0000(\d+)\u0000/g,(m,n)=>codes[+n]);

@@ -275,3 +275,10 @@ pre.code .hl-v{color:#c9a7f0}
 .rtb em{font-style:normal;color:var(--mute)}
 .igp{display:flex;align-items:center;gap:10px;margin:6px 0;padding:8px 12px;border:1px dashed var(--line);border-radius:10px;color:var(--mute);font-size:14px}
 #bgf select,#bgf input[type=number]{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--ink);font:inherit}
+
+.txt a.ext{color:var(--ac);text-decoration:underline;text-underline-offset:2px;word-break:break-all}
+.txt .mh{display:inline-block;margin:4px 0;font-weight:600}
+.txt .mh1{font-size:1.25em}
+.txt .mh2{font-size:1.12em}
+.txt .li{display:inline-block;padding-left:4px}
+.txt s{opacity:.7}
