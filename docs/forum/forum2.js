@@ -4,7 +4,7 @@ const RXD={};
 const clr=new Set();
 const ls={
   get:k=>{try{return localStorage.getItem(k)}catch(x){return null}},
-  set:(k,v)=>{try{localStorage.setItem(k,v)}catch(x){}},
+  set:(k,v)=>{try{localStorage.setItem(k,v);return true}catch(x){return false}},
   del:k=>{try{localStorage.removeItem(k)}catch(x){}}
 };
 const dec=s=>{try{return decodeURIComponent(s||'')}catch(x){return s||''}};
@@ -168,7 +168,12 @@ function dkey(el){
   if(!f)return '';
   let n='';
   if(el.id==='rb'||el.id==='nb'||el.id==='nt')n=el.id;
+  else if(el.id==='dmb'||el.id==='pcb')n=el.id;
   else if(f.classList.contains('cf')&&el.tagName==='TEXTAREA')n='cf'+f.dataset.p;
+  else if(f.classList.contains('edf')&&el.tagName==='TEXTAREA'){
+    const ac=f.nextElementSibling,bt=ac&&ac.querySelector('[data-a="ped"]');
+    if(bt)n='ed'+bt.dataset.i;
+  }
   return n?'dr:'+location.hash+':'+n:'';
 }
 function drafts(){
@@ -179,9 +184,47 @@ function drafts(){
     el.dataset.dr='1';
     if(clr.has(k)){clr.delete(k);ls.del(k);return}
     const v=ls.get(k);
-    if(v&&!el.value)el.value=v;
+    if(el.closest('form').classList.contains('edf')){
+      if(v&&v!==el.value){el.value=v;dnote(el,'черновик восстановлен')}
+      return;
+    }
+    if(v&&!el.value){el.value=v;dnote(el,'черновик восстановлен')}
   });
 }
+const dtm={},del2={};
+function dbase(el){
+  const f=el.closest('form');
+  if(f&&f.classList.contains('edf')){const tx=f.previousElementSibling;return (tx&&tx.dataset.raw)||''}
+  return '';
+}
+function dnote(el,txt){
+  const f=el.closest('form'),tb=f&&f.querySelector('.tb');
+  if(!tb)return;
+  let n=tb.querySelector('.dsv');
+  if(!n){
+    n=document.createElement('span');
+    n.className='mu dsv';
+    n.style.cssText='margin-left:auto;font-size:12px;transition:opacity .3s';
+    tb.appendChild(n);
+  }
+  n.textContent=txt;
+  n.style.opacity='1';
+  clearTimeout(n._t);
+  n._t=setTimeout(()=>{n.style.opacity='0'},1800);
+}
+function dsave(el,k){
+  clearTimeout(dtm[k]);
+  delete dtm[k];delete del2[k];
+  const v=el.value;
+  if(!v||v===dbase(el)){ls.del(k);return}
+  if(ls.set(k,v))dnote(el,'черновик сохранён');
+}
+function dflush(){
+  Object.keys(dtm).forEach(k=>{const el=del2[k];if(el)dsave(el,k)});
+}
+window.addEventListener('pagehide',dflush);
+window.addEventListener('hashchange',dflush);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)dflush()});
 function pbtn(){
   app.querySelectorAll('form textarea').forEach(t=>{
     if(t.id==='pbio'||t.id==='npo'||t.dataset.pv)return;
@@ -208,9 +251,15 @@ document.addEventListener('input',e=>{
   const el=e.target,k=dkey(el);
   if(k){
     clr.delete(k);
-    if(el.value)ls.set(k,el.value);else ls.del(k);
+    clearTimeout(dtm[k]);
+    del2[k]=el;
+    dtm[k]=setTimeout(()=>dsave(el,k),500);
   }
-  if(el.tagName==='TEXTAREA')app.querySelectorAll('.prv').forEach(p=>{if(p._ta===el)pv(p,el)});
+  if(el.tagName==='TEXTAREA')app.querySelectorAll('.prv').forEach(p=>{
+    if(p._ta!==el)return;
+    clearTimeout(p._t);
+    p._t=setTimeout(()=>pv(p,el),300);
+  });
 });
 
 document.addEventListener('submit',e=>{
@@ -224,9 +273,18 @@ document.addEventListener('submit',e=>{
   e.target.querySelectorAll('textarea,input').forEach(el=>{
     const k=dkey(el);
     if(!k)return;
+    clearTimeout(dtm[k]);
+    delete dtm[k];delete del2[k];
     clr.add(k);
-    setTimeout(()=>{clr.delete(k);if(!el.isConnected)ls.del(k)},2500);
+    setTimeout(()=>{clr.delete(k);if(!el.isConnected||!el.value)ls.del(k)},6000);
   });
+},true);
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('[data-a="edx"]');
+  if(!b)return;
+  const f=b.closest('form'),ta=f&&f.querySelector('textarea'),k=dkey(ta);
+  if(k){clearTimeout(dtm[k]);delete dtm[k];delete del2[k];ls.del(k)}
 },true);
 
 document.addEventListener('click',async e=>{
