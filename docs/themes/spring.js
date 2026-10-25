@@ -7,30 +7,30 @@ function blossom(x,y,s,r){
 function bz(a,b,c,d,t){var u=1-t;return [u*u*u*a[0]+3*u*u*t*b[0]+3*u*t*t*c[0]+t*t*t*d[0],u*u*u*a[1]+3*u*u*t*b[1]+3*u*t*t*c[1]+t*t*t*d[1]]}
 function cl(t){return t<.5?bz([-14,9],[80,2],[150,22],[228,28],t*2):bz([228,28],[306,34],[356,34],[432,50],t*2-1)}
 function leaf(x,y,r,sc){return '<path d="M0 0Q6 -5.4 13 0Q6 5.4 0 0z" transform="translate('+x.toFixed(1)+' '+y.toFixed(1)+') rotate('+r+') scale('+sc+')" fill="#86d68f" stroke="#2e8b4f" stroke-width="1.3" stroke-linejoin="round"/>'}
-function branch(seed,sx){
-  var sd=seed||1,i,N=40,top=[],bot=[],pts=[];
-  function r(){sd=(sd*9301+49297)%233280;return sd/233280}
+function P(a){return a[0].toFixed(1)+' '+a[1].toFixed(1)}
+function ribbon(f,N,w0,w1){
+  var top=[],bot=[],i,j,d;
   for(i=0;i<=N;i++){
-    var t=i/N,p=cl(t),q=cl(Math.min(1,t+.01)),o=cl(Math.max(0,t-.01)),dx=q[0]-o[0],dy=q[1]-o[1],L=Math.sqrt(dx*dx+dy*dy)||1,nx=-dy/L,ny=dx/L;
-    var hw=(7.4*Math.pow(1-t,1.15)+1.1)+(i%3===0?.35:0);
-    pts.push(p);top.push([p[0]-nx*hw,p[1]-ny*hw]);bot.push([p[0]+nx*hw,p[1]+ny*hw]);
+    var t=i/N,p=f(t),q=f(Math.min(1,t+.01)),o=f(Math.max(0,t-.01)),dx=q[0]-o[0],dy=q[1]-o[1],L=Math.sqrt(dx*dx+dy*dy)||1,nx=-dy/L,ny=dx/L;
+    var hw=(w0*Math.pow(1-t,1.15)+w1)+(i%3===0?.3:0);
+    top.push([p[0]-nx*hw,p[1]-ny*hw]);bot.push([p[0]+nx*hw,p[1]+ny*hw]);
   }
-  function P(a){return a[0].toFixed(1)+' '+a[1].toFixed(1)}
-  var d='M'+P(top[0]),j;
+  d='M'+P(top[0]);
   for(j=1;j<top.length;j++)d+='L'+P(top[j]);
   for(j=bot.length-1;j>=0;j--)d+='L'+P(bot[j]);
-  var wood='<path d="'+d+'z" fill="#6e3f33" stroke="#4a2a22" stroke-width="1.6" stroke-linejoin="round"/><path d="M'+top.map(P).join('L')+'" fill="none" stroke="#9a6150" stroke-width="1.4" opacity=".55" stroke-linecap="round"/>';
-  var tw='',bl='',lv='',spots=[.1,.2,.31,.43,.55,.67,.79,.9],k2;
+  return '<path d="'+d+'z" fill="#6e3f33" stroke="#4a2a22" stroke-width="1.6" stroke-linejoin="round"/><path d="M'+top.map(P).join('L')+'" fill="none" stroke="#9a6150" stroke-width="1.4" opacity=".55" stroke-linecap="round"/>';
+}
+function deco(f,spots,r,flip){
+  var tw='',bl='',lv='',k2;
   for(k2=0;k2<spots.length;k2++){
-    var t0=spots[k2]+(r()-.5)*.04,p0=cl(t0),q0=cl(t0+.012),ang=Math.atan2(q0[1]-p0[1],q0[0]-p0[0]),side=k2%4===2&&seed!==2?-1:1;
-    var da=ang+side*(1.05+r()*.55),len=(26+r()*20)*(1-t0*.5)+8,ex=p0[0]+Math.cos(da)*len,ey=p0[1]+Math.sin(da)*len;
+    var t0=spots[k2]+(r()-.5)*.04,p0=f(t0),q0=f(t0+.012),ang=Math.atan2(q0[1]-p0[1],q0[0]-p0[0]),side=(k2%4===2?-1:1)*(flip||1);
+    var da=ang+side*(1.05+r()*.5),len=(26+r()*20)*(1-t0*.45)+8,ex=p0[0]+Math.cos(da)*len,ey=p0[1]+Math.sin(da)*len;
     if(ey<-4)ey=-4+r()*6;
-    var cx=(p0[0]+ex)/2+Math.cos(da+1.57)*6,cy=(p0[1]+ey)/2+Math.sin(da+1.57)*6;
-    var w=Math.max(1.6,4.2-t0*2.4);
-    tw+='<path d="M'+p0[0].toFixed(1)+' '+p0[1].toFixed(1)+'Q'+cx.toFixed(1)+' '+cy.toFixed(1)+' '+ex.toFixed(1)+' '+ey.toFixed(1)+'" fill="none" stroke="#6e3f33" stroke-width="'+w.toFixed(1)+'" stroke-linecap="round"/>';
+    var cx=(p0[0]+ex)/2+Math.cos(da+1.57)*6,cy=(p0[1]+ey)/2+Math.sin(da+1.57)*6,w=Math.max(1.6,4.2-t0*2.4);
+    tw+='<path d="M'+P(p0)+'Q'+P([cx,cy])+' '+P([ex,ey])+'" fill="none" stroke="#6e3f33" stroke-width="'+w.toFixed(1)+'" stroke-linecap="round"/>';
     if(k2%2===0){
       var fa=da+(r()<.5?-.7:.7),fx=(p0[0]+ex)/2+(ex-p0[0])*.15,fy=(p0[1]+ey)/2+(ey-p0[1])*.15,f2=[fx+Math.cos(fa)*14,fy+Math.sin(fa)*14];
-      tw+='<path d="M'+fx.toFixed(1)+' '+fy.toFixed(1)+'L'+f2[0].toFixed(1)+' '+f2[1].toFixed(1)+'" stroke="#6e3f33" stroke-width="1.8" stroke-linecap="round" fill="none"/>';
+      tw+='<path d="M'+P([fx,fy])+'L'+P(f2)+'" stroke="#6e3f33" stroke-width="1.8" stroke-linecap="round" fill="none"/>';
       bl+=blossom(f2[0],f2[1],.78+r()*.2,Math.round(r()*72));
     }
     lv+=leaf(p0[0]+Math.cos(da)*len*.55,p0[1]+Math.sin(da)*len*.55,Math.round(da*57.3+(r()<.5?40:-40)),.8+r()*.4);
@@ -38,13 +38,34 @@ function branch(seed,sx){
     if(r()<.7)bl+=blossom(ex+Math.cos(da+.9)*10,ey+Math.sin(da+.9)*10,.74+r()*.2,Math.round(r()*72));
     if(r()<.5)bl+='<circle cx="'+(ex+Math.cos(da-.9)*9).toFixed(1)+'" cy="'+(ey+Math.sin(da-.9)*9).toFixed(1)+'" r="3.4" fill="#ff9cc4" stroke="#e0679d" stroke-width="1.2"/>';
   }
-  for(k2=0;k2<4;k2++){var tt=.04+k2*.08,pp=cl(tt);bl+=blossom(pp[0]+(r()-.5)*8,pp[1]+(r()<.5?-1:1)*6,.8+r()*.2,Math.round(r()*72))}
-  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 90" width="100%" style="display:block;overflow:visible">'+wood+tw+lv+bl+'</svg>';
+  return {tw:tw,lv:lv,bl:bl};
+}
+function branch(seed){
+  var sd=seed||1;
+  function r(){sd=(sd*9301+49297)%233280;return sd/233280}
+  var TF=.44,S=cl(TF),S2=cl(TF+.02),ang=Math.atan2(S2[1]-S[1],S2[0]-S[0]);
+  var c1=[S[0]+Math.cos(ang+.28)*38,S[1]+Math.sin(ang+.28)*38],c2=[S[0]+92,S[1]+34],E=[S[0]+150,S[1]+62];
+  function fk(t){return bz(S,c1,c2,E,t)}
+  var main=ribbon(cl,40,7.4,1.1),fork=ribbon(fk,26,4.4,.9);
+  var dm=deco(cl,[.1,.2,.31,.6,.7,.8,.91],r),df=deco(fk,[.3,.52,.74,.94],r,-1);
+  var joint='<circle cx="'+S[0].toFixed(1)+'" cy="'+(S[1]+3.4).toFixed(1)+'" r="3" fill="#6e3f33"/>';
+  var bud='',k2;
+  for(k2=0;k2<4;k2++){var tt=.04+k2*.08,pp=cl(tt);bud+=blossom(pp[0]+(r()-.5)*8,pp[1]+(r()<.5?-1:1)*6,.8+r()*.2,Math.round(r()*72))}
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 90" width="100%" style="display:block;overflow:visible">'+fork+main+joint+dm.tw+df.tw+dm.lv+df.lv+dm.bl+df.bl+bud+'</svg>';
 }
 var RAINBOW=(function(){var c=['#ff6b6b','#ffa94d','#ffe066','#8ce99a','#74c0fc','#b197fc'],s='',i;for(i=0;i<6;i++){var r=140-i*11;s+='<path d="M'+(150-r)+' 150A'+r+' '+r+' 0 0 1 '+(150+r)+' 150" fill="none" stroke="'+c[i]+'" stroke-width="10.5" stroke-linecap="butt"/>'}return s})();
 function tulip(c){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 62" width="100%" style="display:block"><path d="M15 60V28" stroke="#2e8b4f" stroke-width="3.4" stroke-linecap="round"/><path d="M15 54Q4 50 5 38Q13 42 15 54zM15 48Q26 44 25 34Q17 38 15 48z" fill="#4fc36a" stroke="#2e8b4f" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 28Q4 8 15 5Q26 8 25 28Q20 21 15 26Q10 21 5 28z" fill="'+c+'" stroke="#8a2a52" stroke-width="2.2" stroke-linejoin="round"/></svg>'}
 function daisy(){var p='',i;for(i=0;i<8;i++)p+='<ellipse cx="15" cy="9" rx="3.6" ry="7" transform="rotate('+i*45+' 15 18)" fill="#fff" stroke="#9aa7b5" stroke-width="1.3"/>';return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 62" width="100%" style="display:block"><path d="M15 60V22" stroke="#2e8b4f" stroke-width="3.2" stroke-linecap="round"/><path d="M15 50Q5 46 6 38Q14 40 15 50z" fill="#4fc36a" stroke="#2e8b4f" stroke-width="1.5"/>'+p+'<circle cx="15" cy="18" r="4.4" fill="#ffd93b" stroke="#c98a00" stroke-width="1.6"/></svg>'}
-var FL='<path d="M20 15Q9 17 5 27Q16 28 20 15z" fill="#86d68f" stroke="#2e8b4f" stroke-width="1.4" stroke-linejoin="round"/><path d="M20 15Q31 17 35 27Q24 28 20 15z" fill="#86d68f" stroke="#2e8b4f" stroke-width="1.4" stroke-linejoin="round"/><g transform="translate(20 15)">'+(function(){var s='',i;for(i=0;i<5;i++)s+='<ellipse cx="0" cy="-6.4" rx="4.6" ry="6.8" transform="rotate('+i*72+')" fill="#ffc6df" stroke="#e0679d" stroke-width="1.5"/>';return s})()+'<circle r="2.8" fill="#ffd966" stroke="#d99a00" stroke-width="1.2"/></g>';
+function petals(n,rx,ry,cy,fill){var o='',i;for(i=0;i<n;i++)o+='<ellipse cx="0" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" transform="rotate('+i*(360/n)+')" fill="'+fill+'" stroke="#e0679d" stroke-width="1.5"/>';return o}
+function flowerLogo(cd){
+  var L='fill="#86d68f" stroke="#2e8b4f" stroke-width="1.3" stroke-linejoin="round"';
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" style="display:block;overflow:visible">'
+  +'<path d="M0 0Q8 -5 16 0Q8 5 0 0z" transform="translate(41 5) rotate(-52) scale(1.05)" '+L+'/>'
+  +'<path d="M0 0Q8 -5 16 0Q8 5 0 0z" transform="translate(41 5) rotate(18) scale(1)" '+L+'/>'
+  +'<g transform="translate(41 5)">'+petals(5,5.2,7.2,-5.6,'#ffc6df')+'<circle r="3" fill="#ffd966" stroke="#d99a00" stroke-width="1.2"/><circle cx="-.8" cy="-.8" r=".9" fill="#fff" opacity=".8"/></g>'
+  +'<g transform="translate(25.5 3.2) rotate(20)">'+petals(5,3.2,4.4,-3.4,'#ffd9ea')+'<circle r="1.8" fill="#ffd966" stroke="#d99a00" stroke-width="1"/></g>'
+  +'</svg>';
+}
 var PC=['#ffc6df','#ffb0d0','#ffd9ea','#ff9cc4'],WC=[['#ffd166','#ff9f1c'],['#4cc9f0','#4361ee'],['#f78fb3','#c2185b'],['#b388ff','#7c4dff']];
 function petalSprite(k,col){
   return k.sprite(30,30,function(c){
@@ -82,15 +103,14 @@ function beeSprite(k,up){
 }
 window.CloudSeason.reg('sp',{
   init:function(k){
-    var m=k.mobile(),wd=k.wide(),gh=m?38:46,i,bl,br,rb;
+    var m=k.mobile(),wd=k.wide(),gh=m?38:46,i,bl,rb;
     rb=k.el('',k.svg('0 0 300 152',RAINBOW),'right:'+(m?'-60px':'6%')+';width:'+(m?280:420)+'px;opacity:.5',true);
-    bl=k.el('','<div class="zs-brn" style="transform-origin:0 0">'+branch(4)+'</div>','left:0;width:'+(m?300:480)+'px');
-    br=k.el('','<div class="zs-brn" style="transform-origin:0 0;animation-delay:-3s">'+branch(2)+'</div>','right:0;width:'+(m?200:330)+'px;transform:scaleX(-1);transform-origin:50% 0');
-    k.hbWatch(function(hb){bl.style.top=(hb-8)+'px';br.style.top=(hb-8)+'px';rb.style.top=(hb+(m?36:46))+'px'});
+    bl=k.el('','<div class="zs-brn" style="transform-origin:0 0">'+branch(4)+'</div>','left:0;width:'+(m?290:560)+'px');
+    k.hbWatch(function(hb){bl.style.top=(hb-8)+'px';rb.style.top=(hb+(m?36:46))+'px'});
     k.el('',k.strip(60,[{d:k.hill(1000,34,16,4,2),fill:'#9fdc8f',line:'#4fa35a'},{d:k.hill(1000,44,13,6,8),fill:'#62c46c',line:'#2e8b4f'}]),'left:0;right:0;bottom:0;height:'+gh+'px');
     var cols=['#ff6b8b','#ffd23f','#ff9f5a','#c77dff','#ff6b8b'],nf=m?7:12;
     for(i=0;i<nf;i++)k.el('zs-flower',i%3===2?daisy():tulip(cols[i%cols.length]),'left:'+(3+i*(92/nf)+k.rnd(-1.5,1.5)).toFixed(1)+'%;bottom:'+Math.round(gh*.3)+'px;width:'+(m?20:24)+'px;animation-delay:'+(-i*.47).toFixed(2)+'s');
-    k.logo('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 30" style="display:block;overflow:visible">'+FL+'</svg>',0.63,0.1,m?16:19,{ax:.5,ay:.5,rot:14});
+    k.logo(flowerLogo,0,0,0,{fit:true});
     var ps=PC.map(function(c){return petalSprite(k,c)}),pt=[],n=k.n(60);
     for(i=0;i<n;i++)pt.push({x:Math.random()<.5?Math.random()*.6:.6+Math.random()*.4,y:Math.random(),z:k.rnd(.55,1.1),v:k.rnd(28,60),a:k.rnd(20,60),p:k.rnd(0,6.28),s:k.rnd(.5,1.4),rot:k.rnd(0,6.28),rs:k.rnd(-2,2),c:i%PC.length});
     k.canvas(function(c,dt,t,w,h){

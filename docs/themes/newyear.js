@@ -6,7 +6,14 @@ function tree(){
   for(i=0;i<pts.length;i++)o+='<circle cx="'+pts[i][0]+'" cy="'+pts[i][1]+'" r="4.6" fill="'+ORN[i%ORN.length]+'" stroke="#222" stroke-width="1.4"/>';
   return '<rect x="43" y="124" width="14" height="18" rx="3" fill="#7b4a24" stroke="#4a2a10" stroke-width="2.5"/><path d="M50 52L92 126H8z" fill="#2e9e5b" stroke="#17653a" stroke-width="3" stroke-linejoin="round"/><path d="M50 30L84 92H16z" fill="#35b266" stroke="#17653a" stroke-width="3" stroke-linejoin="round"/><path d="M50 8L74 58H26z" fill="#3cc272" stroke="#17653a" stroke-width="3" stroke-linejoin="round"/>'+o+'<path d="M50 -4l3.6 8.2 8.8.8-6.6 5.8 2 8.6-7.8-4.6-7.8 4.6 2-8.6-6.6-5.8 8.8-.8z" fill="#ffd23f" stroke="#c88a00" stroke-width="2" stroke-linejoin="round"/>';
 }
-var HAT='<path d="M4 27Q8 5 31 6Q27 15 37 27z" fill="#e53935" stroke="#8e1b1b" stroke-width="2" stroke-linejoin="round"/><rect x="1" y="23" width="38" height="8" rx="4" fill="#fff" stroke="#b0bec5" stroke-width="1.6"/><circle cx="32" cy="6" r="4.6" fill="#fff" stroke="#b0bec5" stroke-width="1.6"/>';
+function hatLogo(cd){
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" style="display:block;overflow:visible"><defs><clipPath id="zsc"><path d="'+cd+'"/></clipPath></defs><g transform="rotate(6 31 12)">'
+  +'<path d="M20 9C19 -2 31 -9 41 -4C48 -1 52 5 52.6 12L46.4 12.4C46 7 42 4 37 5.6C33 7 31 8.6 31 9z" fill="#e53935" stroke="#9b1c1c" stroke-width="1.3" stroke-linejoin="round"/>'
+  +'<circle cx="50.4" cy="14" r="4" fill="#fff" stroke="#b0bec5" stroke-width="1.2"/>'
+  +'<g clip-path="url(#zsc)"><rect x="0" y="-8" width="64" height="16.4" fill="#e53935"/></g>'
+  +'<rect x="14.6" y="6.2" width="34.2" height="6" rx="3" fill="#fff" stroke="#b0bec5" stroke-width="1.2"/>'
+  +'</g></svg>';
+}
 var GIFT='<rect x="3" y="17" width="34" height="21" rx="3" fill="#e53935" stroke="#8e1b1b" stroke-width="2.4"/><rect x="17" y="17" width="6" height="21" fill="#ffd23f"/><path d="M20 17C13 5 5 8 9 14S20 17 20 17zM20 17C27 5 35 8 31 14S20 17 20 17z" fill="#ffd23f" stroke="#c88a00" stroke-width="2" stroke-linejoin="round"/>';
 var GIFT2='<rect x="4" y="18" width="32" height="20" rx="3" fill="#3b82f6" stroke="#1e3a8a" stroke-width="2.4"/><rect x="4" y="25" width="32" height="5" fill="#fff"/><rect x="17" y="18" width="6" height="20" fill="#fff"/><circle cx="20" cy="15" r="4" fill="#fff" stroke="#9aa7b5" stroke-width="2"/>';
 var RD='<ellipse cx="46" cy="52" rx="20" ry="11" fill="#b8723a" stroke="#5a3414" stroke-width="2.6"/><path d="M34 60l-6 16M44 62l-3 17M56 62l4 16M64 58l8 14" stroke="#5a3414" stroke-width="3.6" stroke-linecap="round"/><path d="M60 46Q70 38 74 32" stroke="#5a3414" stroke-width="11" stroke-linecap="round" fill="none"/><path d="M60 46Q70 38 74 32" stroke="#b8723a" stroke-width="6.4" stroke-linecap="round" fill="none"/><circle cx="78" cy="28" r="9" fill="#b8723a" stroke="#5a3414" stroke-width="2.6"/><path d="M74 20l-4-12M70 8l-6-2M70 8l1-7M82 20l4-12M86 8l6-2M86 8l-1-7" stroke="#5a3414" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="86" cy="31" r="3.8" fill="#ff3b3b" stroke="#8e1b1b" stroke-width="1.4"/><circle cx="76" cy="26" r="1.8" fill="#222"/>';
@@ -51,7 +58,7 @@ window.CloudSeason.reg('ny',{
     k.el('',k.svg('0 -6 100 150',tree()),'right:2%;bottom:'+Math.round(gh*.42)+'px;width:'+tw+'px');
     k.el('',k.svg('0 0 40 40',GIFT),'right:calc(2% + '+Math.round(tw*.92)+'px);bottom:'+Math.round(gh*.3)+'px;width:'+(m?22:34)+'px');
     k.el('',k.svg('0 0 40 40',GIFT2),'right:calc(2% + '+Math.round(tw*.92+(m?18:30))+'px);bottom:'+Math.round(gh*.28)+'px;width:'+(m?18:28)+'px');
-    k.logo('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 32" style="display:block;overflow:visible">'+HAT+'</svg>',0.47,0.06,m?16:19,{ax:.5,ay:.84,rot:7});
+    k.logo(hatLogo,0,0,0,{fit:true});
     if(k.pc()){
       k.el('zs-aur','<i class="a1"></i><i class="a2"></i><i class="a3"></i>','left:0;top:0;width:100%;height:60%',true);
       for(i=0;i<3;i++)k.el('zs-shoot','','left:'+k.rnd(10,70).toFixed(0)+'%;top:'+k.rnd(8,35).toFixed(0)+'%;animation-delay:'+(-i*4.7).toFixed(1)+'s;animation-duration:'+(11+i*3)+'s',true);

@@ -1,10 +1,11 @@
 (function(){
 var d=document,h=d.documentElement,sc=d.currentScript;
 var BASE=sc?sc.src.replace(/themes\.js.*$/,''):'';
-var V='3';
+var V='5';
 var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring'};
 var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна']];
 var FXN=[['full','полные'],['low','лёгкие'],['off','выкл']];
+var DEVN=[['auto','авто'],['pc','компьютер'],['phone','телефон']];
 var M={},root=null,back=null,frames=[],rsz=[],obs=[],raf=0,last=0,token=0,q=1,ema=0,jank=16,nf=0;
 var MQ=window.matchMedia?window.matchMedia('(prefers-reduced-motion: reduce)'):null;
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
@@ -19,7 +20,19 @@ function autoSeason(){
   return 'off';
 }
 function resolved(){var s=season();return s==='auto'?autoSeason():s}
-function DPR(){return Math.min(1.5,window.devicePixelRatio||1)}
+function dev(){var v=ls('seasondev');return v==='pc'||v==='phone'?v:'auto'}
+function phone(){
+  var v=dev();
+  if(v==='pc')return false;
+  if(v==='phone')return true;
+  var ua=navigator.userAgent||'',mm=window.matchMedia,coarse=!!(mm&&mm('(pointer:coarse)').matches&&!mm('(hover:hover)').matches);
+  if(/Android|iPhone|iPad|iPod|Mobile|Tablet/i.test(ua)||coarse||(navigator.maxTouchPoints>1&&/Mac/.test(ua)))return true;
+  if(innerWidth<700)return true;
+  var mem=navigator.deviceMemory,cpu=navigator.hardwareConcurrency;
+  return !!((mem&&mem<=2)||(cpu&&cpu<=2));
+}
+function rich(){return fx()!=='low'&&!phone()}
+function DPR(){return Math.min(rich()?2:1,window.devicePixelRatio||1)}
 function loop(t){
   raf=requestAnimationFrame(loop);
   var gap=t-last;last=t;
@@ -51,6 +64,10 @@ function ctx(){
     rnd:function(a,b){return a+Math.random()*(b-a)},
     W:function(){return innerWidth},H:function(){return innerHeight},
     mobile:function(){return innerWidth<640},
+    pc:function(){return rich()},
+    phone:function(){return phone()},
+    n:function(b){var s=rich()?1.9:.55;if(innerWidth<640)s*=.6;return Math.max(1,Math.round(b*s))},
+    tick:function(f){if(!still)frames.push(f)},
     wide:function(){return innerWidth>=900},
     hb:hb,
     svg:function(vb,inner,w){var p=vb.split(' ');return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="'+vb+'"'+(w?' width="'+w+'" height="'+Math.round(w*p[3]/p[2])+'"':' width="100%"')+' style="display:block;overflow:visible">'+inner+'</svg>'},
@@ -68,11 +85,24 @@ function ctx(){
     },
     onResize:function(f){rsz.push(f);f()},
     hbWatch:function(f){function run(){f(hb())}rsz.push(run);run();watch(run,d.querySelector('.top'))},
-    logo:function(html,ox,oy,w){
+    logo:function(html,ox,oy,w,o){
       var b=d.querySelector('.brand'),s=b&&b.querySelector('svg');
       if(!b||!s)return;
-      var e=d.createElement('b');e.className='zsl';e.innerHTML=html;e.style.width=w+'px';b.appendChild(e);
-      function pos(){var r=s.getBoundingClientRect(),br=b.getBoundingClientRect();e.style.left=(r.left-br.left+ox*r.width)+'px';e.style.top=(r.top-br.top+oy*r.height)+'px'}
+      var P=s.querySelector('path'),cd=P&&P.getAttribute('d')||'M14 18.5A17.5 17.5 0 1 1 49 18.5z';
+      if(typeof html==='function')html=html(cd);
+      var e=d.createElement('b');e.className='zsl';e.innerHTML=html;
+      if(o&&o.fit){
+        e.style.width='32px';b.appendChild(e);
+        function posf(){var r=s.getBoundingClientRect(),br=b.getBoundingClientRect();e.style.width=r.width+'px';e.style.left=(r.left-br.left)+'px';e.style.top=(r.top-br.top)+'px'}
+        posf();rsz.push(posf);watch(posf,s);watch(posf,b);setTimeout(posf,400);setTimeout(posf,1500);
+        return;
+      }
+      e.style.width=w+'px';b.appendChild(e);
+      var iv=e.querySelector('svg'),vb=((iv&&iv.getAttribute('viewBox'))||'0 0 1 1').split(' '),ratio=vb[3]/vb[2];
+      var ax=o&&o.ax!=null?o.ax:0,ay=o&&o.ay!=null?o.ay:0,rot=o&&o.rot||0;
+      e.style.transformOrigin=(ax*100)+'% '+(ay*100)+'%';
+      if(rot)e.style.transform='rotate('+rot+'deg)';
+      function pos(){var r=s.getBoundingClientRect(),br=b.getBoundingClientRect();e.style.left=(r.left-br.left+ox*r.width-ax*w)+'px';e.style.top=(r.top-br.top+oy*r.height-ay*w*ratio)+'px'}
       pos();rsz.push(pos);watch(pos,s);watch(pos,b);setTimeout(pos,400);setTimeout(pos,1500);
     },
     sprite:function(w,hh,fn){
@@ -88,11 +118,12 @@ function ctx(){
       cx.setTransform(D*co*sc*k,D*si*sc*k,-D*si*sc,D*co*sc,D*x,D*y);
       cx.drawImage(s.c,-s.w/2,-s.h/2,s.w,s.h);
     },
-    canvas:function(draw,bk,fps){
+    canvas:function(draw,bk,fps,keep){
+      if(still&&!keep)return null;
       var cv=d.createElement('canvas'),cx=cv.getContext?cv.getContext('2d'):null;
       if(!cx)return null;
       cv.className='zsc';(bk?back:root).appendChild(cv);
-      var w=0,hh=0,dpr=DPR(),acc=0,step=1/(fps||30);
+      var w=0,hh=0,dpr=DPR(),acc=0,ff=fps||30,step=1/(rich()?Math.min(60,ff*2):phone()?Math.min(ff,24):ff);
       cx.dpr=dpr;
       function fit(){w=innerWidth;hh=innerHeight;cv.width=Math.ceil(w*dpr);cv.height=Math.ceil(hh*dpr)}
       fit();rsz.push(fit);
@@ -135,6 +166,7 @@ window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(funct
 function mark(){
   [].forEach.call(d.querySelectorAll('[data-zs]'),function(b){b.classList.toggle('on',b.getAttribute('data-zs')===season())});
   [].forEach.call(d.querySelectorAll('[data-zsf]'),function(b){b.classList.toggle('on',b.getAttribute('data-zsf')===fx())});
+  [].forEach.call(d.querySelectorAll('[data-zsd]'),function(b){b.classList.toggle('on',b.getAttribute('data-zsd')===dev())});
 }
 function ui(){
   if(!d.querySelector('.sp'))return;
@@ -142,18 +174,19 @@ function ui(){
   if(spb.querySelector('.zss'))return;
   var first=spb.querySelector('.sps'),s=d.createElement('div');
   s.className='sps zss';
-  s.innerHTML='<h4>сезонные темы</h4><div class="zsg">'+NAMES.map(function(n){return '<button type="button" data-zs="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="spm">анимации</p><div class="zsg">'+FXN.map(function(n){return '<button type="button" data-zsf="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div>';
+  s.innerHTML='<h4>сезонные темы</h4><div class="zsg">'+NAMES.map(function(n){return '<button type="button" data-zs="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="spm">анимации</p><div class="zsg">'+FXN.map(function(n){return '<button type="button" data-zsf="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="spm">устройство</p><div class="zsg">'+DEVN.map(function(n){return '<button type="button" data-zsd="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="zsn">компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам</p>';
   if(first&&first.nextSibling)spb.insertBefore(s,first.nextSibling);else spb.appendChild(s);
   mark();
 }
 d.addEventListener('click',function(e){
-  var b=e.target.closest?e.target.closest('[data-zs],[data-zsf]'):null;
+  var b=e.target.closest?e.target.closest('[data-zs],[data-zsf],[data-zsd]'):null;
   if(!b)return;
   if(b.hasAttribute('data-zs'))ls('season',b.getAttribute('data-zs'));
+  else if(b.hasAttribute('data-zsd')){ls('seasondev',b.getAttribute('data-zsd'));q=1;ls('seasonq','1')}
   else{ls('seasonfx',b.getAttribute('data-zsf'));q=1;ls('seasonq','1')}
   apply();mark();
 });
-var T={'сезонные темы':'seasonal themes','выкл':'off','авто':'auto','новый год':'new year','хэллоуин':'halloween','лето':'summer','весна':'spring','анимации':'animations','полные':'full','лёгкие':'light'};
+var T={'сезонные темы':'seasonal themes','выкл':'off','авто':'auto','новый год':'new year','хэллоуин':'halloween','лето':'summer','весна':'spring','анимации':'animations','полные':'full','лёгкие':'light','устройство':'device','компьютер':'computer','телефон':'phone','компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам':'computer — complex effects, phone — light ones. auto picks by itself'};
 function dict(){if(window.I18N&&window.I18N.add)window.I18N.add(T);else{window.I18N_EXTRA=window.I18N_EXTRA||{};for(var k in T)window.I18N_EXTRA[k]=T[k]}}
 dict();
 var lk=d.createElement('link');lk.rel='stylesheet';lk.href=BASE+'themes.css?v='+V;d.head.appendChild(lk);

@@ -19,7 +19,8 @@ window.CloudSeason.reg('su',{
     var m=k.mobile(),wd=k.wide(),gh=m?44:56,i,sunw=m?78:140,sun,bal;
     sun=k.el('','<div style="position:absolute;left:-30%;top:-30%;width:160%;height:160%;border-radius:50%;background:radial-gradient(circle,rgba(255,220,80,.5),rgba(255,220,80,0) 66%)"></div><div class="zs-rays" style="position:absolute;inset:0">'+k.svg('0 0 160 160',RAYS)+'</div><div style="position:absolute;inset:0">'+k.svg('0 0 160 160',SUNFACE)+'</div>','right:'+(m?'-16px':'3%')+';width:'+sunw+'px;height:'+sunw+'px');
     var cd=[[40,'80s','-12s',m?84:120],[110,'110s','-60s',m?64:96],[190,'95s','-35s',m?72:108]],cl=[];
-    for(i=0;i<(m?2:3);i++)cl.push(k.el('zs-cloud',k.svg('0 0 120 70',CLOUD),'top:0;width:'+cd[i][3]+'px;animation-duration:'+cd[i][1]+';animation-delay:'+cd[i][2]+';opacity:.95',true));
+    var sx=[3,57,89];
+    for(i=0;i<(m?2:3);i++)cl.push(k.el('zs-cloud',k.svg('0 0 120 70',CLOUD),'top:0;--sx:'+(m?[4,60][i]:sx[i])+'%;width:'+cd[i][3]+'px;animation-duration:'+cd[i][1]+';animation-delay:'+cd[i][2]+';opacity:.95',true));
     bal=k.el('zs-fly',k.svg('0 0 60 80',BALLOON),'width:'+(m?46:70)+'px;animation-duration:'+(m?90:110)+'s;animation-delay:-30s');
     bal.innerHTML='<div>'+bal.innerHTML+'</div>';
     k.hbWatch(function(hb){sun.style.top=(hb+(m?2:12))+'px';cl.forEach(function(c,j){c.style.top=(hb+cd[j][0])+'px'});bal.style.top=(hb+(m?70:90))+'px'});

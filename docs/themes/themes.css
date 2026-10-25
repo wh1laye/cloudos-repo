@@ -11,7 +11,14 @@ html[data-season="sp"][data-theme="light"]{--bg:#fff3f8;--surf:#fff;--side:#ffe6
 .zs *,.zsb *{pointer-events:none}
 .zso{position:fixed}
 .zsc{position:fixed;left:0;top:0;width:100%;height:100%}
-html.zs-still .zs *,html.zs-still .zsb *{animation-play-state:paused!important}
+html.zs-still .zs *,html.zs-still .zsb *{animation:none!important}
+html.zs-still .zs-fly,html.zs-still .zs-shoot,html.zs-still .zs-bolt{display:none!important}
+html.zs-still .zs-cloud{left:var(--sx,30%)!important}
+html.zs-still .zs-bulb{opacity:1}
+html.zs-still .zs-star{opacity:.85}
+html.zs-still .zs-glint{opacity:.85}
+html.zs-still .zs-pglow{opacity:.9}
+html.zs-still .zs-god i{opacity:.75}
 @media(prefers-reduced-motion:reduce){.zs *,.zsb *{animation-play-state:paused!important}}
 @media print{.zs,.zsb{display:none!important}}
 .brand{position:relative}
