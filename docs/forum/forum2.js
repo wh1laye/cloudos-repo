@@ -62,7 +62,7 @@ thread=async function(id){
 
 function rowHtml(t){
   const u=window.isUnread&&window.isUnread(t);
-  return '<a class="trow'+(u?' unr':'')+'" href="#/t/'+t.id+'"><div><strong>'+(u?'<i class="ud"></i>':'')+pfx(t)+(t.pinned?'<span class="tag">'+tr('закреплено')+'</span>':'')+(t.locked?'<span class="tag">'+tr('закрыто')+'</span>':'')+esc(t.title)+'</strong>'+(window.tagsHtml?window.tagsHtml(t):'')+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>';
+  return '<a class="trow'+(u?' unr':'')+'" href="#/t/'+t.id+'"><div><strong>'+(u?'<i class="ud"></i>':'')+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+(window.tagsHtml?window.tagsHtml(t):'')+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>';
 }
 window.rowHtml=rowHtml;
 
