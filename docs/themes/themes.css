@@ -62,3 +62,23 @@ html[data-theme="light"] .zs-star{display:none}
 .zs-fly > div{animation:zsrise 3.6s ease-in-out infinite}
 html[data-theme="light"] .zs-snow path{stroke:#5f9bd0}
 html[data-theme="light"] .zs-snow path[fill="#d3e8fb"]{fill:#c5def5}
+.zss .zsn{margin:8px 2px 0;font-size:12px;line-height:1.4;color:var(--mute)}
+@keyframes zsraysw{0%,100%{opacity:.55;transform:rotate(-2deg)}50%{opacity:1;transform:rotate(2deg)}}
+@keyframes zsaur{from{transform:translateX(-8%) scaleY(.85)}to{transform:translateX(8%) scaleY(1.15)}}
+@keyframes zsshoot{0%{opacity:0;transform:translate(0,0) rotate(28deg)}2%{opacity:1}9%{opacity:0;transform:translate(260px,140px) rotate(28deg)}100%{opacity:0;transform:translate(260px,140px) rotate(28deg)}}
+@keyframes zsbolt{0%{opacity:0}6%{opacity:.9}12%{opacity:.15}20%{opacity:.7}40%,100%{opacity:0}}
+.zs-fog2{height:170px;bottom:16px;background:linear-gradient(to top,rgba(130,100,200,.3),rgba(130,100,200,0));animation:zsfog 22s ease-in-out infinite alternate-reverse}
+.zs-bolt{opacity:0;pointer-events:none;background:radial-gradient(ellipse at 50% 0,rgba(200,180,255,.22),rgba(200,180,255,0) 70%)}
+.zs-bolt.go{animation:zsbolt 1.1s ease-out 1}
+html[data-theme="light"] .zs-bolt{display:none}
+.zs-god i{position:absolute;inset:0;transform-origin:100% 0;background:repeating-conic-gradient(from 188deg at 100% 0,rgba(255,244,180,.2) 0 3deg,rgba(255,244,180,0) 3deg 11deg);-webkit-mask-image:radial-gradient(circle at 100% 0,#000,rgba(0,0,0,0) 72%);mask-image:radial-gradient(circle at 100% 0,#000,rgba(0,0,0,0) 72%);animation:zsraysw 11s ease-in-out infinite;will-change:transform,opacity}
+html[data-theme="gray"] .zs-god i{opacity:.55}
+.zs-aur i{position:absolute;left:-10%;width:120%;border-radius:50%;opacity:.5;animation:zsaur 13s ease-in-out infinite alternate;will-change:transform}
+.zs-aur .a1{top:2%;height:34%;background:radial-gradient(ellipse at 40% 50%,rgba(60,255,170,.5),rgba(60,255,170,0) 70%)}
+.zs-aur .a2{top:10%;height:30%;background:radial-gradient(ellipse at 65% 50%,rgba(150,110,255,.45),rgba(150,110,255,0) 70%);animation-duration:17s;animation-direction:alternate-reverse}
+.zs-aur .a3{top:0;height:24%;background:radial-gradient(ellipse at 20% 50%,rgba(80,200,255,.35),rgba(80,200,255,0) 70%);animation-duration:21s}
+html[data-theme="light"] .zs-aur,html[data-theme="light"] .zs-shoot{display:none}
+.zs-shoot{width:90px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff);box-shadow:0 0 8px 1px rgba(255,255,255,.7);opacity:0;animation:zsshoot 12s linear infinite}
+.zs-glint{width:5px;height:5px;margin:0;border-radius:50%;background:#fff;box-shadow:0 0 7px 2px rgba(255,255,255,.85);animation:zstw 2.4s ease-in-out infinite;will-change:opacity}
+.zs-flare{border-radius:50%;background:radial-gradient(circle,rgba(255,230,140,.55),rgba(255,200,60,.18) 55%,rgba(255,200,60,0) 72%);border:1px solid rgba(255,220,120,.25)}
+html[data-theme="light"] .zs-flare{opacity:.35!important}
