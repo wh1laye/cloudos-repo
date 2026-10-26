@@ -1,278 +1,278 @@
 (function(){
-const RX=['👍','👎','😂','😮','😢','🎉','🔥','🤔','👀','🙏'];
-const RXD={};
-const clr=new Set();
+const PS=15;
 const ls={
   get:k=>{try{return localStorage.getItem(k)}catch(x){return null}},
-  set:(k,v)=>{try{localStorage.setItem(k,v)}catch(x){}},
-  del:k=>{try{localStorage.removeItem(k)}catch(x){}}
+  set:(k,v)=>{try{localStorage.setItem(k,v)}catch(x){}}
+};
+const ss={
+  get:k=>{try{return sessionStorage.getItem(k)}catch(x){return null}},
+  set:(k,v)=>{try{sessionStorage.setItem(k,v)}catch(x){}},
+  del:k=>{try{sessionStorage.removeItem(k)}catch(x){}}
 };
 const dec=s=>{try{return decodeURIComponent(s||'')}catch(x){return s||''}};
+const parseTags=s=>String(s||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean).slice(0,5);
 
-function rxHtml(i,open){
-  const l=RXD[i]||[],m={};
-  l.forEach(x=>{
-    const o=m[x.emoji]||(m[x.emoji]={n:0,me:false});
-    o.n++;
-    if(me&&x.user_id===me.id)o.me=true;
-  });
-  let h=RX.filter(e=>m[e]).map(e=>'<button type="button" class="rx'+(m[e].me?' on':'')+'" data-a="rx" data-i="'+i+'" data-e="'+e+'">'+e+'<span>'+m[e].n+'</span></button>').join('');
-  h+='<button type="button" class="lk" data-a="rxp" data-i="'+i+'">реакция</button>';
-  if(open)h+='<span class="rxp">'+RX.map(e=>'<button type="button" data-a="rx" data-i="'+i+'" data-e="'+e+'">'+e+'</button>').join('')+'</span>';
-  return h;
+let base=+ls.get('f3base');
+if(!base){base=Date.now();ls.set('f3base',String(base))}
+let SEEN={};
+try{SEEN=JSON.parse(ls.get('f3seen')||'{}')}catch(x){SEEN={}}
+function saveSeen(){
+  const k=Object.keys(SEEN);
+  if(k.length>600)k.sort((a,b)=>SEEN[a]-SEEN[b]).slice(0,k.length-500).forEach(x=>{delete SEEN[x]});
+  ls.set('f3seen',JSON.stringify(SEEN));
+}
+window.isUnread=t=>{
+  if(!t||!t.bumped_at)return false;
+  const s=SEEN[t.id];
+  return new Date(t.bumped_at).getTime()>(s!==undefined?s:base);
+};
+window.tagsHtml=t=>{
+  const g=t&&t.tags;
+  if(!g||!g.length)return '';
+  return '<span class="tgl">'+g.map(x=>'<span class="tg" data-t="'+esc(x)+'">#'+esc(x)+'</span>').join('')+'</span>';
+};
+
+function pager(n,p){
+  const nums=[];
+  for(let i=1;i<=n;i++){
+    if(i===1||i===n||Math.abs(i-p)<=1)nums.push(i);
+    else if(nums[nums.length-1]!=='…')nums.push('…');
+  }
+  const b=(i,t,on)=>'<button type="button" class="pgb'+(on?' on':'')+'" data-a="pgo" data-i="'+i+'">'+t+'</button>';
+  return '<div class="pg">'+(p>1?b(p-1,'назад'):'')+nums.map(x=>x==='…'?'<span class="mu">…</span>':b(x,x,x===p)).join('')+(p<n?b(p+1,'вперёд'):'')+'</div>';
+}
+function setPage(id,p,sc){
+  const arts=[...app.querySelectorAll('article.post')];
+  if(!arts.length)return;
+  const n=Math.max(1,Math.ceil(arts.length/PS));
+  arts.forEach((a,k)=>{a.hidden=!(k>=(p-1)*PS&&k<p*PS)});
+  app.querySelectorAll('.pg').forEach(x=>x.remove());
+  if(n>1){
+    const h=pager(n,p);
+    arts[0].insertAdjacentHTML('beforebegin',h);
+    arts[arts.length-1].insertAdjacentHTML('afterend',h);
+  }
+  try{history.replaceState(null,'','#/t/'+id+(p>1?'/'+p:''))}catch(x){}
+  quotes();
+  if(sc)(app.querySelector('h1')||app).scrollIntoView();
+}
+function popGol(id){
+  let g=null;
+  try{g=JSON.parse(ss.get('f3gol')||'null')}catch(x){}
+  if(!g||g.id!==id)return false;
+  ss.del('f3gol');
+  return Date.now()-g.t<30000;
 }
 
-async function enh(id){
-  if(location.hash!=='#/t/'+id)return;
-  const bs=[...app.querySelectorAll('button[data-a="like"]')];
-  if(!bs.length)return;
-  const ids=bs.map(b=>+b.dataset.i);
-  const [r,h]=await Promise.all([
-    sb.from('reactions').select('post_id,emoji,user_id').in('post_id',ids),
-    sb.from('post_edits').select('post_id').in('post_id',ids)
-  ]);
-  if(location.hash!=='#/t/'+id)return;
-  const hs=new Set((h.data||[]).map(x=>x.post_id));
-  ids.forEach(i=>{RXD[i]=[]});
-  (r.data||[]).forEach(x=>{(RXD[x.post_id]=RXD[x.post_id]||[]).push(x)});
-  bs.forEach(b=>{
-    const i=+b.dataset.i,a=b.parentElement;
-    if(a.dataset.e2)return;
-    a.dataset.e2='1';
-    if(!r.error){
-      const s=document.createElement('span');
-      s.className='rxs';
-      s.dataset.p=i;
-      s.innerHTML=rxHtml(i);
-      b.insertAdjacentElement('afterend',s);
+async function extra(id){
+  const k=location.hash.slice(1).split('/');
+  if(k[1]!=='t'||+k[2]!==id)return;
+  const tr=await sb.from('threads').select('*').eq('id',id).single();
+  const t=tr.data;
+  if(!t||+location.hash.slice(1).split('/')[2]!==id)return;
+  if(t.bumped_at){SEEN[id]=new Date(t.bumped_at).getTime();saveSeen()}
+  let pend=null;
+  try{pend=JSON.parse(ss.get('f3pt')||'null')}catch(x){}
+  if(pend&&me&&tAuth(t)===me.id){
+    ss.del('f3pt');
+    if(Date.now()-pend.t<30000&&pend.title===t.title&&pend.v.length&&!(t.tags||[]).length){
+      const r=await sb.rpc('set_tags',{tid:id,tg:pend.v});
+      if(!r.error){
+        const x=await sb.from('threads').select('tags').eq('id',id).single();
+        t.tags=x.data?x.data.tags:[];
+      }
     }
-    if(hs.has(i)){
-      const t=document.createElement('button');
-      t.type='button';t.className='lk';t.dataset.a='hist';t.dataset.i=i;t.textContent='история правок';
-      a.appendChild(t);
-    }
+  }
+  const h1=app.querySelector('h1');
+  const tg=t.tags||[];
+  const can2=!!me&&(tAuth(t)===me.id||!!(prof&&prof.is_admin));
+  if(h1&&!app.querySelector('.tgs')&&(tg.length||can2)){
+    const d=document.createElement('div');
+    d.className='tgs';
+    d.innerHTML=tg.map(x=>'<a class="tg" href="#/tag/'+encodeURIComponent(x)+'">#'+esc(x)+'</a>').join('')+(can2?'<button type="button" class="lk" data-a="tgedit" data-v="'+esc(tg.join(', '))+'">'+(tg.length?'изменить теги':'добавить теги')+'</button>':'');
+    h1.insertAdjacentElement('afterend',d);
+  }
+  app.querySelectorAll('button[data-a="like"]').forEach(b=>{
+    const a=b.parentElement;
+    if(a.dataset.pl)return;
+    a.dataset.pl='1';
+    const l=document.createElement('button');
+    l.type='button';l.className='lk';l.dataset.a='plink';l.dataset.i=b.dataset.i;l.textContent='ссылка';
+    a.appendChild(l);
   });
+  const arts=[...app.querySelectorAll('article.post')];
+  const n=Math.max(1,Math.ceil(arts.length/PS));
+  const x=k[3]||'';
+  let p=1,target=null;
+  if(popGol(id))p=n;
+  else if(/^\d+$/.test(x))p=+x;
+  else if(/^p\d+$/.test(x)){
+    const b=app.querySelector('button[data-a="like"][data-i="'+x.slice(1)+'"]');
+    const it=b&&b.closest('.item');
+    const a=it&&it.closest('article.post');
+    if(a){p=Math.floor(arts.indexOf(a)/PS)+1;target=it}
+  }
+  p=Math.min(Math.max(1,p),n);
+  if(n>1)setPage(id,p,false);
+  else quotes();
+  if(target){
+    target.scrollIntoView({block:'start'});
+    target.classList.add('flash');
+    setTimeout(()=>target.classList.remove('flash'),2600);
+  }
 }
-
 const _thread=thread;
 thread=async function(id){
   await _thread(id);
-  try{await enh(id)}catch(x){}
+  try{await extra(id)}catch(x){}
 };
-
-function rowHtml(t){
-  const u=window.isUnread&&window.isUnread(t);
-  return '<a class="trow'+(u?' unr':'')+'" href="#/t/'+t.id+'"><div><strong>'+(u?'<i class="ud"></i>':'')+pfx(t)+(t.pinned?'<span class="tag">закреплено</span>':'')+(t.locked?'<span class="tag">закрыто</span>':'')+esc(t.title)+'</strong>'+(window.tagsHtml?window.tagsHtml(t):'')+who(t.profiles,false)+'</div><div class="n">ответов: '+Math.max(0,t.posts[0].count-1)+'<br>'+fmt(t.bumped_at)+'</div></a>';
-}
-window.rowHtml=rowHtml;
-
-function sortUi(id){
-  const q=$('#q');
-  if(!q||$('#srt'))return;
-  const O=[['act','по активности'],['new','сначала новые'],['pop','по числу ответов'],['no','без ответов'],['sv','решённые']];
-  const sel=document.createElement('select');
-  sel.id='srt';
-  sel.innerHTML=O.map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('');
-  const sv=ls.get('tsort');
-  sel.value=O.some(o=>o[0]===sv)?sv:'act';
-  q.insertAdjacentElement('afterend',sel);
-  let tok=0;
-  const draw=async()=>{
-    const my=++tok,m=sel.value;
-    let r=sb.from('threads').select('*,posts(count)').eq('board_id',id).limit(100);
-    if(m==='sv')r=r.eq('solved',true);
-    if(m==='act'||m==='new')r=r.order('pinned',{ascending:false});
-    r=m==='new'?r.order('id',{ascending:false}):r.order('bumped_at',{ascending:false});
-    const v=q.value.trim().replace(/[%_,]/g,'');
-    if(v)r=r.ilike('title','%'+v+'%');
-    const {data,error}=await r;
-    if(my!==tok||!$('#tl'))return;
-    if(error){$('#tl').innerHTML='<p class="mu">'+esc(error.message)+'</p>';return}
-    let ts=data||[];
-    await withProf(ts);
-    if(my!==tok||!$('#tl'))return;
-    const n=t=>Math.max(0,t.posts[0].count-1);
-    if(m==='pop')ts.sort((a,b)=>n(b)-n(a));
-    if(m==='no')ts=ts.filter(t=>n(t)===0);
-    $('#tl').innerHTML=ts.map(rowHtml).join('')||'<p class="mu">тем нет</p>';
-  };
-  q.oninput=draw;
-  sel.onchange=()=>{ls.set('tsort',sel.value);draw()};
-  draw();
-}
 
 const _board=board;
 board=async function(id){
   await _board(id);
-  if(location.hash==='#/b/'+id)sortUi(id);
+  if(location.hash!=='#/b/'+id)return;
+  const row=app.querySelector('.row');
+  if(!row||row.querySelector('[data-a="bsub"]'))return;
+  let on=false;
+  if(me){
+    const r=await sb.from('board_subs').select('board_id').eq('board_id',id).eq('user_id',me.id).maybeSingle();
+    on=!!r.data;
+  }
+  if(row.querySelector('[data-a="bsub"]'))return;
+  const b=document.createElement('button');
+  b.type='button';b.className='btn';b.dataset.a='bsub';b.dataset.i=id;b.dataset.v=on?'1':'0';
+  b.textContent=on?'отписаться от раздела':'подписаться на раздел';
+  row.appendChild(b);
 };
 
-function sbox(q){
-  return '<form id="gsf" class="row"><input id="gs" maxlength="100" placeholder="поиск по темам, сообщениям и участникам" value="'+esc(q||'')+'"><button class="btn p">найти</button></form>';
-}
+const _notifs=notifs;
+notifs=async function(){
+  await _notifs();
+  if(!me)return;
+  const r=await sb.from('notifications').select('id,data').eq('user_id',me.id).eq('kind','newt').limit(100);
+  (r.data||[]).forEach(x=>{
+    const a=app.querySelector('a.ni[data-i="'+x.id+'"]');
+    if(!a||!a.firstElementChild)return;
+    const d=x.data||{};
+    a.firstElementChild.innerHTML='<b>'+esc(d.n||tr('участник'))+'</b> '+tr('создал тему «')+esc(d.t||'')+tr('» в разделе «')+esc(d.b||'')+'»';
+  });
+};
 
-function hl(s,v){
-  const i=s.toLowerCase().indexOf(v.toLowerCase());
-  if(i<0)return esc(s.slice(0,160));
-  const a=Math.max(0,i-50),e=Math.min(s.length,i+v.length+110);
-  return (a?'…':'')+esc(s.slice(a,i))+'<mark>'+esc(s.slice(i,i+v.length))+'</mark>'+esc(s.slice(i+v.length,e))+(e<s.length?'…':'');
+async function topPage(){
+  app.innerHTML='<p><a href="#/">форум</a> / топ участников</p><h1>топ участников</h1><p class="mu">по рейтингу, как в профиле</p><div id="tp"><p class="mu">загрузка</p></div>';
+  const pr=await sb.from('profiles').select('id').limit(1000);
+  const ids=(pr.data||[]).map(x=>x.id);
+  if(!ids.length){$('#tp').innerHTML='<p class="mu">участников пока нет</p>';return}
+  const rt=await sb.rpc('user_ratings',{ids});
+  if(rt.error){$('#tp').innerHTML='<p class="mu">'+esc(rt.error.message)+'</p>';return}
+  const rows=(rt.data||[]).map(x=>({author:x.id,r:+x.r})).filter(x=>x.r>0).sort((a,b)=>b.r-a.r).slice(0,30);
+  if(!rows.length){$('#tp').innerHTML='<p class="mu">пока ни у кого нет рейтинга</p>';return}
+  await withProf(rows);
+  if(!$('#tp'))return;
+  $('#tp').innerHTML=rows.map((x,i)=>'<a class="trow" href="#/u/'+esc(x.author)+'"><div><strong><span class="rk">'+(i+1)+'</span>'+who(x.profiles,false)+'</strong><span class="mu">'+esc(lvl(x.r))+'</span></div><div class="n">рейтинг: '+x.r+'</div></a>').join('');
 }
-
-async function search(q){
-  const v=q.trim().replace(/[%_,]/g,'');
-  app.innerHTML='<p><a href="#/">форум</a> / поиск</p><h1>поиск</h1>'+sbox(q)+'<div id="sr"></div>';
-  const out=$('#sr');
-  if(v.length<2){out.innerHTML='<p class="mu">введи минимум два символа</p>';return}
-  out.innerHTML='<p class="mu">поиск</p>';
-  const L='%'+v+'%';
-  const [t,p,u]=await Promise.all([
-    sb.from('threads').select('id,title,prefix,solved').ilike('title',L).order('id',{ascending:false}).limit(20),
-    sb.from('posts').select('id,body,author,thread_id,created_at').ilike('body',L).order('created_at',{ascending:false}).limit(30),
-    sb.from('profiles').select('id,name,status,avatar_url,roles(*)').ilike('name',L).limit(20)
-  ]);
-  if(!$('#sr'))return;
-  const ps=p.data||[];
-  const tm={};
-  (t.data||[]).forEach(x=>{tm[x.id]=x});
-  const need2=[...new Set(ps.map(x=>x.thread_id))].filter(x=>!tm[x]);
-  if(need2.length)((await sb.from('threads').select('id,title,prefix,solved').in('id',need2)).data||[]).forEach(x=>{tm[x.id]=x});
-  await withProf(ps);
-  const sec=(h,b,e)=>'<h2>'+h+'</h2>'+(b||'<p class="mu">'+(e||'ничего не найдено')+'</p>');
-  const th=(t.data||[]).map(x=>'<a class="trow" href="#/t/'+x.id+'"><div><strong>'+pfx(x)+esc(x.title)+'</strong></div></a>').join('');
-  const pm=ps.filter(x=>tm[x.thread_id]).map(x=>{
-    const s=x.body.replace(/\[img:[^\]]*\]/g,'[картинка]').replace(/\s+/g,' ');
-    return '<a class="trow" href="#/t/'+x.thread_id+'"><div><strong>'+pfx(tm[x.thread_id])+esc(tm[x.thread_id].title)+'</strong><span class="sn">'+hl(s,v)+'</span></div><div class="n">'+who(x.profiles,false)+'<br>'+fmt(x.created_at)+'</div></a>';
-  }).join('');
-  const us=(u.data||[]).map(x=>'<div>'+who(x)+'</div>').join('');
-  out.innerHTML=sec('темы',th)+sec('сообщения',pm)+sec('участники',us?'<div class="srm">'+us+'</div>':'');
+async function tagPage(tag){
+  app.innerHTML='<p><a href="#/">форум</a> / теги</p><h1>#'+esc(tag)+'</h1><div id="tl"><p class="mu">загрузка</p></div>';
+  const r=await sb.from('threads').select('*,posts(count)').contains('tags',[tag]).order('bumped_at',{ascending:false}).limit(100);
+  if(r.error){$('#tl').innerHTML='<p class="mu">'+esc(r.error.message)+'</p>';return}
+  const ts=r.data||[];
+  await withProf(ts);
+  if(!$('#tl'))return;
+  $('#tl').innerHTML=ts.map(window.rowHtml).join('')||'<p class="mu">тем с таким тегом нет</p>';
 }
-
 const _home=home;
 home=async function(){
   const k=location.hash.slice(1).split('/');
-  if(k[1]==='search'){await search(dec(k[2]));return}
+  if(k[1]==='top'){await topPage();return}
+  if(k[1]==='tag'){await tagPage(dec(k[2]).toLowerCase());return}
   await _home();
-  homeBox();
+  homeLinks();
 };
-function homeBox(){
+
+function homeLinks(){
   const h=location.hash;
   if(h&&h!=='#'&&h!=='#/')return;
-  if($('#gsf'))return;
-  const p=app.querySelector('p.mu');
-  if(p)p.insertAdjacentHTML('afterend',sbox(''));
+  const g=$('#gsf');
+  if(!g||$('#lnk'))return;
+  g.insertAdjacentHTML('afterend','<p id="lnk" class="lnks"><a class="chip" href="#/top">топ участников</a></p>');
 }
-
-function dkey(el){
-  if(!el||!el.tagName)return '';
-  const f=el.closest('form');
-  if(!f)return '';
-  let n='';
-  if(el.id==='rb'||el.id==='nb'||el.id==='nt')n=el.id;
-  else if(f.classList.contains('cf')&&el.tagName==='TEXTAREA')n='cf'+f.dataset.p;
-  return n?'dr:'+location.hash+':'+n:'';
+function tagInput(){
+  const t=$('#nt');
+  if(!t||$('#ntg'))return;
+  t.insertAdjacentHTML('afterend','<input id="ntg" maxlength="120" placeholder="теги через запятую, до 5 (необязательно)">');
 }
-function drafts(){
-  app.querySelectorAll('form textarea,form input').forEach(el=>{
-    if(el.dataset.dr)return;
-    const k=dkey(el);
-    if(!k)return;
-    el.dataset.dr='1';
-    if(clr.has(k)){clr.delete(k);ls.del(k);return}
-    const v=ls.get(k);
-    if(v&&!el.value)el.value=v;
-  });
-}
-function pbtn(){
-  app.querySelectorAll('form textarea').forEach(t=>{
-    if(t.id==='pbio'||t.id==='npo'||t.dataset.pv)return;
-    const tb=t.nextElementSibling;
-    if(!tb||!tb.classList.contains('tb'))return;
-    t.dataset.pv='1';
+function quotes(){
+  app.querySelectorAll('blockquote.qt:not([data-cq])').forEach(q=>{
+    if(q.offsetParent===null)return;
+    q.dataset.cq='1';
+    if(q.scrollHeight<=160)return;
+    q.classList.add('cl');
     const b=document.createElement('button');
-    b.type='button';b.className='lk';b.dataset.a='prev';b.textContent='предпросмотр';
-    tb.appendChild(b);
+    b.type='button';b.className='lk qx';b.dataset.a='qx';b.textContent='показать полностью';
+    q.insertAdjacentElement('afterend',b);
   });
 }
-new MutationObserver(()=>{
-  homeBox();
-  drafts();
-  pbtn();
-}).observe(app,{childList:true,subtree:true});
-
-function pv(p,ta){
-  p.innerHTML=ta.value.trim()?fmtBody(ta.value):'<span class="mu">пусто</span>';
-  delete p.dataset.fx;
-}
-
-document.addEventListener('input',e=>{
-  const el=e.target,k=dkey(el);
-  if(k){
-    clr.delete(k);
-    if(el.value)ls.set(k,el.value);else ls.del(k);
-  }
-  if(el.tagName==='TEXTAREA')app.querySelectorAll('.prv').forEach(p=>{if(p._ta===el)pv(p,el)});
-});
+new MutationObserver(()=>{homeLinks();tagInput();quotes()}).observe(app,{childList:true,subtree:true});
 
 document.addEventListener('submit',e=>{
-  if(e.target.id==='gsf'){
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    const q=$('#gs').value.trim();
-    if(q)location.hash='#/search/'+encodeURIComponent(q);
-    return;
+  const f=e.target;
+  if(f.id==='rf'){
+    const m=location.hash.match(/^#\/t\/(\d+)/);
+    if(m)ss.set('f3gol',JSON.stringify({id:+m[1],t:Date.now()}));
   }
-  e.target.querySelectorAll('textarea,input').forEach(el=>{
-    const k=dkey(el);
-    if(!k)return;
-    clr.add(k);
-    setTimeout(()=>{clr.delete(k);if(!el.isConnected)ls.del(k)},2500);
-  });
+  if(f.id==='nf'){
+    const tg=$('#ntg');
+    ss.set('f3pt',JSON.stringify({v:parseTags(tg?tg.value:''),title:$('#nt')?$('#nt').value.trim():'',t:Date.now()}));
+  }
 },true);
 
 document.addEventListener('click',async e=>{
+  const tg=e.target.closest('.tg[data-t]');
+  if(tg){
+    e.preventDefault();
+    e.stopPropagation();
+    location.hash='#/tag/'+encodeURIComponent(tg.dataset.t);
+    return;
+  }
   const b=e.target.closest('[data-a]');
   if(!b)return;
   const a=b.dataset.a;
-  if(a==='rxp'){
-    const s=b.closest('.rxs');
-    s.innerHTML=rxHtml(+s.dataset.p,!s.querySelector('.rxp'));
+  const m=location.hash.match(/^#\/t\/(\d+)/);
+  if(a==='pgo'&&m){
+    setPage(+m[1],+b.dataset.i,true);
   }
-  else if(a==='rx'){
-    const s=b.closest('.rxs'),i=+b.dataset.i,em=b.dataset.e;
-    if(!await need())return;
-    const mine=(RXD[i]||[]).some(x=>x.emoji===em&&x.user_id===me.id);
-    const r=mine
-      ?await sb.from('reactions').delete().eq('post_id',i).eq('user_id',me.id).eq('emoji',em)
-      :await sb.from('reactions').insert({post_id:i,emoji:em});
+  else if(a==='plink'&&m){
+    const url=location.origin+location.pathname+'#/t/'+m[1]+'/p'+b.dataset.i;
+    try{
+      await navigator.clipboard.writeText(url);
+      b.textContent='скопировано';
+      setTimeout(()=>{b.textContent='ссылка'},1500);
+    }catch(x){prompt(tr('ссылка на сообщение'),url)}
+  }
+  else if(a==='tgedit'&&m){
+    const n=prompt(tr('теги через запятую, до 5 штук'),b.dataset.v||'');
+    if(n===null)return;
+    const r=await sb.rpc('set_tags',{tid:+m[1],tg:parseTags(n)});
     if(r.error)return alert(r.error.message);
-    RXD[i]=(RXD[i]||[]).filter(x=>!(x.emoji===em&&x.user_id===me.id));
-    if(!mine)RXD[i].push({post_id:i,emoji:em,user_id:me.id});
-    s.innerHTML=rxHtml(i);
+    thread(+m[1]);
   }
-  else if(a==='hist'){
-    const ac=b.parentElement,nx=ac.nextElementSibling;
-    if(nx&&nx.classList.contains('hist')){nx.remove();return}
-    const r=await sb.from('post_edits').select('body,at').eq('post_id',+b.dataset.i).order('at',{ascending:false}).limit(30);
-    const d=document.createElement('div');
-    d.className='hist';
-    d.innerHTML=r.error
-      ?'<p class="mu">'+esc(r.error.message)+'</p>'
-      :'<p class="mu">прошлые версии, от новых к старым</p>'+((r.data||[]).map(x=>'<div class="hv"><span class="mu">'+fmt(x.at)+'</span><div class="hb">'+esc(x.body)+'</div></div>').join('')||'<p class="mu">правок нет</p>');
-    ac.insertAdjacentElement('afterend',d);
+  else if(a==='bsub'){
+    if(!await need())return;
+    const on=b.dataset.v==='1',id=+b.dataset.i;
+    const r=on
+      ?await sb.from('board_subs').delete().eq('board_id',id).eq('user_id',me.id)
+      :await sb.from('board_subs').insert({board_id:id});
+    if(r.error)return alert(r.error.message);
+    b.dataset.v=on?'0':'1';
+    b.textContent=on?'подписаться на раздел':'отписаться от раздела';
   }
-  else if(a==='prev'){
-    const tb=b.closest('.tb');
-    let ta=tb.previousElementSibling;
-    if(!ta||ta.tagName!=='TEXTAREA')ta=(b.closest('form')||document).querySelector('textarea');
-    if(!ta)return;
-    let p=tb.nextElementSibling;
-    if(p&&p.classList.contains('prv')){p.remove();return}
-    p=document.createElement('div');
-    p.className='txt prv';
-    p._ta=ta;
-    tb.insertAdjacentElement('afterend',p);
-    pv(p,ta);
+  else if(a==='qx'){
+    const q=b.previousElementSibling;
+    if(!q)return;
+    const c=q.classList.toggle('cl');
+    b.textContent=c?'показать полностью':'свернуть';
   }
 });
 
+route();
 })();
