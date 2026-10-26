@@ -196,12 +196,20 @@ async function withProf(rows){
   return rows;
 }
 
+async function popular(){
+  try{
+    const r=await sb.rpc('popular_week',{lim:5});
+    if(r.error||!r.data||!r.data.length)return '';
+    return '<h2>популярное за неделю</h2>'+r.data.map(t=>'<a class="trow" href="#/t/'+t.id+'"><div><strong>'+esc(t.title)+'</strong></div><div class="n">сообщений за неделю: '+t.replies+'</div></a>').join('');
+  }catch(x){return ''}
+}
 async function home(){
   const {data,error}=await sb.from('boards').select('*,threads(count)').order('pos');
   if(error)throw error;
   const fd=await feed();
+  const pop=await popular();
   app.innerHTML='<h1>форум</h1><p class="mu">предложения, вопросы и обсуждение cloudos.</p><div class="grid">'+
-    (data.map(b=>'<a class="card" href="#/b/'+b.id+'"><i class="ci"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></i><strong>'+esc(b.title)+'</strong><span>'+esc(b.descr)+'</span><em>тем: '+b.threads[0].count+'</em></a>').join('')||'<p class="mu">разделов пока нет</p>')+'</div>'+fd+'<div id="onl" class="onlw"></div>';
+    (data.map(b=>'<a class="card" href="#/b/'+b.id+'"><i class="ci"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg></i><strong>'+esc(b.title)+'</strong><span>'+esc(b.descr)+'</span><em>тем: '+b.threads[0].count+'</em></a>').join('')||'<p class="mu">разделов пока нет</p>')+'</div>'+pop+fd+'<div id="onl" class="onlw"></div>';
   renderOnline();
 }
 

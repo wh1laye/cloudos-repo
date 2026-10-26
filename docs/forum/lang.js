@@ -52,6 +52,8 @@ var X={
 "/ топ участников":"/ top members",
 "/ теги":"/ tags",
 "закрепить":"pin",
+"популярное за неделю":"popular this week",
+"сообщений за неделю:":"posts this week:",
 "скачать мои данные":"download my data",
 "собираю данные":"collecting data",
 "полезно":"helpful",
