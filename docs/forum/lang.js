@@ -52,6 +52,8 @@ var X={
 "/ топ участников":"/ top members",
 "/ теги":"/ tags",
 "закрепить":"pin",
+"скачать мои данные":"download my data",
+"собираю данные":"collecting data",
 "полезно":"helpful",
 "отметить как полезное":"mark as helpful",
 "открепить":"unpin",

@@ -161,3 +161,67 @@ new MutationObserver(tick).observe(app,{childList:true,subtree:true});
 window.addEventListener('hashchange',tick);
 tick();
 })();
+
+(function(){
+var TB=[
+['profiles','id','eq','',''],
+['threads','author','eq','created_at',''],
+['posts','author','eq','created_at',''],
+['dms','','dm','created_at',''],
+['likes','user_id','eq','post_id',''],
+['reactions','user_id','eq','created_at',''],
+['helpful','user_id','eq','created_at',''],
+['bookmarks','user_id','eq','created_at',''],
+['subs','user_id','eq','created_at',''],
+['board_subs','user_id','eq','created_at',''],
+['notifications','user_id','eq','created_at',''],
+['user_badges','user_id','eq','given_at',''],
+['dm_pins','user_id','eq','created_at',''],
+['profile_comments','','pc','created_at',''],
+['reports','reporter','eq','created_at','']
+];
+async function page(t,uid){
+  var all=[],from=0,n=0;
+  while(n<20){
+    var q=sb.from(t[0]).select('*');
+    if(t[2]==='eq')q=q.eq(t[1],uid);
+    else if(t[2]==='dm')q=q.or('sender.eq.'+uid+',recipient.eq.'+uid);
+    else q=q.or('author.eq.'+uid+',profile_id.eq.'+uid);
+    if(t[3])q=q.order(t[3]);
+    var r=await q.range(from,from+999);
+    if(r.error)return {error:r.error.message};
+    var d=r.data||[];
+    all=all.concat(d);
+    if(d.length<1000)break;
+    from+=1000;n++;
+  }
+  return {rows:all};
+}
+document.addEventListener('click',async function(e){
+  var b=e.target.closest('[data-a="export"]');
+  if(!b||b.disabled||!me)return;
+  var old=b.textContent;
+  b.disabled=true;
+  b.textContent=tr('собираю данные')+'…';
+  try{
+    var out={exported_at:new Date().toISOString(),user_id:me.id,errors:{}};
+    for(var i=0;i<TB.length;i++){
+      var r=await page(TB[i],me.id);
+      if(r.error)out.errors[TB[i][0]]=r.error;
+      else out[TB[i][0]]=r.rows;
+    }
+    var blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='cloudos-forum-export-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500);
+  }catch(x){
+    alert((x&&x.message)||String(x));
+  }finally{
+    b.disabled=false;
+    b.textContent=old;
+  }
+});
+})();
