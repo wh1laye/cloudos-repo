@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url><loc>https://wh1laye.github.io/cloudos-repo/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/handbook/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/handbook/en/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/wizard/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/kernel/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/detect/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/boot/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/stage3/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/compare/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/news/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/forum/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/releases/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/packages/</loc></url>
-<url><loc>https://wh1laye.github.io/cloudos-repo/hardware/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/handbook/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/handbook/en/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/wizard/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/kernel/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/detect/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/boot/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/stage3/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/compare/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/news/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/forum/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/releases/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/packages/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/hardware/</loc></url>
 </urlset>
