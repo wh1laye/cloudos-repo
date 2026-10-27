@@ -74,8 +74,8 @@
   "v": "",
   "c": "system",
   "d": {
-   "ru": "системный журнал (пока вместо syslog-ng)",
-   "en": "system logger (for now instead of syslog-ng)"
+   "ru": "системный журнал",
+   "en": "system logger"
   },
   "s": "stage3"
  },
