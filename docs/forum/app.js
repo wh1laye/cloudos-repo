@@ -3,6 +3,12 @@ if(typeof supabase==='undefined'){
   throw new Error('supabase missing');
 }
 const sb=supabase.createClient(CFG.url,CFG.key,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});
+let authReady=false;
+sb.auth.onAuthStateChange((ev,s)=>{
+  if(!authReady||!s||!s.user)return;
+  if(me&&me.id===s.user.id)return;
+  setTimeout(()=>{auth().then(()=>route())},0);
+});
 (function(){
   var q=location.hash.replace(/^#/,'')+'&'+location.search.replace(/^\?/,''),m=q.match(/(?:^|&)error_description=([^&]+)/);
   if(m){var t;try{t=decodeURIComponent(m[1].replace(/\+/g,' '))}catch(e){t=m[1]}
@@ -155,6 +161,7 @@ async function auth(){
   presence();
   watchNotifs();
   watchDms();
+  authReady=true;
 }
 
 function drawBar(){
