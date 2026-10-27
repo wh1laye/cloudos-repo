@@ -54,7 +54,6 @@ static char *trim(char *s)
 	return s;
 }
 
-/* каталоги, которые мы чистим или заменяем, не должны быть системными */
 static int safe_dir(const char *p)
 {
 	static const char *bad[] = {
@@ -146,7 +145,6 @@ static void osid(char *out, size_t n)
 	fclose(f);
 }
 
-/* ставить пакеты прямо в / можно только в cloudos (или в боксе, там тоже cloudos) */
 static int host_allowed(char *id, size_t n)
 {
 	const char *f = getenv("CLOUDPKG_FORCE");
@@ -248,7 +246,6 @@ static int emerge(char **pre, int npre, char **pk, int npk)
 	return r;
 }
 
-/* общие параметры: -p -a -o -t, остальное с дефисом уходит в emerge как есть */
 static void parse(int argc, char **argv, char **pre, int *npre, char **pk, int *npk)
 {
 	int i;
@@ -447,7 +444,6 @@ static int cmd_upgrade(int argc, char **argv)
 	pre[npre++] = "--verbose";
 	parse(argc, argv, pre, &npre, pk, &npk);
 	npk = 0;
-	/* @selected, а не @world: @world тянет весь @system профиля gentoo, а база cloudos собрана в lfs */
 	pk[npk++] = "@selected";
 	if (!need_root())
 		r = 1;
@@ -542,7 +538,6 @@ static int cmd_list(void)
 	return 0;
 }
 
-/* выравнивание по символам, а не по байтам, иначе кириллица съезжает */
 static void row(const char *name, const char *val)
 {
 	int w = 0;
