@@ -14,11 +14,9 @@ cloudpkg: cloudpkg.c
 install: cloudpkg
 	install -Dm755 cloudpkg $(DESTDIR)$(PREFIX)/bin/cloudpkg
 
-# запуск на чужом дистрибутиве: вместо программы ставится скрипт, который входит в бокс cloudos
 install-box:
 	install -Dm755 cloudpkg-box.sh $(DESTDIR)/usr/local/bin/cloudpkg
 
-# свои настройки не затираем: если файл уже есть и отличается, новый кладётся рядом с суффиксом .dist
 conf:
 	install -d $(DESTDIR)/etc/cloudpkg $(DESTDIR)/etc/portage/repos.conf $(DESTDIR)/etc/portage/profile
 	@for f in $(CONFS); do \
