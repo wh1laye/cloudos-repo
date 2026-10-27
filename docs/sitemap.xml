@@ -14,4 +14,9 @@
 <url><loc>https://wh1laye.github.io/cloudos-repo/releases/</loc></url>
 <url><loc>https://wh1laye.github.io/cloudos-repo/packages/</loc></url>
 <url><loc>https://wh1laye.github.io/cloudos-repo/hardware/</loc></url>
+<!-- forum:start -->
+<url><loc>https://cloudos-repo.pages.dev/forum/t/</loc></url>
+<url><loc>https://cloudos-repo.pages.dev/forum/t/33</loc><lastmod>2026-10-25</lastmod></url>
+<url><loc>https://cloudos-repo.pages.dev/forum/t/34</loc><lastmod>2026-10-26</lastmod></url>
+<!-- forum:end -->
 </urlset>
