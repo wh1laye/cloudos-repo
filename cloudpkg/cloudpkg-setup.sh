@@ -1,7 +1,4 @@
 #!/bin/bash
-# cloudpkg-setup.sh: ставит portage и cloudpkg внутри cloudos (или внутри бокса).
-# запускается от root. на чужом дистрибутиве запускай не его, а install.sh.
-#   --no-sync   не скачивать дерево рецептов заново
 set -eu
 
 REPO=${CLOUDPKG_REPO:-wh1laye/cloudos-repo}
@@ -55,7 +52,6 @@ getent group portage >/dev/null || groupadd -g 250 portage || groupadd portage
 getent passwd portage >/dev/null || useradd -g portage -d /var/tmp/portage -s /bin/false -u 250 portage 2>/dev/null \
   || useradd -g portage -d /var/tmp/portage -s /bin/false portage || true
 
-# пробуем адреса индекса pypi по очереди: each_index "что делаем" функция
 each_index() {
   local idx what=$1
   shift
@@ -66,13 +62,11 @@ each_index() {
   return 1
 }
 
-# pip install с запасным вариантом для систем с защитой PEP 668
 pip_into() {
   local idx=$1 flag log rc
   shift
   log=$(mktemp)
   for flag in "" "--break-system-packages"; do
-    # shellcheck disable=SC2086
     python3 -m pip install $flag --disable-pip-version-check --timeout 20 --retries 1 --index-url "$idx" "$@" </dev/null 2>&1 | tee "$log"
     rc=${PIPESTATUS[0]}
     if [ "$rc" = 0 ]; then rm -f "$log"; return 0; fi
@@ -84,7 +78,6 @@ pip_into() {
 
 get_tools() { pip_into "$1" --target "$TMP/tools" meson ninja; }
 
-# ссылка и sha256 самого нового портажа (sdist) из индекса pypi
 get_sdist() {
   local idx=$1 line url sum
   line=$(python3 - "$idx" "$PORTAGE_VERSION" <<'PY'
@@ -126,8 +119,6 @@ portage_ok() {
   command -v emerge >/dev/null && python3 -c 'import sys, portage.installation as i; sys.exit(i.TYPE.name != "SYSTEM")' 2>/dev/null
 }
 
-# portage с pypi собран как "модуль" (system-wide=false): он ищет настройки в /usr/etc и ставил бы пакеты
-# в /usr/usr. поэтому берём исходники и собираем системную установку, как это делает сам gentoo
 install_portage() {
   local meson_args="-Dsystem-wide=true -Drsync-verify=false"
   if python3 -m pip show portage >/dev/null 2>&1; then
@@ -142,12 +133,10 @@ install_portage() {
   mkdir -p "$TMP/psrc"
   tar xzf "$TMP/portage.tar.gz" -C "$TMP/psrc" --strip-components=1
   say "сборка portage (meson, system-wide)"
-  # shellcheck disable=SC2086
   if ! { meson setup "$TMP/pbuild" "$TMP/psrc" --prefix=/usr --sysconfdir=/etc --libdir=lib $meson_args >"$TMP/meson.log" 2>&1 \
          && ninja -C "$TMP/pbuild" >>"$TMP/meson.log" 2>&1; }; then
     say "с нативными расширениями не собралось, собираю на чистом python"
     rm -rf "$TMP/pbuild"
-    # shellcheck disable=SC2086
     { meson setup "$TMP/pbuild" "$TMP/psrc" --prefix=/usr --sysconfdir=/etc --libdir=lib $meson_args -Dnative-extensions=false >"$TMP/meson.log" 2>&1 \
       && ninja -C "$TMP/pbuild" >>"$TMP/meson.log" 2>&1; } || { tail -30 "$TMP/meson.log"; die "не удалось собрать portage"; }
   fi
@@ -159,7 +148,6 @@ if ! portage_ok; then
   install_portage
 fi
 
-# ebuild-скрипты зовут python и gtar, в gentoo их дают python-exec и app-arch/tar, а в stage 3 их нет
 [ -e /usr/bin/python ] || ln -s python3 /usr/bin/python
 [ -e /usr/bin/gtar ] || ln -s tar /usr/bin/gtar
 
