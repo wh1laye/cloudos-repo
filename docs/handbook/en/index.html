@@ -43,7 +43,7 @@
 <div class="tmode" role="group" aria-label="boot mode"><span class="tl">boot mode</span><div class="seg2"><button type="button" data-m="uefi">uefi</button><button type="button" data-m="bios">bios</button></div></div>
 <button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>search</span><kbd>ctrl k</kbd></button>
 <details open><summary>contents</summary>
-<ol><li class="tg">installation</li><li><a href="#about">1. about cloudos</a><ol><li><a href="#s1-1">1.1 what you need</a></li><li><a href="#s1-2">1.2 what is inside stage 3</a></li><li><a href="#s1-3">1.3 what the system does not have</a></li><li><a href="#s1-4">1.4 installation order</a></li><li><a href="#s1-5">1.5 how to use the handbook</a></li></ol></li><li><a href="#prep">2. preparation</a><ol><li><a href="#s2-1">2.1 date and time</a></li><li><a href="#s2-2">2.2 disks</a></li><li><a href="#s2-3">2.3 network</a></li><li><a href="#s2-4">2.4 if sites do not open</a></li></ol></li><li><a href="#disk">3. disk and filesystems</a><ol><li><a href="#s3-1">3.1 partitioning</a></li><li><a href="#s3-2">3.2 filesystems</a></li><li><a href="#s3-3">3.3 mounting</a></li><li><a href="#s3-4">3.4 example layout</a></li><li><a href="#s3-5">3.5 checking</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 verification (can be skipped)</a></li><li><a href="#s4-2">4.2 unpacking</a></li><li><a href="#s4-3">4.3 downloading</a></li><li><a href="#s4-4">4.4 after unpacking</a></li></ol></li><li><a href="#chroot">5. entering chroot</a><ol><li><a href="#s5-1">5.1 what the commands do</a></li><li><a href="#s5-2">5.2 prompt</a></li><li><a href="#s5-3">5.3 entering again</a></li><li><a href="#s5-4">5.4 leaving</a></li></ol></li><li><a href="#conf">6. build setup</a><ol><li><a href="#s6-1">6.1 locales</a></li><li><a href="#s6-2">6.2 build flags</a></li><li><a href="#s6-3">6.3 parallel build</a></li><li><a href="#s6-4">6.4 gcc 15 and build errors</a></li></ol></li><li><a href="#kernel">7. kernel</a><ol><li><a href="#s7-1">7.1 what to enable in menuconfig</a></li><li><a href="#s7-2">7.2 what the build commands do</a></li><li><a href="#s7-3">7.3 kernel mirrors</a></li><li><a href="#s7-4">7.4 another kernel version</a></li></ol></li><li><a href="#boot">8. bootloader</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 check before rebooting</a></li><li><a href="#s8-5">8.5 writing to nvram (uefi only, optional)</a></li><li><a href="#s8-6">8.6 several kernels</a></li><li><a href="#s8-7">8.7 grub instead of limine</a></li></ol></li><li><a href="#final">9. finishing</a><ol><li><a href="#s9-1">9.1 checking services</a></li><li><a href="#s9-2">9.2 first boot</a></li></ol></li><li class="tg">after installation</li><li><a href="#first">10. first boot</a><ol><li><a href="#s10-1">10.1 login</a></li><li><a href="#s10-2">10.2 user and doas</a></li><li><a href="#s10-3">10.3 computer name</a></li><li><a href="#s10-4">10.4 time zone</a></li><li><a href="#s10-5">10.5 network</a></li><li><a href="#s10-6">10.6 openrc services</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. packages and cloudpkg</a><ol><li><a href="#s11-1">11.1 commands</a></li><li><a href="#s11-2">11.2 how the installation goes</a></li><li><a href="#s11-3">11.3 examples</a></li><li><a href="#s11-4">11.4 if a package failed to build</a></li></ol></li><li><a href="#maint">12. maintenance</a><ol><li><a href="#s12-1">12.1 updating packages</a></li><li><a href="#s12-2">12.2 updating the kernel</a></li><li><a href="#s12-3">12.3 backup</a></li><li><a href="#s12-4">12.4 freeing space</a></li></ol></li><li><a href="#next">13. what next</a><ol><li><a href="#s13-1">13.1 other locales</a></li><li><a href="#s13-2">13.2 help and feedback</a></li></ol></li><li class="tg">help</li><li><a href="#errors">14. errors and fixes</a><ol><li><a href="#s14-1">14.1 live iso, network and time</a></li><li><a href="#s14-2">14.2 partitioning and filesystems</a></li><li><a href="#s14-3">14.3 downloading and unpacking</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 building packages</a></li><li><a href="#s14-6">14.6 kernel</a></li><li><a href="#s14-7">14.7 booting</a></li><li><a href="#s14-8">14.8 after booting</a></li><li><a href="#s14-9">14.9 emergency system access</a></li><li><a href="#s14-10">14.10 how to report an error</a></li><li><a href="#s14-11">14.11 installer wizard and grub</a></li><li><a href="#s14-12">14.12 cloudpkg and portage</a></li></ol></li><li><a href="#cheat">15. cheat sheet</a><ol><li><a href="#s15-1">15.1 disks</a></li><li><a href="#s15-2">15.2 network</a></li><li><a href="#s15-3">15.3 system</a></li><li><a href="#s15-4">15.4 files and archives</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. questions and answers</a></li><li class="tg">appendices</li><li><a href="#appa">appendix a. disk names</a></li><li><a href="#appb">appendix b. btrfs with subvolumes</a></li><li><a href="#appc">appendix c. glossary</a></li></ol></details>
+<ol><li class="tg">installation</li><li><a href="#about">1. about cloudos</a><ol><li><a href="#s1-1">1.1 what you need</a></li><li><a href="#s1-2">1.2 what is inside stage 3</a></li><li><a href="#s1-3">1.3 what the system does not have</a></li><li><a href="#s1-4">1.4 installation order</a></li><li><a href="#s1-5">1.5 how to use the handbook</a></li></ol></li><li><a href="#prep">2. preparation</a><ol><li><a href="#s2-1">2.1 date and time</a></li><li><a href="#s2-2">2.2 disks</a></li><li><a href="#s2-3">2.3 network</a></li><li><a href="#s2-4">2.4 if sites do not open</a></li></ol></li><li><a href="#disk">3. disk and filesystems</a><ol><li><a href="#s3-1">3.1 partitioning</a></li><li><a href="#s3-2">3.2 filesystems</a></li><li><a href="#s3-3">3.3 mounting</a></li><li><a href="#s3-4">3.4 example layout</a></li><li><a href="#s3-5">3.5 checking</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 verification (can be skipped)</a></li><li><a href="#s4-2">4.2 unpacking</a></li><li><a href="#s4-3">4.3 downloading</a></li><li><a href="#s4-4">4.4 after unpacking</a></li></ol></li><li><a href="#chroot">5. entering chroot</a><ol><li><a href="#s5-1">5.1 what the commands do</a></li><li><a href="#s5-2">5.2 prompt</a></li><li><a href="#s5-3">5.3 entering again</a></li><li><a href="#s5-4">5.4 leaving</a></li></ol></li><li><a href="#conf">6. build setup</a><ol><li><a href="#s6-1">6.1 locales</a></li><li><a href="#s6-2">6.2 build flags</a></li><li><a href="#s6-3">6.3 parallel build</a></li><li><a href="#s6-4">6.4 gcc 15 and build errors</a></li></ol></li><li><a href="#kernel">7. kernel</a><ol><li><a href="#s7-1">7.1 what to enable in menuconfig</a></li><li><a href="#s7-2">7.2 what the build commands do</a></li><li><a href="#s7-3">7.3 kernel mirrors</a></li><li><a href="#s7-4">7.4 another kernel version</a></li></ol></li><li><a href="#boot">8. bootloader</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 check before rebooting</a></li><li><a href="#s8-5">8.5 writing to nvram (uefi only, optional)</a></li><li><a href="#s8-6">8.6 several kernels</a></li><li><a href="#s8-7">8.7 grub instead of limine</a></li></ol></li><li><a href="#final">9. finishing</a><ol><li><a href="#s9-1">9.1 checking services</a></li><li><a href="#s9-2">9.2 first boot</a></li></ol></li><li class="tg">after installation</li><li><a href="#first">10. first boot</a><ol><li><a href="#s10-1">10.1 login</a></li><li><a href="#s10-2">10.2 user and doas</a></li><li><a href="#s10-3">10.3 computer name</a></li><li><a href="#s10-4">10.4 time zone</a></li><li><a href="#s10-5">10.5 network</a></li><li><a href="#s10-6">10.6 openrc services</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. packages and cloudpkg</a><ol><li><a href="#s11-1">11.1 commands</a></li><li><a href="#s11-2">11.2 how the installation goes</a></li><li><a href="#s11-3">11.3 examples</a></li><li><a href="#s11-4">11.4 if a package failed to build</a></li><li><a href="#s11-5">11.5 one-command install</a></li></ol></li><li><a href="#maint">12. maintenance</a><ol><li><a href="#s12-1">12.1 updating packages</a></li><li><a href="#s12-2">12.2 updating the kernel</a></li><li><a href="#s12-3">12.3 backup</a></li><li><a href="#s12-4">12.4 freeing space</a></li></ol></li><li><a href="#next">13. what next</a><ol><li><a href="#s13-1">13.1 other locales</a></li><li><a href="#s13-2">13.2 help and feedback</a></li></ol></li><li class="tg">help</li><li><a href="#errors">14. errors and fixes</a><ol><li><a href="#s14-1">14.1 live iso, network and time</a></li><li><a href="#s14-2">14.2 partitioning and filesystems</a></li><li><a href="#s14-3">14.3 downloading and unpacking</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 building packages</a></li><li><a href="#s14-6">14.6 kernel</a></li><li><a href="#s14-7">14.7 booting</a></li><li><a href="#s14-8">14.8 after booting</a></li><li><a href="#s14-9">14.9 emergency system access</a></li><li><a href="#s14-10">14.10 how to report an error</a></li><li><a href="#s14-11">14.11 installer wizard and grub</a></li><li><a href="#s14-12">14.12 cloudpkg and portage</a></li></ol></li><li><a href="#cheat">15. cheat sheet</a><ol><li><a href="#s15-1">15.1 disks</a></li><li><a href="#s15-2">15.2 network</a></li><li><a href="#s15-3">15.3 system</a></li><li><a href="#s15-4">15.4 files and archives</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. questions and answers</a></li><li class="tg">appendices</li><li><a href="#appa">appendix a. disk names</a></li><li><a href="#appb">appendix b. btrfs with subvolumes</a></li><li><a href="#appc">appendix c. glossary</a></li></ol></details>
 </nav>
 <main id="cloud">
 <h1>cloudos handbook</h1>
@@ -241,7 +241,7 @@ umount -R /mnt/cloudos</code></pre>
 <p>if unmounting says <code>target is busy</code>, close all terminal windows where you were in chroot and repeat.</p>
 
 <h2 id="conf">6. build setup</h2>
-<p>build flags are set in one file, <code>/etc/cloudpkg/make.conf</code>:</p>
+<p>build flags are set in one file, <code>/etc/portage/make.conf</code>:</p>
 <pre><code>CC="gcc"
 CFLAGS="-O2 -march=native"
 MAKEOPTS="-j$(nproc)"
@@ -267,7 +267,7 @@ echo "LANG=en_US.UTF-8" &gt; /etc/locale.conf</code></pre>
 <h3 id="s6-4">6.4 gcc 15 and build errors</h3>
 <p>gcc 15 uses the c23 standard by default, and some old packages do not build with it. typical signs: errors about <code>bool</code>, <code>true</code>, <code>false</code> or function declarations without arguments. in that case return the previous standard:</p>
 <pre><code>CC="gcc -std=gnu17"</code></pre>
-<p>change the value <code>CC</code> in <code>/etc/cloudpkg/make.conf</code> and repeat the package installation.</p>
+<p>change the value <code>CC</code> in <code>/etc/portage/make.conf</code> and repeat the package installation.</p>
 
 <h2 id="kernel">7. kernel</h2>
 <p>the kernel is taken from kernel.org and configured by hand </p>
@@ -481,19 +481,25 @@ swapon /swapfile</code></pre>
 <h2 id="cpkg">11. packages and cloudpkg</h2>
 <p>all packages in cloudos are built from source. this is done by the manager <code>cloudpkg</code>. its recipes are taken from gentoo.</p>
 <div class="warn"><b>IMPORTANT</b>cloudpkg is under development. there are no package signatures yet, the integrity of sources is checked only by the sha256 from the recipe. some recipes may need fixes.</div>
+<p>cloudpkg is not part of stage 3 yet. it is installed with one command, see <a href="#s11-5">11.5</a>.</p>
 <h3 id="s11-1">11.1 commands</h3>
 <div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
 <tr><td><code>cloudpkg sync</code></td><td>updates the recipe list</td></tr>
 <tr><td><code>cloudpkg install name</code></td><td>builds and installs a package together with its dependencies</td></tr>
 <tr><td><code>cloudpkg remove name</code></td><td>removes a package</td></tr>
 <tr><td><code>cloudpkg upgrade</code></td><td>updates installed packages to newer versions</td></tr>
-<tr><td><code>cloudpkg clean</code></td><td>cleans downloaded sources and temporary build files</td></tr></table></div>
+<tr><td><code>cloudpkg clean</code></td><td>cleans downloaded sources and temporary build files</td></tr>
+<tr><td><code>cloudpkg search string</code></td><td>searches for a package</td></tr>
+<tr><td><code>cloudpkg info name</code></td><td>shows what would be installed</td></tr>
+<tr><td><code>cloudpkg list</code></td><td>lists installed packages</td></tr>
+<tr><td><code>cloudpkg doctor</code></td><td>checks the setup</td></tr>
+<tr><td><code>-p</code>, <code>-a</code></td><td>dry run and ask for confirmation (for install, remove, upgrade)</td></tr></table></div>
 <h3 id="s11-2">11.2 how the installation goes</h3>
 <ol class="steps">
 <li>the package recipe and its dependency list are read</li>
 <li>the sources are downloaded through curl</li>
 <li>sha256 is checked</li>
-<li>the package is built with your flags from <code>/etc/cloudpkg/make.conf</code></li>
+<li>the package is built with your flags from <code>/etc/portage/make.conf</code></li>
 <li>the result is installed into the system</li>
 </ol>
 <p>a build takes time and disk space. big packages such as compilers build for a long time, this is normal.</p>
@@ -510,6 +516,16 @@ cloudpkg install nano</code></pre>
 <li>try <code>cloudpkg sync</code> and repeat, maybe the recipe is already fixed</li>
 <li>write on the <a href="../../forum/">forum</a> in the questions section, attaching the last 10-15 lines of output</li>
 </ol>
+<h3 id="s11-5">11.5 one-command install</h3>
+<p>as root (or through doas) run:</p>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre>
+<p>the script works out where it runs. in cloudos it builds cloudpkg, installs portage and downloads the recipe tree. on another distribution (arch, debian, ubuntu, fedora and others, x86_64 only) your system is not touched: the script downloads the cloudos stage 3, checks its sha256, unpacks it into <code>/var/lib/cloudpkg/box</code> and installs cloudpkg there. it needs 4 gb of free space, and it installs missing host tools (curl, tar, xz) by itself.</p>
+<p>on another distribution the commands are the same, and what you install lives in the box:</p>
+<pre><code>cloudpkg install nano
+cloudpkg run nano file
+cloudpkg export nano</code></pre>
+<p><code>run</code> starts a program from the box, <code>export</code> makes it a normal command on the host, <code>shell</code> opens a shell inside the box. to remove everything: <code>rm -rf /var/lib/cloudpkg /usr/local/bin/cloudpkg</code>.</p>
+<div class="note"><b>note</b>the box separates files, not security. builds run as root inside a chroot, this is not a sandbox.</div>
 
 <h2 id="maint">12. maintenance</h2>
 <h3 id="s12-1">12.1 updating packages</h3>
@@ -704,7 +720,9 @@ nano /boot/grub/grub.cfg</code></pre></div></details>
 <details class="err"><summary>!!! Invalid Repository Location (not a dir): '/var/db/repos/gentoo'</summary><div><p>the recipe tree has not been downloaded yet. run:</p><pre><code>cloudpkg sync
 cloudpkg doctor</code></pre></div></details>
 <details class="err"><summary>cloudpkg doctor shows НЕТ for the profile (make.profile)</summary><div><p>the profile link is created after the first sync. create it by hand:</p><pre><code>ln -sfn /var/db/repos/gentoo/profiles/default/linux/amd64/23.0 /etc/portage/make.profile</code></pre></div></details>
-<details class="err"><summary>emerge: command not found or ModuleNotFoundError: No module named 'portage'</summary><div><p>portage is not installed or is broken. run the auto-setup script from the repository or reinstall it:</p><pre><code>python3 -m pip install --force-reinstall --index-url https://mirrors.aliyun.com/pypi/simple/ portage</code></pre></div></details>
+<details class="err"><summary>emerge: command not found or ModuleNotFoundError: No module named 'portage'</summary><div><p>portage is not installed or is broken. run the installer again, it repairs both portage and cloudpkg:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
+<details class="err"><summary>!!! /usr/etc/portage/make.profile is not a symlink</summary><div><p>portage was installed from pip as a module. it looks for its settings in <code>/usr/etc</code> and does not see <code>/etc/portage</code>. run the installer again, it replaces it with a system build:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
+<details class="err"><summary>cloudpkg: this system is not cloudos</summary><div><p>cloudpkg does not install packages straight into a foreign system: that would break its package manager (pacman, apt, dnf). install the isolated mode, it changes nothing on the host, see <a href="#s11-5">11.5</a>:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
 <details class="err"><summary>cloudpkg: root rights required</summary><div><p>install, remove, upgrade and clean work only as root. log in as root or use doas:</p><pre><code>doas cloudpkg install name</code></pre></div></details>
 <details class="err"><summary>emerge: there are no ebuilds to satisfy ...</summary><div><p>there is no such package or the name is incomplete. find the exact name with the category:</p><pre><code>cloudpkg search name
 cloudpkg install category/name</code></pre><p>if the tree is old, run <code>cloudpkg sync</code> first.</p></div></details>
@@ -763,7 +781,11 @@ cloudpkg install name</code></pre></div></details>
 <tr><td><code>cloudpkg install name</code></td><td>install a package</td></tr>
 <tr><td><code>cloudpkg remove name</code></td><td>remove a package</td></tr>
 <tr><td><code>cloudpkg upgrade</code></td><td>update packages</td></tr>
-<tr><td><code>cloudpkg clean</code></td><td>clean the build cache</td></tr></table></div>
+<tr><td><code>cloudpkg clean</code></td><td>clean the build cache</td></tr>
+<tr><td><code>cloudpkg search string</code></td><td>find a package</td></tr>
+<tr><td><code>cloudpkg info name</code></td><td>what would be installed</td></tr>
+<tr><td><code>cloudpkg list</code></td><td>installed packages</td></tr>
+<tr><td><code>cloudpkg doctor</code></td><td>check the setup</td></tr></table></div>
 <p>openrc services are collected in the table <a href="#s10-6">10.6</a>.</p>
 
 <h2 id="faq">16. questions and answers</h2>
