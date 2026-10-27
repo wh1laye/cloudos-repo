@@ -4,6 +4,7 @@ CFLAGS += -std=gnu17 -Wall
 PREFIX ?= /usr
 DESTDIR ?=
 JOBS := $(shell nproc 2>/dev/null || echo 2)
+CONFS := cloudpkg.conf portage/make.conf portage/repos.conf/gentoo.conf portage/profile/package.provided
 
 all: cloudpkg
 
@@ -13,15 +14,25 @@ cloudpkg: cloudpkg.c
 install: cloudpkg
 	install -Dm755 cloudpkg $(DESTDIR)$(PREFIX)/bin/cloudpkg
 
+# запуск на чужом дистрибутиве: вместо программы ставится скрипт, который входит в бокс cloudos
+install-box:
+	install -Dm755 cloudpkg-box.sh $(DESTDIR)/usr/local/bin/cloudpkg
+
+# свои настройки не затираем: если файл уже есть и отличается, новый кладётся рядом с суффиксом .dist
 conf:
 	install -d $(DESTDIR)/etc/cloudpkg $(DESTDIR)/etc/portage/repos.conf $(DESTDIR)/etc/portage/profile
-	for f in cloudpkg.conf portage/make.conf portage/repos.conf/gentoo.conf portage/profile/package.provided; do \
-	  if [ -f $(DESTDIR)/etc/$$f ] && ! cmp -s etc/$$f $(DESTDIR)/etc/$$f; then cp $(DESTDIR)/etc/$$f $(DESTDIR)/etc/$$f.old; fi; \
-	  install -m644 etc/$$f $(DESTDIR)/etc/$$f; \
+	@for f in $(CONFS); do \
+	  d=$(DESTDIR)/etc/$$f; \
+	  if [ ! -e $$d ]; then \
+	    install -m644 etc/$$f $$d; \
+	    if [ $$f = portage/make.conf ]; then sed -i 's/^MAKEOPTS=.*/MAKEOPTS="-j$(JOBS)"/' $$d; fi; \
+	  elif ! cmp -s etc/$$f $$d; then \
+	    install -m644 etc/$$f $$d.dist; \
+	    echo "оставил $$d как есть, новый вариант: $$d.dist"; \
+	  fi; \
 	done
-	sed -i 's/^MAKEOPTS=.*/MAKEOPTS="-j$(JOBS)"/' $(DESTDIR)/etc/portage/make.conf
 
 clean:
 	rm -f cloudpkg
 
-.PHONY: all install conf clean
+.PHONY: all install install-box conf clean
