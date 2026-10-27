@@ -8,8 +8,8 @@ virtual/os-headers-0
 sys-devel/make-4.4.1
 dev-build/make-4.4.1
 sys-devel/m4-1.4.20
-sys-devel/bison-3.8.2
-sys-devel/flex-2.6.4
+sys-devel/bison-3.8.2-r3
+sys-devel/flex-2.6.4-r6
 sys-devel/gettext-0.26
 sys-devel/libtool-2.5.4
 dev-build/libtool-2.5.4
@@ -100,3 +100,7 @@ app-admin/doas-6.8.2
 app-portage/portage-3.0.83
 sys-apps/portage-3.0.83
 sys-apps/sandbox-2.38
+dev-build/meson-1.8.3
+dev-build/ninja-1.13.1
+dev-build/cmake-3.31.8
+dev-util/gperf-3.3
