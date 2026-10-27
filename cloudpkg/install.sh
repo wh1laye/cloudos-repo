@@ -1,16 +1,4 @@
 #!/bin/sh
-# cloudpkg: установка одной командой на любом дистрибутиве x86_64.
-#
-#   curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh
-#
-# в cloudos: собирает cloudpkg и ставит portage прямо в систему.
-# на других дистрибутивах (arch, debian, ubuntu, fedora, ...): систему не трогает,
-# кладёт отдельный корень cloudos (бокс) в /var/lib/cloudpkg/box и ставит туда cloudpkg.
-#
-# переменные: CLOUDPKG_BOX (путь бокса), CLOUDPKG_MODE (auto|box|native), CLOUDPKG_STAGE3
-# (ссылка или путь к stage 3), CLOUDPKG_SRC (папка cloudpkg с исходниками), CLOUDPKG_BRANCH,
-# CLOUDPKG_INSTALL_URL (откуда брать сам скрипт при перезапуске через sudo).
-# параметры: --box, --native, --update, -h.
 set -eu
 
 main() {
@@ -51,7 +39,6 @@ main() {
 
 	OSID=unknown
 	if [ -r /etc/os-release ]; then
-		# shellcheck disable=SC1091
 		OSID=$(. /etc/os-release && printf '%s' "${ID:-unknown}")
 	fi
 	for p in pacman apt-get dnf yum zypper apk xbps-install; do
@@ -100,7 +87,6 @@ cleanup() {
 	return 0
 }
 
-# нужен root: перезапускаем себя через sudo или doas (в том числе когда скрипт пришёл по конвейеру из curl)
 need_root() {
 	[ "$(id -u)" = 0 ] && return 0
 	for s in sudo doas; do
@@ -108,10 +94,8 @@ need_root() {
 		say "нужен root, перезапускаю через $s" "root is needed, re-running with $s"
 		ENVV="CLOUDPKG_REPO=$REPO CLOUDPKG_BRANCH=$BRANCH CLOUDPKG_BOX=$BOX CLOUDPKG_MODE=$MODE CLOUDPKG_SRC=$SRC CLOUDPKG_STAGE3=${CLOUDPKG_STAGE3:-}"
 		if [ -f "$0" ]; then
-			# shellcheck disable=SC2086
 			exec "$s" env $ENVV sh "$0" "$@"
 		fi
-		# shellcheck disable=SC2086
 		fetch_out "$INSTALL_URL" | "$s" env $ENVV sh -s -- "$@"
 		exit $?
 	done
@@ -126,11 +110,10 @@ fetch_out() {
 	fi
 }
 
-# dl ссылка файл: с докачкой
 dl() {
 	if has curl; then
 		if [ -t 2 ]; then q=; else q=-sS; fi
-		# shellcheck disable=SC2086
+		
 		curl -fL $q --retry 3 --connect-timeout 20 -C - -o "$2" "$1" </dev/null
 	elif has wget; then
 		wget -c -O "$2" "$1" </dev/null
@@ -159,7 +142,6 @@ pm_install() {
 	esac
 }
 
-# ensure команда пакет: ставит пакет через менеджер хоста, если команды нет
 ensure() {
 	has "$1" && return 0
 	[ -n "$PM" ] || die "нет команды $1, поставь пакет $2 и повтори" "command $1 is missing, install package $2 and retry"
@@ -181,7 +163,6 @@ safe_box() {
 	esac
 }
 
-# папка cloudpkg с исходниками: заданная, соседняя со скриптом или свежая с github
 get_src() {
 	if [ -n "$SRC" ]; then
 		[ -f "$SRC/cloudpkg.c" ] || die "нет $SRC/cloudpkg.c" "no $SRC/cloudpkg.c"
@@ -217,7 +198,6 @@ get_stage3() {
 	case $S3 in
 		http://* | https://*)
 			say "загрузка stage 3 cloudos, около 260 МБ" "downloading cloudos stage 3, about 260 MB"
-			# сначала докачка; если не вышло (например, файл на github заменили), качаем заново с нуля
 			dl "$S3" "$DL/stage3.part" || { rm -f "$DL/stage3.part"; dl "$S3" "$DL/stage3.part"; } \
 				|| die "не удалось скачать $S3 (повтори или скачай файл сам и задай CLOUDPKG_STAGE3=/путь/к/файлу)" \
 				"could not download $S3 (retry, or download it yourself and set CLOUDPKG_STAGE3=/path/to/file)"
@@ -305,8 +285,6 @@ install_box() {
 		die "/usr/local/bin/cloudpkg уже есть и это не наш скрипт, убери его и повтори" "/usr/local/bin/cloudpkg exists and is not ours, remove it and retry"
 	fi
 	mkdir -p /usr/local/bin
-	# путь бокса подставляем только в одну строку с точным значением по умолчанию
-	# shellcheck disable=SC2016
 	sed 's|^BOX=${CLOUDPKG_BOX:-/var/lib/cloudpkg/box}$|BOX=${CLOUDPKG_BOX:-'"$BOX"'}|' "$SRC/cloudpkg-box.sh" > /usr/local/bin/cloudpkg.new
 	chmod 755 /usr/local/bin/cloudpkg.new
 	mv /usr/local/bin/cloudpkg.new /usr/local/bin/cloudpkg
@@ -314,7 +292,6 @@ install_box() {
 	say "настройка внутри бокса: portage, cloudpkg, дерево рецептов" "setting up inside the box: portage, cloudpkg, recipe tree"
 	extra=
 	if [ "$UPDATE" = 1 ] && [ -d "$BOX/var/db/repos/gentoo/profiles" ]; then extra=--no-sync; fi
-	# shellcheck disable=SC2086
 	/usr/local/bin/cloudpkg exec bash /var/tmp/cloudpkg-src/cloudpkg-setup.sh $extra </dev/null && rc=0 || rc=$?
 	rm -rf "$BOX/var/tmp/cloudpkg-src"
 	[ "$rc" = 0 ] || [ "$rc" = 3 ] || die "настройка внутри бокса не удалась (код $rc)" "setup inside the box failed (code $rc)"
