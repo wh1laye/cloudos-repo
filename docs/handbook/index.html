@@ -43,7 +43,7 @@
 <div class="tmode" role="group" aria-label="режим загрузки"><span class="tl">режим загрузки</span><div class="seg2"><button type="button" data-m="uefi">uefi</button><button type="button" data-m="bios">bios</button></div></div>
 <button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>поиск</span><kbd>ctrl k</kbd></button>
 <details open><summary>содержание</summary>
-<ol><li class="tg">установка</li><li><a href="#about">1. о cloudos</a><ol><li><a href="#s1-1">1.1 что нужно</a></li><li><a href="#s1-2">1.2 что внутри stage 3</a></li><li><a href="#s1-3">1.3 чего в системе нет</a></li><li><a href="#s1-4">1.4 порядок установки</a></li><li><a href="#s1-5">1.5 как пользоваться справочником</a></li></ol></li><li><a href="#prep">2. подготовка</a><ol><li><a href="#s2-1">2.1 дата и время</a></li><li><a href="#s2-2">2.2 диски</a></li><li><a href="#s2-3">2.3 сеть</a></li><li><a href="#s2-4">2.4 если сайты не открываются</a></li></ol></li><li><a href="#disk">3. диск и файловые системы</a><ol><li><a href="#s3-1">3.1 разметка</a></li><li><a href="#s3-2">3.2 файловые системы</a></li><li><a href="#s3-3">3.3 монтирование</a></li><li><a href="#s3-4">3.4 пример схемы</a></li><li><a href="#s3-5">3.5 проверка</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 проверка(можно пропустить)</a></li><li><a href="#s4-2">4.2 распаковка</a></li><li><a href="#s4-3">4.3 скачивание</a></li><li><a href="#s4-4">4.4 после распаковки</a></li></ol></li><li><a href="#chroot">5. вход в chroot</a><ol><li><a href="#s5-1">5.1 что делают команды</a></li><li><a href="#s5-2">5.2 приглашение</a></li><li><a href="#s5-3">5.3 войти повторно</a></li><li><a href="#s5-4">5.4 выход</a></li></ol></li><li><a href="#conf">6. настройка сборки</a><ol><li><a href="#s6-1">6.1 локали</a></li><li><a href="#s6-2">6.2 флаги сборки</a></li><li><a href="#s6-3">6.3 параллельная сборка</a></li><li><a href="#s6-4">6.4 gcc 15 и ошибки сборки</a></li></ol></li><li><a href="#kernel">7. ядро</a><ol><li><a href="#s7-1">7.1 что включить в menuconfig</a></li><li><a href="#s7-2">7.2 что делают команды сборки</a></li><li><a href="#s7-3">7.3 зеркала ядра</a></li><li><a href="#s7-4">7.4 другая версия ядра</a></li></ol></li><li><a href="#boot">8. загрузчик</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 проверка перед перезагрузкой</a></li><li><a href="#s8-5">8.5 запись в nvram (только uefi, по желанию)</a></li><li><a href="#s8-6">8.6 несколько ядер</a></li><li><a href="#s8-7">8.7 grub вместо limine</a></li></ol></li><li><a href="#final">9. завершение</a><ol><li><a href="#s9-1">9.1 проверка служб</a></li><li><a href="#s9-2">9.2 первая загрузка</a></li></ol></li><li class="tg">после установки</li><li><a href="#first">10. первая загрузка</a><ol><li><a href="#s10-1">10.1 вход</a></li><li><a href="#s10-2">10.2 пользователь и doas</a></li><li><a href="#s10-3">10.3 имя компьютера</a></li><li><a href="#s10-4">10.4 часовой пояс</a></li><li><a href="#s10-5">10.5 сеть</a></li><li><a href="#s10-6">10.6 службы openrc</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. пакеты и cloudpkg</a><ol><li><a href="#s11-1">11.1 команды</a></li><li><a href="#s11-2">11.2 как проходит установка</a></li><li><a href="#s11-3">11.3 примеры</a></li><li><a href="#s11-4">11.4 если пакет не собрался</a></li></ol></li><li><a href="#maint">12. обслуживание</a><ol><li><a href="#s12-1">12.1 обновление пакетов</a></li><li><a href="#s12-2">12.2 обновление ядра</a></li><li><a href="#s12-3">12.3 резервная копия</a></li><li><a href="#s12-4">12.4 очистка места</a></li></ol></li><li><a href="#next">13. что дальше</a><ol><li><a href="#s13-1">13.1 другие локали</a></li><li><a href="#s13-2">13.2 помощь и обратная связь</a></li></ol></li><li class="tg">помощь</li><li><a href="#errors">14. ошибки и решения</a><ol><li><a href="#s14-1">14.1 live iso, сеть и время</a></li><li><a href="#s14-2">14.2 разметка и файловые системы</a></li><li><a href="#s14-3">14.3 скачивание и распаковка</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 сборка пакетов</a></li><li><a href="#s14-6">14.6 ядро</a></li><li><a href="#s14-7">14.7 загрузка</a></li><li><a href="#s14-8">14.8 после загрузки</a></li><li><a href="#s14-9">14.9 аварийный вход в систему</a></li><li><a href="#s14-10">14.10 как сообщить об ошибке</a></li><li><a href="#s14-11">14.11 мастер установки и grub</a></li><li><a href="#s14-12">14.12 cloudpkg и portage</a></li></ol></li><li><a href="#cheat">15. шпаргалка</a><ol><li><a href="#s15-1">15.1 диски</a></li><li><a href="#s15-2">15.2 сеть</a></li><li><a href="#s15-3">15.3 система</a></li><li><a href="#s15-4">15.4 файлы и архивы</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. вопросы и ответы</a></li><li class="tg">приложения</li><li><a href="#appa">приложение а. имена дисков</a></li><li><a href="#appb">приложение б. btrfs с подтомами</a></li><li><a href="#appc">приложение в. словарь</a></li></ol></details>
+<ol><li class="tg">установка</li><li><a href="#about">1. о cloudos</a><ol><li><a href="#s1-1">1.1 что нужно</a></li><li><a href="#s1-2">1.2 что внутри stage 3</a></li><li><a href="#s1-3">1.3 чего в системе нет</a></li><li><a href="#s1-4">1.4 порядок установки</a></li><li><a href="#s1-5">1.5 как пользоваться справочником</a></li></ol></li><li><a href="#prep">2. подготовка</a><ol><li><a href="#s2-1">2.1 дата и время</a></li><li><a href="#s2-2">2.2 диски</a></li><li><a href="#s2-3">2.3 сеть</a></li><li><a href="#s2-4">2.4 если сайты не открываются</a></li></ol></li><li><a href="#disk">3. диск и файловые системы</a><ol><li><a href="#s3-1">3.1 разметка</a></li><li><a href="#s3-2">3.2 файловые системы</a></li><li><a href="#s3-3">3.3 монтирование</a></li><li><a href="#s3-4">3.4 пример схемы</a></li><li><a href="#s3-5">3.5 проверка</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 проверка(можно пропустить)</a></li><li><a href="#s4-2">4.2 распаковка</a></li><li><a href="#s4-3">4.3 скачивание</a></li><li><a href="#s4-4">4.4 после распаковки</a></li></ol></li><li><a href="#chroot">5. вход в chroot</a><ol><li><a href="#s5-1">5.1 что делают команды</a></li><li><a href="#s5-2">5.2 приглашение</a></li><li><a href="#s5-3">5.3 войти повторно</a></li><li><a href="#s5-4">5.4 выход</a></li></ol></li><li><a href="#conf">6. настройка сборки</a><ol><li><a href="#s6-1">6.1 локали</a></li><li><a href="#s6-2">6.2 флаги сборки</a></li><li><a href="#s6-3">6.3 параллельная сборка</a></li><li><a href="#s6-4">6.4 gcc 15 и ошибки сборки</a></li></ol></li><li><a href="#kernel">7. ядро</a><ol><li><a href="#s7-1">7.1 что включить в menuconfig</a></li><li><a href="#s7-2">7.2 что делают команды сборки</a></li><li><a href="#s7-3">7.3 зеркала ядра</a></li><li><a href="#s7-4">7.4 другая версия ядра</a></li></ol></li><li><a href="#boot">8. загрузчик</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 проверка перед перезагрузкой</a></li><li><a href="#s8-5">8.5 запись в nvram (только uefi, по желанию)</a></li><li><a href="#s8-6">8.6 несколько ядер</a></li><li><a href="#s8-7">8.7 grub вместо limine</a></li></ol></li><li><a href="#final">9. завершение</a><ol><li><a href="#s9-1">9.1 проверка служб</a></li><li><a href="#s9-2">9.2 первая загрузка</a></li></ol></li><li class="tg">после установки</li><li><a href="#first">10. первая загрузка</a><ol><li><a href="#s10-1">10.1 вход</a></li><li><a href="#s10-2">10.2 пользователь и doas</a></li><li><a href="#s10-3">10.3 имя компьютера</a></li><li><a href="#s10-4">10.4 часовой пояс</a></li><li><a href="#s10-5">10.5 сеть</a></li><li><a href="#s10-6">10.6 службы openrc</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. пакеты и cloudpkg</a><ol><li><a href="#s11-1">11.1 команды</a></li><li><a href="#s11-2">11.2 как проходит установка</a></li><li><a href="#s11-3">11.3 примеры</a></li><li><a href="#s11-4">11.4 если пакет не собрался</a></li><li><a href="#s11-5">11.5 установка одной командой</a></li></ol></li><li><a href="#maint">12. обслуживание</a><ol><li><a href="#s12-1">12.1 обновление пакетов</a></li><li><a href="#s12-2">12.2 обновление ядра</a></li><li><a href="#s12-3">12.3 резервная копия</a></li><li><a href="#s12-4">12.4 очистка места</a></li></ol></li><li><a href="#next">13. что дальше</a><ol><li><a href="#s13-1">13.1 другие локали</a></li><li><a href="#s13-2">13.2 помощь и обратная связь</a></li></ol></li><li class="tg">помощь</li><li><a href="#errors">14. ошибки и решения</a><ol><li><a href="#s14-1">14.1 live iso, сеть и время</a></li><li><a href="#s14-2">14.2 разметка и файловые системы</a></li><li><a href="#s14-3">14.3 скачивание и распаковка</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 сборка пакетов</a></li><li><a href="#s14-6">14.6 ядро</a></li><li><a href="#s14-7">14.7 загрузка</a></li><li><a href="#s14-8">14.8 после загрузки</a></li><li><a href="#s14-9">14.9 аварийный вход в систему</a></li><li><a href="#s14-10">14.10 как сообщить об ошибке</a></li><li><a href="#s14-11">14.11 мастер установки и grub</a></li><li><a href="#s14-12">14.12 cloudpkg и portage</a></li></ol></li><li><a href="#cheat">15. шпаргалка</a><ol><li><a href="#s15-1">15.1 диски</a></li><li><a href="#s15-2">15.2 сеть</a></li><li><a href="#s15-3">15.3 система</a></li><li><a href="#s15-4">15.4 файлы и архивы</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. вопросы и ответы</a></li><li class="tg">приложения</li><li><a href="#appa">приложение а. имена дисков</a></li><li><a href="#appb">приложение б. btrfs с подтомами</a></li><li><a href="#appc">приложение в. словарь</a></li></ol></details>
 </nav>
 <main id="cloud">
 <h1>cloudos справочник</h1>
@@ -241,7 +241,7 @@ umount -R /mnt/cloudos</code></pre>
 <p>если размонтирование пишет <code>target is busy</code>, закрой все окна терминала, где ты был в chroot, и повтори.</p>
 
 <h2 id="conf">6. настройка сборки</h2>
-<p>флаги сборки задаются в одном файле, <code>/etc/cloudpkg/make.conf</code>:</p>
+<p>флаги сборки задаются в одном файле, <code>/etc/portage/make.conf</code>:</p>
 <pre><code>CC="gcc"
 CFLAGS="-O2 -march=native"
 MAKEOPTS="-j$(nproc)"
@@ -267,7 +267,7 @@ echo "LANG=en_US.UTF-8" &gt; /etc/locale.conf</code></pre>
 <h3 id="s6-4">6.4 gcc 15 и ошибки сборки</h3>
 <p>gcc 15 по умолчанию использует стандарт c23, и некоторые старые пакеты с ним не собираются. типичные признаки: ошибки про <code>bool</code>, <code>true</code>, <code>false</code> или объявления функций без аргументов. в этом случае верни прежний стандарт:</p>
 <pre><code>CC="gcc -std=gnu17"</code></pre>
-<p>меняй значение <code>CC</code> в <code>/etc/cloudpkg/make.conf</code> и повтори установку пакета.</p>
+<p>меняй значение <code>CC</code> в <code>/etc/portage/make.conf</code> и повтори установку пакета.</p>
 
 <h2 id="kernel">7. ядро</h2>
 <p>ядро берётся с kernel.org и настраивается вручную </p>
@@ -481,19 +481,25 @@ swapon /swapfile</code></pre>
 <h2 id="cpkg">11. пакеты и cloudpkg</h2>
 <p>все пакеты в cloudos собираются из исходников. этим занимается менеджер <code>cloudpkg</code>. рецепты для него берутся из gentoo.</p>
 <div class="warn"><b>ВАЖНО</b>cloudpkg в разработке. подписей пакетов пока нет, целостность исходников проверяется только по sha256 из рецепта. часть рецептов может потребовать правок.</div>
+<p>cloudpkg пока не входит в stage 3. он ставится одной командой, смотри <a href="#s11-5">11.5</a>.</p>
 <h3 id="s11-1">11.1 команды</h3>
 <div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
 <tr><td><code>cloudpkg sync</code></td><td>обновляет список рецептов</td></tr>
 <tr><td><code>cloudpkg install имя</code></td><td>собирает и ставит пакет вместе с зависимостями</td></tr>
 <tr><td><code>cloudpkg remove имя</code></td><td>удаляет пакет</td></tr>
 <tr><td><code>cloudpkg upgrade</code></td><td>обновляет установленные пакеты до новых версий</td></tr>
-<tr><td><code>cloudpkg clean</code></td><td>чистит скачанные исходники и временные файлы сборки</td></tr></table></div>
+<tr><td><code>cloudpkg clean</code></td><td>чистит скачанные исходники и временные файлы сборки</td></tr>
+<tr><td><code>cloudpkg search строка</code></td><td>ищет пакет</td></tr>
+<tr><td><code>cloudpkg info имя</code></td><td>показывает, что будет установлено</td></tr>
+<tr><td><code>cloudpkg list</code></td><td>список установленных пакетов</td></tr>
+<tr><td><code>cloudpkg doctor</code></td><td>проверяет настройку</td></tr>
+<tr><td><code>-p</code>, <code>-a</code></td><td>пробный запуск и запрос подтверждения (для install, remove, upgrade)</td></tr></table></div>
 <h3 id="s11-2">11.2 как проходит установка</h3>
 <ol class="steps">
 <li>читается рецепт пакета и список его зависимостей</li>
 <li>исходники скачиваются через curl</li>
 <li>проверяется sha256</li>
-<li>пакет собирается с твоими флагами из <code>/etc/cloudpkg/make.conf</code></li>
+<li>пакет собирается с твоими флагами из <code>/etc/portage/make.conf</code></li>
 <li>результат ставится в систему</li>
 </ol>
 <p>сборка занимает время и место на диске. большие пакеты вроде компиляторов собираются долго, это нормально.</p>
@@ -510,6 +516,16 @@ cloudpkg install nano</code></pre>
 <li>попробуй <code>cloudpkg sync</code> и повтори, возможно рецепт уже исправлен</li>
 <li>напиши на <a href="../forum/">форум</a> в раздел с вопросами, приложив последние 10-15 строк вывода</li>
 </ol>
+<h3 id="s11-5">11.5 установка одной командой</h3>
+<p>от root (или через doas) выполни:</p>
+<pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre>
+<p>скрипт сам поймёт, где он запущен. в cloudos он соберёт cloudpkg, поставит portage и загрузит дерево рецептов. на другом дистрибутиве (arch, debian, ubuntu, fedora и других, только x86_64) твоя система не затрагивается: скрипт скачает stage 3 cloudos, проверит sha256, распакует в <code>/var/lib/cloudpkg/box</code> и поставит cloudpkg туда. нужно 4 гб свободного места, недостающие утилиты хоста (curl, tar, xz) скрипт доставит сам.</p>
+<p>на чужом дистрибутиве команды те же, а поставленное живёт в боксе:</p>
+<pre><code>cloudpkg install nano
+cloudpkg run nano файл
+cloudpkg export nano</code></pre>
+<p><code>run</code> запускает программу из бокса, <code>export</code> делает её обычной командой на хосте, <code>shell</code> открывает оболочку внутри бокса. удалить всё: <code>rm -rf /var/lib/cloudpkg /usr/local/bin/cloudpkg</code>.</p>
+<div class="note"><b>заметка</b>бокс разделяет файлы, а не безопасность. сборки идут от root внутри chroot, это не песочница.</div>
 
 <h2 id="maint">12. обслуживание</h2>
 <h3 id="s12-1">12.1 обновление пакетов</h3>
@@ -704,7 +720,9 @@ nano /boot/grub/grub.cfg</code></pre></div></details>
 <details class="err"><summary>!!! Invalid Repository Location (not a dir): '/var/db/repos/gentoo'</summary><div><p>дерево рецептов ещё не загружено. выполни:</p><pre><code>cloudpkg sync
 cloudpkg doctor</code></pre></div></details>
 <details class="err"><summary>cloudpkg doctor пишет НЕТ у профиля (make.profile)</summary><div><p>ссылка на профиль создаётся после первой синхронизации. создай её вручную:</p><pre><code>ln -sfn /var/db/repos/gentoo/profiles/default/linux/amd64/23.0 /etc/portage/make.profile</code></pre></div></details>
-<details class="err"><summary>emerge: command not found или ModuleNotFoundError: No module named 'portage'</summary><div><p>portage не установлен или сломан. запусти автоустановку из репозитория или поставь заново:</p><pre><code>python3 -m pip install --force-reinstall --index-url https://mirrors.aliyun.com/pypi/simple/ portage</code></pre></div></details>
+<details class="err"><summary>emerge: command not found или ModuleNotFoundError: No module named 'portage'</summary><div><p>portage не установлен или сломан. запусти установщик ещё раз, он починит и portage, и cloudpkg:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
+<details class="err"><summary>!!! /usr/etc/portage/make.profile is not a symlink</summary><div><p>portage поставлен из pip как модуль. он ищет настройки в <code>/usr/etc</code> и не видит <code>/etc/portage</code>. запусти установщик ещё раз, он заменит его системной сборкой:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
+<details class="err"><summary>cloudpkg: эта система не cloudos</summary><div><p>cloudpkg не ставит пакеты прямо в чужую систему: это сломало бы её менеджер пакетов (pacman, apt, dnf). поставь изолированный режим, он ничего не меняет на хосте, смотри <a href="#s11-5">11.5</a>:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
 <details class="err"><summary>cloudpkg: нужны права root</summary><div><p>установка, удаление, обновление и очистка работают только от root. зайди под root или выполни через doas:</p><pre><code>doas cloudpkg install имя</code></pre></div></details>
 <details class="err"><summary>emerge: there are no ebuilds to satisfy ...</summary><div><p>такого пакета нет или имя неполное. найди точное имя вместе с категорией:</p><pre><code>cloudpkg search имя
 cloudpkg install категория/имя</code></pre><p>если дерево старое, сначала <code>cloudpkg sync</code>.</p></div></details>
@@ -763,7 +781,11 @@ cloudpkg install имя</code></pre></div></details>
 <tr><td><code>cloudpkg install имя</code></td><td>поставить пакет</td></tr>
 <tr><td><code>cloudpkg remove имя</code></td><td>удалить пакет</td></tr>
 <tr><td><code>cloudpkg upgrade</code></td><td>обновить пакеты</td></tr>
-<tr><td><code>cloudpkg clean</code></td><td>очистить кеш сборки</td></tr></table></div>
+<tr><td><code>cloudpkg clean</code></td><td>очистить кеш сборки</td></tr>
+<tr><td><code>cloudpkg search строка</code></td><td>найти пакет</td></tr>
+<tr><td><code>cloudpkg info имя</code></td><td>что будет установлено</td></tr>
+<tr><td><code>cloudpkg list</code></td><td>установленные пакеты</td></tr>
+<tr><td><code>cloudpkg doctor</code></td><td>проверить настройку</td></tr></table></div>
 <p>службы openrc собраны в таблице <a href="#s10-6">10.6</a>.</p>
 
 <h2 id="faq">16. вопросы и ответы</h2>
