@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>нет сети — cloudos</title>
+<style>
+:root{color-scheme:dark light}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#1a1c20;color:#e7edf7;font:16px/1.6 system-ui,sans-serif;text-align:center;padding:24px}
+@media(prefers-color-scheme:light){body{background:#f4f8fd;color:#1c2b44}}
+main{max-width:420px}
+h1{font-size:26px;margin:0 0 10px}
+p{margin:0 0 22px;opacity:.8}
+.b{display:inline-block;margin:4px;padding:10px 20px;border:0;border-radius:12px;background:#8fb4f0;color:#10203a;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1 id="t">нет сети</h1>
+<p id="p">форум работает только при подключении к интернету. справочник и уже открытые страницы доступны без сети.</p>
+<button class="b" id="r" type="button">повторить</button>
+<a class="b" id="h" href="handbook/">открыть справочник</a>
+</main>
+<script>
+var en=false;
+try{en=localStorage.getItem('lang')==='en'}catch(e){}
+if(en){
+document.documentElement.lang='en';
+document.title='offline — cloudos';
+document.getElementById('t').textContent='no connection';
+document.getElementById('p').textContent='the forum works only online. the handbook and pages you already opened are available offline.';
+document.getElementById('r').textContent='try again';
+document.getElementById('h').textContent='open the handbook';
+}
+document.getElementById('r').onclick=function(){location.reload()};
+</script>
+</body>
+</html>
