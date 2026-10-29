@@ -1,20 +1,20 @@
 (function(){
-var d=document,M={m:'uefi',b:'limine'},cur=0;
+var d=document,M={m:'uefi'},cur=0;
 function lang(){return window.CloudTheme&&window.CloudTheme.getLang?window.CloudTheme.getLang():'ru'}
 function T(p){return lang()==='en'?p[1]:p[0]}
 function S(){
-var u=M.m==='uefi',l=M.b==='limine';
+var u=M.m==='uefi';
 return [
 {n:['прошивка','firmware'],
  w:u?['uefi читает таблицу разделов, находит раздел efi (твой /boot) и запускает с него загрузчик: сначала запись из nvram, иначе путь по умолчанию EFI/BOOT/BOOTX64.EFI.','uefi reads the partition table, finds the efi partition (your /boot) and starts the bootloader from it: first the nvram entry, otherwise the default path EFI/BOOT/BOOTX64.EFI.']:['bios читает первый сектор диска (mbr) и передаёт управление коду загрузчика, записанному туда установкой.','bios reads the first sector of the disk (mbr) and hands control to the bootloader code written there during installation.'],
- f:u?['/boot/EFI/BOOT/BOOTX64.EFI']:(l?['mbr диска','/boot/limine-bios.sys']:['mbr диска','/boot/grub/i386-pc/']),
+ f:u?['/boot/EFI/BOOT/BOOTX64.EFI']:['mbr диска','/boot/limine-bios.sys'],
  c:u?['ls /sys/firmware/efi','efibootmgr']:['lsblk -f','fdisk -l'],
  e:[['нет загрузочного устройства: проверь режим прошивки и что раздел /boot смонтирован при установке загрузчика','boot device not found: check the firmware mode and that /boot was mounted when the bootloader was installed','s14-7']]},
 {n:['загрузчик','bootloader'],
- w:l?['limine читает свой конфиг, показывает меню и загружает в память ядро и initramfs, передавая ядру строку параметров (cmdline) с корневым разделом.','limine reads its config, shows the menu and loads the kernel and initramfs into memory, passing the kernel a parameter line (cmdline) with the root partition.']:['grub читает grub.cfg, показывает меню и загружает в память ядро и initramfs, передавая ядру строку параметров с корневым разделом.','grub reads grub.cfg, shows the menu and loads the kernel and initramfs into memory, passing the kernel a parameter line with the root partition.'],
- f:l?['/boot/limine.conf']:['/boot/grub/grub.cfg'],
- c:l?['cat /boot/limine.conf']:['cat /boot/grub/grub.cfg','ls /boot/grub'],
- e:l?[['Config file not found: limine.conf лежит не там или не на /boot','Config file not found: limine.conf is in the wrong place or not on /boot','s14-7']]:[['grub rescue или приглашение grub>: нет grub.cfg или неверный раздел','grub rescue or a grub> prompt: no grub.cfg or a wrong partition','s14-11']]},
+ w:['limine читает свой конфиг, показывает меню и загружает в память ядро и initramfs, передавая ядру строку параметров (cmdline) с корневым разделом.','limine reads its config, shows the menu and loads the kernel and initramfs into memory, passing the kernel a parameter line (cmdline) with the root partition.'],
+ f:['/boot/limine.conf'],
+ c:['cat /boot/limine.conf'],
+ e:[['Config file not found: limine.conf лежит не там или не на /boot','Config file not found: limine.conf is in the wrong place or not on /boot','s14-7']]},
 {n:['ядро','kernel'],
  w:['ядро распаковывается, определяет оборудование и подключает initramfs как временный корень. если в ядре нет драйвера диска или файловой системы, дальше система не загрузится.','the kernel unpacks, detects the hardware and attaches the initramfs as a temporary root. if the kernel lacks the disk or filesystem driver, the system cannot go further.'],
  f:['/boot/vmlinuz-6.18.10','/boot/config-6.18.10'],c:['uname -r','dmesg | head -30'],
@@ -57,10 +57,10 @@ function render(){
   pv.onclick=function(){if(cur>0){cur--;render()}};
   nx.onclick=function(){if(cur<st.length-1){cur++;render()}};
   [].forEach.call(d.querySelectorAll('.bm [data-k]'),function(b){b.classList.toggle('on',M[b.getAttribute('data-k')]===b.getAttribute('data-v'))});
-  try{history.replaceState(null,'',location.pathname+location.search+'#'+(cur+1)+'&m='+M.m+'&b='+M.b)}catch(e){}
+  try{history.replaceState(null,'',location.pathname+location.search+'#'+(cur+1)+'&m='+M.m)}catch(e){}
 }
 var q;try{q=new URLSearchParams(location.hash.replace(/^#/,'').replace(/^([0-9]+)/,'s=$1'))}catch(e){q=null}
-if(q){var s=parseInt(q.get('s'),10);if(s>=1&&s<=7)cur=s-1;if(q.get('m')==='bios')M.m='bios';if(q.get('b')==='grub')M.b='grub'}
+if(q){var s=parseInt(q.get('s'),10);if(s>=1&&s<=7)cur=s-1;if(q.get('m')==='bios')M.m='bios'}
 d.addEventListener('click',function(e){
   var b=e.target.closest?e.target.closest('.bm [data-k]'):null;
   if(b){M[b.getAttribute('data-k')]=b.getAttribute('data-v');render()}
