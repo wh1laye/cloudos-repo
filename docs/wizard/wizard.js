@@ -1,7 +1,7 @@
 (function(){
 var d=document;
-var DEF={d:'/dev/sda',m:'uefi',b:'limine',f:'ext4',p:'auto',s:'4',k:'6.18.10',z:'Europe/Moscow',h:'cloudos',u:''};
-var S={},KEYS=['d','m','b','f','p','s','k','z','h','u'];
+var DEF={d:'/dev/sda',m:'uefi',f:'ext4',p:'auto',s:'4',k:'6.18.10',z:'Europe/Moscow',h:'cloudos',u:''};
+var S={},KEYS=['d','m','f','p','s','k','z','h','u'];
 var ID={d:'dk',s:'sw',k:'kv',z:'tz',h:'hn',u:'us'};
 var RX={
 d:/^\/dev\/(sd[a-z]+|vd[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)$/,
@@ -24,7 +24,6 @@ function load(){
   for(i=0;i<KEYS.length;i++){k=KEYS[i];S[k]=o[k]!==undefined?o[k]:DEF[k]}
   if(S.m!=='bios')S.m='uefi';
   if(S.f!=='btrfs')S.f='ext4';
-  if(S.b!=='grub')S.b='limine';
   if(S.p!=='cfdisk')S.p='auto';
 }
 function save(){
@@ -77,7 +76,7 @@ function copy(text,btn){
   }
 }
 function header(){
-  return 'DISK='+S.d+'\nMODE='+S.m+'\nBOOT='+S.b+'\nFS='+S.f+'\nPART='+S.p+'\nSWAP='+S.s+'\nKVER='+S.k+'\nTZ='+S.z+'\nHOST='+S.h+'\nUSR='+S.u+'\n';
+  return 'DISK='+S.d+'\nMODE='+S.m+'\nFS='+S.f+'\nPART='+S.p+'\nSWAP='+S.s+'\nKVER='+S.k+'\nTZ='+S.z+'\nHOST='+S.h+'\nUSR='+S.u+'\n';
 }
 function script1(){
   var t2=d.getElementById('t2').textContent.replace(/^\n/,'').replace(/\n$/,'');
@@ -151,11 +150,11 @@ function renderR(){
   var n=d.getElementById('tr'),pp=parts(),bt=S.f==='btrfs';
   n.textContent='';
   var enter=(bt?'mount -o subvol=@ '+pp[1]+' /mnt/cloudos\nmount -o subvol=@home '+pp[1]+' /mnt/cloudos/home':'mount '+pp[1]+' /mnt/cloudos')+'\nmount '+pp[0]+' /mnt/cloudos/boot\nmount --types proc /proc /mnt/cloudos/proc\nmount --rbind /sys /mnt/cloudos/sys\nmount --make-rslave /mnt/cloudos/sys\nmount --rbind /dev /mnt/cloudos/dev\nmount --make-rslave /mnt/cloudos/dev\ncp --dereference /etc/resolv.conf /mnt/cloudos/etc/\nchroot /mnt/cloudos /bin/bash\nsource /etc/profile';
-  var lim=S.b==='grub'?(S.m==='uefi'?'grub-install --target=x86_64-efi --efi-directory=/mnt/cloudos/boot --boot-directory=/mnt/cloudos/boot --removable':'grub-install --target=i386-pc --boot-directory=/mnt/cloudos/boot '+S.d):S.m==='uefi'?'mkdir -p /mnt/cloudos/boot/EFI/BOOT\ncp /usr/share/limine/BOOTX64.EFI /mnt/cloudos/boot/EFI/BOOT/BOOTX64.EFI':'cp /usr/share/limine/limine-bios.sys /mnt/cloudos/boot/\nlimine bios-install '+S.d;
+  var lim=S.m==='uefi'?'mkdir -p /mnt/cloudos/boot/EFI/BOOT\ncp /usr/share/limine/BOOTX64.EFI /mnt/cloudos/boot/EFI/BOOT/BOOTX64.EFI':'cp /usr/share/limine/limine-bios.sys /mnt/cloudos/boot/\nlimine bios-install '+S.d;
   n.appendChild(blk('войти в систему из живого iso',enter,'выполняй в живой системе. выход: exit, потом umount -R /mnt/cloudos.'));
   n.appendChild(blk('переустановить загрузчик',lim,'выполняй в живой системе, раздел boot уже смонтирован.'));
   n.appendChild(blk('пересобрать initramfs','dracut --force --kver '+S.k+' /boot/initramfs-'+S.k+'.img','выполняй внутри chroot.'));
-  n.appendChild(blk('проверить fstab и uuid','blkid\ncat /etc/fstab\ncat '+(S.b==='grub'?'/boot/grub/grub.cfg':'/boot/limine.conf'),'uuid в fstab и в конфиге загрузчика должны совпадать с blkid.'));
+  n.appendChild(blk('проверить fstab и uuid','blkid\ncat /etc/fstab\ncat /boot/limine.conf','uuid в fstab и в конфиге загрузчика должны совпадать с blkid.'));
   n.appendChild(blk('пересобрать ядро','cd /usr/src/linux-'+S.k+'\nmake menuconfig\nmake -j$(nproc)\nmake modules_install\ncp arch/x86/boot/bzImage /boot/vmlinuz-'+S.k+'\ncp .config /boot/config-'+S.k+'\ndracut --force --kver '+S.k+' /boot/initramfs-'+S.k+'.img','выполняй внутри chroot.'));
 }
 function render(){

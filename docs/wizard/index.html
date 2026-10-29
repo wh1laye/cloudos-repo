@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="../settings.css?v=3">
 <script src="../theme.js?v=11"></script>
 <script>window.I18N_EXTRA={
-'мастер установки':'install wizard','установка':'install','загрузчик':'bootloader','переустановить загрузчик':'reinstall the bootloader','grub не найден в живой системе':'grub not found in the live system','после установки':'after install','восстановление':'recovery',
+'мастер установки':'install wizard','установка':'install','загрузчик':'bootloader','переустановить загрузчик':'reinstall the bootloader','после установки':'after install','восстановление':'recovery',
 'введи диск и режим, получи готовый скрипт установки. всё считается в браузере, ничего не отправляется.':'enter your disk and mode, get a ready install script. everything runs in your browser, nothing is sent.',
 'диск':'disk','режим загрузки':'boot mode','файловая система':'file system','разметка':'partitioning','автоматически':'automatic','вручную (cfdisk)':'manual (cfdisk)',
 'swap, гб (0 без swap)':'swap, gb (0 for none)','версия ядра':'kernel version','часовой пояс':'time zone','имя компьютера':'hostname','пользователь (пусто пропустить)':'user (empty to skip)',
@@ -61,7 +61,6 @@
 <datalist id="dkl"><option value="/dev/sda"><option value="/dev/sdb"><option value="/dev/nvme0n1"><option value="/dev/vda"></datalist>
 <div class="wzl">режим загрузки<div class="wzs" data-k="m"><button type="button" data-v="uefi">uefi</button><button type="button" data-v="bios">bios</button></div></div>
 <div class="wzl">файловая система<div class="wzs" data-k="f"><button type="button" data-v="ext4">ext4</button><button type="button" data-v="btrfs">btrfs</button></div></div>
-<div class="wzl">загрузчик<div class="wzs" data-k="b"><button type="button" data-v="limine">limine</button><button type="button" data-v="grub">grub</button></div></div>
 <div class="wzl">разметка<div class="wzs" data-k="p"><button type="button" data-v="auto">автоматически</button><button type="button" data-v="cfdisk">вручную (cfdisk)</button></div></div>
 <label class="wzl">swap, гб (0 без swap)<input id="sw" type="text" inputmode="numeric" autocomplete="off"><span class="er" id="e-sw"></span></label>
 <label class="wzl">версия ядра<input id="kv" type="text" autocomplete="off" spellcheck="false"><span class="er" id="e-kv"></span></label>
@@ -86,14 +85,11 @@ M=/mnt/cloudos
 case "$DISK" in *nvme*|*mmcblk*) PS=p;; *) PS="";; esac
 P1="$DISK${PS}1"
 P2="$DISK${PS}2"
-STAGE=cloudos-stage3-1.0-x86_64.tar.xz
-URL=https://github.com/wh1laye/cloudos-repo/releases/download/cloudos
+STAGE=cloudos-stage3-amd64-1.1.tar.xz
+URL=https://github.com/wh1laye/cloudos-repo/releases/download/1.1
 [ "$(id -u)" = 0 ] || { echo "нужен root"; exit 1; }
 [ -b "$DISK" ] || { echo "нет диска $DISK"; exit 1; }
-if [ "$BOOT" = grub ]; then
-  GI=$(command -v grub-install || command -v grub2-install || true)
-  [ -n "$GI" ] || { echo "grub не найден в живой системе"; exit 1; }
-elif [ "$MODE" = uefi ]; then
+if [ "$MODE" = uefi ]; then
   [ -f /usr/share/limine/BOOTX64.EFI ] || { echo "limine не найден в живой системе"; exit 1; }
 else
   [ -f /usr/share/limine/limine-bios.sys ] || { echo "limine не найден в живой системе"; exit 1; }
@@ -144,13 +140,7 @@ if [ ! -f $M/etc/os-release ]; then
   rm -f $M/$STAGE $M/$STAGE.sha256
   cd /
 fi
-if [ "$BOOT" = grub ]; then
-  if [ "$MODE" = uefi ]; then
-    "$GI" --target=x86_64-efi --efi-directory=$M/boot --boot-directory=$M/boot --removable
-  else
-    "$GI" --target=i386-pc --boot-directory=$M/boot "$DISK"
-  fi
-elif [ "$MODE" = uefi ]; then
+if [ "$MODE" = uefi ]; then
   mkdir -p $M/boot/EFI/BOOT
   cp /usr/share/limine/BOOTX64.EFI $M/boot/EFI/BOOT/BOOTX64.EFI
 else
@@ -162,7 +152,7 @@ mountpoint -q $M/sys || { mount --rbind /sys $M/sys; mount --make-rslave $M/sys;
 mountpoint -q $M/dev || { mount --rbind /dev $M/dev; mount --make-rslave $M/dev; }
 cp --dereference /etc/resolv.conf $M/etc/
 {
-printf 'DISK=%s\nP1=%s\nP2=%s\nMODE=%s\nBOOT=%s\nFS=%s\nSWAP=%s\nKVER=%s\nTZ=%s\nHOST=%s\nUSR=%s\n' "$DISK" "$P1" "$P2" "$MODE" "$BOOT" "$FS" "$SWAP" "$KVER" "$TZ" "$HOST" "$USR"
+printf 'DISK=%s\nP1=%s\nP2=%s\nMODE=%s\nFS=%s\nSWAP=%s\nKVER=%s\nTZ=%s\nHOST=%s\nUSR=%s\n' "$DISK" "$P1" "$P2" "$MODE" "$FS" "$SWAP" "$KVER" "$TZ" "$HOST" "$USR"
 cat <<'INNER'
 @S2@
 INNER
@@ -204,25 +194,14 @@ if [ ! -f /boot/vmlinuz-$KVER ]; then
   cp System.map /boot/System.map-$KVER
 fi
 [ -f /boot/initramfs-$KVER.img ] || dracut --kver $KVER /boot/initramfs-$KVER.img
-if [ "$BOOT" = grub ]; then
-  mkdir -p /boot/grub
-  cat > /boot/grub/grub.cfg <<EOF
-set timeout=5
-menuentry "CloudOS" {
-    search --no-floppy --fs-uuid --set=root $BOOT_UUID
-    linux /vmlinuz-$KVER root=UUID=$ROOT_UUID$RF rw
-    initrd /initramfs-$KVER.img
-}
-EOF
-else
-  cat > /boot/limine.conf <<EOF
+cat > /boot/limine.conf <<EOF
 timeout: 5
 
 /CloudOS
-    protocol: linux
-    path: boot():/vmlinuz-$KVER
-    cmdline: root=UUID=$ROOT_UUID$RF rw
-    module_path: boot():/initramfs-$KVER.img
+  protocol: linux
+  path: boot():/vmlinuz-$KVER
+  cmdline: root=UUID=$ROOT_UUID$RF rw
+  module_path: boot():/initramfs-$KVER.img
 EOF
 fi
 if [ "$SWAP" -gt 0 ] && [ ! -f /swapfile ]; then
