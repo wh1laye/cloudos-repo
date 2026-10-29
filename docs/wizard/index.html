@@ -86,7 +86,7 @@ M=/mnt/cloudos
 case "$DISK" in *nvme*|*mmcblk*) PS=p;; *) PS="";; esac
 P1="$DISK${PS}1"
 P2="$DISK${PS}2"
-STAGE=cloudos-stage3-1.1-x86_64.tar.xz
+STAGE=cloudos-stage3-1.0-x86_64.tar.xz
 URL=https://github.com/wh1laye/cloudos-repo/releases/download/cloudos
 [ "$(id -u)" = 0 ] || { echo "нужен root"; exit 1; }
 [ -b "$DISK" ] || { echo "нет диска $DISK"; exit 1; }
@@ -235,7 +235,7 @@ if [ "$SWAP" -gt 0 ] && [ ! -f /swapfile ]; then
   fi
   echo "/swapfile  none  swap  defaults  0 0" >> /etc/fstab
 fi
-for S in dhcpcd sysklogd; do
+for S in dhcpcd syslog-ng sysklogd; do
   [ -e /etc/init.d/$S ] && rc-update add $S default || true
 done
 if [ -n "$USR" ]; then
