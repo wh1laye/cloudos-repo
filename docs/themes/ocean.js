@@ -15,15 +15,15 @@
       var sea=k.el('','<div class="zs-wv">'+WAVE+'</div>','left:0;bottom:0;width:100%;height:'+gh+'px;opacity:.96');
       k.el('zs-wv b2','<div class="zs-wv">'+WAVE+'</div>','left:0;bottom:0;width:100%;height:'+Math.round(gh*.62)+'px;opacity:.7');
       k.el('','<div class="zs-fog2"></div>','left:0;right:0;bottom:0;height:'+(m?90:120)+'px',true);
-      k.hbWatch(function(hb){document.querySelectorAll('.zs-fog2').forEach(function(e){e.style.top=(hb-8)+'px'})});
+      k.hbWatch(function(hb){[].forEach.call(document.querySelectorAll('.zs-fog2'),function(e){e.style.top=(hb-8)+'px'})});
       k.el('',k.svg('0 0 1000 '+gh,k.hill(1000,gh*1.8,18,6,11)+k.hill(1000,gh*2.4,26,8,21)),'left:0;right:0;bottom:0;height:'+gh+'px;fill:#0b1d26;stroke:#163a4c;stroke-width:2;opacity:.95');
       k.logo(function(cd){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" style="display:block;overflow:visible"><path d="'+cd+'" fill="#00bfa5" stroke="#00838f" stroke-width="1.2"/><circle cx="14" cy="12" r="2" fill="#b2ebf2"/><circle cx="20" cy="14" r="1.5" fill="#b2ebf2"/></svg>'},0,0,0,{fit:true});
       var lh=k.el('zs-bob',k.svg('0 0 100 110',LIGHT),'right:3%;bottom:'+Math.round(gh*.35)+'px;width:'+(m?44:70)+'px;animation-delay:'+(-k.rnd(0,3)).toFixed(2)+'s');
       k.hbWatch(function(hb){lh.style.top=(hb+(m?2:6))+'px'});
-      var wh=k.el('zs-fly',k.svg('0 0 220 110',WHALE),'left:-12%;bottom:'+Math.round(gh*.45)+'px;width:'+(m?140:220)+'px;animation-duration:'+(m?130:170)+'s;animation-delay:-35s');
+      var wh=k.el('zs-fly zs-whale',k.svg('0 0 220 110',WHALE),'left:-12%;bottom:'+Math.round(gh*.45)+'px;width:'+(m?140:220)+'px;animation-duration:'+(m?130:170)+'s;animation-delay:-35s');
       wh.innerHTML='<div>'+wh.innerHTML+'</div>';
       k.hbWatch(function(hb){wh.style.top=(hb+(m?4:8))+'px'});
-      var dl=k.el('zs-fly r',k.svg('0 0 160 90',DOLPHIN),'right:-14%;bottom:'+Math.round(gh*.38)+'px;width:'+(m?110:160)+'px;animation-duration:'+(m?100:130)+'s;animation-delay:-50s');
+      var dl=k.el('zs-fly r zs-dolphin',k.svg('0 0 160 90',DOLPHIN),'right:-14%;bottom:'+Math.round(gh*.38)+'px;width:'+(m?110:160)+'px;animation-duration:'+(m?100:130)+'s;animation-delay:-50s');
       dl.innerHTML='<div>'+dl.innerHTML+'</div>';
       k.hbWatch(function(hb){dl.style.top=(hb+(m?2:6))+'px'});
       if(k.pc()){

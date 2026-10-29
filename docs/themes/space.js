@@ -19,7 +19,7 @@
       k.el('zs-moon','<div style="width:64px;height:64px;border-radius:50%;box-shadow:0 0 30px 10px rgba(236,239,241,.5)"></div>','left:6%;top:'+Math.round(gh*.2)+'px;width:'+(m?42:64)+'px;height:'+(m?42:64)+'px');
       k.el('',k.svg('0 0 64 64',MOON2),'left:6.5%;top:'+Math.round(gh*.22)+'px;width:'+(m?38:58)+'px;animation:zswob 8s ease-in-out infinite');
       k.el('',k.svg('0 0 90 100',PLANET),'right:8%;bottom:'+Math.round(gh*.5)+'px;width:'+(m?70:110)+'px;animation:zswob 9s ease-in-out infinite;animation-delay:-2s');
-      k.el('',k.svg('0 0 90 100',RING),'right:8%;bottom:'+Math.round(gh*.5)+'px;width:'+(m?70:110)+'px;animation:zspin 20s linear infinite');
+      k.el('',k.svg('0 0 90 100',RING),'right:8%;bottom:'+Math.round(gh*.5)+'px;width:'+(m?70:110)+'px;animation:zsspin 20s linear infinite');
       for(i=0;i<(m?2:4);i++)k.el('zs-cloud',k.svg('0 0 130 80',NEB),'left:'+k.rnd(-25,35).toFixed(1)+'%;top:'+Math.round(k.rnd(gh*.3,gh*.8))+'px;width:'+(m?160:240)+'px;animation-duration:'+(m?140:180)+'s;animation-delay:'+(-i*30).toFixed(1)+'s;opacity:.9');
       k.logo(function(cd){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" style="display:block;overflow:visible"><path d="'+cd+'" fill="#bb86fc" stroke="#9370db" stroke-width="1.2"/><circle cx="12" cy="9" r="2" fill="#fff" opacity=".8"/><circle cx="18" cy="11" r="1.5" fill="#fff" opacity=".7"/></svg>'},0,0,0,{fit:true});
       var sat=k.el('zs-fly',k.svg('0 0 60 40',SATELLITE),'right:6%;top:'+Math.round(gh*.3)+'px;width:'+(m?40:60)+'px;animation-duration:'+(m?100:130)+'s;animation-delay:-60s');
