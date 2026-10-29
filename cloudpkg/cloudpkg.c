@@ -9,9 +9,10 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#define VERSION "0.3"
+#define VERSION "0.4"
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
 #define INSTALL_URL "https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh"
+#define OVERLAY "/var/db/repos/cloudos"
 #define MAXM 16
 #define BUF 600
 
@@ -54,6 +55,7 @@ static char *trim(char *s)
 	return s;
 }
 
+/* каталоги, которые мы чистим или заменяем, не должны быть системными */
 static int safe_dir(const char *p)
 {
 	static const char *bad[] = {
@@ -145,6 +147,7 @@ static void osid(char *out, size_t n)
 	fclose(f);
 }
 
+/* ставить пакеты прямо в / можно только в cloudos (или в боксе, там тоже cloudos) */
 static int host_allowed(char *id, size_t n)
 {
 	const char *f = getenv("CLOUDPKG_FORCE");
@@ -216,6 +219,113 @@ static void mkparent(const char *path)
 	run(a);
 }
 
+/* дерева рецептов нет: от root скачиваем само, чтобы не было ошибки про repos.conf */
+static int cmd_sync(void);
+static int ensure_tree(void)
+{
+	char p[BUF];
+
+	snprintf(p, sizeof p, "%s/profiles", repo);
+	if (exists(p))
+		return 1;
+	if (geteuid() != 0) {
+		fprintf(stderr, "cloudpkg: дерево рецептов не загружено, выполни от root: cloudpkg sync\n");
+		return 0;
+	}
+	printf("cloudpkg: дерева рецептов ещё нет, загружаю\n");
+	return cmd_sync() == 0;
+}
+
+static int is_dir(const char *p)
+{
+	struct stat st;
+
+	return stat(p, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+/* короткое имя (jq, git) может быть в нескольких категориях: берём лучшую и говорим об этом */
+static char *resolve(char *name)
+{
+	static const char *prefer[] = {
+		"app-misc", "sys-apps", "app-admin", "app-editors", "app-text", "net-misc",
+		"sys-process", "sys-fs", "sys-boot", "dev-vcs", "dev-util", "net-analyzer",
+		"app-shells", "app-arch", "sys-libs", "dev-libs", "dev-lang", NULL
+	};
+	const char *roots[2] = { OVERLAY, repo };
+	char found[24][320], p[BUF], *res;
+	int nf = 0, r, i, j, best = -1, bi = 1000;
+	DIR *d;
+	struct dirent *e;
+
+	if (strchr(name, '/') || strchr("@=<>~!", name[0]) || name[0] == '-')
+		return name;
+	for (r = 0; r < 2; r++) {
+		d = opendir(roots[r]);
+		if (!d)
+			continue;
+		while ((e = readdir(d)) && nf < 24) {
+			if (e->d_name[0] == '.' || !strcmp(e->d_name, "profiles") || !strcmp(e->d_name, "metadata") ||
+			    !strcmp(e->d_name, "eclass") || !strcmp(e->d_name, "licenses") || !strcmp(e->d_name, "scripts") ||
+			    !strncmp(e->d_name, "acct-", 5) || !strcmp(e->d_name, "virtual"))
+				continue;
+			snprintf(p, sizeof p, "%s/%s/%s", roots[r], e->d_name, name);
+			if (!is_dir(p))
+				continue;
+			snprintf(found[nf], sizeof found[nf], "%s/%s", e->d_name, name);
+			for (j = 0; j < nf && strcmp(found[j], found[nf]); j++)
+				;
+			if (j == nf)
+				nf++;
+		}
+		closedir(d);
+	}
+	if (!nf)
+		return name;
+	for (i = 0; i < nf; i++) {
+		char cat[320], *sl;
+
+		sl = strchr(found[i], '/');
+		snprintf(cat, sizeof cat, "%.*s", (int)(sl - found[i]), found[i]);
+		for (j = 0; prefer[j] && strcmp(prefer[j], cat); j++)
+			;
+		if (j < bi) {
+			bi = j;
+			best = i;
+		}
+	}
+	if (best < 0)
+		best = 0;
+	res = strdup(found[best]);
+	if (nf > 1) {
+		printf("cloudpkg: %s -> %s (есть ещё:", name, res);
+		for (i = 0; i < nf; i++)
+			if (i != best)
+				printf(" %s", found[i]);
+		printf(")\n");
+	}
+	return res;
+}
+
+/* после неудачной сборки показываем хвост свежего build.log, чтобы ошибка была понятной */
+static void fail_hint(void)
+{
+	FILE *f = popen("find /var/tmp/portage -name build.log -mmin -120 -printf '%T@ %p\\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-", "r");
+	char path[BUF], cmd[BUF + 40];
+
+	if (f && fgets(path, sizeof path, f)) {
+		trim(path);
+		if (*path) {
+			fprintf(stderr, "\ncloudpkg: сборка не удалась. последние строки лога %s:\n", path);
+			snprintf(cmd, sizeof cmd, "tail -n 25 '%s' >&2", path);
+			if (system(cmd) < 0)
+				perror("cloudpkg: tail");
+		}
+	}
+	if (f)
+		pclose(f);
+	fprintf(stderr, "cloudpkg: проверь сеть (cloudpkg sync), имя пакета (cloudpkg search имя) и cloudpkg doctor\n");
+}
+
 static int need_portage(void)
 {
 	if (!have("emerge")) {
@@ -243,9 +353,12 @@ static int emerge(char **pre, int npre, char **pk, int npk)
 	av[n] = NULL;
 	r = run(av);
 	free(av);
+	if (r != 0 && geteuid() == 0)
+		fail_hint();
 	return r;
 }
 
+/* общие параметры: -p -a -o -t, остальное с дефисом уходит в emerge как есть */
 static void parse(int argc, char **argv, char **pre, int *npre, char **pk, int *npk)
 {
 	int i;
@@ -262,7 +375,7 @@ static void parse(int argc, char **argv, char **pre, int *npre, char **pk, int *
 		else if (argv[i][0] == '-')
 			pre[(*npre)++] = argv[i];
 		else
-			pk[(*npk)++] = argv[i];
+			pk[(*npk)++] = resolve(argv[i]);
 	}
 }
 
@@ -390,17 +503,22 @@ static int cmd_sync(void)
 
 static int cmd_install(int argc, char **argv)
 {
-	char **pre = calloc(argc + 8, sizeof *pre);
+	char **pre = calloc(argc + 12, sizeof *pre);
 	char **pk = calloc(argc + 1, sizeof *pk);
 	int npre = 0, npk = 0, r;
 
 	pre[npre++] = "--verbose";
 	pre[npre++] = "--noreplace";
+	pre[npre++] = "--autounmask=y";
+	pre[npre++] = "--autounmask-continue";
+	pre[npre++] = "--autounmask-keep-masks";
 	parse(argc, argv, pre, &npre, pk, &npk);
 	if (!npk) {
 		fprintf(stderr, "cloudpkg: укажи пакеты\n");
 		r = 1;
 	} else if (!need_root())
+		r = 1;
+	else if (!ensure_tree())
 		r = 1;
 	else {
 		ensure_profile();
@@ -413,7 +531,7 @@ static int cmd_install(int argc, char **argv)
 
 static int cmd_remove(int argc, char **argv)
 {
-	char **pre = calloc(argc + 8, sizeof *pre);
+	char **pre = calloc(argc + 12, sizeof *pre);
 	char **pk = calloc(argc + 1, sizeof *pk);
 	int npre = 0, npk = 0, r;
 
@@ -434,7 +552,7 @@ static int cmd_remove(int argc, char **argv)
 
 static int cmd_upgrade(int argc, char **argv)
 {
-	char **pre = calloc(argc + 8, sizeof *pre);
+	char **pre = calloc(argc + 12, sizeof *pre);
 	char **pk = calloc(argc + 2, sizeof *pk);
 	int npre = 0, npk = 0, r;
 
@@ -442,10 +560,16 @@ static int cmd_upgrade(int argc, char **argv)
 	pre[npre++] = "--deep";
 	pre[npre++] = "--newuse";
 	pre[npre++] = "--verbose";
+	pre[npre++] = "--autounmask=y";
+	pre[npre++] = "--autounmask-continue";
+	pre[npre++] = "--autounmask-keep-masks";
 	parse(argc, argv, pre, &npre, pk, &npk);
 	npk = 0;
+	/* @selected, а не @world: @world тянет весь @system профиля gentoo, а база cloudos собрана в lfs */
 	pk[npk++] = "@selected";
 	if (!need_root())
+		r = 1;
+	else if (!ensure_tree())
 		r = 1;
 	else {
 		ensure_profile();
@@ -490,6 +614,8 @@ static int cmd_search(int argc, char **argv)
 		return 1;
 	}
 	pre[0] = "--search";
+	if (!ensure_tree())
+		return 1;
 	return emerge(pre, 1, argv, argc);
 }
 
@@ -504,6 +630,9 @@ static int cmd_info(int argc, char **argv)
 	pre[0] = "--pretend";
 	pre[1] = "--verbose";
 	pre[2] = "--nodeps";
+	if (!ensure_tree())
+		return 1;
+	argv[0] = resolve(argv[0]);
 	return emerge(pre, 3, argv, argc);
 }
 
@@ -538,6 +667,7 @@ static int cmd_list(void)
 	return 0;
 }
 
+/* выравнивание по символам, а не по байтам, иначе кириллица съезжает */
 static void row(const char *name, const char *val)
 {
 	int w = 0;
