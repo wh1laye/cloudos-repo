@@ -13,9 +13,9 @@
 <meta name="theme-color" content="#1a1c20">
 <link rel="alternate" type="application/rss+xml" title="cloudos: новое" href="rss.xml">
 <link rel="alternate" type="application/atom+xml" title="cloudos: релизы" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
-<meta name="description" content="cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine или grub, пакеты из исходников. после установки только консоль.">
+<meta name="description" content="cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine, пакеты из исходников. после установки только консоль.">
 <meta property="og:title" content="cloudos">
-<meta property="og:description" content="cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine или grub, пакеты из исходников. после установки только консоль.">
+<meta property="og:description" content="cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine, пакеты из исходников. после установки только консоль.">
 <meta property="og:type" content="website">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="48x48">
@@ -31,7 +31,7 @@
 <script src="i18n.js?v=3"></script>
 <script src="gate.js?v=2"></script>
 <meta name="google-site-verification" content="18RICMRH_Gf_bcSQ7dL6TLRFiu3xmfDnoj_icw04Zkg" />
-<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "CloudOS", "alternateName": "cloudos", "applicationCategory": "OperatingSystem", "operatingSystem": "Linux x86_64", "description": "cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine или grub, пакеты из исходников.", "url": "https://wh1laye.github.io/cloudos-repo/", "image": "https://wh1laye.github.io/cloudos-repo/og.png", "license": "https://opensource.org/licenses/MIT", "author": {"@type": "Person", "name": "wh1laye", "url": "https://github.com/wh1laye"}, "codeRepository": "https://github.com/wh1laye/cloudos-repo"}</script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "CloudOS", "alternateName": "cloudos", "applicationCategory": "OperatingSystem", "operatingSystem": "Linux x86_64", "description": "cloudos: минимальный linux на базе lfs. openrc, ванильное ядро, limine, пакеты из исходников.", "url": "https://wh1laye.github.io/cloudos-repo/", "image": "https://wh1laye.github.io/cloudos-repo/og.png", "license": "https://opensource.org/licenses/MIT", "author": {"@type": "Person", "name": "wh1laye", "url": "https://github.com/wh1laye"}, "codeRepository": "https://github.com/wh1laye/cloudos-repo"}</script>
 </head>
 <body>
 <header class="top">
@@ -64,7 +64,7 @@
 <div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7l8-4 8 4-8 4zM4 12l8 4 8-4M4 17l8 4 8-4"/></svg></i><h3>собрана с нуля</h3><p>база lfs 12.4 с glibc. никаких готовых бинарников чужих дистрибутивов.</p></div>
 <div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0"/></svg></i><h3>openrc</h3><p>простая система инициализации и служб, без systemd.</p></div>
 <div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></i><h3>ванильное ядро</h3><p>ты сам настраиваешь ядро через menuconfig под своё железо.</p></div>
-<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i><h3>limine и grub</h3><p>два загрузчика на выбор: limine (быстрый, один файл конфига) и grub, для uefi и bios.</p></div>
+<div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i><h3>limine</h3><p>быстрый загрузчик с одним файлом конфига, для uefi и bios.</p></div>
 <div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/></svg></i><h3>ext4 и btrfs</h3><p>на выбор, с поддержкой подтомов и снимков.</p></div>
 <div class="feat"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></i><h3>cloudpkg</h3><p>пакеты только из исходников, рецепты основаны на gentoo.</p></div>
 </div>
@@ -78,7 +78,7 @@
 <li><a href="handbook/#stage"><b>3</b><strong>stage 3</strong><span>скачать и распаковать</span></a></li>
 <li><a href="handbook/#chroot"><b>4</b><strong>chroot</strong><span>вход в новую систему</span></a></li>
 <li><a href="handbook/#kernel"><b>5</b><strong>ядро</strong><span>menuconfig и сборка</span></a></li>
-<li><a href="handbook/#boot"><b>6</b><strong>загрузчик</strong><span>initramfs, fstab, limine или grub</span></a></li>
+<li><a href="handbook/#boot"><b>6</b><strong>загрузчик</strong><span>initramfs, fstab, limine</span></a></li>
 <li><a href="handbook/#final"><b>7</b><strong>завершение</strong><span>пароль и службы</span></a></li>
 <li><a href="handbook/#first"><b>8</b><strong>первая загрузка</strong><span>пользователь, имя, сеть, swap</span></a></li>
 </ol>
@@ -87,7 +87,7 @@
 <h2>как это выглядит</h2>
 <div class="term"><div class="tbar">терминал</div><pre><span class="p">$</span> lsblk -f
 <span class="p">$</span> mount /dev/sda2 /mnt/cloudos
-<span class="p">$</span> tar xpvf cloudos-stage3-1.1-x86_64.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos
+<span class="p">$</span> tar xpvf cloudos-stage3-amd64-1.1.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos
 <span class="p">$</span> chroot /mnt/cloudos /bin/bash
 <span class="p">$</span> cloudpkg install limine</pre></div>
 </section>
