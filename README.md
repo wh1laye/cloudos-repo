@@ -39,7 +39,7 @@ CloudOS это Linux система, которую я собираю сам, ш
 | 💽 | **Файловые системы** | `ext4` и `btrfs` |
 | 🖥️ | **Железо** | только `x86_64`, UEFI и старый BIOS |
 | 🌐 | **Сеть** | `dhcpcd` |
-| 📜 | **Логи** | системный лог `sysklogd` |
+| 📜 | **Логи** | системный лог `syslog-ng` |
 | 🔐 | **Права** | `doas` вместо `sudo` |
 | 🐚 | **Оболочка** | `bash` |
 | ⚙️ | **Компиляторы** | `gcc` и `clang`, выбираешь сам |
@@ -89,6 +89,17 @@ cloudpkg clean     # почистить кэш
 ```
 
 Рецепты пакетов мы берём из Gentoo (они под лицензией GPL-2).
+
+### Установка cloudpkg одной командой
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh
+```
+
+- **В CloudOS** скрипт соберёт `cloudpkg`, поставит portage и загрузит дерево рецептов.
+- **На любом другом дистрибутиве** (Arch, Debian, Ubuntu, Fedora и другие, x86_64) система не трогается: скрипт скачает stage 3, проверит sha256 и положит отдельный корень CloudOS в `/var/lib/cloudpkg/box`. Пакеты ставятся туда, а `cloudpkg run`, `cloudpkg export` и `cloudpkg shell` дают к ним доступ. Нужно 4 ГБ свободного места.
+
+Подробнее в [cloudpkg/README.md](cloudpkg/README.md).
 
 ---
 
