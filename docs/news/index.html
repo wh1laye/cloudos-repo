@@ -47,13 +47,12 @@
 <li><span class="st ok">готово</span><div><h3>подсказки к командам</h3><p>в справочнике у блоков кода появилась кнопка с вопросом: она объясняет каждую команду и её ключи.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>режимы чтения</h3><p>в настройках: размер текста, высокий контраст и режим «только команды» для справочника. Ctrl+K теперь умеет и действия, а знак вопроса открывает палитру.</p></div></li>
 
-<li><span class="st ok">готово</span><div><h3>мастер установки</h3><p>страница собирает скрипт установки под твой диск: uefi или bios, ext4 или btrfs, limine или grub. есть чек-лист после установки и раздел восстановления.</p></div></li>
-<li><span class="st ok">готово</span><div><h3>grub</h3><p>поддержка grub добавлена в справочник (раздел 8.7) и в мастер установки.</p></div></li>
-<li><span class="st wip">в работе</span><div><h3>cloudpkg на portage</h3><p>пакетный менеджер на c поверх portage с рецептами gentoo. сейчас проходит проверку и ещё не включён в stage 3.</p></div></li>
-<li><span class="st ok">готово</span><div><h3>ошибки и решения</h3><p>в справочник добавлено 22 решения: мастер установки, grub, cloudpkg и portage.</p></div></li>
+<li><span class="st ok">готово</span><div><h3>мастер установки</h3><p>страница собирает скрипт установки под твой диск: uefi или bios, ext4 или btrfs. есть чек-лист после установки и раздел восстановления.</p></div></li>
+<li><span class="st ok">готово</span><div><h3>cloudpkg на portage</h3><p>пакетный менеджер на c поверх portage с рецептами gentoo. полностью готов.</p></div></li>
+<li><span class="st ok">готово</span><div><h3>ошибки и решения</h3><p>в справочник добавлены решения: мастер установки, cloudpkg и portage.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>сравнение дистрибутивов</h3><p>новая страница: чем cloudos отличается от lfs, gentoo и arch и кому подходит.</p></div></li>
 
-<li><span class="st ok">готово</span><div><h3>cloudos 1.0 beta</h3><p>первый публичный stage 3: cloudos-stage3-1.0-x86_64.tar.xz. база lfs 12.4, openrc, ядро собирается вручную, загрузчик limine. файлы лежат на странице релизов.</p></div></li>
+<li><span class="st ok">готово</span><div><h3>cloudos 1.1 beta</h3><p>первый публичный stage 3: cloudos-stage3-amd64-1.1.tar.xz. база lfs 12.4, openrc, ядро собирается вручную, загрузчик limine. файлы лежат на странице релизов.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>справочник</h3><p>расширен: переключатель uefi и bios, поиск, главы про первую загрузку, пакеты, обслуживание, ошибки и решения, шпаргалка и приложения.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>форум</h3><p>темы, ответы, комментарии, лайки и реакции, поиск, теги, личные сообщения, уведомления, профили, значки, опросы и панель управления.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>релизы</h3><p>страница собирает файлы из github releases: размеры, число скачиваний, кнопка скачать и команда проверки sha256.</p></div></li>
@@ -61,12 +60,8 @@
 <li><span class="st ok">готово</span><div><h3>настройки сайта</h3><p>шестерёнка в шапке: тема, язык, акцентный цвет с градиентом и градиент фона.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>справочник: удобства</h3><p>прогресс по главам, подстановка своих значений в команды и диагностика ошибок.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>пакеты и железо</h3><p>список пакетов stage 3 и cloudpkg и таблица проверенного железа с формой для своих результатов.</p></div></li>
+<li><span class="st ok">готово</span><div><h3>английская версия справочника</h3><p>справочник полностью переведён на английский.</p></div></li>
 <li><span class="st wip">в работе</span><div><h3>живой iso</h3><p>образ для установки с git, curl, cfdisk, fdisk, gdisk, dosfstools, btrfs-progs, e2fsprogs, limine и efibootmgr.</p></div></li>
-<li><span class="st wip">в работе</span><div><h3>cloudpkg</h3><p>пакетный менеджер: sync, install, remove, upgrade, clean. нужно решить, как использовать рецепты gentoo, и добавить подпись пакетов.</p></div></li>
-<li><span class="st ok">готово</span><div><h3>syslog-ng</h3><p>в stage 3 вместо sysklogd теперь syslog-ng.</p></div></li>
-<li><span class="st plan">в планах</span><div><h3>проверка установки</h3><p>прогнать установку с нуля на разном железе и в виртуальных машинах, исправить найденное.</p></div></li>
-<li><span class="st plan">в планах</span><div><h3>английская версия справочника</h3><p>полный перевод справочника на английский.</p></div></li>
-<li><span class="st plan">возможно</span><div><h3>grub</h3><p>поддержка grub рядом с limine.</p></div></li>
 </ul>
 <div class="note"><b>следить за обновлениями</b>список <a href="../packages/">пакетов</a> и проверенное <a href="../hardware/">железо</a> смотри на отдельных страницах. новые версии и образы появляются на странице <a href="../releases/">релизов</a>, обсуждение на <a href="../forum/">форуме</a>, исходники на <a href="https://github.com/wh1laye/cloudos-repo">github</a>.</div>
 <footer>
