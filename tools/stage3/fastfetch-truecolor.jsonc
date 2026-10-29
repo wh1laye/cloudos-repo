@@ -1,0 +1,5 @@
+{
+  "logo": { "type": "file-raw", "source": "/usr/share/cloudos/logo.ansi", "width": 44, "height": 14, "padding": { "top": 1, "left": 1, "right": 3 } },
+  "display": { "separator": "  ", "color": { "keys": "38;2;120;160;212", "title": "38;2;153;195;239" } },
+  "modules": ["title", "separator", "os", "host", "kernel", "uptime", "packages", "shell", "terminal", "cpu", "gpu", "memory", "swap", "disk", "localip", "break", "colors"]
+}

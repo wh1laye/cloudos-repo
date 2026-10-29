@@ -1,0 +1,9 @@
+ivykis-0.43.2.tar.gz|5a81cb5ff94e2b9c289682204aecc675bd726d6db822c592ed9f0e3e493d488e|https://github.com/buytenh/ivykis/archive/v0.43.2.tar.gz
+syslog-ng-4.10.2.tar.gz|841503de6c2486e66fd08f0c62ac2568fc8ed1021297f855e8acd58ad7caff76|https://github.com/syslog-ng/syslog-ng/releases/download/syslog-ng-4.10.2/syslog-ng-4.10.2.tar.gz
+libburn_1.5.6.orig.tar.gz|7295491b4be5eeac5e7a3fb2067e236e2955ffdc6bbd45f546466edee321644b|https://archive.ubuntu.com/ubuntu/pool/main/libb/libburn/libburn_1.5.6.orig.tar.gz
+libisofs_1.5.6.pl01.orig.tar.gz|ac1fd338d641744ca1fb1567917188b79bc8c2506832dd56885fec98656b9f25|https://archive.ubuntu.com/ubuntu/pool/main/libi/libisofs/libisofs_1.5.6.pl01.orig.tar.gz
+libisoburn_1.5.6.orig.tar.gz|2b80a6f73dd633a5d243facbe97a15e5c9a07644a5e1a242c219b9375a45f71b|https://archive.ubuntu.com/ubuntu/pool/main/libi/libisoburn/libisoburn_1.5.6.orig.tar.gz
+squashfs-tools-4.7.5.tar.gz|547b7b7f4d2e44bf91b6fc554664850c69563701deab9fd9cd7e21f694c88ea6|https://github.com/plougher/squashfs-tools/archive/4.7.5.tar.gz
+mtools_4.0.49.orig.tar.bz2|6fe5193583d6e7c59da75e63d7234f76c0b07caf33b103894f46f66a871ffc9f|https://archive.ubuntu.com/ubuntu/pool/main/m/mtools/mtools_4.0.49.orig.tar.bz2
+fastfetch-2.70.0.tar.gz|8aa01bd3faff2be1d94f231d76489ce6d9f781f51f6e93eafe82359d6d8669af|https://github.com/fastfetch-cli/fastfetch/archive/refs/tags/2.70.0.tar.gz
+json-c-0.19-20260627.tar.gz|f17a6d7d265cf840dfd8f0f46a606d98c6b5b26dc7cfe27275d1546a213086c8|https://github.com/json-c/json-c/archive/refs/tags/json-c-0.19-20260627.tar.gz
