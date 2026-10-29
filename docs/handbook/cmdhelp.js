@@ -34,7 +34,6 @@ a('exit','выйти из оболочки (из chroot)','leave the shell (the 
 a('localedef','собрать локаль','compile a locale',[['-i','файл описания','definition file'],['-f','кодировка','character set']]);
 a('dracut','собрать initramfs','build an initramfs',[['--kver','версия ядра','kernel version'],['--force','перезаписать готовый образ','overwrite an existing image']]);
 a('grep','найти строки по шаблону','find lines matching a pattern',[['-q','молча, только код возврата','quiet, only the exit code'],['-i','без учёта регистра','ignore case'],['-r','по каталогу','search a directory']]);
-a('grub-install','установить загрузчик grub','install the grub bootloader',[['--target','платформа (x86_64-efi или i386-pc)','platform (x86_64-efi or i386-pc)'],['--boot-directory','где лежат файлы grub','where grub files live'],['--efi-directory','где раздел efi','where the efi partition is'],['--removable','путь EFI/BOOT, работает на любой прошивке','EFI/BOOT path, works on any firmware']]);
 a('passwd','задать пароль','set a password',[]);
 a('chmod','изменить права доступа','change permissions',[]);
 a('chown','сменить владельца','change the owner',[]);
