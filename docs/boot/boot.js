@@ -28,7 +28,7 @@ return [
  f:['/etc/fstab','/lib/modules/6.18.10'],c:['findmnt','cat /etc/fstab'],
  e:[['после загрузки не смонтирован /boot или swap: проверь строки в fstab','/boot or swap not mounted after boot: check the fstab lines','s14-8']]},
 {n:['openrc','openrc'],
- w:['/sbin/init это openrc-init. он по очереди запускает уровни sysinit, boot, default и поднимает включённые службы: сеть (dhcpcd), журнал (sysklogd), консоль.','/sbin/init is openrc-init. it starts the sysinit, boot and default runlevels in turn and brings up the enabled services: network (dhcpcd), log (sysklogd), console.'],
+ w:['/sbin/init это openrc-init. он по очереди запускает уровни sysinit, boot, default и поднимает включённые службы: сеть (dhcpcd), журнал (syslog-ng), консоль.','/sbin/init is openrc-init. it starts the sysinit, boot and default runlevels in turn and brings up the enabled services: network (dhcpcd), log (syslog-ng), console.'],
  f:['/sbin/init','/etc/runlevels/','/etc/rc.conf'],c:['rc-status','rc-update show'],
  e:[['Attempted to kill init: нет /sbin/init или он не ведёт на openrc-init','Attempted to kill init: /sbin/init is missing or does not point to openrc-init','s14-7']]},
 {n:['вход','login'],
