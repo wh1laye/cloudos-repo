@@ -1,9 +1,4 @@
 #!/bin/bash
-# собирает stage 3 cloudos из предыдущего stage 3 (нужен root, x86_64 linux)
-#   sudo tools/build-stage3.sh
-# переменные: BASE (ссылка или путь к прошлому stage 3), VERSION (по умолчанию 1.1),
-#             WORK (рабочая папка, нужно ~6 гб), OUT (куда положить результат)
-# что внутри: cloudpkg + portage, limine, syslog-ng вместо sysklogd, xorriso, squashfs-tools, mtools, fastfetch с логотипом
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -52,9 +47,7 @@ cp "$WORK"/src/* "$ROOT/var/tmp/s3src/"
 cp -R "$HERE"/stage3/. "$ROOT/var/tmp/s3files/"
 cp -R "$REPO"/cloudpkg/. "$ROOT/var/tmp/cloudpkg-src/"
 
-# вход в chroot: монтирования живут в отдельном пространстве имён и исчезают сами
 enter() {
-  # shellcheck disable=SC2016
   unshare -m sh -c '
 R=$1; shift
 mount --make-rprivate / || exit 1
