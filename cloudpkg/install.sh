@@ -17,7 +17,7 @@ main() {
 	REPO=${CLOUDPKG_REPO:-wh1laye/cloudos-repo}
 	BRANCH=${CLOUDPKG_BRANCH:-main}
 	INSTALL_URL=${CLOUDPKG_INSTALL_URL:-https://raw.githubusercontent.com/$REPO/$BRANCH/cloudpkg/install.sh}
-	S3_VER=1.0
+	S3_VER=1.1
 	S3_NAME=cloudos-stage3-amd64-$S3_VER.tar.xz
 	S3=${CLOUDPKG_STAGE3:-https://github.com/$REPO/releases/download/cloudos/$S3_NAME}
 	BOX=${CLOUDPKG_BOX:-/var/lib/cloudpkg/box}
