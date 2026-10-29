@@ -11,15 +11,16 @@
   window.CloudSeason.reg('oc',{
     init:function(k){
       var m=k.mobile(),wd=k.wide(),gh=m?32:42,i;
-      k.el('',k.svg('0 0 1000 150','<rect width="1000" height="100" fill="#6fa8dc"/>'+SUN),'left:0;right:0;top:0;height:150px');
+      // океан: солнце, облака, волны, песок, кит, дельфин, чайки, маяк. маяк стоит на песке, неба над интерфейсом нет.
+      // небо убрано — не закрывает интерфейс
       for(i=0;i<(m?2:4);i++)k.el('zs-cloud',k.svg('0 0 100 70',CLOUD),'left:'+k.rnd(-20,60).toFixed(1)+'%;top:'+Math.round(k.rnd(gh*.45,gh*.75))+'px;width:'+(m?90:130)+'px;animation-duration:'+(m?150:200)+'s;animation-delay:'+(-i*24).toFixed(1)+'s;opacity:.92');
       k.el('',k.svg('0 0 1000 '+gh,k.hill(1000,gh*1.8,20,7,11)+k.hill(1000,gh*2.4,28,9,19)),'left:0;right:0;bottom:0;height:'+gh+'px;fill:#0b1d26;stroke:#163a4c;stroke-width:2;opacity:.98');
       k.el('','<div class="zs-wv">'+WAVE+'</div>','left:0;bottom:0;width:100%;height:'+gh+'px;opacity:.99');
       k.el('zs-wv b2','<div class="zs-wv">'+WAVE2+'</div>','left:0;bottom:0;width:100%;height:'+Math.round(gh*.58)+'px;opacity:.88');
       k.el('',k.svg('0 0 1000 40',SAND),'left:0;right:0;bottom:0;height:40px;opacity:.97');
       k.logo(function(cd){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" style="display:block;overflow:visible"><path d="'+cd+'" fill="#00bfa5" stroke="#00838f" stroke-width="1.2"/><circle cx="14" cy="12" r="2" fill="#b2ebf2"/><circle cx="20" cy="14" r="1.5" fill="#b2ebf2"/></svg>'},0,0,0,{fit:true});
-      var lh=k.el('zs-bob',k.svg('0 0 100 110',LIGHT),'right:3%;bottom:'+Math.round(gh*.4)+'px;width:'+(m?44:70)+'px;animation-delay:'+(-k.rnd(0,3)).toFixed(2)+'s');
-      k.hbWatch(function(hb){lh.style.top=(hb+(m?2:8))+'px'});
+      // маяк стоит на песке
+      k.el('zs-bob',k.svg('0 0 100 110',LIGHT),'right:3%;bottom:0;width:'+(m?44:70)+'px;animation-delay:'+(-k.rnd(0,3)).toFixed(2)+'s');
       var wh=k.el('zs-fly zs-whale',k.svg('0 0 224 110',WHALE),'left:-14%;bottom:'+Math.round(gh*.46)+'px;width:'+(m?148:224)+'px;animation-duration:'+(m?140:180)+'s;animation-delay:-40s');
       wh.innerHTML='<div>'+wh.innerHTML+'</div>';
       k.hbWatch(function(hb){wh.style.top=(hb+(m?4:12))+'px'});
@@ -28,7 +29,7 @@
       k.hbWatch(function(hb){dl.style.top=(hb+(m?2:8))+'px'});
       if(k.pc()){
         for(i=0;i<8;i++)k.el('zs-glint','','left:'+k.rnd(2,98).toFixed(1)+'%;top:'+Math.round(k.rnd(gh*.15,gh*.55))+'px;animation-delay:'+(-k.rnd(0,3)).toFixed(2)+'s;animation-duration:'+k.rnd(1.8,3.8).toFixed(1)+'s',true);
-        for(i=0;i<6;i++)k.el('zs-fly',k.svg('0 0 70 40',GULL),'left:'+k.rnd(10,80).toFixed(1)+'%;top:'+Math.round(k.rnd(gh*.3,gh*.62))+'px;width:'+(m?34:50)+'px;animation-duration:'+(m?80:110)+'s;animation-delay:'+(-i*10).toFixed(1)+'s');
+        for(i=0;i<8;i++)k.el('zs-fly',k.svg('0 0 70 40',GULL),'left:'+k.rnd(10,80).toFixed(1)+'%;top:'+Math.round(k.rnd(gh*.3,gh*.62))+'px;width:'+(m?34:50)+'px;animation-duration:'+(m?80:110)+'s;animation-delay:'+(-i*10).toFixed(1)+'s');
         var bs=k.sprite(16,16,function(c){
           var g=c.createRadialGradient(-2,-2,0,0,0,7);g.addColorStop(0,'rgba(255,255,255,.9)');g.addColorStop(.4,'rgba(200,250,255,.4)');g.addColorStop(1,'rgba(100,180,200,0)');
           c.fillStyle=g;c.beginPath();c.arc(0,0,7,0,6.283);c.fill();

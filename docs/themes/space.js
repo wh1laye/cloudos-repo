@@ -15,12 +15,14 @@
   window.CloudSeason.reg('cs',{
     init:function(k){
       var m=k.mobile(),wd=k.wide(),gh=m?30:40,i;
-      k.el('',k.svg('0 0 1000 150','<rect width="1000" height="100" fill="#05050a"/><radialGradient id="g1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#1a1a2e" stop-opacity="1"/><stop offset="100%" stop-color="#05050a" stop-opacity="1"/></radialGradient><rect width="1000" height="100" fill="url(#g1)"/>'),'left:0;right:0;top:0;height:150px');
+      // космос: туманности, луна, планета с кольцами на земле, спутник, кометы, звёзды. неба над интерфейсом нет.
+      // небо убрано — не закрывает интерфейс
       for(i=0;i<(m?2:4);i++)k.el('zs-cloud',k.svg('0 0 136 86',NEB),'left:'+k.rnd(-30,40).toFixed(1)+'%;top:'+Math.round(k.rnd(gh*.35,gh*.8))+'px;width:'+(m?140:240)+'px;animation-duration:'+(m?150:200)+'s;animation-delay:'+(-i*34).toFixed(1)+'s;opacity:.95');
       k.el('zs-moon',k.svg('0 0 64 64',MOON),'left:6%;width:56px;height:56px');
       k.logo(function(cd){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" style="display:block;overflow:visible"><path d="'+cd+'" fill="#bb86fc" stroke="#9370db" stroke-width="1.2"/><circle cx="12" cy="9" r="2" fill="#fff" opacity=".85"/><circle cx="18" cy="11" r="1.5" fill="#fff" opacity=".7"/></svg>'},0,0,0,{fit:true});
-      k.el('',k.svg('0 0 94 104',PLANET),'right:7%;bottom:'+Math.round(gh*.5)+'px;width:'+(m?68:104)+'px;animation:zswob 10s ease-in-out infinite;animation-delay:-2s');
-      k.el('',k.svg('0 0 94 104',RING),'right:7%;bottom:'+Math.round(gh*.5)+'px;width:'+(m?68:104)+'px;animation:zsspin 24s linear infinite');
+      // планета с кольцами стоит на земле
+      k.el('',k.svg('0 0 94 124',PLANET),'right:7%;bottom:0;width:'+(m?72:112)+'px;animation:zswob 10s ease-in-out infinite;animation-delay:-2s');
+      k.el('',k.svg('0 0 94 124',RING),'right:7%;bottom:0;width:'+(m?72:112)+'px;animation:zsspin 24s linear infinite');
       k.el('',k.svg('0 0 1000 '+gh,k.hill(1000,gh*2.4,28,9,15)+k.hill(1000,gh*3.0,36,11,25)),'left:0;right:0;bottom:0;height:'+gh+'px;fill:#05050a;stroke:#141420;stroke-width:2;opacity:.99');
       k.el('',k.strip(gh,[{d:k.hill(1000,gh*1.8,18,7,21),fill:'#0a0a12',line:'#141420'}]),'left:0;right:0;bottom:0;height:'+gh+'px;opacity:.96');
       var sat=k.el('zs-fly zs-orbit',k.svg('0 0 62 42',SATELLITE),'right:6%;top:'+Math.round(gh*.3)+'px;width:'+(m?38:60)+'px;animation-duration:'+(m?100:140)+'s;animation-delay:-60s');
@@ -30,7 +32,7 @@
         for(i=0;i<8;i++)k.el('zs-shoot','','left:'+k.rnd(4,84).toFixed(1)+'%;top:'+k.rnd(4,48).toFixed(1)+'%;animation-delay:'+(-i*3.0).toFixed(1)+'s;animation-duration:'+(9+i*4.0).toFixed(1)+'s',true);
         for(i=0;i<10;i++)k.el('zs-glint','','left:'+k.rnd(2,98).toFixed(1)+'%;bottom:'+Math.round(k.rnd(gh*.2,gh*.9))+'px;animation-delay:'+(-k.rnd(0,3)).toFixed(2)+'s;animation-duration:'+k.rnd(2,4.4).toFixed(1)+'s',true);
         for(i=0;i<4;i++)k.el('zs-fly zs-comet',k.svg('0 0 94 52',COMET),'left:'+k.rnd(0,42).toFixed(1)+'%;top:'+k.rnd(10,52).toFixed(1)+'%;width:'+(m?48:78)+'px;animation-duration:'+(m?120:170)+'s;animation-delay:'+(-i*24).toFixed(1)+'s');
-        var ss=starSprite(k),st=[],ns=k.n(200),s0;
+        var ss=starSprite(k),st=[],ns=k.n(240),s0;
         for(s0=0;s0<ns;s0++)st.push({x:Math.random(),y:Math.random(),z:k.rnd(.5,1.6),tw:k.rnd(1.0,4.6),p:k.rnd(0,6.28),ph:k.rnd(0,6.28),g:Math.random()<.17});
         k.canvas(function(c,dt,t,w,h){
           var cnt=Math.ceil(ns*k.q()),j,o;
