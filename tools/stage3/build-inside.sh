@@ -1,5 +1,4 @@
 #!/bin/bash
-# запускается внутри chroot из tools/build-stage3.sh. собирает пакеты stage 3 cloudos
 set -eu
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 export CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe"
@@ -7,10 +6,8 @@ VERSION=${1:-1.1}
 S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
 say() { printf '==> %s\n' "$*"; }
 unpack() { rm -rf "$B"; mkdir -p "$B"; tar xf "$S/$1" -C "$B" --strip-components=1; cd "$B"; }
-# gnu17: старые configure не переживают c23, который в gcc 15 включён по умолчанию
 auto() { local f=$1; shift; unpack "$f"; CC="gcc -std=gnu17" ./configure --prefix=/usr "$@"; make -j"$J"; make install; ldconfig; }
 ST=/var/tmp/s3stamp; mkdir -p "$ST"
-# каждый шаг отмечается, поэтому прерванную сборку можно запустить заново, готовое не пересобирается
 step() { local n=$1; shift; if [ -e "$ST/$n" ]; then say "$n: уже готово"; return 0; fi; say "$n"; "$@"; touch "$ST/$n"; }
 
 
@@ -52,7 +49,6 @@ do_fastfetch() {
   ln -sf ../xdg/fastfetch/config.jsonc /etc/fastfetch/config.jsonc
 }
 
-# limine ставится самим cloudpkg из рецепта оверлея cloudos (без llvm)
 do_limine() { cloudpkg sync; cloudpkg install limine; }
 
 do_logger() {

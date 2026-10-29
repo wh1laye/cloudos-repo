@@ -1,7 +1,4 @@
 #!/usr/bin/env python3
-# делает логотип для fastfetch из docs/logo.png (нужен pillow). результат лежит в репозитории готовым:
-#   logo.txt  : цветной логотип с метками $1 $2 $3 (любой терминал, 256 цветов)
-#   logo.ansi : то же облако в truecolor (современные терминалы)
 import sys
 from PIL import Image
 src = sys.argv[1] if len(sys.argv) > 1 else "logo.png"
