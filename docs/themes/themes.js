@@ -2,8 +2,8 @@
 var d=document,h=d.documentElement,sc=d.currentScript;
 var BASE=sc?sc.src.replace(/themes\.js.*$/,''):'';
 var V='5';
-var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',fr:'forest',au:'autumn',ni:'night',oc:'ocean'};
-var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['fr','лес'],['au','осень'],['ni','ночь'],['oc','океан']];
+var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',fr:'forest',au:'autumn',ni:'night',oc:'ocean',cs:'space'};
+var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['fr','лес'],['au','осень'],['ni','ночь'],['oc','океан'],['cs','космос']];
 var FXN=[['full','полные'],['low','лёгкие'],['off','выкл']];
 var DEVN=[['auto','авто'],['pc','компьютер'],['phone','телефон']];
 var M={},root=null,back=null,frames=[],rsz=[],obs=[],raf=0,last=0,token=0,q=1,ema=0,jank=16,nf=0;
