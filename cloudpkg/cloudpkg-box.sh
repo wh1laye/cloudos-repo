@@ -1,9 +1,5 @@
 #!/bin/sh
 # cloudpkg-box-launcher
-# cloudpkg для чужих дистрибутивов (arch, debian, fedora, ...).
-# система хоста не трогается: все пакеты собираются и живут в отдельном корне cloudos
-# (бокс, по умолчанию /var/lib/cloudpkg/box). сюда ставит install.sh, руками этот файл не нужен.
-# бокс отделяет файлы, а не безопасность: это не песочница, сборки идут от root внутри chroot.
 set -u
 
 BOX=${CLOUDPKG_BOX:-/var/lib/cloudpkg/box}
@@ -81,7 +77,6 @@ case ${1-help} in
 	where) printf '%s\n' "$BOX"; exit 0 ;;
 esac
 
-# нужен root: chroot и mount без него не работают
 if [ "$(id -u)" != 0 ]; then
 	for s in sudo doas; do
 		if command -v "$s" >/dev/null 2>&1; then
@@ -96,14 +91,11 @@ for c in unshare mount chroot; do
 	command -v "$c" >/dev/null 2>&1 || die "нет команды $c (пакеты util-linux и coreutils)" "missing command $c (util-linux and coreutils)"
 done
 
-# enter MODE КОМАНДА...: MODE root или user; монтирования живут только в приватном пространстве имён
-# и исчезают сами, когда процесс закончится, поэтому rm -rf бокса безопасен
 enter() {
 	[ -x "$BOX/usr/bin/env" ] || die "бокс не найден: $BOX. установка: curl -fsSL $INSTALL_URL | sh" \
 		"box not found: $BOX. install: curl -fsSL $INSTALL_URL | sh"
 	mode=$1
 	shift
-	# shellcheck disable=SC2016
 	exec unshare -m sh -c '
 BOX=$1; MODE=$2; shift 2
 mount --make-rprivate / || { echo "cloudpkg: не удалось изолировать монтирование" >&2; exit 1; }
@@ -113,10 +105,8 @@ if [ "$MODE" = user ]; then
 	[ -d /home ] && mount --rbind /home "$BOX/home"
 	mount --bind /tmp "$BOX/tmp"
 fi
-# dns: старый resolv.conf (или ссылку) убираем, чтобы не записать на хост через ссылку
 rm -f "$BOX/etc/resolv.conf"
 if [ -s /etc/resolv.conf ]; then cat /etc/resolv.conf > "$BOX/etc/resolv.conf"; else echo "nameserver 1.1.1.1" > "$BOX/etc/resolv.conf"; fi
-# сертификаты хоста вместо старых из stage 3 (работает и за корпоративным прокси)
 if [ "${CLOUDPKG_HOST_CA:-1}" != 0 ] && [ -f "$BOX/etc/ssl/certs/ca-certificates.crt" ] && [ ! -L "$BOX/etc/ssl/certs/ca-certificates.crt" ]; then
 	for ca in /etc/ssl/certs/ca-certificates.crt /etc/pki/tls/certs/ca-bundle.crt /etc/ssl/ca-bundle.pem /etc/ssl/cert.pem; do
 		if [ -s "$ca" ] && grep -q "BEGIN CERTIFICATE" "$ca" 2>/dev/null; then
@@ -164,7 +154,6 @@ case ${1-} in
 	run)
 		shift
 		[ $# -gt 0 ] || die "укажи программу" "give a program"
-		# для root-запуска без sudo берём пользователя из SUDO_UID
 		CLOUDPKG_UID=${CLOUDPKG_UID:-${SUDO_UID:-0}}
 		CLOUDPKG_GID=${CLOUDPKG_GID:-${SUDO_GID:-0}}
 		export CLOUDPKG_UID CLOUDPKG_GID
