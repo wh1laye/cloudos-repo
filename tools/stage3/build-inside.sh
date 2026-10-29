@@ -3,6 +3,7 @@ set -eu
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 export CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe"
 VERSION=${1:-1.1}
+STRICT=${2:-0}
 S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
 say() { printf '==> %s\n' "$*"; }
 unpack() { rm -rf "$B"; mkdir -p "$B"; tar xf "$S/$1" -C "$B" --strip-components=1; cd "$B"; }
@@ -77,8 +78,71 @@ sys-fs/mtools-4.0.49
 app-misc/fastfetch-2.70.0
 EOP
   install -m644 /var/tmp/cloudpkg-src/etc/portage/make.conf /etc/portage/make.conf
-  sed -i "s/CloudOS 1\.0/CloudOS $VERSION/g;s/^VERSION_ID=.*/VERSION_ID=\"$VERSION\"/" /etc/os-release
+  sed -i -E "s/CloudOS 1\.0/CloudOS $VERSION/g;s/^VERSION=.*/VERSION=\"$VERSION\"/;s/^VERSION_ID=.*/VERSION_ID=\"$VERSION\"/" /etc/os-release
+  grep -q '^VERSION_ID=' /etc/os-release || echo "VERSION_ID=\"$VERSION\"" >> /etc/os-release
   if [ -f /etc/issue ]; then sed -i "s/CloudOS 1\.0/CloudOS $VERSION/g" /etc/issue; fi
+}
+
+excluded() {
+  local p
+  while read -r p _; do
+    case $p in ''|'#'*) continue ;; esac
+    case $1 in $p) return 0 ;; esac
+  done < "$F/gentoo-exclude.txt"
+  return 1
+}
+
+have_pkg() {
+  ls -d /var/db/pkg/"$1"-[0-9]* >/dev/null 2>&1 && return 0
+  awk -v a="$1-" 'index($0, a) == 1 { f = 1 } END { exit !f }' /etc/portage/profile/package.provided
+}
+
+# весь набор пакетов из gentoo stage 3 (кроме пакетного менеджера и фишек gentoo, см. gentoo-exclude.txt).
+# один пакет не собрался: пишем в отчёт и идём дальше, итог в конце (с STRICT=1 это ошибка сборки)
+do_gentoo_set() {
+  local rep=/var/tmp/cloudos-report.txt L=/var/tmp/s3log a n=0 ok=0 have=0 skip=0 fail=0
+  mkdir -p "$L"; : > "$rep"
+  while read -r a _; do
+    case $a in ''|'#'*) continue ;; esac
+    n=$((n + 1))
+    if excluded "$a"; then skip=$((skip + 1)); continue; fi
+    if have_pkg "$a"; then have=$((have + 1)); continue; fi
+    say "gentoo stage 3: $a ($n)"
+    if cloudpkg install "$a" < /dev/null > "$L/${a//\//_}.log" 2>&1; then
+      ok=$((ok + 1))
+    else
+      fail=$((fail + 1)); echo "$a" >> "$rep"
+      printf '!! не собрался %s, хвост лога:\n' "$a"; tail -n 25 "$L/${a//\//_}.log"
+    fi
+  done < "$F/gentoo-stage3.list"
+  say "пакеты gentoo stage 3: в списке $n, уже были $have, исключено $skip, поставлено $ok, ошибок $fail"
+  if [ "$fail" -gt 0 ]; then
+    say "НЕ СОБРАЛИСЬ: $(tr '\n' ' ' < "$rep")"
+    [ "$STRICT" = 1 ] && { echo "STRICT=1: сборка остановлена" >&2; return 1; }
+  fi
+  return 0
+}
+
+# проверка готового корня: всё, что нужно, чтобы система загрузилась и работала
+do_verify() {
+  local bad=0 f
+  for f in /sbin/init /sbin/openrc-init /sbin/openrc /etc/init.d/syslog-ng /etc/runlevels/default/syslog-ng \
+           /etc/syslog-ng/syslog-ng.conf /usr/share/cloudos/logo.txt /usr/share/cloudos/logo.ansi \
+           /usr/share/cloudos/logo.png /etc/xdg/fastfetch/config.jsonc /etc/os-release /etc/portage/make.conf; do
+    if [ -e "$f" ] || [ -L "$f" ]; then :; else echo "!! нет $f"; bad=1; fi
+  done
+  for f in syslog-ng fastfetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd; do
+    command -v "$f" >/dev/null || { echo "!! нет команды $f"; bad=1; }
+  done
+  [ "$(readlink -f /sbin/init)" = "$(readlink -f /sbin/openrc-init)" ] || { echo "!! /sbin/init не указывает на openrc-init"; bad=1; }
+  grep -q "^VERSION_ID=\"$VERSION\"" /etc/os-release || { echo "!! в /etc/os-release не $VERSION"; bad=1; }
+  [ ! -e /etc/init.d/sysklogd ] || { echo "!! остался sysklogd"; bad=1; }
+  syslog-ng -s -f /etc/syslog-ng/syslog-ng.conf || { echo "!! конфиг syslog-ng не проходит проверку"; bad=1; }
+  fastfetch --version || bad=1
+  say "так выглядит fastfetch в этом stage 3:"
+  fastfetch --pipe false || true
+  [ "$bad" = 0 ] || { echo "проверка не пройдена" >&2; return 1; }
+  say "проверка пройдена"
 }
 
 step ivykis do_ivykis
@@ -93,7 +157,9 @@ step fastfetch do_fastfetch
 step limine do_limine
 step sysklogd-to-syslog-ng do_logger
 step package.provided do_provided
+step gentoo-stage3-set do_gentoo_set
+step verify do_verify
 
 say "уборка"
-rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/* /var/tmp/s3* /var/tmp/cloudpkg-src /root/.cache /tmp/* /etc/resolv.conf /.cloudpkg-box
+rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/* /var/tmp/s3* /var/tmp/cloudpkg-src /root/.cache /tmp/* /etc/resolv.conf /.cloudpkg-box /var/log/portage /var/log/emerge*.log
 say "готово"

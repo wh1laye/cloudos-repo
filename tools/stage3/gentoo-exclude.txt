@@ -1,0 +1,23 @@
+# что из gentoo stage 3 в cloudos не берём: пакетный менеджер gentoo и всё, что к нему привязано.
+# строки это шаблоны category/name (как в case в shell), после # пояснение.
+sys-apps/portage            # пакетный менеджер gentoo, у нас cloudpkg
+sys-apps/sandbox            # часть portage
+app-portage/*               # утилиты portage
+app-admin/eselect           # переключатель gentoo
+app-eselect/*
+app-alternatives/*          # механизм gentoo поверх eselect
+virtual/*                   # подтягиваются зависимостями сами
+acct-group/*                # группы и пользователи подтягиваются зависимостями
+acct-user/*
+sec-keys/*                  # ключи подписи gentoo
+sys-apps/gentoo-functions   # скрипты gentoo
+app-shells/gentoo-bashcomp
+sys-apps/baselayout         # у cloudos свой
+sys-apps/sysvinit           # /sbin/init у нас openrc-init, sysvinit его бы затёр
+sys-devel/binutils-config   # переключатели версий gentoo
+sys-devel/gcc-config
+net-misc/netifrc            # сеть gentoo через conf.d/net, у нас dhcpcd
+sys-kernel/*                # ядра в stage 3 нет, заголовки уже собраны
+dev-python/*                # модули python под portage, python у нас свой
+app-admin/sysklogd          # заменён на syslog-ng
+app-admin/metalog

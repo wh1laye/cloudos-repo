@@ -1,0 +1,107 @@
+# пакеты, которые есть в gentoo stage 3 (amd64, openrc), без их пакетного менеджера и их фишек
+# (что исключено и почему: gentoo-exclude.txt). то, что уже собрано в базе cloudos или стоит в
+# package.provided, при сборке пропускается само. список составлен вручную. чтобы взять точный
+# список из настоящего stage 3 gentoo, запусти tools/stage3/refresh-list.sh (нужна сеть).
+# по одному пакету в строке, # комментарий.
+
+# архивы и сжатие
+app-arch/bzip2
+app-arch/cpio
+app-arch/gzip
+app-arch/libarchive
+app-arch/tar
+app-arch/unzip
+app-arch/xz-utils
+app-arch/zstd
+
+# редакторы, оболочка, сертификаты, ключи
+app-editors/nano
+app-shells/bash
+app-misc/ca-certificates
+app-crypt/gnupg
+
+# справка (в gentoo stage 3 есть man)
+app-text/man-db
+sys-apps/man-pages
+
+# сборка и языки
+dev-build/autoconf
+dev-build/automake
+dev-build/libtool
+dev-build/make
+dev-lang/perl
+dev-lang/python
+dev-util/pkgconf
+sys-devel/binutils
+sys-devel/bison
+sys-devel/flex
+sys-devel/gcc
+sys-devel/gettext
+sys-devel/m4
+sys-devel/patch
+sys-devel/gnuconfig
+
+# библиотеки
+dev-libs/expat
+dev-libs/gmp
+dev-libs/libffi
+dev-libs/libpcre2
+dev-libs/libtasn1
+dev-libs/libunistring
+dev-libs/libxcrypt
+dev-libs/libxml2
+dev-libs/mpc
+dev-libs/mpfr
+dev-libs/openssl
+dev-libs/popt
+net-dns/libidn2
+net-libs/gnutls
+net-libs/libmnl
+net-libs/libtirpc
+sys-libs/binutils-libs
+sys-libs/gdbm
+sys-libs/glibc
+sys-libs/libcap
+sys-libs/libseccomp
+sys-libs/ncurses
+sys-libs/pam
+sys-libs/readline
+sys-libs/timezone-data
+sys-libs/zlib
+
+# сеть
+net-misc/curl
+net-misc/dhcpcd
+net-misc/iputils
+net-misc/openssh
+net-misc/rsync
+net-misc/wget
+sys-apps/iproute2
+sys-apps/net-tools
+
+# система и утилиты
+sys-apps/acl
+sys-apps/attr
+sys-apps/coreutils
+sys-apps/debianutils
+sys-apps/diffutils
+sys-apps/file
+sys-apps/findutils
+sys-apps/gawk
+sys-apps/grep
+sys-apps/groff
+sys-apps/hwdata
+sys-apps/kbd
+sys-apps/kmod
+sys-apps/less
+sys-apps/openrc
+sys-apps/sed
+sys-apps/shadow
+sys-apps/systemd-utils
+sys-apps/texinfo
+sys-apps/util-linux
+sys-apps/which
+sys-auth/pambase
+sys-fs/e2fsprogs
+sys-process/procps
+sys-process/psmisc
