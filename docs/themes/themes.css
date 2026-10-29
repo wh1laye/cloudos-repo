@@ -6,6 +6,14 @@ html[data-season="su"][data-theme="gray"]{--bg:#0a2530;--surf:#103744;--side:#14
 html[data-season="su"][data-theme="light"]{--bg:#e4f8ff;--surf:#fff;--side:#d2f0fb;--line:#aee0f2;--ink:#0b3a4d;--mute:#4a8aa2;--ac:#0aa5c7;--soft:#d4f3fb;--onac:#fff;--code:#dff4fb}
 html[data-season="sp"][data-theme="gray"]{--bg:#1e1723;--surf:#2b2031;--side:#352839;--line:#4d3a58;--ink:#fdeff6;--mute:#d3a9c1;--ac:#ff8fb8;--soft:#3e2639;--onac:#3a0a1f;--code:#231a28}
 html[data-season="sp"][data-theme="light"]{--bg:#fff3f8;--surf:#fff;--side:#ffe6ef;--line:#f5cadb;--ink:#4a1f33;--mute:#a0637f;--ac:#e0507f;--soft:#ffe0ec;--onac:#fff;--code:#ffeaf2}
+html[data-season="fr"][data-theme="gray"]{--bg:#1b2a1e;--surf:#243828;--side:#2e4531;--line:#4a634e;--ink:#e8f5e9;--mute:#a5d6a7;--ac:#4caf50;--soft:#335036;--onac:#1b2a1e;--code:#162b19}
+html[data-season="fr"][data-theme="light"]{--bg:#e8f5e9;--surf:#fff;--side:#c8e6c9;--line:#a5d6a7;--ink:#1b5e20;--mute:#388e3c;--ac:#2e7d32;--soft:#dcedc8;--onac:#fff;--code:#dcedc8}
+html[data-season="au"][data-theme="gray"]{--bg:#2d1b10;--surf:#3d2616;--side:#4c311f;--line:#6d4c41;--ink:#fff3e0;--mute:#ffcc80;--ac:#ff8f1f;--soft:#4e342e;--onac:#3e2723;--code:#3e2723}
+html[data-season="au"][data-theme="light"]{--bg:#fff3e0;--surf:#fff;--side:#ffe0b2;--line:#ffcc80;--ink:#e65100;--mute:#ef6c00;--ac:#f57c00;--soft:#ffe0b2;--onac:#fff;--code:#ffe0b2}
+html[data-season="ni"][data-theme="gray"]{--bg:#0a0a12;--surf:#12121e;--side:#1a1a2e;--line:#2a2a4e;--ink:#e8eaf6;--mute:#b0b0d0;--ac:#bb86fc;--soft:#1f1f3d;--onac:#0a0a12;--code:#0d0d1a}
+html[data-season="ni"][data-theme="light"]{--bg:#e8eaf6;--surf:#fff;--side:#c5cae9;--line:#9fa8da;--ink:#303f9f;--mute:#7986cb;--ac:#5c6bc0;--soft:#e8eaf6;--onac:#fff;--code:#e8eaf6}
+html[data-season="oc"][data-theme="gray"]{--bg:#0b1d26;--surf:#0f2a38;--side:#163a4c;--line:#265c73;--ink:#e0f7fa;--mute:#80deea;--ac:#00bfa5;--soft:#14485a;--onac:#004d40;--code:#0c2e3a}
+html[data-season="oc"][data-theme="light"]{--bg:#e0f7fa;--surf:#fff;--side:#b2ebf2;--line:#4dd0e1;--ink:#006064;--mute:#00acc1;--ac:#0097a7;--soft:#b2ebf2;--onac:#fff;--code:#b2ebf2}
 .zs{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden;contain:layout style}
 .zsb{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:layout style}
 .zs *,.zsb *{pointer-events:none}
