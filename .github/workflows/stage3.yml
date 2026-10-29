@@ -1,1 +1,66 @@
+name: stage3
 
+# собирает stage 3 cloudos на сервере github (tools/build-stage3.sh) и кладёт в релиз 1.1.
+# запуск: вкладка Actions -> stage3 -> Run workflow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: версия
+        default: "1.1"
+      refresh_list:
+        description: взять список пакетов из настоящего stage 3 gentoo
+        type: boolean
+        default: true
+      strict:
+        description: остановить сборку, если хоть один пакет не собрался
+        type: boolean
+        default: false
+      publish:
+        description: выложить результат в релиз
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: место на диске
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo mkdir -p /mnt/stage3 && sudo chown "$USER" /mnt/stage3
+          df -h / /mnt
+
+      - name: сборка stage 3
+        env:
+          VERSION: ${{ inputs.version }}
+          REFRESH_LIST: ${{ inputs.refresh_list && '1' || '0' }}
+          STRICT: ${{ inputs.strict && '1' || '0' }}
+        run: |
+          mkdir -p "$PWD/out"
+          sudo -E env WORK=/mnt/stage3 OUT="$PWD/out" VERSION="$VERSION" REFRESH_LIST="$REFRESH_LIST" STRICT="$STRICT" \
+            bash tools/build-stage3.sh
+          ls -lh out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloudos-stage3-${{ inputs.version }}
+          path: out/*
+          compression-level: 0
+
+      - name: релиз
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          gh release view "$VERSION" >/dev/null 2>&1 || gh release create "$VERSION" --title "CloudOS $VERSION" \
+            --notes "stage 3 cloudos $VERSION. проверка: sha256sum -c cloudos-stage3-amd64-$VERSION.tar.xz.sha256"
+          gh release upload "$VERSION" out/* --clobber
