@@ -13,8 +13,6 @@
   window.CloudSeason.reg('cs',{
     init:function(k){
       var m=k.mobile(),wd=k.wide(),gh=m?30:40,i;
-      // космос: туманности, луна, спутник, кометы, звёзды. неба над интерфейсом нет.
-      // небо убрано — не закрывает интерфейс
       for(i=0;i<(m?2:4);i++)k.el('zs-cloud',k.svg('0 0 136 86',NEB),'left:'+k.rnd(-30,40).toFixed(1)+'%;top:'+Math.round(k.rnd(gh*.35,gh*.8))+'px;width:'+(m?140:240)+'px;animation-duration:'+(m?150:200)+'s;animation-delay:'+(-i*34).toFixed(1)+'s;opacity:.95');
       k.el('zs-moon',k.svg('0 0 64 64',MOON),'left:6%;width:56px;height:56px');
       k.logo(function(cd){return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 40" style="display:block;overflow:visible"><path d="'+cd+'" fill="#bb86fc" stroke="#9370db" stroke-width="1.2"/><circle cx="12" cy="9" r="2" fill="#fff" opacity=".85"/><circle cx="18" cy="11" r="1.5" fill="#fff" opacity=".7"/></svg>'},0,0,0,{fit:true});
