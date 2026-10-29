@@ -32,8 +32,14 @@ esac
 
 say "распаковка базы в $ROOT"
 rm -rf "$ROOT"; mkdir -p "$ROOT"
-xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner
+xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*'
 grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на stage 3 cloudos"
+
+if [ "${REFRESH_LIST:-0}" = 1 ]; then
+  say "список пакетов из настоящего stage 3 gentoo"
+  "$HERE/stage3/refresh-list.sh" "$WORK/gentoo-stage3.list" && cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list" \
+    || printf 'предупреждение: список не обновился, беру тот, что лежит в репозитории\n' >&2
+fi
 
 say "исходники (sha256 сверяются)"
 while IFS='|' read -r name sum url; do
@@ -63,12 +69,41 @@ exec chroot "$R" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/
 say "cloudpkg и portage"
 enter bash /var/tmp/cloudpkg-src/cloudpkg-setup.sh --no-sync
 say "сборка пакетов (1-2 часа на одном ядре, на 8 ядрах около 15 минут)"
-enter bash /var/tmp/s3files/build-inside.sh "$VERSION"
+enter bash /var/tmp/s3files/build-inside.sh "$VERSION" "${STRICT:-0}"
 
 rm -f "$ROOT/etc/resolv.conf"
 NAME=cloudos-stage3-amd64-$VERSION.tar.xz
+
+if [ -s "$ROOT/var/tmp/cloudos-report.txt" ]; then
+  cp "$ROOT/var/tmp/cloudos-report.txt" "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt"
+  printf 'внимание: не собрались пакеты (список в %s):\n' "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt" >&2
+  cat "$ROOT/var/tmp/cloudos-report.txt" >&2
+fi
+rm -f "$ROOT/var/tmp/cloudos-report.txt"
+
+{
+  echo "# cloudos $VERSION stage 3: состав"
+  echo "# собрано вручную (lfs, stage 3), portage их не трогает"
+  grep -v '^#' "$ROOT/etc/portage/profile/package.provided" | sort -u
+  echo "# установлено через cloudpkg (portage)"
+  ( cd "$ROOT/var/db/pkg" 2>/dev/null && for d in */*/; do echo "${d%/}"; done | sort )
+} > "$OUT/cloudos-stage3-amd64-$VERSION.packages.txt"
+
 say "упаковка: $OUT/$NAME"
-tar -C "$ROOT" --numeric-owner -cpf - . | xz -T0 -9 > "$OUT/$NAME"
+tar -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*' -cpf - . | xz -T0 -9 > "$OUT/$NAME"
+
+say "проверка архива"
+LIST=$(mktemp); trap 'rm -f "$LIST"' EXIT
+tar -tf "$OUT/$NAME" > "$LIST"
+miss=0
+for f in sbin/init sbin/openrc-init etc/os-release etc/init.d/syslog-ng etc/runlevels/default/syslog-ng \
+         etc/syslog-ng/syslog-ng.conf usr/bin/fastfetch usr/bin/cloudpkg usr/bin/emerge \
+         usr/share/cloudos/logo.txt usr/share/cloudos/logo.ansi usr/share/cloudos/logo.png \
+         etc/xdg/fastfetch/config.jsonc; do
+  grep -qxE "(\./)?$f" "$LIST" || { printf 'в архиве нет %s\n' "$f" >&2; miss=1; }
+done
+[ "$miss" = 0 ] || die "архив неполный"
+
 ( cd "$OUT" && sha256sum "$NAME" > "$NAME.sha256" )
 say "готово: $OUT/$NAME ($(du -h "$OUT/$NAME" | cut -f1))"
 cat "$OUT/$NAME.sha256"
