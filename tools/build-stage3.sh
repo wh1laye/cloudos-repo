@@ -30,9 +30,13 @@ case $BASE in
   *) BASEFILE=$BASE ;;
 esac
 
-say "распаковка базы в $ROOT"
-rm -rf "$ROOT"; mkdir -p "$ROOT"
-xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*'
+if [ "${RESUME:-0}" = 1 ] && [ -d "$ROOT/var/tmp/s3stamp" ]; then
+  say "RESUME=1: продолжаю в $ROOT, готовые шаги не повторяются"
+else
+  say "распаковка базы в $ROOT"
+  rm -rf "$ROOT"; mkdir -p "$ROOT"
+  xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*'
+fi
 grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на stage 3 cloudos"
 
 if [ "${REFRESH_LIST:-0}" = 1 ]; then
@@ -67,7 +71,10 @@ exec chroot "$R" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/
 }
 
 say "cloudpkg и portage"
-enter bash /var/tmp/cloudpkg-src/cloudpkg-setup.sh --no-sync
+if [ ! -e "$ROOT/var/tmp/s3stamp/cloudpkg-setup" ]; then
+  enter bash /var/tmp/cloudpkg-src/cloudpkg-setup.sh --no-sync
+  mkdir -p "$ROOT/var/tmp/s3stamp"; touch "$ROOT/var/tmp/s3stamp/cloudpkg-setup"
+fi
 say "сборка пакетов (1-2 часа на одном ядре, на 8 ядрах около 15 минут)"
 enter bash /var/tmp/s3files/build-inside.sh "$VERSION" "${STRICT:-0}"
 
