@@ -32,6 +32,7 @@ esac
 
 if [ "${RESUME:-0}" = 1 ] && [ -d "$ROOT/var/tmp/s3stamp" ]; then
   say "RESUME=1: продолжаю в $ROOT, готовые шаги не повторяются"
+  [ -x "$ROOT/usr/bin/ninja" ] && [ ! -L "$ROOT/usr/bin/ninja" ] || die "в $ROOT затёрт ninja, корень испорчен. запусти без RESUME=1"
 else
   say "распаковка базы в $ROOT"
   rm -rf "$ROOT"; mkdir -p "$ROOT"
