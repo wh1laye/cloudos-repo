@@ -3,7 +3,7 @@
 # установленных пакетов (var/db/pkg) прямо из архива, убирает версии и то, что в gentoo-exclude.txt.
 # нужна сеть, скачивается около 250 мб (в файл не сохраняется). запуск:
 #   tools/stage3/refresh-list.sh [файл-результат]
-set -eu
+set -eu -o pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 MIRROR=${GENTOO_MIRROR:-https://distfiles.gentoo.org}
 OUT=${1:-$HERE/gentoo-stage3.list}

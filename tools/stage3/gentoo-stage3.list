@@ -1,7 +1,7 @@
 # пакеты, которые есть в gentoo stage 3 (amd64, openrc), без их пакетного менеджера и их фишек
 # (что исключено и почему: gentoo-exclude.txt). то, что уже собрано в базе cloudos или стоит в
-# package.provided, при сборке пропускается само. список составлен вручную. чтобы взять точный
-# список из настоящего stage 3 gentoo, запусти tools/stage3/refresh-list.sh (нужна сеть).
+# package.provided, при сборке пропускается само. запасной список, на случай если нет сети.
+# по умолчанию build-stage3.sh берёт точный список из настоящего stage 3 gentoo (refresh-list.sh).
 # по одному пакету в строке, # комментарий.
 
 # архивы и сжатие
@@ -14,19 +14,35 @@ app-arch/unzip
 app-arch/xz-utils
 app-arch/zstd
 
-# редакторы, оболочка, сертификаты, ключи
+# редактор и оболочка
 app-editors/nano
 app-shells/bash
-app-misc/ca-certificates
-app-crypt/gnupg
+app-misc/editor-wrapper
 
-# справка (в gentoo stage 3 есть man)
+# сертификаты, ключи и шифрование (библиотеки gnupg отдельными пунктами: так сразу видно, какая упала)
+app-misc/ca-certificates
+dev-libs/libgpg-error
+dev-libs/libassuan
+dev-libs/libgcrypt
+dev-libs/libksba
+dev-libs/npth
+dev-libs/nettle
+dev-libs/libtasn1
+dev-libs/openssl
+net-libs/gnutls
+app-crypt/gnupg
+app-crypt/gpgme
+app-misc/pax-utils
+
+# справка
+dev-libs/libpipeline
 app-text/man-db
+app-text/manpager
 sys-apps/man-pages
 
-# сборка и языки
-app-misc/pax-utils
+# сборка: автотулы, компилятор, интерпретаторы
 dev-build/autoconf
+dev-build/autoconf-archive
 dev-build/automake
 dev-build/libtool
 dev-build/make
@@ -38,32 +54,27 @@ sys-devel/bison
 sys-devel/flex
 sys-devel/gcc
 sys-devel/gettext
+sys-devel/gnuconfig
 sys-devel/m4
 sys-devel/patch
-sys-devel/gnuconfig
+sys-libs/binutils-libs
+dev-libs/gmp
+dev-libs/isl
+dev-libs/mpc
+dev-libs/mpfr
 
 # библиотеки
 dev-libs/expat
-dev-libs/gmp
 dev-libs/libffi
 dev-libs/libpcre2
-dev-libs/libtasn1
 dev-libs/libunistring
-dev-libs/libxcrypt
 dev-libs/libxml2
-dev-libs/mpc
-dev-libs/mpfr
-dev-libs/openssl
 dev-libs/popt
-net-dns/libidn2
-net-libs/gnutls
-net-libs/libmnl
-net-libs/libtirpc
-sys-libs/binutils-libs
 sys-libs/gdbm
 sys-libs/glibc
 sys-libs/libcap
 sys-libs/libseccomp
+sys-libs/libxcrypt
 sys-libs/ncurses
 sys-libs/pam
 sys-libs/readline
@@ -71,6 +82,11 @@ sys-libs/timezone-data
 sys-libs/zlib
 
 # сеть
+net-dns/libidn2
+net-libs/libmnl
+net-libs/libpsl
+net-libs/libtirpc
+net-libs/nghttp2
 net-misc/curl
 net-misc/dhcpcd
 net-misc/iputils
@@ -80,7 +96,7 @@ net-misc/wget
 sys-apps/iproute2
 sys-apps/net-tools
 
-# система и утилиты
+# система
 sys-apps/acl
 sys-apps/attr
 sys-apps/coreutils
