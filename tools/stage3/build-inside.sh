@@ -110,11 +110,66 @@ EOH
   [ "$(meson-format-array "-O2 -pipe")" = "['-O2', '-pipe']" ] || { echo "meson-format-array работает неверно" >&2; return 1; }
 }
 
+# фишки gentoo, которые portage подтягивает зависимостями, а у нас им не место: записываем как уже стоящие.
+# gentoo-functions не собирается (meson не видит ninja), а обёртки autoconf и automake затёрли бы
+# настоящие autoconf и automake из lfs
+do_machinery() {
+  cat >> /etc/portage/profile/package.provided <<EOP
+sys-apps/gentoo-functions-1.7.7
+dev-build/autoconf-wrapper-99999999
+dev-build/automake-wrapper-99999999
+EOP
+  # скрипты gentoo иногда подключают /lib/gentoo/functions.sh: даём лёгкую замену
+  if [ ! -e /lib/gentoo/functions.sh ]; then
+    install -d /lib/gentoo
+    cat > /lib/gentoo/functions.sh <<'EOS'
+# замена gentoo-functions для cloudos
+einfo()  { printf ' * %s\n' "$*"; }
+einfon() { printf ' * %s' "$*"; }
+ewarn()  { printf ' * %s\n' "$*" >&2; }
+eerror() { printf ' * %s\n' "$*" >&2; }
+ebegin() { printf ' * %s ...' "$*"; }
+eend()   { local r=${1:-0}; shift; if [ "$r" = 0 ]; then printf ' [ ok ]\n'; else printf ' [ !! ]\n'; [ -n "${*:-}" ] && eerror "$*"; fi; return "$r"; }
+ewend()  { eend "$@"; }
+eindent() { :; }
+eoutdent() { :; }
+yesno() { case ${1:-} in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) return 0 ;; *) return 1 ;; esac; }
+EOS
+  fi
+  # libxml2: meson не находит readline через pkg-config, а он нужен только для xmllint --shell
+  if [ -d /etc/portage/package.use ]; then
+    echo 'dev-libs/libxml2 -readline' >> /etc/portage/package.use/cloudos
+  else
+    echo 'dev-libs/libxml2 -readline' >> /etc/portage/package.use
+  fi
+}
+
+# после каждого пакета проверяем, что инструменты сборки живы (portage мог затереть их файлом gentoo)
+tools_ok() {
+  local bad="" t
+  for t in ninja meson autoconf automake pkg-config gcc bash tar python3 make; do
+    "$t" --version >/dev/null 2>&1 || bad="$bad $t"
+  done
+  [ -z "$bad" ] && return 0
+  echo "$bad"; return 1
+}
+
+preflight() {
+  say "состояние перед установкой пакетов"
+  local t
+  for t in ninja meson pkg-config autoconf automake; do
+    printf '%-11s %s -> %s\n' "$t" "$(command -v $t || echo НЕТ)" "$($t --version 2>&1 | head -n 1)"
+  done
+  pkg-config --print-errors --modversion readline 2>&1 | head -n 3 || true
+  ls -l "$(command -v ninja)" 2>&1 || true
+}
+
 # весь набор пакетов из gentoo stage 3 (кроме пакетного менеджера и фишек gentoo, см. gentoo-exclude.txt).
 # один пакет не собрался: пишем в отчёт и идём дальше, итог в конце (с STRICT=1 это ошибка сборки)
 do_gentoo_set() {
-  local rep=/var/tmp/cloudos-report.txt L=/var/tmp/s3log a n=0 ok=0 have=0 skip=0 fail=0
+  local rep=/var/tmp/cloudos-report.txt L=/var/tmp/s3log a bad n=0 ok=0 have=0 skip=0 fail=0
   mkdir -p "$L"; : > "$rep"
+  preflight
   while read -r a _; do
     case $a in ''|'#'*) continue ;; esac
     n=$((n + 1))
@@ -128,6 +183,12 @@ do_gentoo_set() {
       printf '!! не собрался %s. главное из лога:\n' "$a"
       grep -E 'not found|No such file|rror:|ERROR|undefined|cannot|failed' "$L/${a//\//_}.log" | grep -v 'Called ' | head -n 6
       echo "   (полный лог: $L/${a//\//_}.log)"
+      echo "   что он тянет за собой:"
+      emerge -pvq --noreplace "$a" < /dev/null 2>&1 | grep -E '^\[(ebuild|binary)' | head -n 12 || true
+    fi
+    if ! bad=$(tools_ok); then
+      printf '!! после %s сломались инструменты сборки:%s\nсборка остановлена, чтобы не плодить ошибки. покажи этот текст\n' "$a" "$bad" >&2
+      return 1
     fi
   done < "$F/gentoo-stage3.list"
   say "пакеты gentoo stage 3: в списке $n, уже были $have, исключено $skip, поставлено $ok, ошибок $fail"
@@ -173,6 +234,7 @@ step limine do_limine
 step sysklogd-to-syslog-ng do_logger
 step package.provided do_provided
 step meson-helper do_meson_helper
+step machinery do_machinery
 step gentoo-stage3-set do_gentoo_set
 step verify do_verify
 
