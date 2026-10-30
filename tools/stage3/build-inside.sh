@@ -144,14 +144,57 @@ EOS
   fi
 }
 
-# после каждого пакета проверяем, что инструменты сборки живы (portage мог затереть их файлом gentoo)
+# проверка, что инструменты сборки живы. при поломке показываем, что именно сказала команда
 tools_ok() {
-  local bad="" t
+  local bad="" t out
+  hash -r
   for t in ninja meson autoconf automake pkg-config gcc bash tar python3 make; do
-    "$t" --version >/dev/null 2>&1 || bad="$bad $t"
+    if ! out=$("$t" --version 2>&1); then
+      bad="$bad
+   $t: $(printf '%s' "$out" | head -n 2 | tr '\n' ' ')
+   файл: $(ls -l "$(command -v "$t" 2>/dev/null)" 2>&1)
+   библиотеки: $(ldd "$(command -v "$t" 2>/dev/null)" 2>&1 | grep -i 'not found' | tr '\n' ' ')"
+    fi
   done
   [ -z "$bad" ] && return 0
-  echo "$bad"; return 1
+  printf '%s\n' "$bad"; return 1
+}
+
+STRIPV='s/-[0-9]+(\.[0-9]+)*[a-z]?(_(alpha|beta|pre|rc|p)[0-9]*)*(-r[0-9]+)?$//'
+
+# portage иногда хочет пересобрать то, что уже стоит из lfs (из-за новых версий и флагов abi).
+# смотрим план: если в нём пакет, который у нас уже есть (package.provided) или фишка gentoo,
+# записываем его как установленный и не пересобираем
+provide_planned() {
+  local a=$1 PP=/etc/portage/profile/package.provided i p name ok changed
+  for i in 1 2 3 4; do
+    changed=0
+    while read -r p; do
+      [ -n "$p" ] || continue
+      name=$(printf '%s\n' "$p" | sed -E "$STRIPV")
+      [ "$name" = "$a" ] && continue
+      case $name in
+        sys-apps/gentoo-functions|app-alternatives/*|dev-build/*-wrapper) ok=1 ;;
+        *) ok=0; sed -E "$STRIPV" "$PP" | grep -qxF "$name" && ok=1 ;;
+      esac
+      if [ "$ok" = 1 ]; then
+        echo "$p" >> "$PP"; say "уже есть в системе, не пересобираю: $p"; changed=1
+      fi
+    done < <(emerge -pvq --noreplace "$a" < /dev/null 2>/dev/null | sed -nE 's/^\[(ebuild|binary)[^]]*\] +([^ ]+).*/\2/p')
+    [ "$changed" = 1 ] || break
+  done
+  return 0
+}
+
+# scanelf из pax-utils нужен самому portage (без него estrip и проверки ругаются)
+do_paxutils() {
+  mkdir -p /var/tmp/s3log
+  command -v scanelf >/dev/null && return 0
+  provide_planned app-misc/pax-utils
+  cloudpkg install app-misc/pax-utils < /dev/null > /var/tmp/s3log/pax-utils.log 2>&1 \
+    || { echo "!! pax-utils не собрался:"; tail -n 15 /var/tmp/s3log/pax-utils.log; }
+  command -v scanelf >/dev/null || echo "!! scanelf не появился, продолжаю без него"
+  return 0
 }
 
 preflight() {
@@ -176,19 +219,20 @@ do_gentoo_set() {
     if excluded "$a"; then skip=$((skip + 1)); continue; fi
     if have_pkg "$a"; then have=$((have + 1)); continue; fi
     say "gentoo stage 3: $a ($n)"
+    provide_planned "$a"
     if MAKEOPTS="-j$J" cloudpkg install "$a" < /dev/null > "$L/${a//\//_}.log" 2>&1; then
       ok=$((ok + 1))
     else
       fail=$((fail + 1)); echo "$a" >> "$rep"
       printf '!! не собрался %s. главное из лога:\n' "$a"
-      grep -E 'not found|No such file|rror:|ERROR|undefined|cannot|failed' "$L/${a//\//_}.log" | grep -v 'Called ' | head -n 6
+      grep -E 'not found|No such file|rror:|ERROR|undefined|cannot|failed' "$L/${a//\//_}.log" | grep -v -e 'Called ' -e scanelf | tail -n 8
       echo "   (полный лог: $L/${a//\//_}.log)"
       echo "   что он тянет за собой:"
       emerge -pvq --noreplace "$a" < /dev/null 2>&1 | grep -E '^\[(ebuild|binary)' | head -n 12 || true
     fi
     if ! bad=$(tools_ok); then
-      printf '!! после %s сломались инструменты сборки:%s\nсборка остановлена, чтобы не плодить ошибки. покажи этот текст\n' "$a" "$bad" >&2
-      return 1
+      printf '!! после %s не работают инструменты сборки:%s\n' "$a" "$bad" >&2
+      echo "после $a сломано:$bad" >> "$rep"
     fi
   done < "$F/gentoo-stage3.list"
   say "пакеты gentoo stage 3: в списке $n, уже были $have, исключено $skip, поставлено $ok, ошибок $fail"
@@ -215,6 +259,7 @@ do_verify() {
   [ ! -e /etc/init.d/sysklogd ] || { echo "!! остался sysklogd"; bad=1; }
   syslog-ng -s -f /etc/syslog-ng/syslog-ng.conf || { echo "!! конфиг syslog-ng не проходит проверку"; bad=1; }
   fastfetch --version || bad=1
+  tools_ok || { echo "!! сломаны инструменты сборки"; bad=1; }
   say "так выглядит fastfetch в этом stage 3:"
   fastfetch --pipe false || true
   [ "$bad" = 0 ] || { echo "проверка не пройдена" >&2; return 1; }
@@ -235,6 +280,7 @@ step sysklogd-to-syslog-ng do_logger
 step package.provided do_provided
 step meson-helper do_meson_helper
 step machinery do_machinery
+step pax-utils do_paxutils
 step gentoo-stage3-set do_gentoo_set
 step verify do_verify
 

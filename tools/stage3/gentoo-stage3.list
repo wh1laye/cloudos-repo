@@ -25,6 +25,7 @@ app-text/man-db
 sys-apps/man-pages
 
 # сборка и языки
+app-misc/pax-utils
 dev-build/autoconf
 dev-build/automake
 dev-build/libtool
