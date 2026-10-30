@@ -4,12 +4,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 #include <dirent.h>
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#define VERSION "0.4"
+#define VERSION "0.5"
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
 #define INSTALL_URL "https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh"
 #define OVERLAY "/var/db/repos/cloudos"
@@ -302,11 +303,16 @@ static char *resolve(char *name)
 	return res;
 }
 
-static void fail_hint(void)
+static void fail_hint(time_t t0)
 {
-	FILE *f = popen("find /var/tmp/portage -name build.log -mmin -120 -printf '%T@ %p\\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-", "r");
-	char path[BUF], cmd[BUF + 40];
+	char find[BUF], path[BUF], cmd[BUF + 40];
+	FILE *f;
 
+	snprintf(find, sizeof find,
+		 "find /var/tmp/portage -name build.log -newermt @%ld -printf '%%T@ %%p\\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-",
+		 (long)t0);
+	f = popen(find, "r");
+	path[0] = 0;
 	if (f && fgets(path, sizeof path, f)) {
 		trim(path);
 		if (*path) {
@@ -318,6 +324,8 @@ static void fail_hint(void)
 	}
 	if (f)
 		pclose(f);
+	if (!*path)
+		fprintf(stderr, "\ncloudpkg: до сборки дело не дошло: смотри сообщения emerge выше (маски, блокировки, зависимости)\n");
 	fprintf(stderr, "cloudpkg: проверь сеть (cloudpkg sync), имя пакета (cloudpkg search имя) и cloudpkg doctor\n");
 }
 
@@ -335,6 +343,7 @@ static int emerge(char **pre, int npre, char **pk, int npk)
 {
 	char **av = calloc(npre + npk + 2, sizeof *av);
 	int i, n = 0, r;
+	time_t t0 = time(NULL);
 
 	if (!need_portage()) {
 		free(av);
@@ -349,7 +358,7 @@ static int emerge(char **pre, int npre, char **pk, int npk)
 	r = run(av);
 	free(av);
 	if (r != 0 && geteuid() == 0)
-		fail_hint();
+		fail_hint(t0);
 	return r;
 }
 
