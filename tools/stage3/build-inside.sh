@@ -97,6 +97,19 @@ have_pkg() {
   awk -v a="$1-" 'index($0, a) == 1 { f = 1 } END { exit !f }' /etc/portage/profile/package.provided
 }
 
+# в gentoo этот скрипт ставит их пакет meson, а у нас meson собран вручную. без него падают все meson-пакеты
+do_meson_helper() {
+  command -v meson-format-array >/dev/null && return 0
+  cat > /usr/bin/meson-format-array <<'EOH'
+#!/usr/bin/env python3
+import shlex, sys
+def q(s): return "'" + s.replace("\\", "\\\\").replace("'", "\\'") + "'"
+print("[" + ", ".join(q(x) for x in shlex.split(" ".join(sys.argv[1:]))) + "]")
+EOH
+  chmod 755 /usr/bin/meson-format-array
+  [ "$(meson-format-array "-O2 -pipe")" = "['-O2', '-pipe']" ] || { echo "meson-format-array работает неверно" >&2; return 1; }
+}
+
 # весь набор пакетов из gentoo stage 3 (кроме пакетного менеджера и фишек gentoo, см. gentoo-exclude.txt).
 # один пакет не собрался: пишем в отчёт и идём дальше, итог в конце (с STRICT=1 это ошибка сборки)
 do_gentoo_set() {
@@ -112,7 +125,9 @@ do_gentoo_set() {
       ok=$((ok + 1))
     else
       fail=$((fail + 1)); echo "$a" >> "$rep"
-      printf '!! не собрался %s, хвост лога:\n' "$a"; tail -n 25 "$L/${a//\//_}.log"
+      printf '!! не собрался %s. главное из лога:\n' "$a"
+      grep -E 'not found|No such file|rror:|ERROR|undefined|cannot|failed' "$L/${a//\//_}.log" | grep -v 'Called ' | head -n 6
+      echo "   (полный лог: $L/${a//\//_}.log)"
     fi
   done < "$F/gentoo-stage3.list"
   say "пакеты gentoo stage 3: в списке $n, уже были $have, исключено $skip, поставлено $ok, ошибок $fail"
@@ -157,6 +172,7 @@ step fastfetch do_fastfetch
 step limine do_limine
 step sysklogd-to-syslog-ng do_logger
 step package.provided do_provided
+step meson-helper do_meson_helper
 step gentoo-stage3-set do_gentoo_set
 step verify do_verify
 
