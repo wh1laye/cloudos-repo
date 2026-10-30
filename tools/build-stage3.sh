@@ -40,10 +40,18 @@ else
 fi
 grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на stage 3 cloudos"
 
-if [ "${REFRESH_LIST:-0}" = 1 ]; then
-  say "список пакетов из настоящего stage 3 gentoo"
-  "$HERE/stage3/refresh-list.sh" "$WORK/gentoo-stage3.list" && cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list" \
-    || printf 'предупреждение: список не обновился, беру тот, что лежит в репозитории\n' >&2
+# REFRESH_LIST: 1 (по умолчанию) берёт список из настоящего stage 3 gentoo и запоминает его в $WORK,
+# force скачивает заново, 0 берёт список из репозитория. при ошибке сети остаётся список из репозитория
+REFRESH_LIST=${REFRESH_LIST:-1}
+if [ "$REFRESH_LIST" != 0 ]; then
+  if [ "$REFRESH_LIST" != force ] && [ -s "$WORK/gentoo-stage3.list" ]; then
+    say "список пакетов: беру сохранённый $WORK/gentoo-stage3.list (REFRESH_LIST=force скачает заново)"
+    cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list"
+  else
+    say "список пакетов из настоящего stage 3 gentoo"
+    "$HERE/stage3/refresh-list.sh" "$WORK/gentoo-stage3.list" && cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list" \
+      || printf 'предупреждение: список не обновился, беру тот, что лежит в репозитории\n' >&2
+  fi
 fi
 
 say "исходники (sha256 сверяются)"
@@ -77,7 +85,8 @@ if [ ! -e "$ROOT/var/tmp/s3stamp/cloudpkg-setup" ]; then
   mkdir -p "$ROOT/var/tmp/s3stamp"; touch "$ROOT/var/tmp/s3stamp/cloudpkg-setup"
 fi
 say "сборка пакетов (1-2 часа на одном ядре, на 8 ядрах около 15 минут)"
-enter bash /var/tmp/s3files/build-inside.sh "$VERSION" "${STRICT:-0}"
+enter bash /var/tmp/s3files/build-inside.sh "$VERSION" "${STRICT:-0}" \
+  || die "сборка внутри chroot оборвалась. причина выше. исправь и запусти снова с RESUME=1 (готовые шаги не повторятся)"
 
 rm -f "$ROOT/etc/resolv.conf"
 NAME=cloudos-stage3-amd64-$VERSION.tar.xz
@@ -98,7 +107,8 @@ rm -f "$ROOT/var/tmp/cloudos-report.txt"
 } > "$OUT/cloudos-stage3-amd64-$VERSION.packages.txt"
 
 say "упаковка: $OUT/$NAME"
-tar -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*' -cpf - . | xz -T0 -9 > "$OUT/$NAME"
+tar -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*' \
+  --exclude=./var/tmp/s3stamp --exclude=./var/tmp/s3log --exclude=./var/tmp/portage/* -cpf - . | xz -T0 -9 > "$OUT/$NAME"
 
 say "проверка архива"
 LIST=$(mktemp); trap 'rm -f "$LIST"' EXIT
@@ -108,7 +118,7 @@ for f in sbin/init sbin/openrc-init etc/os-release etc/init.d/syslog-ng etc/runl
          etc/syslog-ng/syslog-ng.conf usr/bin/fastfetch usr/bin/cloudpkg usr/bin/emerge \
          usr/share/cloudos/logo.txt usr/share/cloudos/logo.ansi usr/share/cloudos/logo.png \
          etc/xdg/fastfetch/config.jsonc; do
-  grep -qxE "(\./)?$f" "$LIST" || { printf 'в архиве нет %s\n' "$f" >&2; miss=1; }
+  grep -qxE "(\./)?(usr/)?$f" "$LIST" || { printf 'в архиве нет %s\n' "$f" >&2; miss=1; }
 done
 [ "$miss" = 0 ] || die "архив неполный"
 
