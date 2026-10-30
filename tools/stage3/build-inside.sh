@@ -114,11 +114,15 @@ EOH
 # gentoo-functions не собирается (meson не видит ninja), а обёртки autoconf и automake затёрли бы
 # настоящие autoconf и automake из lfs
 do_machinery() {
-  cat >> /etc/portage/profile/package.provided <<EOP
-sys-apps/gentoo-functions-1.7.7
-dev-build/autoconf-wrapper-99999999
-dev-build/automake-wrapper-99999999
-EOP
+  local n PP=/etc/portage/profile/package.provided
+  {
+    echo sys-apps/gentoo-functions-1.7.7
+    echo dev-build/autoconf-wrapper-99999999
+    echo dev-build/automake-wrapper-99999999
+    echo dev-build/meson-format-array-99
+    # app-alternatives кладут ссылки поверх настоящих файлов (ninja, awk, sh...) и ломают систему
+    for n in awk bc bzip2 cpio gpg gzip lex ninja sh tar yacc zstd; do echo "app-alternatives/$n-99"; done
+  } | while read -r n; do grep -qxF "$n" "$PP" || echo "$n" >> "$PP"; done
   # скрипты gentoo иногда подключают /lib/gentoo/functions.sh: даём лёгкую замену
   if [ ! -e /lib/gentoo/functions.sh ]; then
     install -d /lib/gentoo
@@ -142,6 +146,28 @@ EOS
   else
     echo 'dev-libs/libxml2 -readline' >> /etc/portage/package.use
   fi
+}
+
+# portage умеет затирать ninja и meson-format-array (ссылки app-alternatives и т.п.).
+# держим запасные копии и возвращаем файлы на место, записывая, после какого пакета это случилось
+KEEP=/usr/lib/cloudos-keep
+keep_helpers() {
+  local f
+  mkdir -p "$KEEP"
+  for f in ninja meson-format-array; do
+    if [ -x "/usr/bin/$f" ] && [ ! -L "/usr/bin/$f" ] && [ ! -e "$KEEP/$f" ]; then cp -a "/usr/bin/$f" "$KEEP/$f"; fi
+  done
+}
+restore_helpers() {
+  local f
+  for f in ninja meson-format-array; do
+    [ -e "$KEEP/$f" ] || continue
+    if [ -L "/usr/bin/$f" ] || [ ! -x "/usr/bin/$f" ]; then
+      rm -f "/usr/bin/$f"; cp -a "$KEEP/$f" "/usr/bin/$f"
+      say "!! $f пропал ($1), вернул на место"
+      echo "$f пропал: $1" >> /var/tmp/cloudos-helpers.txt
+    fi
+  done
 }
 
 # проверка, что инструменты сборки живы. при поломке показываем, что именно сказала команда
@@ -189,10 +215,13 @@ provide_planned() {
 # scanelf из pax-utils нужен самому portage (без него estrip и проверки ругаются)
 do_paxutils() {
   mkdir -p /var/tmp/s3log
+  keep_helpers
   command -v scanelf >/dev/null && return 0
+  restore_helpers "перед pax-utils"
   provide_planned app-misc/pax-utils
   cloudpkg install app-misc/pax-utils < /dev/null > /var/tmp/s3log/pax-utils.log 2>&1 \
     || { echo "!! pax-utils не собрался:"; tail -n 15 /var/tmp/s3log/pax-utils.log; }
+  restore_helpers "после pax-utils"
   command -v scanelf >/dev/null || echo "!! scanelf не появился, продолжаю без него"
   return 0
 }
@@ -212,6 +241,7 @@ preflight() {
 do_gentoo_set() {
   local rep=/var/tmp/cloudos-report.txt L=/var/tmp/s3log a bad n=0 ok=0 have=0 skip=0 fail=0
   mkdir -p "$L"; : > "$rep"
+  keep_helpers
   preflight
   while read -r a _; do
     case $a in ''|'#'*) continue ;; esac
@@ -219,6 +249,7 @@ do_gentoo_set() {
     if excluded "$a"; then skip=$((skip + 1)); continue; fi
     if have_pkg "$a"; then have=$((have + 1)); continue; fi
     say "gentoo stage 3: $a ($n)"
+    restore_helpers "перед $a"
     provide_planned "$a"
     if MAKEOPTS="-j$J" cloudpkg install "$a" < /dev/null > "$L/${a//\//_}.log" 2>&1; then
       ok=$((ok + 1))
@@ -230,6 +261,7 @@ do_gentoo_set() {
       echo "   что он тянет за собой:"
       emerge -pvq --noreplace "$a" < /dev/null 2>&1 | grep -E '^\[(ebuild|binary)' | head -n 12 || true
     fi
+    restore_helpers "после $a"
     if ! bad=$(tools_ok); then
       printf '!! после %s не работают инструменты сборки:%s\n' "$a" "$bad" >&2
       echo "после $a сломано:$bad" >> "$rep"
@@ -280,10 +312,10 @@ step sysklogd-to-syslog-ng do_logger
 step package.provided do_provided
 step meson-helper do_meson_helper
 step machinery do_machinery
-step pax-utils do_paxutils
+do_paxutils || true
 step gentoo-stage3-set do_gentoo_set
 step verify do_verify
 
 say "уборка"
-rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/* /var/tmp/s3* /var/tmp/cloudpkg-src /root/.cache /tmp/* /etc/resolv.conf /.cloudpkg-box /var/log/portage /var/log/emerge*.log
+rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/* /var/tmp/s3* /var/tmp/cloudpkg-src /root/.cache /tmp/* /etc/resolv.conf /.cloudpkg-box /var/log/portage /var/log/emerge*.log /usr/lib/cloudos-keep
 say "готово"
