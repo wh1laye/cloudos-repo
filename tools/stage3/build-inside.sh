@@ -176,7 +176,7 @@ do_gentoo_set() {
     if excluded "$a"; then skip=$((skip + 1)); continue; fi
     if have_pkg "$a"; then have=$((have + 1)); continue; fi
     say "gentoo stage 3: $a ($n)"
-    if cloudpkg install "$a" < /dev/null > "$L/${a//\//_}.log" 2>&1; then
+    if MAKEOPTS="-j$J" cloudpkg install "$a" < /dev/null > "$L/${a//\//_}.log" 2>&1; then
       ok=$((ok + 1))
     else
       fail=$((fail + 1)); echo "$a" >> "$rep"
