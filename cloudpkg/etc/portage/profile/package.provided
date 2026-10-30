@@ -14,7 +14,6 @@ sys-devel/gettext-0.26
 sys-devel/libtool-2.5.4
 dev-build/libtool-2.5.4
 sys-devel/patch-2.8
-sys-devel/gnuconfig-20240101
 dev-build/autoconf-2.72
 dev-build/automake-1.18.1
 dev-lang/perl-5.42.0
