@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#define VERSION "0.6"
+#define VERSION "0.7"
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
 #define INSTALL_URL "https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh"
 #define OVERLAY "/var/db/repos/cloudos"
@@ -20,6 +20,13 @@
 #ifndef ENVDIR
 #define ENVDIR "/etc/portage/env"
 #endif
+#ifndef PENV
+#define PENV "/etc/portage/package.env"
+#endif
+#ifndef VDB
+#define VDB "/var/db/pkg"
+#endif
+#define NOHOOK "cloudos-noreconf"
 
 static char *mirrors[MAXM];
 static int nmir;
@@ -222,17 +229,6 @@ static void mkparent(const char *path)
 	run(a);
 }
 
-static const char noreconf_hook[] =
-"pre_src_prepare() {\n"
-"eautoreconf() { :; }\n"
-"eaclocal() { :; }\n"
-"eautoconf() { :; }\n"
-"eautoheader() { :; }\n"
-"eautomake() { :; }\n"
-"elibtoolize() { :; }\n"
-"_elibtoolize() { :; }\n"
-"}\n";
-
 static int env_bad(const char *p)
 {
 	pid_t pid = fork();
@@ -254,7 +250,7 @@ static int env_bad(const char *p)
 	return WEXITSTATUS(st) == 1 || WEXITSTATUS(st) == 2;
 }
 
-static int env_is_hook(const char *p)
+static int file_has(const char *p, const char *needle)
 {
 	char b[4096];
 	size_t n;
@@ -265,17 +261,14 @@ static int env_is_hook(const char *p)
 	n = fread(b, 1, sizeof b - 1, f);
 	fclose(f);
 	b[n] = 0;
-	return strstr(b, "eautoreconf") != NULL;
+	return strstr(b, needle) != NULL;
 }
 
-static void env_rewrite(const char *p)
+static int env_is_legacy(const char *name, const char *p)
 {
-	FILE *f = fopen(p, "w");
-
-	if (!f)
-		return;
-	fputs(noreconf_hook, f);
-	fclose(f);
+	if (!strcmp(name, NOHOOK))
+		return 1;
+	return file_has(p, "pre_src_prepare") && file_has(p, "eautoreconf() { :; }");
 }
 
 static int env_scan(const char *dir, int fix, int depth)
@@ -285,7 +278,7 @@ static int env_scan(const char *dir, int fix, int depth)
 	struct stat st;
 	char p[BUF], bak[BUF + 8];
 	size_t n;
-	int bad = 0, hook;
+	int bad = 0, legacy;
 
 	if (!d)
 		return 0;
@@ -303,27 +296,222 @@ static int env_scan(const char *dir, int fix, int depth)
 				bad += env_scan(p, fix, depth + 1);
 			continue;
 		}
-		if (!S_ISREG(st.st_mode) || !env_bad(p))
+		if (!S_ISREG(st.st_mode))
+			continue;
+		legacy = env_is_legacy(e->d_name, p);
+		if (!legacy && !env_bad(p))
 			continue;
 		bad++;
-		if (!fix)
+		if (!fix || !legacy)
 			continue;
-		hook = env_is_hook(p);
 		snprintf(bak, sizeof bak, "%s.bak", p);
-		if (rename(p, bak) != 0)
-			continue;
-		fprintf(stderr, "cloudpkg: ошибка синтаксиса в %s, старый файл: %s\n", p, bak);
-		if (hook)
-			env_rewrite(p);
+		if (rename(p, bak) == 0)
+			fprintf(stderr, "cloudpkg: убрал устаревший хук %s, копия: %s\n", p, bak);
 	}
 	closedir(d);
 	return bad;
 }
 
-static void heal_env(void)
+static int penv_file(const char *p, int fix)
 {
-	if (geteuid() == 0)
-		env_scan(ENVDIR, 1, 0);
+	char line[BUF], tmp[BUF + 4];
+	FILE *f = fopen(p, "r"), *o = NULL;
+	int hit = 0;
+
+	if (!f)
+		return 0;
+	snprintf(tmp, sizeof tmp, "%s~", p);
+	if (fix)
+		o = fopen(tmp, "w");
+	while (fgets(line, sizeof line, f)) {
+		if (strstr(line, NOHOOK)) {
+			hit++;
+			continue;
+		}
+		if (o)
+			fputs(line, o);
+	}
+	fclose(f);
+	if (o) {
+		if (fclose(o) != 0 || !hit)
+			unlink(tmp);
+		else if (rename(tmp, p) == 0)
+			fprintf(stderr, "cloudpkg: убрал %d строк про %s из %s\n", hit, NOHOOK, p);
+	}
+	return hit;
+}
+
+static int penv_clean(int fix)
+{
+	struct stat st;
+	struct dirent *e;
+	char p[BUF];
+	DIR *d;
+	int n = 0;
+
+	if (stat(PENV, &st) != 0)
+		return 0;
+	if (!S_ISDIR(st.st_mode))
+		return penv_file(PENV, fix);
+	d = opendir(PENV);
+	if (!d)
+		return 0;
+	while ((e = readdir(d))) {
+		if (e->d_name[0] == '.')
+			continue;
+		snprintf(p, sizeof p, "%s/%s", PENV, e->d_name);
+		if (stat(p, &st) == 0 && S_ISREG(st.st_mode))
+			n += penv_file(p, fix);
+	}
+	closedir(d);
+	return n;
+}
+
+struct stub {
+	const char *name;
+	const char *cmd;
+	int comps;
+};
+
+static const struct stub stubs[] = {
+	{ "autoconf", "autoconf", 2 },
+	{ "automake", "automake", 2 },
+	{ "libtool", "libtoolize", 1 },
+};
+
+#define NSTUB ((int)(sizeof stubs / sizeof *stubs))
+
+static int probe_ver(const char *cmd, char *ver, size_t n)
+{
+	char c[BUF], line[BUF], *t, *s;
+	FILE *f;
+	int ok = 0;
+
+	snprintf(c, sizeof c, "%s --version 2>/dev/null", cmd);
+	f = popen(c, "r");
+	if (!f)
+		return 0;
+	if (fgets(line, sizeof line, f)) {
+		t = trim(line);
+		s = strrchr(t, ' ');
+		if (s)
+			t = s + 1;
+		ok = *t >= '0' && *t <= '9' && strlen(t) < n && strspn(t, "0123456789.") == strlen(t);
+		if (ok)
+			snprintf(ver, n, "%s", t);
+	}
+	pclose(f);
+	return ok;
+}
+
+static int vdb_has(const char *name)
+{
+	char p[BUF], pre[128];
+	struct dirent *e;
+	DIR *d;
+	size_t n;
+	int r = 0;
+
+	snprintf(p, sizeof p, "%s/dev-build", VDB);
+	d = opendir(p);
+	if (!d)
+		return 0;
+	n = snprintf(pre, sizeof pre, "%s-", name);
+	while ((e = readdir(d)))
+		if (!strncmp(e->d_name, pre, n) && e->d_name[n] >= '0' && e->d_name[n] <= '9') {
+			r = 1;
+			break;
+		}
+	closedir(d);
+	return r;
+}
+
+static void put(const char *dir, const char *name, const char *val)
+{
+	char p[BUF];
+	FILE *f;
+
+	snprintf(p, sizeof p, "%s/%s", dir, name);
+	f = fopen(p, "w");
+	if (!f)
+		return;
+	fputs(val, f);
+	fclose(f);
+}
+
+static int stub_make(const struct stub *s, const char *ver)
+{
+	char dir[BUF], pf[128], slot[32], t[160];
+	char *a[4];
+	int i, k = 0;
+
+	for (i = 0; ver[i] && i < (int)sizeof slot - 1; i++) {
+		if (ver[i] == '.' && ++k == s->comps)
+			break;
+		slot[i] = ver[i];
+	}
+	slot[i] = 0;
+	snprintf(pf, sizeof pf, "%s-%s", s->name, ver);
+	snprintf(dir, sizeof dir, "%s/dev-build/%s", VDB, pf);
+	a[0] = "mkdir"; a[1] = "-p"; a[2] = dir; a[3] = NULL;
+	if (run(a) != 0)
+		return 1;
+	put(dir, "CATEGORY", "dev-build\n");
+	snprintf(t, sizeof t, "%s\n", pf);
+	put(dir, "PF", t);
+	snprintf(t, sizeof t, "%s\n", slot);
+	put(dir, "SLOT", t);
+	put(dir, "EAPI", "8\n");
+	put(dir, "repository", "gentoo\n");
+	put(dir, "COUNTER", "1\n");
+	snprintf(t, sizeof t, "%ld\n", (long)time(NULL));
+	put(dir, "BUILD_TIME", t);
+	put(dir, "SIZE", "0\n");
+	put(dir, "DEFINED_PHASES", "-\n");
+	put(dir, "KEYWORDS", "amd64\n");
+	put(dir, "DESCRIPTION", "cloudos: собрано вручную в lfs, запись нужна eclass autotools\n");
+	put(dir, "CONTENTS", "");
+	put(dir, "USE", "");
+	put(dir, "IUSE", "");
+	put(dir, "DEPEND", "");
+	put(dir, "RDEPEND", "");
+	put(dir, "CLOUDOS_STUB", "1\n");
+	return 0;
+}
+
+static void heal_vdb(void)
+{
+	char ver[32];
+	int i;
+
+	if (geteuid() != 0)
+		return;
+	for (i = 0; i < NSTUB; i++) {
+		if (vdb_has(stubs[i].name) || !probe_ver(stubs[i].cmd, ver, sizeof ver))
+			continue;
+		if (stub_make(&stubs[i], ver) == 0)
+			fprintf(stderr, "cloudpkg: %s-%s записан в базу установленных (собран в lfs)\n", stubs[i].name, ver);
+	}
+}
+
+static int vdb_ok(void)
+{
+	char ver[32];
+	int i;
+
+	for (i = 0; i < NSTUB; i++)
+		if (!vdb_has(stubs[i].name) && probe_ver(stubs[i].cmd, ver, sizeof ver))
+			return 0;
+	return 1;
+}
+
+static void heal(void)
+{
+	if (geteuid() != 0)
+		return;
+	env_scan(ENVDIR, 1, 0);
+	penv_clean(1);
+	heal_vdb();
 }
 
 static int cmd_sync(void);
@@ -428,6 +616,9 @@ static void fail_hint(time_t t0)
 			snprintf(cmd, sizeof cmd, "tail -n 25 '%s' >&2", path);
 			if (system(cmd) < 0)
 				perror("cloudpkg: tail");
+			snprintf(cmd, sizeof cmd, "grep -q 'Cannot find the latest' '%s'", path);
+			if (system(cmd) == 0)
+				fprintf(stderr, "cloudpkg: eclass не видит autotools. выполни cloudpkg vdb и повтори установку\n");
 		}
 	}
 	if (f)
@@ -457,7 +648,7 @@ static int emerge(char **pre, int npre, char **pk, int npk)
 		free(av);
 		return 1;
 	}
-	heal_env();
+	heal();
 	av[n++] = "emerge";
 	for (i = 0; i < npre; i++)
 		av[n++] = pre[i];
@@ -541,7 +732,7 @@ static int cmd_sync(void)
 
 	if (!need_root())
 		return 1;
-	heal_env();
+	heal();
 	snprintf(part, sizeof part, "%s/portage-latest.part", dist);
 	snprintf(fin, sizeof fin, "%s/portage-latest.tar.xz", dist);
 	snprintf(nw, sizeof nw, "%s.new", repo);
@@ -708,6 +899,7 @@ static int cmd_clean(int argc, char **argv)
 	if (!need_root())
 		return 1;
 	r = emerge(pre, npre, NULL, 0);
+	heal_vdb();
 	if (pretend)
 		return r;
 	a[0] = "find"; a[1] = dist; a[2] = "-mindepth"; a[3] = "1"; a[4] = "-delete"; a[5] = NULL;
@@ -780,6 +972,23 @@ static int cmd_list(void)
 	return 0;
 }
 
+static int cmd_vdb(void)
+{
+	char ver[32];
+	int i;
+
+	if (!need_root())
+		return 1;
+	heal_vdb();
+	for (i = 0; i < NSTUB; i++) {
+		if (!probe_ver(stubs[i].cmd, ver, sizeof ver))
+			printf("%-10s нет в системе\n", stubs[i].name);
+		else
+			printf("%-10s %-8s %s\n", stubs[i].name, ver, vdb_has(stubs[i].name) ? "в базе" : "НЕ В БАЗЕ");
+	}
+	return vdb_ok() ? 0 : 1;
+}
+
 static void row(const char *name, const char *val)
 {
 	int w = 0;
@@ -812,7 +1021,9 @@ static int cmd_doctor(void)
 	bad += !check("make.conf", exists("/etc/portage/make.conf"));
 	bad += !check("профиль (make.profile)", exists("/etc/portage/make.profile"));
 	bad += !check("package.provided", exists("/etc/portage/profile/package.provided"));
-	bad += !check("синтаксис /etc/portage/env", env_scan(ENVDIR, 0, 0) == 0);
+	bad += !check("хуки и синтаксис /etc/portage/env", env_scan(ENVDIR, 0, 0) == 0);
+	bad += !check("package.env без cloudos-noreconf", penv_clean(0) == 0);
+	bad += !check("autotools в базе установленных", vdb_ok());
 	bad += !check("curl", have("curl"));
 	bad += !check("tar", have("tar"));
 	bad += !check("xz", have("xz"));
@@ -833,6 +1044,7 @@ static void usage(void)
 	     "  info    пакет         показать, что будет установлено\n"
 	     "  list                  список установленных пакетов\n"
 	     "  doctor                проверить настройку\n"
+	     "  vdb                   записать autotools из lfs в базу установленных\n"
 	     "  version, help\n\n"
 	     "-p пробный запуск, -a спросить перед установкой, -o не добавлять в world,\n"
 	     "-t разрешить testing (~amd64). остальные параметры с дефисом уходят в emerge.");
@@ -866,6 +1078,8 @@ int main(int argc, char **argv)
 		return cmd_list();
 	if (!strcmp(c, "doctor"))
 		return cmd_doctor();
+	if (!strcmp(c, "vdb"))
+		return host_ok() ? cmd_vdb() : 1;
 	if (!strcmp(c, "version") || !strcmp(c, "--version")) {
 		puts("cloudpkg " VERSION);
 		return 0;

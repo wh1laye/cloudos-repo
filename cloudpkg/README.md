@@ -23,6 +23,7 @@ cloudpkg: пакетный менеджер cloudos. написан на c, со
     cloudpkg info nano
     cloudpkg list
     cloudpkg doctor
+    cloudpkg vdb                записать autotools из lfs в базу установленных
 
 только в боксе (на чужом дистрибутиве):
 
