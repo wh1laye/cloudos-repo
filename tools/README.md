@@ -8,27 +8,27 @@
 
 результат в `$OUT` (по умолчанию текущая папка):
 
-- `cloudos-stage3-amd64-1.2.tar.xz` и `.sha256`: сам архив
-- `cloudos-stage3-amd64-1.2.packages.txt`: состав (что собрано вручную и что поставлено через cloudpkg)
-- `cloudos-stage3-amd64-1.2.failed.txt`: появляется, только если какой-то пакет не собрался
+- `cloudos-stage3-amd64-1.3.tar.xz` и `.sha256`: сам архив
+- `cloudos-stage3-amd64-1.3.packages.txt`: состав (что собрано вручную и что поставлено через cloudpkg)
+- `cloudos-stage3-amd64-1.3.failed.txt`: появляется, только если какой-то пакет не собрался
 
-что внутри: cloudpkg 0.6 и portage, openrc, limine, syslog-ng вместо sysklogd, xorriso, squashfs-tools, mtools, fastfetch с облаком cloudos и все пакеты из stage 3 gentoo (кроме portage и того, что привязано к gentoo, см. `stage3/gentoo-exclude.txt`).
+что внутри: cloudpkg 0.7 и portage, openrc, limine, syslog-ng вместо sysklogd, xorriso, squashfs-tools, mtools, fastfetch с облаком cloudos и все пакеты из stage 3 gentoo (кроме portage и того, что привязано к gentoo, см. `stage3/gentoo-exclude.txt`).
 
 переменные:
 
 - `BASE`: ссылка или путь к прошлому stage 3
-- `VERSION`: версия (по умолчанию 1.2)
+- `VERSION`: версия (по умолчанию 1.3)
 - `WORK`: рабочая папка (на github actions `/mnt/stage3`)
 - `OUT`: куда положить результат
 - `REFRESH_LIST=1`: перед сборкой взять список пакетов из настоящего stage 3 gentoo (нужна сеть, качается около 250 мб); если не вышло, берётся `stage3/gentoo-stage3.list`
 - `RESUME=1`: продолжить прерванную или неудавшуюся сборку в той же рабочей папке, не распаковывая базу заново (готовые шаги пропускаются)
-- `STRICT=1`: остановить сборку, если хоть один пакет не собрался (по умолчанию пакет пишется в отчёт и сборка идёт дальше)
+- `STRICT=1`: остановить сборку, если хоть один пакет не собрался (при запуске руками по умолчанию пакет пишется в отчёт и сборка идёт дальше, в github actions `strict` включён)
 
 исходники скачиваются с github и из архива ubuntu, их sha256 записаны в `stage3/SOURCES.txt` и сверяются. сборка идёт шагами с отметками, поэтому прерванный запуск можно повторить, готовое не пересобирается. в конце сборка сама проверяет корень (есть ли `/sbin/init` на openrc-init, syslog-ng, fastfetch, cloudpkg, конфиг syslog-ng проходит `-s`) и показывает fastfetch в логе. после упаковки проверяет, что нужные файлы попали в архив.
 
 ### сборка на github (без своей машины)
 
-вкладка Actions, workflow `stage3`, Run workflow. он собирает архив на сервере github и кладёт файлы в релиз `1.2`, откуда их берёт `cloudpkg/install.sh`. на одном ядре сборка идёт часами, на сервере с 4 ядрами заметно быстрее.
+вкладка Actions, workflow `stage3`, Run workflow. он собирает архив на сервере github и кладёт файлы в релиз `1.3`, откуда их берёт `cloudpkg/install.sh`. на одном ядре сборка идёт часами, на сервере с 4 ядрами заметно быстрее.
 
 ## stage3/
 
@@ -41,9 +41,16 @@
 - `neofetch`: команда `neofetch` на чистом bash с облаком cloudos, без зависимостей (`neofetch --ff` запускает fastfetch, `--plain` без логотипа и цветов)
 - `cloudos-users.sh`: ставится как `/usr/sbin/cloudos-users`. настраивает вход и пользователей: pam (только если shadow собран с ним), setuid на su и passwd, login.defs, PATH с sbin для всех, /etc/skel, группа wheel, doas.conf. безопасно запускать повторно, на живой системе 1.1 тоже
 - `cloudos-adduser`: `cloudos-adduser имя` создаёт пользователя с домашней папкой, группой wheel и паролем
+- `cloudos-fix.sh`: ставится как `/usr/sbin/cloudos-fix`. чинит систему 1.2: убирает хуки `cloudos-noreconf` и строки про них в `package.env`, обновляет cloudpkg и записывает autotools в базу установленных. `--files` только убирает файлы, без сети
 - `fastfetch.jsonc`: настройка fastfetch, по умолчанию облако в пяти оттенках голубого для любого терминала
 - `fastfetch-truecolor.jsonc`, `fastfetch-image.jsonc`: то же облако плавным градиентом (truecolor) и картинкой для терминалов с показом изображений. запуск: `fastfetch -c /usr/share/cloudos/fastfetch-truecolor.jsonc` или `fastfetch -c /usr/share/cloudos/fastfetch-image.jsonc`
 - `logo.png`, `logo.txt`, `logo.ansi`, `make-logo.py`: логотип с сайта и скрипт, который делает из него текстовые варианты (нужен pillow)
+
+## test-cloudpkg.sh
+
+проверка cloudpkg на временном корне, без portage (нужен root и gcc): очистка хуков и `package.env`, запись autotools со слотами, повторный запуск, настоящий пакет не затирается, `cloudos-fix --files`. запускается в github actions перед сборкой:
+
+    sudo tools/test-cloudpkg.sh
 
 ## stage3-map.py
 

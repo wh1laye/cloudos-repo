@@ -3,7 +3,7 @@ set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$HERE")
-VERSION=${VERSION:-1.2}
+VERSION=${VERSION:-1.3}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/cloudos/cloudos-stage3-amd64-1.0.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-stage3-build}
 OUT=${OUT:-$PWD}
@@ -103,7 +103,7 @@ rm -f "$ROOT/var/tmp/cloudos-report.txt"
   echo "# собрано вручную (lfs, stage 3), portage их не трогает"
   grep -v '^#' "$ROOT/etc/portage/profile/package.provided" | sort -u
   echo "# установлено через cloudpkg (portage)"
-  ( cd "$ROOT/var/db/pkg" 2>/dev/null && for d in */*/; do echo "${d%/}"; done | sort )
+  ( cd "$ROOT/var/db/pkg" 2>/dev/null && for d in */*/; do [ -e "$d/CLOUDOS_STUB" ] || echo "${d%/}"; done | sort )
 } > "$OUT/cloudos-stage3-amd64-$VERSION.packages.txt"
 
 say "упаковка: $OUT/$NAME"
@@ -117,9 +117,13 @@ miss=0
 for f in sbin/init sbin/openrc-init etc/os-release etc/init.d/syslog-ng etc/runlevels/default/syslog-ng \
          etc/syslog-ng/syslog-ng.conf usr/bin/fastfetch usr/bin/cloudpkg usr/bin/emerge \
          usr/share/cloudos/logo.txt usr/share/cloudos/logo.ansi usr/share/cloudos/logo.png \
-         etc/xdg/fastfetch/config.jsonc usr/bin/neofetch usr/sbin/cloudos-users usr/sbin/cloudos-adduser \
+         etc/xdg/fastfetch/config.jsonc usr/bin/neofetch usr/sbin/cloudos-users usr/sbin/cloudos-adduser usr/sbin/cloudos-fix \
          etc/login.defs etc/doas.conf; do
   grep -qxE "(\./)?(usr/)?$f" "$LIST" || { printf 'в архиве нет %s\n' "$f" >&2; miss=1; }
+done
+if grep -qE '(^|/)cloudos-noreconf' "$LIST"; then printf 'в архиве остался cloudos-noreconf\n' >&2; miss=1; fi
+for t in autoconf automake libtool; do
+  grep -qE "^(\./)?var/db/pkg/dev-build/$t-[0-9]" "$LIST" || { printf 'в архиве нет записи %s в var/db/pkg\n' "$t" >&2; miss=1; }
 done
 [ "$miss" = 0 ] || die "архив неполный"
 
