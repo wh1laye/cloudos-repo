@@ -55,6 +55,17 @@ jobs:
           path: out/*
           compression-level: 0
 
+      - name: логи сборки при падении
+        if: failure()
+        run: sudo tar -C /mnt/stage3/root/var/tmp -czf "$PWD/s3log.tgz" s3log || true
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: s3log
+          path: s3log.tgz
+          if-no-files-found: ignore
+
       - name: релиз
         if: ${{ inputs.publish }}
         env:
