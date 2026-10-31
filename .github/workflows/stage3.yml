@@ -1,14 +1,11 @@
 name: stage3
 
-# собирает stage 3 cloudos на сервере github (tools/build-stage3.sh) и кладёт в релиз 1.2.
-# запуск: вкладка Actions -> stage3 -> Run workflow.
-
 on:
   workflow_dispatch:
     inputs:
       version:
         description: версия
-        default: "1.2"
+        default: "1.3"
       refresh_list:
         description: взять список пакетов из настоящего stage 3 gentoo
         type: boolean
@@ -16,11 +13,15 @@ on:
       strict:
         description: остановить сборку, если хоть один пакет не собрался
         type: boolean
-        default: false
+        default: true
       publish:
         description: выложить результат в релиз
         type: boolean
         default: true
+
+concurrency:
+  group: stage3-${{ inputs.version }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -31,6 +32,13 @@ jobs:
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
+
+      - name: проверка скриптов и cloudpkg
+        run: |
+          for f in tools/build-stage3.sh tools/test-cloudpkg.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/neofetch cloudpkg/*.sh; do bash -n "$f"; done
+          make -C cloudpkg clean all CC="gcc -Wextra -Werror"
+          ./cloudpkg/cloudpkg version
+          sudo bash tools/test-cloudpkg.sh
 
       - name: место на диске
         run: |
@@ -49,20 +57,36 @@ jobs:
             bash tools/build-stage3.sh
           ls -lh out
 
+      - name: карта размеров
+        run: python3 tools/stage3-map.py "out/cloudos-stage3-amd64-${{ inputs.version }}.tar.xz" -o "out/cloudos-stage3-amd64-${{ inputs.version }}.map.json"
+
+      - name: итог в summary
+        if: always()
+        run: |
+          {
+            echo "### stage3 ${{ inputs.version }}"
+            ls -lh out 2>/dev/null | sed 's/^/    /' || true
+            for f in out/*.failed.txt; do
+              [ -f "$f" ] || continue
+              echo "### не собрались пакеты"
+              sed 's/^/    /' "$f"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - uses: actions/upload-artifact@v4
         with:
           name: cloudos-stage3-${{ inputs.version }}
           path: out/*
           compression-level: 0
 
-      - name: логи сборки при падении
-        if: failure()
+      - name: логи сборки
+        if: always()
         run: sudo tar -C /mnt/stage3/root/var/tmp -czf "$PWD/s3log.tgz" s3log || true
 
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
-          name: s3log
+          name: s3log-${{ inputs.version }}
           path: s3log.tgz
           if-no-files-found: ignore
 
