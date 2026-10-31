@@ -8,6 +8,7 @@
 - `sys-libs/timezone-data`: архив `.tar.lz`, а `lzip` в lfs нет, unpacker падал с `-dc: command not found`. новый шаг `lzip` ставит `app-arch/lzip` и проверяет распаковку своего архива
 - сборка: список упавших пакетов теперь содержит строки причины (`fatal error`, `No such file`...) из `build.log`, а `failed.txt` сохраняется и когда сборка оборвалась, поэтому причина видна в summary github actions без скачивания логов
 - cloudpkg: `package.provided` без `sys-libs/pam`
+- `sys-libs/pam` тянет docbook, а у `app-text/build-docbook-catalog` падал postinst (`getopt-long: command not found`), из-за чего `--keep-going` выкидывал сам pam. сборка ставит обёртку `/usr/bin/getopt-long` над `getopt` до шагов `pam` и `lzip`, а `apply_fix` ставит её сам при такой ошибке и повторяет пакет
 
 исправлено:
 
