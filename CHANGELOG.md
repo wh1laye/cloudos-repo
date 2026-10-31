@@ -2,6 +2,12 @@
 
 ## 1.3 (stage 3 и cloudpkg 0.7)
 
+исправлено (stage 3, сборка падала без причины в логе):
+
+- `build-inside.sh`: описанные ниже `s3log/step-имя.log`, `trap` с `::error::` и хвостом лога на самом деле отсутствовали в скрипте, теперь они есть: `set -E`, `trap ERR`, каждый шаг пишет в `s3log/step-имя.log`
+- `build-inside.sh`: функция `mk`: `make -jN` упал, повтор `-j1 V=1` (ivykis, syslog-ng, libburn, libisofs, libisoburn, squashfs-tools)
+- `build-inside.sh`: syslog-ng собирается с `--disable-example-modules --disable-stackdump`, меньше кода, меньше шансов упасть на gcc 15
+
 исправлено (сборка stage 3 в github actions, ошибка без причины в логе):
 
 - `cloudpkg.c`: буфер в `put()` был `BUF` (600) под путь `dir/name`, gcc 15 в chroot давал `-Wformat-truncation` на каждую запись stub. буфер `BUF + 64`, сборка проходит с `-Wall -Wextra -Werror`
