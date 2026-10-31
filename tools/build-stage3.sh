@@ -49,7 +49,7 @@ if [ "$REFRESH_LIST" != 0 ]; then
     cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list"
   else
     say "список пакетов из настоящего stage 3 gentoo"
-    "$HERE/stage3/refresh-list.sh" "$WORK/gentoo-stage3.list" && cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list" \
+    bash "$HERE/stage3/refresh-list.sh" "$WORK/gentoo-stage3.list" && cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list" \
       || printf 'предупреждение: список не обновился, беру тот, что лежит в репозитории\n' >&2
   fi
 fi
