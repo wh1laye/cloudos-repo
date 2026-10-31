@@ -47,7 +47,7 @@
 </nav>
 <main id="cloud">
 <h1>cloudos справочник</h1>
-<p class="lead">установка cloudos 1.1 на x86_64. </p>
+<p class="lead">установка cloudos 1.2 на x86_64. </p>
 <h2 id="about">1. о cloudos</h2>
 <p>cloudos это минимальный linux, который ты собираешь сам. после установки в системе только консоль.</p>
 <table><tr><th>параметр</th><th>значение</th></tr>
@@ -69,7 +69,7 @@
 <tr><td>носитель</td><td>флешка с live iso cloudos</td></tr></table></div>
 <p>цифры примерные, жёстких проверок нет.</p>
 <h3 id="s1-2">1.2 что внутри stage 3</h3>
-<p>stage 3 собран с нуля по lfs 12.4 (sysv-вариант) и дополнен всем, что нужно для установки и сборки пакетов. версии указаны для cloudos 1.1.</p>
+<p>stage 3 собран с нуля по lfs 12.4 (sysv-вариант) и дополнен всем, что нужно для установки и сборки пакетов. версии указаны для cloudos 1.2.</p>
 <div class="sc"><table><tr><th>часть</th><th>что внутри</th></tr>
 <tr><td>инструментарий</td><td>gcc 15.2.0, glibc 2.42, binutils 2.45, python 3.13.7</td></tr>
 <tr><td>init</td><td>openrc 0.63, <code>/sbin/init</code> указывает на <code>openrc-init</code></td></tr>
@@ -181,23 +181,23 @@ findmnt /mnt/cloudos/boot</code></pre>
 <h2 id="stage">4. stage 3</h2>
 <p>stage 3 это готовая базовая система cloudos без ядра и загрузчика. файлы лежат в разделе releases репозитория.</p>
 <p><a href="https://github.com/wh1laye/cloudos-repo/releases">github.com/wh1laye/cloudos-repo/releases</a></p>
-<pre><code>cloudos-stage3-amd64-1.1.tar.xz
-cloudos-stage3-amd64-1.1.tar.xz.sha256
+<pre><code>cloudos-stage3-amd64-1.2.tar.xz
+cloudos-stage3-amd64-1.2.tar.xz.sha256
 </code></pre>
 <h3 id="s4-1">4.1 проверка(можно пропустить)</h3>
-<pre><code>sha256sum -c cloudos-stage3-amd64-1.1.tar.xz.sha256
+<pre><code>sha256sum -c cloudos-stage3-amd64-1.2.tar.xz.sha256
 </code></pre>
 <h3 id="s4-2">4.2 распаковка</h3>
-<pre><code>tar xpvf cloudos-stage3-amd64-1.1.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
+<pre><code>tar xpvf cloudos-stage3-amd64-1.2.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
 <h3 id="s4-3">4.3 скачивание</h3>
 <p>скачивай прямо на корневой раздел, в live-системе мало места в памяти:</p>
 <pre><code>cd /mnt/cloudos
-curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.1/cloudos-stage3-amd64-1.1.tar.xz
-curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.1/cloudos-stage3-amd64-1.1.tar.xz.sha256</code></pre>
+curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.2/cloudos-stage3-amd64-1.2.tar.xz
+curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.2/cloudos-stage3-amd64-1.2.tar.xz.sha256</code></pre>
 <p>потом сделай проверку из <a href="#s4-1">4.1</a> и распаковку из <a href="#s4-2">4.2</a>. распаковку запускай из той же папки, где лежит архив.</p>
 <h3 id="s4-4">4.4 после распаковки</h3>
 <p>архив больше не нужен, удали его, чтобы не занимал место:</p>
-<pre><code>rm /mnt/cloudos/cloudos-stage3-amd64-1.1.tar.xz*
+<pre><code>rm /mnt/cloudos/cloudos-stage3-amd64-1.2.tar.xz*
 ls /mnt/cloudos</code></pre>
 <p>в списке должны быть <code>bin</code>, <code>boot</code>, <code>etc</code>, <code>usr</code>, <code>var</code> и другие системные папки. если папка пустая, архив распаковался не туда.</p>
 <div class="note"><b>заметка</b>архив можно всегда скачать вручную со страницы <a href="../releases/">релизов</a> и положить на диск через флешку.</div>
