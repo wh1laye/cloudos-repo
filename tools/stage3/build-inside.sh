@@ -358,6 +358,9 @@ apply_fix() {
     say "eclass не видит autotools, записываю их в базу установленных"
     if cloudpkg vdb; then did=0; fi
   fi
+  if clean_log "$lg" | grep -q '/var/mail' && clean_log "$lg" | grep -q 'collision'; then
+    fix_maildir && did=0
+  fi
   if clean_log "$lg" | grep -q 'getopt-long: command not found'; then
     ensure_getopt_long && { command -v build-docbook-catalog >/dev/null && build-docbook-catalog >/dev/null 2>&1 || true; did=0; }
   fi
@@ -429,6 +432,28 @@ do_lzip() {
   echo cloudos > "$t/a"; tar -C "$t" -cf "$t/a.tar" a; lzip -k "$t/a.tar"
   [ "$(lzip -dc "$t/a.tar.lz" | tar -xOf - a)" = cloudos ] || { echo "!! lzip не распаковывает свой архив" >&2; rm -rf "$t"; return 1; }
   rm -rf "$t"
+}
+
+fix_maildir() {
+  mkdir -p /var/spool
+  [ -L /var/spool/mail ] && rm -f /var/spool/mail
+  mkdir -p /var/spool/mail
+  if [ -d /var/mail ] && [ ! -L /var/mail ]; then
+    cp -a /var/mail/. /var/spool/mail/ || return 1
+    rm -rf /var/mail
+  fi
+  [ "$(readlink /var/mail 2>/dev/null)" = spool/mail ] || { rm -f /var/mail; ln -s spool/mail /var/mail; }
+  chmod 03775 /var/spool/mail
+  [ -L /var/mail ] && [ -d /var/spool/mail ] || { echo "!! /var/mail не стал симлинком на spool/mail" >&2; return 1; }
+}
+
+do_elfutils() {
+  if pkg-config --exists libdw; then say "libdw уже есть"; return 0; fi
+  sed -i '/^dev-libs\/elfutils-/d' "$PP"
+  restore_helpers "перед elfutils"
+  install_one dev-libs/elfutils "$L/elfutils.log" || { echo "!! elfutils не поставился" >&2; return 1; }
+  restore_helpers "после elfutils"
+  pkg-config --exists libdw || { echo "!! нет libdw.pc после elfutils" >&2; return 1; }
 }
 
 # весь набор пакетов из gentoo stage 3 (кроме пакетного менеджера и фишек gentoo, см. gentoo-exclude.txt).
@@ -618,6 +643,8 @@ do_paxutils || true
 step users do_users
 step pam do_pam
 step lzip do_lzip
+step maildir fix_maildir
+step elfutils do_elfutils
 step gentoo-stage3-set do_gentoo_set
 do_cfgclean
 step verify do_verify
