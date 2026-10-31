@@ -47,7 +47,7 @@
 </nav>
 <main id="cloud">
 <h1>cloudos handbook</h1>
-<p class="lead">installing cloudos 1.1 on x86_64. </p>
+<p class="lead">installing cloudos 1.2 on x86_64. </p>
 <h2 id="about">1. about cloudos</h2>
 <p>cloudos is a minimal linux that you build yourself. after installation the system has only a console.</p>
 <table><tr><th>parameter</th><th>value</th></tr>
@@ -69,7 +69,7 @@
 <tr><td>media</td><td>a usb stick with the cloudos live iso</td></tr></table></div>
 <p>the numbers are approximate, there are no hard checks.</p>
 <h3 id="s1-2">1.2 what is inside stage 3</h3>
-<p>stage 3 is built from scratch following lfs 12.4 (sysv variant) and extended with everything needed for installation and building packages. versions are given for cloudos 1.1.</p>
+<p>stage 3 is built from scratch following lfs 12.4 (sysv variant) and extended with everything needed for installation and building packages. versions are given for cloudos 1.2.</p>
 <div class="sc"><table><tr><th>part</th><th>what is inside</th></tr>
 <tr><td>toolchain</td><td>gcc 15.2.0, glibc 2.42, binutils 2.45, python 3.13.7</td></tr>
 <tr><td>init</td><td>openrc 0.63, <code>/sbin/init</code> points to <code>openrc-init</code></td></tr>
@@ -181,23 +181,23 @@ findmnt /mnt/cloudos/boot</code></pre>
 <h2 id="stage">4. stage 3</h2>
 <p>stage 3 is a ready base cloudos system without a kernel and bootloader. the files are in the releases section of the repository.</p>
 <p><a href="https://github.com/wh1laye/cloudos-repo/releases">github.com/wh1laye/cloudos-repo/releases</a></p>
-<pre><code>cloudos-stage3-amd64-1.1.tar.xz
-cloudos-stage3-amd64-1.1.tar.xz.sha256
+<pre><code>cloudos-stage3-amd64-1.2.tar.xz
+cloudos-stage3-amd64-1.2.tar.xz.sha256
 </code></pre>
 <h3 id="s4-1">4.1 verification (can be skipped)</h3>
-<pre><code>sha256sum -c cloudos-stage3-amd64-1.1.tar.xz.sha256
+<pre><code>sha256sum -c cloudos-stage3-amd64-1.2.tar.xz.sha256
 </code></pre>
 <h3 id="s4-2">4.2 unpacking</h3>
-<pre><code>tar xpvf cloudos-stage3-amd64-1.1.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
+<pre><code>tar xpvf cloudos-stage3-amd64-1.2.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
 <h3 id="s4-3">4.3 downloading</h3>
 <p>download straight onto the root partition, the live system has little memory:</p>
 <pre><code>cd /mnt/cloudos
-curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.1/cloudos-stage3-amd64-1.1.tar.xz
-curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.1/cloudos-stage3-amd64-1.1.tar.xz.sha256</code></pre>
+curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.2/cloudos-stage3-amd64-1.2.tar.xz
+curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.2/cloudos-stage3-amd64-1.2.tar.xz.sha256</code></pre>
 <p>then do the verification from <a href="#s4-1">4.1</a> and the unpacking from <a href="#s4-2">4.2</a>. run the unpacking from the same folder where the archive is.</p>
 <h3 id="s4-4">4.4 after unpacking</h3>
 <p>the archive is no longer needed, delete it so it does not take space:</p>
-<pre><code>rm /mnt/cloudos/cloudos-stage3-amd64-1.1.tar.xz*
+<pre><code>rm /mnt/cloudos/cloudos-stage3-amd64-1.2.tar.xz*
 ls /mnt/cloudos</code></pre>
 <p>the list should contain <code>bin</code>, <code>boot</code>, <code>etc</code>, <code>usr</code>, <code>var</code> and other system folders. if the folder is empty, the archive was unpacked to the wrong place.</p>
 <div class="note"><b>note</b>you can always download the archive manually from the <a href="../../releases/">releases</a> page and put it on the disk through a usb stick.</div>
