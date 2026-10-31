@@ -1,6 +1,13 @@
 # changelog
 
-## 1.3 (stage 3 и cloudpkg 0.7)
+## 1.3 (stage 3 и cloudpkg 0.7), правка 2
+
+исправлено (шаг gentoo-stage3-set, упали `dev-util/debugedit` и `net-mail/mailbase`, `STRICT=1` остановил сборку):
+
+- `build-inside.sh`: новый шаг `elfutils`. `dev-libs/elfutils` был в `package.provided`, но `libdw.pc` нет, поэтому у `debugedit` configure падал с `Package 'libdw' not found`. шаг проверяет `pkg-config --exists libdw`, если нет, убирает запись из `package.provided`, ставит настоящий elfutils через cloudpkg и снова проверяет `libdw`
+- `build-inside.sh`: новый шаг `maildir` (`fix_maildir`). в lfs `/var/mail` каталог, а `mailbase-1.8.1` ставит `/var/mail -> spool/mail`, portage запрещает такую коллизию (PMS 13.4). шаг переносит почту в `/var/spool/mail` и делает `/var/mail` симлинком. `apply_fix` вызывает его сам, если в логе коллизия на `/var/mail`
+
+### правка 1
 
 исправлено (шаг pam, `dev-python/more-itertools`: `python_setup: no enabled implementation satisfy requirements`):
 
