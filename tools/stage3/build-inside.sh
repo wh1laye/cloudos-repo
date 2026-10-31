@@ -453,10 +453,13 @@ do_verify() {
   for f in syslog-ng fastfetch neofetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd useradd usermod userdel groupadd passwd chpasswd su login cloudos-users cloudos-adduser; do
     command -v "$f" >/dev/null || { echo "!! нет команды $f"; bad=1; }
   done
-  for f in /etc/pam.d/system-auth /etc/pam.d/su /etc/pam.d/login /etc/pam.d/passwd /etc/pam.d/doas /etc/login.defs /etc/default/useradd /etc/profile.d/cloudos-path.sh /etc/skel/.bashrc /etc/doas.conf; do
+  for f in /etc/login.defs /etc/default/useradd /etc/profile.d/cloudos-path.sh /etc/skel/.bashrc /etc/doas.conf; do
     [ -e "$f" ] || { echo "!! нет $f"; bad=1; }
   done
-  for f in su passwd; do
+  if ldd "$(command -v su)" 2>/dev/null | grep -q libpam; then
+    [ -e /etc/pam.d/su ] && [ -e /etc/pam.d/system-auth ] && [ -e /etc/pam.d/login ] || { echo "!! su собран с pam, но нет /etc/pam.d"; bad=1; }
+  fi
+  for f in su passwd doas; do
     [ -u "$(readlink -f "$(command -v $f)")" ] || { echo "!! у $f нет setuid"; bad=1; }
   done
   grep -q '^wheel:' /etc/group || { echo "!! нет группы wheel"; bad=1; }

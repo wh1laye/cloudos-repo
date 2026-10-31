@@ -22,10 +22,15 @@ say "утилиты shadow"
 for t in useradd userdel usermod groupadd passwd chpasswd su login newgrp chage; do
   find_bin "$t" >/dev/null || err "нет $t"
 done
-[ -n "$MOD" ] || err "нет pam_unix.so: без pam вход и su не работают"
+PAMUSE=0
+for t in su passwd login; do
+  f=$(find_bin "$t") || continue
+  ldd "$f" 2>/dev/null | grep -q libpam && PAMUSE=1
+done
+if [ "$PAMUSE" = 1 ] && [ -z "$MOD" ]; then err "shadow собран с pam, но нет pam_unix.so"; fi
 
 say "setuid"
-for t in su passwd chsh chfn newgrp; do
+for t in su passwd chsh chfn newgrp doas; do
   f=$(find_bin "$t") || continue
   [ -L "$f" ] && f=$(readlink -f "$f")
   chown 0:0 "$f" && chmod 4755 "$f" || err "не смог выставить setuid на $f"
@@ -40,6 +45,7 @@ pam() {
   chmod 644 "$f"
 }
 
+if [ "$PAMUSE" = 1 ]; then
 say "pam"
 has() { [ -n "$MOD" ] && [ -e "$MOD/$1" ]; }
 {
@@ -70,6 +76,10 @@ if [ -n "$MOD" ]; then
       [ -e "$MOD/$m" ] || err "$f: нет модуля $m"
     done
   done
+fi
+
+else
+  say "shadow собран без pam: pam.d не нужен"
 fi
 
 say "login.defs"
@@ -110,7 +120,7 @@ say "skel"
 if [ -z "$R" ]; then
   say "группы"
   getent group wheel >/dev/null || groupadd -g 10 wheel 2>/dev/null || groupadd wheel || err "не создалась группа wheel"
-  getent group users >/dev/null || groupadd users || err "не создалась группа users"
+  getent group users >/dev/null || groupadd users
   getent group video >/dev/null || groupadd video
   getent group audio >/dev/null || groupadd audio
 fi
@@ -119,11 +129,6 @@ say "doas"
 if [ ! -e "$R/etc/doas.conf" ]; then
   printf '%s\n' 'permit persist :wheel' 'permit nopass root' > "$R/etc/doas.conf"
   chmod 600 "$R/etc/doas.conf"
-fi
-
-if [ -z "$R" ] && [ -r /etc/shadow ]; then
-  p=$(awk -F: '$1=="root"{print $2}' /etc/shadow)
-  case $p in ''|'!'|'*'|'!!') printf '!! у root нет пароля: задай его командой passwd (иначе su и вход под root не работают)\n' >&2 ;; esac
 fi
 
 if [ "$bad" = 0 ]; then say "пользователи и вход настроены"; else echo "есть ошибки" >&2; fi
