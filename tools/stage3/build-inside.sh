@@ -2,7 +2,7 @@
 set -eu
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 export CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe"
-VERSION=${1:-1.1}
+VERSION=${1:-1.2}
 STRICT=${2:-0}
 S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
 say() { printf '==> %s\n' "$*"; }
@@ -89,6 +89,24 @@ do_fastfetch() {
   ln -sf ../xdg/fastfetch/config.jsonc /etc/fastfetch/config.jsonc
 }
 
+do_neofetch() {
+  install -m755 "$F/neofetch" /usr/bin/neofetch
+  install -m755 "$F/cloudos-users.sh" /usr/sbin/cloudos-users
+  install -m755 "$F/cloudos-adduser" /usr/sbin/cloudos-adduser
+  NO_COLOR=1 /usr/bin/neofetch | grep -q '^OS ' || { echo "!! neofetch не работает" >&2; return 1; }
+}
+
+do_users() {
+  if ! command -v useradd >/dev/null || ! command -v su >/dev/null; then
+    say "нет useradd или su: ставлю sys-apps/shadow через cloudpkg"
+    sed -i '/^sys-apps\/shadow-/d' "$PP"
+    restore_helpers "перед shadow"
+    install_one sys-apps/shadow "$L/shadow.log" || { echo "!! shadow не поставился" >&2; return 1; }
+    restore_helpers "после shadow"
+  fi
+  /usr/sbin/cloudos-users
+}
+
 do_limine() { cloudpkg sync; cloudpkg install limine; }
 
 do_logger() {
@@ -117,9 +135,9 @@ sys-fs/mtools-4.0.49
 app-misc/fastfetch-2.70.0
 EOP
   install -m644 /var/tmp/cloudpkg-src/etc/portage/make.conf /etc/portage/make.conf
-  sed -i -E "s/CloudOS 1\.0/CloudOS $VERSION/g;s/^VERSION=.*/VERSION=\"$VERSION\"/;s/^VERSION_ID=.*/VERSION_ID=\"$VERSION\"/" /etc/os-release
+  sed -i -E "s/CloudOS [0-9][0-9.]*/CloudOS $VERSION/g;s/^VERSION=.*/VERSION=\"$VERSION\"/;s/^VERSION_ID=.*/VERSION_ID=\"$VERSION\"/" /etc/os-release
   grep -q '^VERSION_ID=' /etc/os-release || echo "VERSION_ID=\"$VERSION\"" >> /etc/os-release
-  if [ -f /etc/issue ]; then sed -i "s/CloudOS 1\.0/CloudOS $VERSION/g" /etc/issue; fi
+  if [ -f /etc/issue ]; then sed -i "s/CloudOS [0-9][0-9.]*/CloudOS $VERSION/g" /etc/issue; fi
 }
 
 excluded() {
@@ -308,18 +326,9 @@ fix_noreconf() {
   if [ -e "$mark" ]; then return 1; fi
   touch "$mark"
   install -d "/etc/portage/env/$pc"
-  cat > /etc/portage/env/cloudos-noreconf <<'EOE'
-# не пересобирать autotools: в тарболле уже лежит готовый configure
-pre_src_prepare() {
-	eautoreconf() { :; }
-	eaclocal() { :; }
-	eautoconf() { :; }
-	eautoheader() { :; }
-	eautomake() { :; }
-	elibtoolize() { :; }
-	_elibtoolize() { :; }
-}
-EOE
+  printf '%s\n' 'pre_src_prepare() {' 'eautoreconf() { :; }' 'eaclocal() { :; }' 'eautoconf() { :; }' 'eautoheader() { :; }' \
+    'eautomake() { :; }' 'elibtoolize() { :; }' '_elibtoolize() { :; }' '}' > /etc/portage/env/cloudos-noreconf
+  bash -n /etc/portage/env/cloudos-noreconf || { echo "!! cloudos-noreconf не прошёл bash -n" >&2; rm -f /etc/portage/env/cloudos-noreconf; return 1; }
   cp /etc/portage/env/cloudos-noreconf "/etc/portage/env/$cp"
   if [ -d /etc/portage/package.env ]; then pe=/etc/portage/package.env/cloudos; else pe=/etc/portage/package.env; fi
   echo "$cp cloudos-noreconf" >> "$pe"
@@ -441,9 +450,17 @@ do_verify() {
            /usr/share/cloudos/logo.png /etc/xdg/fastfetch/config.jsonc /etc/os-release /etc/portage/make.conf /usr/lib64; do
     if [ -e "$f" ] || [ -L "$f" ]; then :; else echo "!! нет $f"; bad=1; fi
   done
-  for f in syslog-ng fastfetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd; do
+  for f in syslog-ng fastfetch neofetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd useradd usermod userdel groupadd passwd chpasswd su login cloudos-users cloudos-adduser; do
     command -v "$f" >/dev/null || { echo "!! нет команды $f"; bad=1; }
   done
+  for f in /etc/pam.d/system-auth /etc/pam.d/su /etc/pam.d/login /etc/pam.d/passwd /etc/pam.d/doas /etc/login.defs /etc/default/useradd /etc/profile.d/cloudos-path.sh /etc/skel/.bashrc /etc/doas.conf; do
+    [ -e "$f" ] || { echo "!! нет $f"; bad=1; }
+  done
+  for f in su passwd; do
+    [ -u "$(readlink -f "$(command -v $f)")" ] || { echo "!! у $f нет setuid"; bad=1; }
+  done
+  grep -q '^wheel:' /etc/group || { echo "!! нет группы wheel"; bad=1; }
+  env -i PATH=/usr/bin:/bin bash -lc 'command -v useradd' >/dev/null 2>&1 || { echo "!! useradd не виден в PATH обычного входа"; bad=1; }
   [ "$(readlink -f /sbin/init)" = "$(readlink -f /sbin/openrc-init)" ] || { echo "!! /sbin/init не указывает на openrc-init"; bad=1; }
   grep -q "^VERSION_ID=\"$VERSION\"" /etc/os-release || { echo "!! в /etc/os-release не $VERSION"; bad=1; }
   [ ! -e /etc/init.d/sysklogd ] || { echo "!! остался sysklogd"; bad=1; }
@@ -469,7 +486,7 @@ do_verify() {
 
 step libdir do_libdir
 step portage-tune do_tune
-step cloudpkg-0.5 do_cloudpkg
+step cloudpkg-0.6 do_cloudpkg
 step ivykis do_ivykis
 step json-c do_jsonc
 step syslog-ng do_syslogng
@@ -479,12 +496,14 @@ step libisoburn auto libisoburn_1.5.6.orig.tar.gz --disable-static
 step squashfs-tools do_squashfs
 step mtools do_mtools
 step fastfetch do_fastfetch
+step neofetch do_neofetch
 step limine do_limine
 step sysklogd-to-syslog-ng do_logger
 step package.provided do_provided
 step meson-helper do_meson_helper
 step machinery do_machinery
 do_paxutils || true
+step users do_users
 step gentoo-stage3-set do_gentoo_set
 step verify do_verify
 

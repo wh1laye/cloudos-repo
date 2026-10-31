@@ -11,8 +11,11 @@
     "color": { "keys": "38;5;110", "title": "38;5;153", "separator": "38;5;67" }
   },
   "modules": [
-    "title", "separator", "os", "host", "kernel", "uptime", "packages", "shell",
-    "terminal", "cpu", "gpu", "memory", "swap", "disk", "localip",
+    "title", "separator", "os", "host", "kernel",
+    { "type": "initsystem", "key": "Init" },
+    "uptime", "packages",
+    { "type": "command", "key": "cloudpkg", "text": "cloudpkg version | cut -d' ' -f2" },
+    "shell", "terminal", "cpu", "gpu", "memory", "swap", "disk", "localip", "locale",
     "break", "colors"
   ]
 }

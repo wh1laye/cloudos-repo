@@ -1,0 +1,13 @@
+#!/bin/bash
+set -eu
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+[ "$(id -u)" = 0 ] || { echo "нужен root: doas cloudos-adduser имя" >&2; exit 1; }
+n=${1:-}
+case $n in ''|*[!a-z0-9_-]*|[0-9-]*) echo "использование: cloudos-adduser имя [nowheel]" >&2; exit 1 ;; esac
+command -v useradd >/dev/null || { echo "нет useradd: запусти cloudos-users" >&2; exit 1; }
+g=wheel
+[ "${2:-}" = nowheel ] && g=users
+getent group "$g" >/dev/null || groupadd "$g"
+useradd -m -G "$g" -s /bin/bash "$n"
+passwd "$n"
+echo "готово: su - $n"

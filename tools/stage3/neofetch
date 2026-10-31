@@ -1,0 +1,117 @@
+#!/bin/bash
+export LC_ALL=C.UTF-8
+VER=1.2
+SH=${CLOUDOS_SHARE:-/usr/share/cloudos}
+LOGO=$SH/logo.txt
+mode=auto
+case ${1:-} in --ff|--fastfetch) shift; exec fastfetch "$@" ;; esac
+for a in "$@"; do
+  case $a in
+    --plain|--no-logo) mode=plain ;;
+    --version|-v) echo "neofetch $VER (cloudos)"; exit 0 ;;
+    --help|-h) echo "neofetch [--plain] [--ff] [--version]"; exit 0 ;;
+  esac
+done
+if [ ! -t 1 ] || [ -n "${NO_COLOR:-}" ]; then mode=plain; fi
+
+c() { [ "$mode" = plain ] && return; printf '\033[%sm' "$1"; }
+KEY='38;5;110'; TIT='38;5;153'; SEP='38;5;67'; OFF=0
+
+osr() { local k=$1 l v; while IFS='=' read -r l v; do [ "$l" = "$k" ] && { v=${v#\"}; printf '%s' "${v%\"}"; return; }; done < /etc/os-release; }
+human() {
+  local s=$1 d h m o=""
+  d=$((s / 86400)); h=$((s % 86400 / 3600)); m=$((s % 3600 / 60))
+  [ "$d" -gt 0 ] && o="$d d "
+  [ "$h" -gt 0 ] && o="$o$h h "
+  printf '%s%s min' "$o" "$m"
+}
+mib() { printf '%s MiB' $(($1 / 1024)); }
+bar() {
+  local p=$1 w=14 f i o=""
+  f=$((p * w / 100))
+  for ((i = 0; i < w; i++)); do if [ "$i" -lt "$f" ]; then o="$o█"; else o="$o░"; fi; done
+  printf '%s' "$o"
+}
+
+user=${USER:-$(id -un)}; host=${HOSTNAME:-$(cat /proc/sys/kernel/hostname)}
+os="$(osr PRETTY_NAME)"; [ -n "$os" ] || os=$(osr NAME)
+arch=$(uname -m); kern=$(uname -r)
+read -r up _ < /proc/uptime; up=${up%.*}
+pk=0; for d in /var/db/pkg/*/*; do [ -d "$d" ] && pk=$((pk + 1)); done
+shn=${SHELL##*/}; shv=${BASH_VERSION%%(*}
+term=${TERM_PROGRAM:-${TERM:-tty}}
+cpu=""; cores=0
+while IFS=: read -r k v; do
+  case $k in
+    "model name"*) [ -z "$cpu" ] && cpu=${v# } ;;
+    processor*) cores=$((cores + 1)) ;;
+  esac
+done < /proc/cpuinfo
+cpu=${cpu//(R)/}; cpu=${cpu//(TM)/}; cpu=${cpu//  / }; cpu=${cpu%% @*}
+[ -n "$cpu" ] || cpu=unknown
+mt=0; ma=0; st=0; sf=0
+while read -r k v _; do
+  case $k in
+    MemTotal:) mt=$v ;; MemAvailable:) ma=$v ;;
+    SwapTotal:) st=$v ;; SwapFree:) sf=$v ;;
+  esac
+done < /proc/meminfo
+mu=$((mt - ma)); mp=$((mt ? mu * 100 / mt : 0))
+read -r dsz dav < <(stat -f -c '%S %b %a' / | { read -r bs bt ba; echo $((bs * bt / 1048576)) $((bs * ba / 1048576)); })
+du=$((dsz - dav)); dp=$((dsz ? du * 100 / dsz : 0))
+ip=""
+if command -v ip >/dev/null; then ip=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p' | head -n 1); fi
+[ -n "$ip" ] || ip=offline
+init=$(readlink /proc/1/exe 2>/dev/null); init=${init##*/}; [ -n "$init" ] || init=unknown
+cpkg=""; command -v cloudpkg >/dev/null && cpkg=$(cloudpkg version 2>/dev/null)
+gpu=""
+for d in /sys/class/drm/card[0-9]/device; do
+  [ -r "$d/vendor" ] || continue
+  case $(<"$d/vendor") in 0x10de) gpu=nvidia ;; 0x1002) gpu=amd ;; 0x8086) gpu=intel ;; 0x1af4|0x15ad|0x1234) gpu=virtual ;; *) gpu=$(<"$d/vendor") ;; esac
+  break
+done
+
+L=()
+L+=("$(c "1;$TIT")$user$(c $OFF)$(c "$SEP")@$(c $OFF)$(c "1;$TIT")$host$(c $OFF)")
+L+=("$(c "$SEP")$(printf '%*s' $((${#user} + ${#host} + 1)) '' | tr ' ' '-')$(c $OFF)")
+add() { L+=("$(c "$KEY")$(printf '%-9s' "$1")$(c $OFF) $2"); }
+add OS "$os $arch"
+add Kernel "$kern"
+add Init "$init"
+add Uptime "$(human "$up")"
+add Packages "$pk (portage)${cpkg:+, $cpkg}"
+add Shell "$shn $shv"
+add Terminal "$term"
+add CPU "$cpu ($cores)"
+[ -n "$gpu" ] && add GPU "$gpu"
+add Memory "$(mib "$mu") / $(mib "$mt")  $(bar "$mp") $mp%"
+[ "$st" -gt 0 ] && add Swap "$(mib $((st - sf))) / $(mib "$st")"
+add Disk "$((du / 1024)).$((du % 1024 * 10 / 1024)) GiB / $((dsz / 1024)).$((dsz % 1024 * 10 / 1024)) GiB  $(bar "$dp") $dp%"
+add IP "$ip"
+
+if [ "$mode" != plain ]; then
+  b1=""; b2=""
+  for i in 0 1 2 3 4 5 6 7; do b1="$b1\033[4${i}m   "; b2="$b2\033[10${i}m   "; done
+  L+=("")
+  L+=("$(printf '%b\033[0m' "$b1")")
+  L+=("$(printf '%b\033[0m' "$b2")")
+fi
+
+if [ "$mode" = plain ] || [ ! -r "$LOGO" ]; then
+  printf '%s\n' "${L[@]}"
+  exit 0
+fi
+
+G=("" 153 111 110 68 25)
+logo=()
+while IFS= read -r l; do logo+=("$l"); done < "$LOGO"
+col=50
+n=${#logo[@]}; m=${#L[@]}; max=$((n > m ? n : m))
+for ((i = 0; i < max; i++)); do
+  if [ "$i" -lt "$n" ]; then
+    l=${logo[i]}
+    if [ "${l:0:1}" = '$' ]; then g=${l:1:1}; l=${l:2}; printf '\033[38;5;%sm%s\033[0m' "${G[g]}" "$l"; else printf '%s' "$l"; fi
+  fi
+  if [ "$i" -lt "$m" ] && [ -n "${L[i]}" ]; then printf '\033[%dG%s' "$col" "${L[i]}"; fi
+  printf '\n'
+done
