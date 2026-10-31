@@ -1,6 +1,6 @@
 name: stage3
 
-# собирает stage 3 cloudos на сервере github (tools/build-stage3.sh) и кладёт в релиз 1.1.
+# собирает stage 3 cloudos на сервере github (tools/build-stage3.sh) и кладёт в релиз 1.2.
 # запуск: вкладка Actions -> stage3 -> Run workflow.
 
 on:
@@ -8,7 +8,7 @@ on:
     inputs:
       version:
         description: версия
-        default: "1.1"
+        default: "1.2"
       refresh_list:
         description: взять список пакетов из настоящего stage 3 gentoo
         type: boolean
