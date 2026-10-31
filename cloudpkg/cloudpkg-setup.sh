@@ -5,7 +5,7 @@ REPO=${CLOUDPKG_REPO:-wh1laye/cloudos-repo}
 BRANCH=${CLOUDPKG_BRANCH:-main}
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd)" || HERE="$(pwd)"
 SRC="${CLOUDPKG_SRC:-}"
-PIPS=${CLOUDPKG_PIPS:-"https://mirrors.aliyun.com/pypi/simple/ https://mirrors.ustc.edu.cn/pypi/simple/ https://pypi.org/simple/"}
+PIPS=${CLOUDPKG_PIPS:-"https://pypi.org/simple/ https://mirrors.ustc.edu.cn/pypi/simple/ https://mirrors.aliyun.com/pypi/simple/"}
 PORTAGE_VERSION=${CLOUDPKG_PORTAGE_VERSION:-}
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH
 

@@ -121,10 +121,10 @@ static void loadconf(void)
 		fclose(f);
 	}
 	if (!nmir) {
+		mirrors[nmir++] = strdup("https://distfiles.gentoo.org");
+		mirrors[nmir++] = strdup("https://mirror.yandex.ru/gentoo-distfiles");
 		mirrors[nmir++] = strdup("https://mirrors.ustc.edu.cn/gentoo");
 		mirrors[nmir++] = strdup("https://mirrors.aliyun.com/gentoo");
-		mirrors[nmir++] = strdup("https://mirror.yandex.ru/gentoo-distfiles");
-		mirrors[nmir++] = strdup("https://distfiles.gentoo.org");
 	}
 	if (!nfall)
 		falls[nfall++] = strdup("https://codeload.github.com/gentoo-mirror/gentoo/tar.gz/refs/heads/master");
@@ -428,7 +428,7 @@ static int vdb_has(const char *name)
 
 static void put(const char *dir, const char *name, const char *val)
 {
-	char p[BUF];
+	char p[BUF + 64];
 	FILE *f;
 
 	snprintf(p, sizeof p, "%s/%s", dir, name);
