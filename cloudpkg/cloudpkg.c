@@ -6,16 +6,20 @@
 #include <errno.h>
 #include <time.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 
-#define VERSION "0.5"
+#define VERSION "0.6"
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
 #define INSTALL_URL "https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh"
 #define OVERLAY "/var/db/repos/cloudos"
 #define MAXM 16
 #define BUF 600
+#ifndef ENVDIR
+#define ENVDIR "/etc/portage/env"
+#endif
 
 static char *mirrors[MAXM];
 static int nmir;
@@ -218,6 +222,110 @@ static void mkparent(const char *path)
 	run(a);
 }
 
+static const char noreconf_hook[] =
+"pre_src_prepare() {\n"
+"eautoreconf() { :; }\n"
+"eaclocal() { :; }\n"
+"eautoconf() { :; }\n"
+"eautoheader() { :; }\n"
+"eautomake() { :; }\n"
+"elibtoolize() { :; }\n"
+"_elibtoolize() { :; }\n"
+"}\n";
+
+static int env_bad(const char *p)
+{
+	pid_t pid = fork();
+	int st, fd;
+
+	if (pid < 0)
+		return 0;
+	if (pid == 0) {
+		fd = open("/dev/null", O_RDWR);
+		if (fd >= 0) {
+			dup2(fd, 1);
+			dup2(fd, 2);
+		}
+		execlp("bash", "bash", "-n", p, (char *)NULL);
+		_exit(127);
+	}
+	if (waitpid(pid, &st, 0) < 0 || !WIFEXITED(st))
+		return 0;
+	return WEXITSTATUS(st) == 1 || WEXITSTATUS(st) == 2;
+}
+
+static int env_is_hook(const char *p)
+{
+	char b[4096];
+	size_t n;
+	FILE *f = fopen(p, "r");
+
+	if (!f)
+		return 0;
+	n = fread(b, 1, sizeof b - 1, f);
+	fclose(f);
+	b[n] = 0;
+	return strstr(b, "eautoreconf") != NULL;
+}
+
+static void env_rewrite(const char *p)
+{
+	FILE *f = fopen(p, "w");
+
+	if (!f)
+		return;
+	fputs(noreconf_hook, f);
+	fclose(f);
+}
+
+static int env_scan(const char *dir, int fix, int depth)
+{
+	DIR *d = opendir(dir);
+	struct dirent *e;
+	struct stat st;
+	char p[BUF], bak[BUF + 8];
+	size_t n;
+	int bad = 0, hook;
+
+	if (!d)
+		return 0;
+	while ((e = readdir(d))) {
+		if (e->d_name[0] == '.')
+			continue;
+		n = strlen(e->d_name);
+		if (n > 4 && !strcmp(e->d_name + n - 4, ".bak"))
+			continue;
+		snprintf(p, sizeof p, "%s/%s", dir, e->d_name);
+		if (stat(p, &st) != 0)
+			continue;
+		if (S_ISDIR(st.st_mode)) {
+			if (depth < 2)
+				bad += env_scan(p, fix, depth + 1);
+			continue;
+		}
+		if (!S_ISREG(st.st_mode) || !env_bad(p))
+			continue;
+		bad++;
+		if (!fix)
+			continue;
+		hook = env_is_hook(p);
+		snprintf(bak, sizeof bak, "%s.bak", p);
+		if (rename(p, bak) != 0)
+			continue;
+		fprintf(stderr, "cloudpkg: ошибка синтаксиса в %s, старый файл: %s\n", p, bak);
+		if (hook)
+			env_rewrite(p);
+	}
+	closedir(d);
+	return bad;
+}
+
+static void heal_env(void)
+{
+	if (geteuid() == 0)
+		env_scan(ENVDIR, 1, 0);
+}
+
 static int cmd_sync(void);
 static int ensure_tree(void)
 {
@@ -349,6 +457,7 @@ static int emerge(char **pre, int npre, char **pk, int npk)
 		free(av);
 		return 1;
 	}
+	heal_env();
 	av[n++] = "emerge";
 	for (i = 0; i < npre; i++)
 		av[n++] = pre[i];
@@ -432,6 +541,7 @@ static int cmd_sync(void)
 
 	if (!need_root())
 		return 1;
+	heal_env();
 	snprintf(part, sizeof part, "%s/portage-latest.part", dist);
 	snprintf(fin, sizeof fin, "%s/portage-latest.tar.xz", dist);
 	snprintf(nw, sizeof nw, "%s.new", repo);
@@ -702,6 +812,7 @@ static int cmd_doctor(void)
 	bad += !check("make.conf", exists("/etc/portage/make.conf"));
 	bad += !check("профиль (make.profile)", exists("/etc/portage/make.profile"));
 	bad += !check("package.provided", exists("/etc/portage/profile/package.provided"));
+	bad += !check("синтаксис /etc/portage/env", env_scan(ENVDIR, 0, 0) == 0);
 	bad += !check("curl", have("curl"));
 	bad += !check("tar", have("tar"));
 	bad += !check("xz", have("xz"));
