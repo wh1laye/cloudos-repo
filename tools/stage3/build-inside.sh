@@ -551,6 +551,39 @@ do_vdb() {
   done
 }
 
+do_pyvdb() {
+  local ver slot pf dir use="" m
+  ver=$(python3 -c 'import platform; print(platform.python_version())')
+  slot=${ver%.*}
+  pf=python-$ver
+  dir=$VDB/dev-lang/$pf
+  for m in ensurepip:ensurepip ssl:ssl sqlite3:sqlite readline:readline xml.parsers.expat:xml _gdbm:gdbm curses:ncurses threading:threads; do
+    python3 -c "import ${m%%:*}" 2>/dev/null && use="$use ${m##*:}"
+  done
+  use=${use# }
+  rm -rf "$VDB"/dev-lang/python-[0-9]*
+  mkdir -p "$dir"
+  printf 'dev-lang\n' > "$dir/CATEGORY"
+  printf '%s\n' "$pf" > "$dir/PF"
+  printf '%s\n' "$slot" > "$dir/SLOT"
+  printf '8\n' > "$dir/EAPI"
+  printf 'gentoo\n' > "$dir/repository"
+  printf '1\n' > "$dir/COUNTER"
+  date +%s > "$dir/BUILD_TIME"
+  printf '0\n' > "$dir/SIZE"
+  printf -- '-\n' > "$dir/DEFINED_PHASES"
+  printf 'amd64\n' > "$dir/KEYWORDS"
+  printf 'cloudos: python собран вручную в lfs, запись нужна eclass python-utils-r1\n' > "$dir/DESCRIPTION"
+  : > "$dir/CONTENTS"
+  printf '%s\n' "$use" > "$dir/USE"
+  printf 'bluetooth build debug ensurepip examples gdbm jit libedit ncurses pgo readline sqlite ssl test threads tk valgrind xml\n' > "$dir/IUSE"
+  : > "$dir/DEPEND"; : > "$dir/RDEPEND"
+  printf '1\n' > "$dir/CLOUDOS_STUB"
+  say "python $ver (slot $slot, use: $use) записан в базу установленных"
+  portageq has_version / "dev-lang/python:$slot" || { echo "!! portage не видит dev-lang/python:$slot" >&2; ls -l "$VDB/dev-lang" >&2 || true; return 1; }
+  grep -q "python${slot/./_}" /etc/portage/make.conf || { echo "!! в make.conf нет python${slot/./_} в PYTHON_TARGETS" >&2; return 1; }
+}
+
 do_fixtool() { install -m755 "$F/cloudos-fix.sh" /usr/sbin/cloudos-fix; }
 
 do_cfgclean() {
@@ -580,6 +613,7 @@ step package.provided do_provided
 step meson-helper do_meson_helper
 step machinery do_machinery
 step autotools-vdb do_vdb
+step python-vdb do_pyvdb
 do_paxutils || true
 step users do_users
 step pam do_pam
