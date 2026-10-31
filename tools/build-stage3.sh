@@ -86,7 +86,10 @@ if [ ! -e "$ROOT/var/tmp/s3stamp/cloudpkg-setup" ]; then
 fi
 say "сборка пакетов (1-2 часа на одном ядре, на 8 ядрах около 15 минут)"
 enter bash /var/tmp/s3files/build-inside.sh "$VERSION" "${STRICT:-0}" \
-  || die "сборка внутри chroot оборвалась. причина выше. исправь и запусти снова с RESUME=1 (готовые шаги не повторятся)"
+  || {
+    if [ -s "$ROOT/var/tmp/cloudos-report.txt" ]; then cp "$ROOT/var/tmp/cloudos-report.txt" "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt"; fi
+    die "сборка внутри chroot оборвалась. причина выше. исправь и запусти снова с RESUME=1 (готовые шаги не повторятся)"
+  }
 
 rm -f "$ROOT/etc/resolv.conf"
 NAME=cloudos-stage3-amd64-$VERSION.tar.xz
