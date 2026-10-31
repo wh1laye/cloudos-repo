@@ -326,12 +326,24 @@ show_plan() {
   fi
 }
 
+# build-docbook-catalog в postinst зовёт getopt-long, которого в lfs нет: пакет вставал, но postinst падал и portage выкидывал всё, что от него зависит (pam, pambase...)
+ensure_getopt_long() {
+  command -v getopt-long >/dev/null && return 0
+  command -v getopt >/dev/null || { echo "!! нет getopt из util-linux" >&2; return 1; }
+  printf '#!/bin/sh\nexec getopt "$@"\n' > /usr/bin/getopt-long
+  chmod 755 /usr/bin/getopt-long
+  say "поставил getopt-long (обёртка над getopt)"
+}
+
 apply_fix() {
   local lg=$1 did=1
   if clean_log "$lg" | grep -q 'Cannot find the latest' && [ ! -e "$ST/fix-vdb" ]; then
     touch "$ST/fix-vdb"
     say "eclass не видит autotools, записываю их в базу установленных"
     if cloudpkg vdb; then did=0; fi
+  fi
+  if clean_log "$lg" | grep -q 'getopt-long: command not found'; then
+    ensure_getopt_long && { command -v build-docbook-catalog >/dev/null && build-docbook-catalog >/dev/null 2>&1 || true; did=0; }
   fi
   if clean_log "$lg" | grep -qE 'Fetch failed|Couldn.t download|Could not resolve host|Connection timed out|Connection reset'; then
     say "похоже на сбой сети, повторю через 10 секунд"; sleep 10; did=0
@@ -381,6 +393,7 @@ preflight() {
 # в package.provided был записан sys-libs/pam, но в lfs его нет (shadow собран без pam): нет pam_appl.h, падают passwdqc, pambase, openssh.
 # убираем запись и ставим настоящий pam через cloudpkg
 do_pam() {
+  ensure_getopt_long || return 1
   sed -i '/^sys-libs\/pam-/d' "$PP"
   restore_helpers "перед pam"
   install_one sys-libs/pam "$L/pam.log" || { echo "!! pam не поставился" >&2; return 1; }
@@ -391,6 +404,7 @@ do_pam() {
 
 # ebuild-ы с архивами .tar.lz (timezone-data) зовут lzip, а его в lfs нет: unpacker падает с "-dc: command not found"
 do_lzip() {
+  ensure_getopt_long || return 1
   restore_helpers "перед lzip"
   command -v lzip >/dev/null || install_one app-arch/lzip "$L/lzip.log" || { echo "!! lzip не поставился" >&2; return 1; }
   restore_helpers "после lzip"
