@@ -307,6 +307,14 @@ report_failure() {
   echo "   (полный лог: $lg)"
 }
 
+# одна строка причины на каждый упавший пакет, для итога в github actions
+cause_of() {
+  local pf=$1 bl="$PTMP/$1/temp/build.log"
+  [ -s "$bl" ] || return 0
+  clean_log "$bl" | grep -E 'fatal error|[Ee]rror:|No such file|not found|Cannot find|Could not|failed to|ModuleNotFound|No module' \
+    | grep -v 'ERROR: .* failed (' | head -n 3 | cut -c1-200 | sed 's/^/      причина: /' || true
+}
+
 show_plan() {
   local a=$1 out
   echo "   что он тянет за собой:"
@@ -370,6 +378,29 @@ preflight() {
   grep -E '^(Portage |System uname|ABI=|LIBDIR_amd64|CHOST=|ACCEPT_KEYWORDS=|FEATURES=|MAKEOPTS=)' "$L/emerge-info.txt" | cut -c1-200 || true
 }
 
+# в package.provided был записан sys-libs/pam, но в lfs его нет (shadow собран без pam): нет pam_appl.h, падают passwdqc, pambase, openssh.
+# убираем запись и ставим настоящий pam через cloudpkg
+do_pam() {
+  sed -i '/^sys-libs\/pam-/d' "$PP"
+  restore_helpers "перед pam"
+  install_one sys-libs/pam "$L/pam.log" || { echo "!! pam не поставился" >&2; return 1; }
+  restore_helpers "после pam"
+  [ -e /usr/include/security/pam_appl.h ] || { echo "!! нет security/pam_appl.h после установки pam" >&2; return 1; }
+  ls /usr/lib/libpam.so* >/dev/null 2>&1 || { echo "!! нет libpam.so" >&2; return 1; }
+}
+
+# ebuild-ы с архивами .tar.lz (timezone-data) зовут lzip, а его в lfs нет: unpacker падает с "-dc: command not found"
+do_lzip() {
+  restore_helpers "перед lzip"
+  command -v lzip >/dev/null || install_one app-arch/lzip "$L/lzip.log" || { echo "!! lzip не поставился" >&2; return 1; }
+  restore_helpers "после lzip"
+  command -v lzip >/dev/null || { echo "!! lzip не появился в PATH" >&2; return 1; }
+  local t; t=$(mktemp -d)
+  echo cloudos > "$t/a"; tar -C "$t" -cf "$t/a.tar" a; lzip -k "$t/a.tar"
+  [ "$(lzip -dc "$t/a.tar.lz" | tar -xOf - a)" = cloudos ] || { echo "!! lzip не распаковывает свой архив" >&2; rm -rf "$t"; return 1; }
+  rm -rf "$t"
+}
+
 # весь набор пакетов из gentoo stage 3 (кроме пакетного менеджера и фишек gentoo, см. gentoo-exclude.txt).
 # один пакет не собрался: показываем настоящую причину, идём дальше, в конце вторая попытка для упавших.
 # итог в конце (с STRICT=1 это ошибка сборки, без неё шаг остаётся "не до конца" и при RESUME=1 повторится)
@@ -409,7 +440,7 @@ do_gentoo_set() {
         ok=$((ok + 1)); fail=$((fail - 1)); say "собрался со второй попытки: $a"
       else
         failed+=("$a")
-        { echo "$a"; failed_in_log "$lg" | sed 's/^/   упал: /'; } >> "$rep"
+        { echo "$a"; failed_in_log "$lg" | while read -r pf ph; do echo "   упал: $pf $ph"; cause_of "$pf"; done; } >> "$rep"
       fi
     done
   fi
@@ -521,6 +552,8 @@ step machinery do_machinery
 step autotools-vdb do_vdb
 do_paxutils || true
 step users do_users
+step pam do_pam
+step lzip do_lzip
 step gentoo-stage3-set do_gentoo_set
 do_cfgclean
 step verify do_verify
