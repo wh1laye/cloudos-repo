@@ -1,12 +1,11 @@
 # changelog
 
+#BUG решение - rm /etc/portage/env/cloudos-noreconf
+
 ## 1.2 (stage 3 и cloudpkg 0.6)
 
 исправлено:
 
-- пакетник: сломанные файлы в `/etc/portage/env` (ошибка синтаксиса в `cloudos-noreconf`) больше не рушат сборку. cloudpkg 0.6 проверяет их через `bash -n` перед `sync`, `install` и `upgrade`, сломанный файл уходит в `.bak`, а хук `cloudos-noreconf` пересоздаётся рабочим. `cloudpkg doctor` показывает, всё ли в порядке
-- сборка stage 3: хук `cloudos-noreconf` пишется построчно и проверяется `bash -n` сразу при создании, если не прошёл, сборка не использует его
-- su: setuid на `su`, `passwd`, `doas` и `unix_chkpwd`, `login.defs` с нужным PATH и шифрованием. настройки pam ставятся, только если shadow собран с pam (в базе lfs он без pam, тогда `/etc/pam.d` не нужен)
 - useradd: `/usr/sbin` теперь в PATH у всех (`/etc/profile.d/cloudos-path.sh`, `ENV_PATH` и `ENV_SUPATH` в `login.defs`), если shadow не установлен, сборка ставит его через cloudpkg
 - версия в `/etc/os-release` и `/etc/issue` обновляется с любой прошлой версии, не только с 1.0
 
