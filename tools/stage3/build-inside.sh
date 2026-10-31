@@ -1,22 +1,37 @@
 #!/bin/bash
-set -eu
+set -euE
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 export CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe"
 VERSION=${1:-1.3}
 STRICT=${2:-0}
-S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
+L=/var/tmp/s3log; S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
 say() { printf '==> %s\n' "$*"; }
 unpack() { rm -rf "$B"; mkdir -p "$B"; tar xf "$S/$1" -C "$B" --strip-components=1; cd "$B"; }
-auto() { local f=$1; shift; unpack "$f"; CC="gcc -std=gnu17" ./configure --prefix=/usr "$@"; make -j"$J"; make install; ldconfig; }
+mk() { make -j"$J" "$@" || { echo "!! make -j$J упал, повтор -j1 V=1"; make -j1 V=1 "$@"; }; }
+auto() { local f=$1; shift; unpack "$f"; CC="gcc -std=gnu17" ./configure --prefix=/usr "$@"; mk; make install; ldconfig; }
 ST=/var/tmp/s3stamp; mkdir -p "$ST"
+CUR=""
+fail() {
+  local rc=$1 lg="$L/step-$CUR.log"
+  trap - EXIT ERR; sleep 1
+  printf '::error::шаг %s упал, код %s\n' "${CUR:-старт}" "$rc" >&2
+  if [ -f "$lg" ]; then
+    echo "--- последние 80 строк $lg" >&2; tail -n 80 "$lg" >&2
+    echo "--- строки с ошибкой" >&2
+    grep -nE 'error:|Error [0-9]+|No such file|undefined reference|CMake Error|Killed|\*\*\*' "$lg" | tail -n 30 >&2 || true
+  fi
+  exit "$rc"
+}
+trap 'fail $?' ERR
 step() {
   local n=$1; shift
   if [ -e "$ST/$n" ]; then say "$n: уже готово"; return 0; fi
+  CUR=$n; exec > >(tee "$L/step-$n.log") 2>&1
   say "$n"; rm -f "$ST/$n.partial"
   "$@"
   if [ -e "$ST/$n.partial" ]; then say "$n: сделано не до конца, после исправления запусти с RESUME=1"; else touch "$ST/$n"; fi
 }
-L=/var/tmp/s3log; PP=/etc/portage/profile/package.provided; VDB=/var/db/pkg; PTMP=/var/tmp/portage
+PP=/etc/portage/profile/package.provided; VDB=/var/db/pkg; PTMP=/var/tmp/portage
 mkdir -p "$L"
 
 
@@ -51,7 +66,7 @@ do_cloudpkg() {
   cloudpkg version
 }
 
-do_ivykis() { unpack ivykis-0.43.2.tar.gz; autoreconf -fi >/dev/null; CC="gcc -std=gnu17" ./configure --prefix=/usr --disable-static; make -j"$J"; make install; ldconfig; }
+do_ivykis() { unpack ivykis-0.43.2.tar.gz; autoreconf -fi >/dev/null; CC="gcc -std=gnu17" ./configure --prefix=/usr --disable-static; mk; make install; ldconfig; }
 
 do_jsonc() {
   unpack json-c-0.19-20260627.tar.gz
@@ -65,13 +80,14 @@ do_syslogng() {
     --enable-ipv6 --enable-json --disable-java --disable-java-modules --disable-python \
     --disable-mongodb --without-mongoc --disable-amqp --disable-geoip2 --disable-http --disable-kafka \
     --disable-mqtt --disable-redis --disable-smtp --disable-sql --disable-systemd --disable-tcp-wrapper \
-    --disable-linux-caps --disable-spoof-source --disable-manpages --disable-docs
+    --disable-linux-caps --disable-spoof-source --disable-manpages --disable-docs \
+    --disable-example-modules --disable-stackdump
 }
 
 do_squashfs() {
   unpack squashfs-tools-4.7.5.tar.gz
   local z=0 l=0; [ -e /usr/include/zstd.h ] && z=1; [ -e /usr/include/lzo/lzo1x.h ] && l=1
-  make -C squashfs-tools -j"$J" CC="gcc -std=gnu17" GZIP_SUPPORT=1 XZ_SUPPORT=1 ZSTD_SUPPORT=$z LZO_SUPPORT=$l
+  mk -C squashfs-tools CC="gcc -std=gnu17" GZIP_SUPPORT=1 XZ_SUPPORT=1 ZSTD_SUPPORT=$z LZO_SUPPORT=$l
   make -C squashfs-tools install INSTALL_DIR=/usr/bin
 }
 
