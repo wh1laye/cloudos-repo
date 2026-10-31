@@ -2,7 +2,7 @@
 set -eu
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 export CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe"
-VERSION=${1:-1.2}
+VERSION=${1:-1.3}
 STRICT=${2:-0}
 S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
 say() { printf '==> %s\n' "$*"; }
@@ -318,34 +318,13 @@ show_plan() {
   fi
 }
 
-# известный сбой: ebuild падает в prepare на eautoreconf. в тарболле уже есть готовый configure,
-# поэтому для этого пакета глушим пересборку autotools (хук pre_src_prepare в /etc/portage/env)
-fix_noreconf() {
-  local cp=$1 pc=${1%%/*} mark pe
-  mark="$ST/fix-noreconf-${cp//\//_}"
-  if [ -e "$mark" ]; then return 1; fi
-  touch "$mark"
-  install -d "/etc/portage/env/$pc"
-  printf '%s\n' 'pre_src_prepare() {' 'eautoreconf() { :; }' 'eaclocal() { :; }' 'eautoconf() { :; }' 'eautoheader() { :; }' \
-    'eautomake() { :; }' 'elibtoolize() { :; }' '_elibtoolize() { :; }' '}' > /etc/portage/env/cloudos-noreconf
-  bash -n /etc/portage/env/cloudos-noreconf || { echo "!! cloudos-noreconf не прошёл bash -n" >&2; rm -f /etc/portage/env/cloudos-noreconf; return 1; }
-  cp /etc/portage/env/cloudos-noreconf "/etc/portage/env/$cp"
-  if [ -d /etc/portage/package.env ]; then pe=/etc/portage/package.env/cloudos; else pe=/etc/portage/package.env; fi
-  echo "$cp cloudos-noreconf" >> "$pe"
-  return 0
-}
-
-# смотрит, что упало, и чинит то, что умеем. 0 = что-то изменили и повтор имеет смысл
 apply_fix() {
-  local lg=$1 pf ph cp did=1
-  while read -r pf ph; do
-    [ -n "$pf" ] || continue
-    cp=$(printf '%s\n' "$pf" | sed -E "$STRIPV")
-    case $ph in
-      prepare)
-        if fix_noreconf "$cp"; then say "для $cp отключаю пересборку autotools"; did=0; fi ;;
-    esac
-  done < <(failed_in_log "$lg")
+  local lg=$1 did=1
+  if clean_log "$lg" | grep -q 'Cannot find the latest' && [ ! -e "$ST/fix-vdb" ]; then
+    touch "$ST/fix-vdb"
+    say "eclass не видит autotools, записываю их в базу установленных"
+    if cloudpkg vdb; then did=0; fi
+  fi
   if clean_log "$lg" | grep -qE 'Fetch failed|Couldn.t download|Could not resolve host|Connection timed out|Connection reset'; then
     say "похоже на сбой сети, повторю через 10 секунд"; sleep 10; did=0
   fi
@@ -382,6 +361,7 @@ preflight() {
   for t in ninja meson pkg-config autoconf automake; do
     printf '%-11s %s -> %s\n' "$t" "$(command -v $t || echo НЕТ)" "$($t --version 2>&1 | head -n 1)"
   done
+  portageq has_version / '>=dev-build/automake-1.18' && echo "automake в базе установленных: да" || echo "automake в базе установленных: НЕТ"
   pkg-config --print-errors --modversion readline 2>&1 | head -n 3 || true
   ls -l "$(command -v ninja)" 2>&1 || true
   ls -ld /usr/lib64 /lib64 2>&1 || true
@@ -450,7 +430,7 @@ do_verify() {
            /usr/share/cloudos/logo.png /etc/xdg/fastfetch/config.jsonc /etc/os-release /etc/portage/make.conf /usr/lib64; do
     if [ -e "$f" ] || [ -L "$f" ]; then :; else echo "!! нет $f"; bad=1; fi
   done
-  for f in syslog-ng fastfetch neofetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd useradd usermod userdel groupadd passwd chpasswd su login cloudos-users cloudos-adduser; do
+  for f in syslog-ng fastfetch neofetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd useradd usermod userdel groupadd passwd chpasswd su login cloudos-users cloudos-adduser cloudos-fix portageq; do
     command -v "$f" >/dev/null || { echo "!! нет команды $f"; bad=1; }
   done
   for f in /etc/login.defs /etc/default/useradd /etc/profile.d/cloudos-path.sh /etc/skel/.bashrc /etc/doas.conf; do
@@ -463,6 +443,10 @@ do_verify() {
     [ -u "$(readlink -f "$(command -v $f)")" ] || { echo "!! у $f нет setuid"; bad=1; }
   done
   grep -q '^wheel:' /etc/group || { echo "!! нет группы wheel"; bad=1; }
+  [ ! -e /etc/portage/env/cloudos-noreconf ] || { echo "!! остался /etc/portage/env/cloudos-noreconf"; bad=1; }
+  if grep -rlF 'eautoreconf() { :; }' /etc/portage/env 2>/dev/null | grep -q .; then echo "!! остались хуки отключения autoreconf"; bad=1; fi
+  [ -z "$(find /etc -name '._cfg[0-9][0-9][0-9][0-9]_*' 2>/dev/null | head -n 1)" ] || { echo "!! остались файлы ._cfg"; bad=1; }
+  do_vdb >/dev/null 2>&1 || { echo "!! portage не видит autotools в базе установленных"; bad=1; }
   env -i PATH=/usr/bin:/bin bash -lc 'command -v useradd' >/dev/null 2>&1 || { echo "!! useradd не виден в PATH обычного входа"; bad=1; }
   [ "$(readlink -f /sbin/init)" = "$(readlink -f /sbin/openrc-init)" ] || { echo "!! /sbin/init не указывает на openrc-init"; bad=1; }
   grep -q "^VERSION_ID=\"$VERSION\"" /etc/os-release || { echo "!! в /etc/os-release не $VERSION"; bad=1; }
@@ -487,9 +471,37 @@ do_verify() {
   say "проверка пройдена"
 }
 
+do_vdb() {
+  local t cmd ver mm
+  cloudpkg vdb
+  for t in autoconf automake libtool; do
+    cmd=$t
+    [ "$t" = libtool ] && cmd=libtoolize
+    ver=$("$cmd" --version | head -n 1 | awk '{print $NF}')
+    mm=$(printf '%s' "$ver" | cut -d. -f1,2)
+    if portageq has_version / "=dev-build/$t-$mm*"; then
+      say "$t $ver: portage видит в базе установленных"
+    else
+      echo "!! portage не видит $t $ver (=dev-build/$t-$mm*)" >&2
+      ls -l "$VDB/dev-build" >&2 || true
+      portageq match / "dev-build/$t" >&2 || true
+      return 1
+    fi
+  done
+}
+
+do_fixtool() { install -m755 "$F/cloudos-fix.sh" /usr/sbin/cloudos-fix; }
+
+do_cfgclean() {
+  local n
+  n=$(find /etc -name '._cfg[0-9][0-9][0-9][0-9]_*' | wc -l)
+  find /etc -name '._cfg[0-9][0-9][0-9][0-9]_*' -delete
+  say "убрано неприменённых обновлений конфигов: $n"
+}
+
 step libdir do_libdir
 step portage-tune do_tune
-step cloudpkg-0.6 do_cloudpkg
+step cloudpkg-0.7 do_cloudpkg
 step ivykis do_ivykis
 step json-c do_jsonc
 step syslog-ng do_syslogng
@@ -500,14 +512,17 @@ step squashfs-tools do_squashfs
 step mtools do_mtools
 step fastfetch do_fastfetch
 step neofetch do_neofetch
+step cloudos-fix do_fixtool
 step limine do_limine
 step sysklogd-to-syslog-ng do_logger
 step package.provided do_provided
 step meson-helper do_meson_helper
 step machinery do_machinery
+step autotools-vdb do_vdb
 do_paxutils || true
 step users do_users
 step gentoo-stage3-set do_gentoo_set
+do_cfgclean
 step verify do_verify
 
 say "уборка"
