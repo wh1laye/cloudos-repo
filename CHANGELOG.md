@@ -2,6 +2,10 @@
 
 ## 1.3 (stage 3 и cloudpkg 0.7)
 
+исправлено (шаг pam, `dev-python/more-itertools`: `python_setup: no enabled implementation satisfy requirements`):
+
+- `build-inside.sh`: новый шаг `python-vdb` после `autotools-vdb`. `has_version` в eclass `python-utils-r1` не видит `package.provided`, поэтому python 3.13 из lfs считался не установленным и `python_setup` не находил ни одной реализации. шаг записывает `dev-lang/python-<версия>` (slot `3.13`, флаги `USE` определяются проверкой импорта модулей: ssl, sqlite, readline, xml, gdbm, ncurses, threads, ensurepip) в `/var/db/pkg` с файлом `CLOUDOS_STUB`, потом проверяет `portageq has_version / dev-lang/python:3.13` и `python3_13` в `make.conf`
+
 исправлено (stage 3, сборка падала без причины в логе):
 
 - `build-inside.sh`: описанные ниже `s3log/step-имя.log`, `trap` с `::error::` и хвостом лога на самом деле отсутствовали в скрипте, теперь они есть: `set -E`, `trap ERR`, каждый шаг пишет в `s3log/step-имя.log`
