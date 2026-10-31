@@ -5,7 +5,7 @@
 **Своя Linux система, собранная с нуля.**
 Простая, лёгкая и без ничего лишнего.
 
-[![Версия](https://img.shields.io/badge/версия-1.1%20бета-9cc8f2?style=for-the-badge)](https://github.com/wh1laye/cloudos-repo/releases)
+[![Версия](https://img.shields.io/badge/версия-1.2%20бета-9cc8f2?style=for-the-badge)](https://github.com/wh1laye/cloudos-repo/releases)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-3b5fa8?style=for-the-badge)](#-лицензия)
 [![Система](https://img.shields.io/badge/система-x86__64-cfe3f8?style=for-the-badge&labelColor=3b5fa8)](#-что-внутри)
 
@@ -24,7 +24,7 @@ CloudOS это Linux система, которую я собираю сам, ш
 После установки у тебя будет чистая консоль и пользователь `root`.
 Всё остальное ты добавляешь сам, так как хочешь.
 
-> 🚧 Проект живёт в моём темпе. Сроков выхода версий нет. Сейчас это **бета 1.1**.
+> 🚧 Проект живёт в моём темпе. Сроков выхода версий нет. Сейчас это **бета 1.2**.
 
 ---
 
@@ -69,7 +69,7 @@ CloudOS это Linux система, которую я собираю сам, ш
 Положи архив и файл `.sha256` в одну папку и выполни:
 
 ```bash
-sha256sum -c cloudos-stage3-amd64-1.1.tar.xz.sha256
+sha256sum -c cloudos-stage3-amd64-1.2.tar.xz.sha256
 ```
 
 Если написано `OK`, всё хорошо.
