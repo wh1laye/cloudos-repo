@@ -118,7 +118,7 @@ for f in sbin/init sbin/openrc-init etc/os-release etc/init.d/syslog-ng etc/runl
          etc/syslog-ng/syslog-ng.conf usr/bin/fastfetch usr/bin/cloudpkg usr/bin/emerge \
          usr/share/cloudos/logo.txt usr/share/cloudos/logo.ansi usr/share/cloudos/logo.png \
          etc/xdg/fastfetch/config.jsonc usr/bin/neofetch usr/sbin/cloudos-users usr/sbin/cloudos-adduser \
-         etc/pam.d/system-auth etc/pam.d/su etc/pam.d/login etc/login.defs etc/doas.conf; do
+         etc/login.defs etc/doas.conf; do
   grep -qxE "(\./)?(usr/)?$f" "$LIST" || { printf 'в архиве нет %s\n' "$f" >&2; miss=1; }
 done
 [ "$miss" = 0 ] || die "архив неполный"

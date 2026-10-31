@@ -39,7 +39,7 @@
 - `SOURCES.txt`: имя, sha256 и ссылка каждого исходника
 - `syslog-ng.initd`, `syslog-ng.confd`, `syslog-ng.conf`: файлы openrc из дерева gentoo (gpl-2)
 - `neofetch`: команда `neofetch` на чистом bash с облаком cloudos, без зависимостей (`neofetch --ff` запускает fastfetch, `--plain` без логотипа и цветов)
-- `cloudos-users.sh`: ставится как `/usr/sbin/cloudos-users`. настраивает вход и пользователей: pam (system-auth, login, su, doas, passwd), setuid на su и passwd, login.defs, PATH с sbin для всех, /etc/skel, группа wheel, doas.conf. безопасно запускать повторно, на живой системе 1.1 тоже
+- `cloudos-users.sh`: ставится как `/usr/sbin/cloudos-users`. настраивает вход и пользователей: pam (только если shadow собран с ним), setuid на su и passwd, login.defs, PATH с sbin для всех, /etc/skel, группа wheel, doas.conf. безопасно запускать повторно, на живой системе 1.1 тоже
 - `cloudos-adduser`: `cloudos-adduser имя` создаёт пользователя с домашней папкой, группой wheel и паролем
 - `fastfetch.jsonc`: настройка fastfetch, по умолчанию облако в пяти оттенках голубого для любого терминала
 - `fastfetch-truecolor.jsonc`, `fastfetch-image.jsonc`: то же облако плавным градиентом (truecolor) и картинкой для терминалов с показом изображений. запуск: `fastfetch -c /usr/share/cloudos/fastfetch-truecolor.jsonc` или `fastfetch -c /usr/share/cloudos/fastfetch-image.jsonc`
