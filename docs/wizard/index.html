@@ -85,8 +85,8 @@ M=/mnt/cloudos
 case "$DISK" in *nvme*|*mmcblk*) PS=p;; *) PS="";; esac
 P1="$DISK${PS}1"
 P2="$DISK${PS}2"
-STAGE=cloudos-stage3-amd64-1.1.tar.xz
-URL=https://github.com/wh1laye/cloudos-repo/releases/download/1.1
+STAGE=cloudos-stage3-amd64-1.2.tar.xz
+URL=https://github.com/wh1laye/cloudos-repo/releases/download/1.2
 [ "$(id -u)" = 0 ] || { echo "нужен root"; exit 1; }
 [ -b "$DISK" ] || { echo "нет диска $DISK"; exit 1; }
 if [ "$MODE" = uefi ]; then
