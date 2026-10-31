@@ -2,6 +2,15 @@
 
 ## 1.3 (stage 3 и cloudpkg 0.7)
 
+исправлено (сборка stage 3 в github actions, ошибка без причины в логе):
+
+- `cloudpkg.c`: буфер в `put()` был `BUF` (600) под путь `dir/name`, gcc 15 в chroot давал `-Wformat-truncation` на каждую запись stub. буфер `BUF + 64`, сборка проходит с `-Wall -Wextra -Werror`
+- `build-inside.sh`: каждый шаг пишет вывод в `s3log/step-имя.log`, при падении `trap` печатает `::error::`, последние 80 строк шага и строки с `error:`/`Error N`/`No such file`
+- `build-inside.sh`: `make -jN` упал, повтор с `-j1 V=1`: параллельный вывод прятал настоящую ошибку, заодно лечит гонки в libisoburn и syslog-ng
+- `build-inside.sh`: шаг `limine` перенесён после `autotools-vdb`: раньше `cloudpkg sync` и `install limine` шли до `package.provided`, `machinery` и записи autotools, и portage мог начать собирать gentoo-functions и app-alternatives
+- зеркала дерева portage: первым `distfiles.gentoo.org`, китайские в конце (с runner github они медленные, `--speed-limit` рвал каждое по 30 секунд). pypi для сборки portage: первым `pypi.org`
+- workflow: весь вывод сборки пишется в `build.log`, в summary идёт блок "где упало", `build.log` лежит в артефакте `s3log-версия` даже при падении
+
 исправлено (сборка stage 3 через github actions, падали 9 пакетов):
 
 - `sys-libs/pam` убран из `package.provided`: в lfs shadow собран без pam, настоящего pam нет, но portage считал его установленным. из-за этого не было `security/pam_appl.h`, и падали `sys-auth/passwdqc` (compile), `sys-auth/pambase`, `net-misc/openssh` и `net-mail/mailbase`. новый шаг `pam` ставит настоящий pam через cloudpkg и проверяет `pam_appl.h` и `libpam.so`
