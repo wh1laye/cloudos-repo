@@ -31,10 +31,19 @@ jobs:
     timeout-minutes: 240
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
+      - name: проверка параметров
+        env:
+          VERSION: ${{ inputs.version }}
+          KVER: ${{ inputs.kernel }}
+        run: |
+          case "$VERSION" in ''|*[!0-9A-Za-z._-]*) echo "::error::неверная версия"; exit 1 ;; esac
+          case "$KVER" in ""|*[!0-9.]*) echo "::error::неверная версия ядра"; exit 1 ;; esac
       - name: проверка скриптов
         run: |
-          for f in tools/mkiso.sh tools/iso/mkiso-inside.sh tools/iso/init; do bash -n "$f"; done
+          for f in tools/mkiso.sh tools/iso/mkiso-inside.sh tools/iso/init tools/stage3/cloudos-firewall tools/stage3/cloudos-audit; do bash -n "$f"; done
 
       - name: место на диске
         run: |
@@ -81,12 +90,16 @@ jobs:
             -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || true
           grep -aq 'cloudos-init: switch_root' smoke.log || { echo "initramfs не дошёл до switch_root"; exit 1; }
           grep -aq 'is starting up' smoke.log || { echo "openrc не стартовал"; exit 1; }
+          grep -aqE 'nftables|нет службы nftables' smoke.log || { echo "в логе загрузки нет nftables"; exit 1; }
+          if grep -aqE 'правила в .* не проходят проверку' smoke.log; then echo "nftables не принял правила"; exit 1; fi
 
       - name: итог в summary
         if: always()
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
           {
-            echo "### iso ${{ inputs.version }}"
+            echo "### iso $VERSION"
             ls -lh out 2>/dev/null | sed 's/^/    /' || true
             if [ -s "$RUNNER_TEMP/build.log" ] && grep -qE '::error::|ошибка:|rror:|упал' "$RUNNER_TEMP/build.log"; then
               echo "### где упало"

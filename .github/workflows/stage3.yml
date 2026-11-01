@@ -32,13 +32,27 @@ jobs:
     timeout-minutes: 350
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: проверка параметров
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          case "$VERSION" in ''|*[!0-9A-Za-z._-]*) echo "::error::неверная версия"; exit 1 ;; esac
 
       - name: проверка скриптов и cloudpkg
         run: |
-          for f in tools/build-stage3.sh tools/test-cloudpkg.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/neofetch cloudpkg/*.sh; do bash -n "$f"; done
+          for f in tools/build-stage3.sh tools/test-cloudpkg.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/neofetch tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/test-firewall.sh cloudpkg/*.sh; do bash -n "$f"; done
           make -C cloudpkg clean all CC="gcc -Wextra -Werror"
           ./cloudpkg/cloudpkg version
           sudo bash tools/test-cloudpkg.sh
+
+      - name: проверка фаервола
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq nftables
+          sudo bash tools/test-firewall.sh
 
       - name: место на диске
         run: |
@@ -59,10 +73,14 @@ jobs:
           ls -lh out
 
       - name: карта размеров
-        run: python3 tools/stage3-map.py "out/cloudos-stage3-amd64-${{ inputs.version }}.tar.xz" -o "out/cloudos-stage3-amd64-${{ inputs.version }}.map.json"
+        env:
+          VERSION: ${{ inputs.version }}
+        run: python3 tools/stage3-map.py "out/cloudos-stage3-amd64-$VERSION.tar.xz" -o "out/cloudos-stage3-amd64-$VERSION.map.json"
 
       - name: итог в summary
         if: always()
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
           {
             if [ -s "$RUNNER_TEMP/build.log" ] && grep -qE '::error::|ошибка:|rror:|упал' "$RUNNER_TEMP/build.log"; then
@@ -71,7 +89,7 @@ jobs:
               echo "---"
               tail -n 60 "$RUNNER_TEMP/build.log" | sed 's/^/    /'
             fi
-            echo "### stage3 ${{ inputs.version }}"
+            echo "### stage3 $VERSION"
             ls -lh out 2>/dev/null | sed 's/^/    /' || true
             for f in out/*.failed.txt; do
               [ -f "$f" ] || continue
