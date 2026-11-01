@@ -1,5 +1,12 @@
 # changelog
 
+## 1.3, живой iso
+
+новое:
+
+- `tools/mkiso.sh`, `tools/iso/mkiso-inside.sh`, `tools/iso/init`: сборка гибридного iso (bios и uefi) на limine из stage 3. ядро собирается из исходников kernel.org, initramfs свой (без dracut), корень это squashfs из stage 3 с overlay в tmpfs
+- `.github/workflows/iso.yml`: сборка iso в github actions, проверочная загрузка в qemu, выкладывание `cloudos-live-amd64-1.3.iso` и `.sha256` в релиз `1.3`. `docs/` не затрагивается
+
 ## 1.3, сайт и справочник
 
 - версия 1.3 везде: `docs/index.html`, справочник (ru и en), мастер установки, страница пакетов, страница stage 3, имена файлов и ссылки на релиз `1.3`
