@@ -1,1 +1,50 @@
+#!/bin/bash
+export PATH=/bin:/usr/bin
+mount -t proc proc /proc
+mount -t sysfs sysfs /sys
+mount -t devtmpfs devtmpfs /dev
+mount -t tmpfs tmpfs /run
 
+say() { echo "cloudos-init: $*"; }
+
+rescue() {
+  say "$*"
+  say "аварийная оболочка, exit продолжит загрузку"
+  bash
+}
+
+CMDLINE=$(cat /proc/cmdline)
+case " $CMDLINE " in *" cloudos.shell "*) rescue "cloudos.shell в командной строке" ;; esac
+
+find_iso() {
+  local n=0 d
+  while [ "$n" -lt 40 ]; do
+    for d in /dev/sr* /dev/sd* /dev/vd* /dev/nvme*n* /dev/mmcblk*; do
+      [ -b "$d" ] || continue
+      mount -t iso9660 -o ro "$d" /mnt/iso 2>/dev/null || continue
+      if [ -f /mnt/iso/cloudos/rootfs.squashfs ]; then
+        say "образ найден на $d"
+        return 0
+      fi
+      umount /mnt/iso
+    done
+    n=$((n + 1))
+    sleep 1
+  done
+  return 1
+}
+
+until find_iso; do rescue "не найден носитель с cloudos/rootfs.squashfs"; done
+
+until mount -t squashfs -o ro,loop /mnt/iso/cloudos/rootfs.squashfs /mnt/sq; do rescue "squashfs не смонтировался"; done
+
+mount -t tmpfs -o mode=755 tmpfs /mnt/rw
+mkdir -p /mnt/rw/up /mnt/rw/work
+until mount -t overlay overlay -o lowerdir=/mnt/sq,upperdir=/mnt/rw/up,workdir=/mnt/rw/work /mnt/new; do rescue "overlay не смонтировался"; done
+
+mkdir -p /mnt/new/dev /mnt/new/proc /mnt/new/sys /mnt/new/run /mnt/new/tmp /mnt/new/var/tmp /mnt/new/media/cdrom
+chmod 1777 /mnt/new/tmp /mnt/new/var/tmp
+mount --move /mnt/iso /mnt/new/media/cdrom 2>/dev/null
+
+say "switch_root"
+exec switch_root /mnt/new /sbin/init
