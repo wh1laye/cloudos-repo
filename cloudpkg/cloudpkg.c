@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <time.h>
 #include <dirent.h>
+#include <ftw.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <sys/stat.h>
@@ -387,6 +388,9 @@ static int probe_ver(const char *cmd, char *ver, size_t n)
 	FILE *f;
 	int ok = 0;
 
+	for (t = (char *)cmd; *t; t++)
+		if (!((*t >= 'a' && *t <= 'z') || (*t >= '0' && *t <= '9') || *t == '-' || *t == '_'))
+			return 0;
 	snprintf(c, sizeof c, "%s --version 2>/dev/null", cmd);
 	f = popen(c, "r");
 	if (!f)
@@ -599,34 +603,58 @@ static char *resolve(char *name)
 	return res;
 }
 
+static char best_log[BUF];
+static time_t best_mt, log_since;
+
+static int log_cb(const char *path, const struct stat *st, int type, struct FTW *ftw)
+{
+	if (type != FTW_F || strcmp(path + ftw->base, "build.log") != 0)
+		return 0;
+	if (st->st_mtime < log_since || st->st_mtime < best_mt)
+		return 0;
+	if (strlen(path) >= sizeof best_log || strchr(path, '\n'))
+		return 0;
+	best_mt = st->st_mtime;
+	snprintf(best_log, sizeof best_log, "%s", path);
+	return 0;
+}
+
+static int show_tail(const char *path, const char *needle)
+{
+	static char ring[25][BUF];
+	char line[BUF];
+	int cnt = 0, found = 0, i, from;
+	FILE *f = fopen(path, "r");
+
+	if (!f)
+		return 0;
+	while (fgets(line, sizeof line, f)) {
+		if (needle && strstr(line, needle))
+			found = 1;
+		snprintf(ring[cnt % 25], BUF, "%s", line);
+		cnt++;
+	}
+	fclose(f);
+	from = cnt > 25 ? cnt - 25 : 0;
+	for (i = from; i < cnt; i++)
+		fputs(ring[i % 25], stderr);
+	return found;
+}
+
 static void fail_hint(time_t t0)
 {
-	char find[BUF], path[BUF], cmd[BUF + 40];
-	FILE *f;
-
-	snprintf(find, sizeof find,
-		 "find /var/tmp/portage -name build.log -newermt @%ld -printf '%%T@ %%p\\n' 2>/dev/null | sort -n | tail -1 | cut -d' ' -f2-",
-		 (long)t0);
-	f = popen(find, "r");
-	path[0] = 0;
-	if (f && fgets(path, sizeof path, f)) {
-		trim(path);
-		if (strchr(path, '\'') || strchr(path, '\n'))
-			path[0] = 0;
-		if (*path) {
-			fprintf(stderr, "\ncloudpkg: сборка не удалась. последние строки лога %s:\n", path);
-			snprintf(cmd, sizeof cmd, "tail -n 25 '%s' >&2", path);
-			if (system(cmd) < 0)
-				perror("cloudpkg: tail");
-			snprintf(cmd, sizeof cmd, "grep -q 'Cannot find the latest' '%s'", path);
-			if (system(cmd) == 0)
-				fprintf(stderr, "cloudpkg: eclass не видит autotools. выполни cloudpkg vdb и повтори установку\n");
-		}
-	}
-	if (f)
-		pclose(f);
-	if (!*path)
+	best_log[0] = 0;
+	best_mt = 0;
+	log_since = t0;
+	if (nftw("/var/tmp/portage", log_cb, 16, FTW_PHYS) < 0)
+		best_log[0] = 0;
+	if (*best_log) {
+		fprintf(stderr, "\ncloudpkg: сборка не удалась. последние строки лога %s:\n", best_log);
+		if (show_tail(best_log, "Cannot find the latest"))
+			fprintf(stderr, "cloudpkg: eclass не видит autotools. выполни cloudpkg vdb и повтори установку\n");
+	} else {
 		fprintf(stderr, "\ncloudpkg: до сборки дело не дошло: смотри сообщения emerge выше (маски, блокировки, зависимости)\n");
+	}
 	fprintf(stderr, "cloudpkg: проверь сеть (cloudpkg sync), имя пакета (cloudpkg search имя) и cloudpkg doctor\n");
 }
 
