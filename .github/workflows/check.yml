@@ -1,0 +1,39 @@
+name: check
+
+on:
+  push:
+    paths-ignore:
+      - "**.md"
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: синтаксис скриптов
+        run: |
+          for f in tools/*.sh tools/iso/mkiso-inside.sh tools/iso/init tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/stage3/neofetch cloudpkg/*.sh; do bash -n "$f"; done
+
+      - name: cloudpkg
+        run: |
+          make -C cloudpkg clean all CC="gcc -Wextra -Werror"
+          ./cloudpkg/cloudpkg version
+
+      - name: форум
+        run: bash tools/test-forum.sh
+
+      - name: json и yaml
+        run: |
+          python3 -c "import json; json.load(open('docs/packages/packages.json'))"
+          python3 -c "import yaml,glob; [yaml.safe_load(open(f)) for f in glob.glob('.github/workflows/*.yml')]"
+
+      - name: js
+        run: for f in docs/*.js docs/*/*.js; do node --check "$f"; done
