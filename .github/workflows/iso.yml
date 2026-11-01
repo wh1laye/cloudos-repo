@@ -1,0 +1,132 @@
+name: iso
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: версия
+        default: "1.3"
+      kernel:
+        description: версия ядра
+        default: "6.18.10"
+      smoke:
+        description: проверочная загрузка в qemu
+        type: boolean
+        default: true
+      publish:
+        description: выложить iso в релиз
+        type: boolean
+        default: true
+
+concurrency:
+  group: iso-${{ inputs.version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: проверка скриптов
+        run: |
+          for f in tools/mkiso.sh tools/iso/mkiso-inside.sh tools/iso/init; do bash -n "$f"; done
+
+      - name: место на диске
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo mkdir -p /mnt/iso && sudo chown "$USER" /mnt/iso
+          df -h / /mnt
+
+      - name: stage 3 из релиза
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          mkdir -p dl
+          gh release download "$VERSION" --repo "$GITHUB_REPOSITORY" -p "cloudos-stage3-amd64-$VERSION.tar.xz*" -D dl
+          ls -lh dl
+          ( cd dl && sha256sum -c "cloudos-stage3-amd64-$VERSION.tar.xz.sha256" )
+
+      - name: сборка iso
+        env:
+          VERSION: ${{ inputs.version }}
+          KVER: ${{ inputs.kernel }}
+        run: |
+          set -o pipefail
+          mkdir -p "$PWD/out"
+          sudo -E env WORK=/mnt/iso OUT="$PWD/out" VERSION="$VERSION" KVER="$KVER" BASE="$PWD/dl/cloudos-stage3-amd64-$VERSION.tar.xz" \
+            bash tools/mkiso.sh 2>&1 | tee "$RUNNER_TEMP/build.log"
+          ls -lh out
+
+      - name: проверочная загрузка в qemu
+        id: smoke
+        if: ${{ inputs.smoke }}
+        continue-on-error: true
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 xorriso
+          ISO="$PWD/out/cloudos-live-amd64-$VERSION.iso"
+          mkdir -p smoke
+          xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz smoke/vmlinuz -extract /boot/initramfs.img smoke/initramfs.img 2>/dev/null
+          ACCEL=""
+          if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
+          timeout 420 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
+            -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || true
+          grep -aq 'cloudos-init: switch_root' smoke.log || { echo "initramfs не дошёл до switch_root"; exit 1; }
+          grep -aq 'is starting up' smoke.log || { echo "openrc не стартовал"; exit 1; }
+
+      - name: итог в summary
+        if: always()
+        run: |
+          {
+            echo "### iso ${{ inputs.version }}"
+            ls -lh out 2>/dev/null | sed 's/^/    /' || true
+            if [ -s "$RUNNER_TEMP/build.log" ] && grep -qE '::error::|ошибка:|rror:|упал' "$RUNNER_TEMP/build.log"; then
+              echo "### где упало"
+              grep -nE '::error::|ошибка:|fatal error|error:|Error [0-9]+|No such file|undefined reference|!!' "$RUNNER_TEMP/build.log" | tail -n 25 | sed 's/^/    /'
+              echo "---"
+              tail -n 60 "$RUNNER_TEMP/build.log" | sed 's/^/    /'
+            fi
+            echo "### проверочная загрузка: ${{ steps.smoke.outcome }}"
+            if [ -s smoke.log ]; then tail -n 40 smoke.log | tr -d '\033' | sed 's/^/    /'; fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: логи
+        if: always()
+        run: |
+          cp "$RUNNER_TEMP/build.log" "$PWD/build.log" 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: isolog-${{ inputs.version }}
+          path: |
+            build.log
+            smoke.log
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.publish }}
+        with:
+          name: cloudos-iso-${{ inputs.version }}
+          path: out/*
+          compression-level: 0
+
+      - name: релиз
+        if: ${{ inputs.publish }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          SIZE=$(stat -c %s "out/cloudos-live-amd64-$VERSION.iso")
+          [ "$SIZE" -lt 2147483648 ] || { echo "iso $SIZE байт, лимит github releases 2 гб"; exit 1; }
+          gh release view "$VERSION" >/dev/null 2>&1 || gh release create "$VERSION" --title "CloudOS $VERSION" \
+            --notes "cloudos $VERSION. проверка: sha256sum -c cloudos-live-amd64-$VERSION.iso.sha256"
+          gh release upload "$VERSION" "out/cloudos-live-amd64-$VERSION.iso" "out/cloudos-live-amd64-$VERSION.iso.sha256" --clobber
