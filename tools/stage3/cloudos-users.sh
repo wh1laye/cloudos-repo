@@ -170,10 +170,14 @@ if [ -z "$R" ]; then
 fi
 
 say "doas"
-if [ ! -e "$R/etc/doas.conf" ]; then
-  printf '%s\n' 'permit persist :wheel' 'permit nopass root' > "$R/etc/doas.conf"
-  chmod 600 "$R/etc/doas.conf"
-fi
+DC=$R/etc/doas.conf
+[ -e "$DC" ] || : > "$DC"
+if [ -s "$DC" ] && [ -n "$(tail -c1 "$DC")" ]; then echo >> "$DC"; fi
+for rule in 'permit persist :wheel' 'permit nopass root'; do
+  grep -qxF "$rule" "$DC" || printf '%s\n' "$rule" >> "$DC"
+done
+chmod 600 "$DC"
+grep -qxF 'permit persist :wheel' "$DC" || { echo "в doas.conf нет правила для wheel" >&2; bad=1; }
 
 if [ "$bad" = 0 ]; then say "пользователи и вход настроены"; else echo "есть ошибки" >&2; fi
 exit "$bad"
