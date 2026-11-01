@@ -27,6 +27,8 @@ if [ -z "$R" ]; then
   chk kernel.kptr_restrict 2
   chk kernel.dmesg_restrict 1
   chk kernel.randomize_va_space 2
+  chk kernel.yama.ptrace_scope 2
+  chk vm.mmap_min_addr 65536
   chk kernel.unprivileged_bpf_disabled 1
   chk fs.protected_symlinks 1
   chk fs.protected_hardlinks 1
@@ -50,6 +52,23 @@ if [ -r "$SH" ]; then
 fi
 u=$(awk -F: '$3 == 0 && $1 != "root" { print $1 }' "$R/etc/passwd" | tr '\n' ' ')
 [ -z "$u" ] && good "uid 0 только у root" || fail "лишний uid 0: $u"
+
+echo "== вход и ssh"
+SC=$R/etc/ssh/sshd_config.d/10-cloudos.conf
+if [ -e "$SC" ]; then
+  grep -q '^PasswordAuthentication no' "$SC" && good "ssh: вход по паролю закрыт" || fail "ssh: вход по паролю не закрыт"
+  grep -q '^AuthenticationMethods publickey' "$SC" && good "ssh: только ключи" || fail "ssh: не только ключи"
+  grep -q '^DisableForwarding yes' "$SC" && good "ssh: проброс закрыт" || fail "ssh: проброс не закрыт"
+else
+  note "нет $SC"
+fi
+if [ -r "$R/etc/shadow" ]; then
+  r=$(awk -F: '$1 == "root" { print $2 }' "$R/etc/shadow")
+  case $r in '!'*|'*'*|'') good "root без пароля для входа (заблокирован)" ;; *) note "у root задан пароль" ;; esac
+fi
+grep -qs 'pam_faillock.so' "$R/etc/pam.d/system-auth" && good "pam: блокировка после 5 неудачных входов" || note "pam_faillock не включён"
+[ -e "$R/etc/modprobe.d/cloudos.conf" ] && good "modprobe: редкие протоколы и fs отключены" || note "нет /etc/modprobe.d/cloudos.conf"
+[ "$(stat -c %a "$R/root" 2>/dev/null)" = 700 ] && good "/root права 700" || fail "/root права не 700"
 
 echo "== файлы"
 w=$(find "$R/etc" -xdev -type f -perm -0002 2>/dev/null | head -n 10)

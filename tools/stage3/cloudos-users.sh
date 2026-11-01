@@ -30,7 +30,7 @@ done
 if [ "$PAMUSE" = 1 ] && [ -z "$MOD" ]; then err "shadow собран с pam, но нет pam_unix.so"; fi
 
 say "setuid"
-for t in su passwd chsh chfn newgrp doas; do
+for t in su passwd newgrp doas; do
   f=$(find_bin "$t") || continue
   [ -L "$f" ] && f=$(readlink -f "$f")
   chown 0:0 "$f" && chmod 4755 "$f" || err "не смог выставить setuid на $f"
@@ -48,10 +48,25 @@ pam() {
 if [ "$PAMUSE" = 1 ]; then
 say "pam"
 has() { [ -n "$MOD" ] && [ -e "$MOD/$1" ]; }
+FL='deny=5 unlock_time=600 fail_interval=900'
 {
-  echo 'auth      required    pam_unix.so'
+  if has pam_faillock.so && has pam_deny.so; then
+    echo "auth      required    pam_faillock.so preauth $FL"
+    echo 'auth      [success=1 default=bad] pam_unix.so'
+    echo "auth      [default=die] pam_faillock.so authfail $FL"
+    echo "auth      sufficient  pam_faillock.so authsucc $FL"
+    echo 'auth      required    pam_deny.so'
+    echo 'account   required    pam_faillock.so'
+  else
+    echo 'auth      required    pam_unix.so'
+  fi
   echo 'account   required    pam_unix.so'
-  echo 'password  required    pam_unix.so sha512 shadow try_first_pass'
+  UA=''
+  if has pam_pwquality.so; then
+    echo 'password  requisite   pam_pwquality.so retry=3 minlen=10 difok=3'
+    UA=' use_authtok'
+  fi
+  echo "password  required    pam_unix.so sha512 rounds=100000 shadow try_first_pass$UA"
   echo 'session   required    pam_unix.so'
   has pam_limits.so && echo 'session   required    pam_limits.so'
   has pam_env.so && echo 'session   optional    pam_env.so'
@@ -103,6 +118,12 @@ setkey SU_NAME su
 setkey UMASK 027
 setkey HOME_MODE 0750
 setkey LOGIN_RETRIES 5
+setkey PASS_MAX_DAYS 365
+setkey PASS_MIN_DAYS 1
+setkey PASS_WARN_AGE 14
+setkey SYSLOG_SU_ENAB yes
+setkey SYSLOG_SG_ENAB yes
+setkey LOG_UNKFAIL_ENAB no
 setkey LOGIN_TIMEOUT 60
 setkey FAILLOG_ENAB yes
 setkey SHA_CRYPT_MIN_ROUNDS 100000
@@ -136,6 +157,16 @@ if [ -z "$R" ]; then
   getent group users >/dev/null || groupadd users
   getent group video >/dev/null || groupadd video
   getent group audio >/dev/null || groupadd audio
+fi
+
+if [ -z "$R" ]; then
+  say "root"
+  chmod 700 /root
+  chmod 600 /etc/shadow
+  if [ -e /etc/gshadow ]; then chmod 600 /etc/gshadow; fi
+  if awk -F: '$1 == "root" && $2 == "" { f = 1 } END { exit !f }' /etc/shadow; then
+    passwd -l root >/dev/null && say "у root был пустой пароль, учётка заблокирована" || err "не смог заблокировать root"
+  fi
 fi
 
 say "doas"

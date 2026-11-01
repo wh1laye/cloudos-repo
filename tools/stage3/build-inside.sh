@@ -579,6 +579,11 @@ do_verify() {
     ssh-keygen -q -t ed25519 -N '' -f "$hk" && sshd -t -f /etc/ssh/sshd_config -h "$hk" || { echo "!! sshd_config не проходит sshd -t"; bad=1; }
     rm -f "$hk" "$hk.pub"
   fi
+  [ "$(stat -c %a /root)" = 700 ] || { echo "!! /root не 700"; bad=1; }
+  [ "$(stat -c %a /etc/shadow)" = 600 ] || { echo "!! /etc/shadow не 600"; bad=1; }
+  grep -q '^PasswordAuthentication no' /etc/ssh/sshd_config.d/10-cloudos.conf || { echo "!! в sshd нет PasswordAuthentication no"; bad=1; }
+  [ -e /etc/modprobe.d/cloudos.conf ] && [ -e /etc/security/limits.d/10-cloudos.conf ] || { echo "!! нет modprobe или limits"; bad=1; }
+  grep -q '^kernel.yama.ptrace_scope = 2' /etc/sysctl.d/90-cloudos.conf || { echo "!! в sysctl нет ptrace_scope 2"; bad=1; }
   grep -q '^wheel:' /etc/group || { echo "!! нет группы wheel"; bad=1; }
   [ ! -e /etc/portage/env/cloudos-noreconf ] || { echo "!! остался /etc/portage/env/cloudos-noreconf"; bad=1; }
   if grep -rlF 'eautoreconf() { :; }' /etc/portage/env 2>/dev/null | grep -q .; then echo "!! остались хуки отключения autoreconf"; bad=1; fi
@@ -662,6 +667,24 @@ do_pyvdb() {
 
 do_fixtool() { install -m755 "$F/cloudos-fix.sh" /usr/sbin/cloudos-fix; }
 
+do_harden() {
+  install -d -m755 /etc/modprobe.d /etc/security/limits.d
+  install -m644 "$F/modprobe-cloudos.conf" /etc/modprobe.d/cloudos.conf
+  install -m644 "$F/limits-cloudos.conf" /etc/security/limits.d/10-cloudos.conf
+  chmod 700 /root
+  chmod 600 /etc/shadow
+  if [ -e /etc/gshadow ]; then chmod 600 /etc/gshadow; fi
+  chmod 644 /etc/passwd /etc/group
+  if [ -e /etc/doas.conf ]; then chmod 600 /etc/doas.conf; fi
+  local f
+  for f in chsh chfn; do
+    if [ -e "/usr/bin/$f" ] && [ ! -L "/usr/bin/$f" ]; then chmod u-s "/usr/bin/$f"; fi
+  done
+  rm -f /root/.bash_history /root/.viminfo /root/.wget-hsts
+  CLOUDOS_ROOT=/ /usr/sbin/cloudos-audit >/var/tmp/s3log/audit.txt 2>&1 || true
+  grep -E '^\[ !! \]|^итог' /var/tmp/s3log/audit.txt || true
+}
+
 do_cfgclean() {
   local n
   n=$(find /etc -name '._cfg[0-9][0-9][0-9][0-9]_*' | wc -l)
@@ -699,6 +722,7 @@ step maildir fix_maildir
 step elfutils do_elfutils
 step gentoo-stage3-set do_gentoo_set
 step sshd-harden do_sshd
+step harden do_harden
 do_cfgclean
 step verify do_verify
 
