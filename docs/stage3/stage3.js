@@ -78,7 +78,9 @@ function init(){
   d.getElementById('meta').textContent=DATA.src+' · '+fmt(DATA.t)+' · '+DATA.f+' '+(en()?'files':'файлов')+' · '+DATA.d;
   draw();crumbs();list();
 }
-fetch('map.json').then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){DATA=j;init()}).catch(function(){});
+var MAPURL='https://github.com/wh1laye/cloudos-repo/releases/download/1.3/cloudos-stage3-amd64-1.3.map.json';
+function getj(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.json()})}
+getj('map.json').catch(function(){return getj(MAPURL)}).then(function(j){DATA=j;init()}).catch(function(){});
 window.addEventListener('resize',function(){if(DATA)draw()});
 window.addEventListener('cloudlang',function(){if(DATA){init()}});
 })();
