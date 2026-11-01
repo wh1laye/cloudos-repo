@@ -21,7 +21,7 @@ printf 'MAKEOPTS="-j2"\n' > "$T/env/good.conf"
 printf 'dev-libs/libuv cloudos-noreconf\napp-misc/x good.conf\n' > "$T/package.env"
 
 build() {
-  gcc -std=gnu17 -Wall -Wextra -Werror -O2 -DENVDIR="\"$T/env\"" -DPENV="\"$T/package.env\"" -DVDB="\"$1\"" -o "$2" "$SRC"
+  gcc -std=gnu17 -Wall -Wextra -Werror -O2 ${CFLAGS_EXTRA:-} -DENVDIR="\"$T/env\"" -DPENV="\"$T/package.env\"" -DVDB="\"$1\"" -o "$2" "$SRC"
 }
 build "$T/vdb" "$T/cloudpkg"
 build "$T/vdb2" "$T/cloudpkg2"
