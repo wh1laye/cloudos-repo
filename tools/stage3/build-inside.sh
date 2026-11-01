@@ -126,9 +126,11 @@ do_users() {
 do_firewall() {
   if ! command -v nft >/dev/null; then
     say "ставлю net-firewall/nftables через cloudpkg"
-    install -d /etc/portage/package.use
+    NFU='net-firewall/nftables -python -doc -man -xtables json readline gmp -libedit'
     if [ -d /etc/portage/package.use ]; then
-      printf '%s\n' 'net-firewall/nftables -python -doc -man -xtables json readline gmp -libedit' > /etc/portage/package.use/cloudos-nftables
+      printf '%s\n' "$NFU" > /etc/portage/package.use/cloudos-nftables
+    else
+      grep -qxF "$NFU" /etc/portage/package.use 2>/dev/null || printf '%s\n' "$NFU" >> /etc/portage/package.use
     fi
     restore_helpers "перед nftables"
     install_one net-firewall/nftables "$L/nftables.log" || { echo "!! nftables не поставился" >&2; return 1; }
