@@ -121,7 +121,7 @@ function renderA(){
   n.textContent='';
   var swap=S.s==='0'?(S.f==='btrfs'?'btrfs filesystem mkswapfile --size 4g /swapfile\nswapon /swapfile':'dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress\nchmod 600 /swapfile\nmkswap /swapfile\nswapon /swapfile')+'\necho "/swapfile  none  swap  defaults  0 0" >> /etc/fstab':'swapon --show';
   var items=[
-    ['u','пользователь и doas','grep wheel /etc/group || groupadd wheel\nuseradd -m -G wheel -s /bin/bash '+u+'\npasswd '+u+'\necho "permit :wheel" > /etc/doas.conf\nchmod 0400 /etc/doas.conf'],
+    ['u','пользователь и doas','grep wheel /etc/group || groupadd wheel\nuseradd -m -G wheel -s /bin/bash '+u+'\npasswd '+u+'\ngrep -q wheel /etc/doas.conf 2>/dev/null || echo "permit persist :wheel" >> /etc/doas.conf\nchmod 0400 /etc/doas.conf'],
     ['h','имя компьютера и часовой пояс','cat /etc/hostname\nls -l /etc/localtime'],
     ['n','сеть','ip addr\nping -c1 github.com'],
     ['s','swap',swap],

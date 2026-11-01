@@ -203,7 +203,6 @@ timeout: 5
   cmdline: root=UUID=$ROOT_UUID$RF rw
   module_path: boot():/initramfs-$KVER.img
 EOF
-fi
 if [ "$SWAP" -gt 0 ] && [ ! -f /swapfile ]; then
   if [ "$FS" = btrfs ]; then
     btrfs filesystem mkswapfile --size ${SWAP}g /swapfile
@@ -220,7 +219,7 @@ done
 if [ -n "$USR" ]; then
   grep -q '^wheel:' /etc/group || groupadd wheel
   id "$USR" >/dev/null 2>&1 || useradd -m -G wheel -s /bin/bash "$USR"
-  echo "permit :wheel" > /etc/doas.conf
+  grep -q wheel /etc/doas.conf 2>/dev/null || echo "permit persist :wheel" >> /etc/doas.conf
   chmod 0400 /etc/doas.conf
   echo "пароль для $USR"
   passwd "$USR"
