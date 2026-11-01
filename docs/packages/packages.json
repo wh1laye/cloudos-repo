@@ -318,5 +318,125 @@
    "en": "event library (for syslog-ng)"
   },
   "s": "stage3"
+ },
+ {
+  "n": "openssh",
+  "v": "",
+  "c": "network",
+  "d": {
+   "ru": "ssh-сервер и клиент",
+   "en": "ssh server and client"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "iptables",
+  "v": "",
+  "c": "network",
+  "d": {
+   "ru": "фаервол",
+   "en": "firewall"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "rsync",
+  "v": "",
+  "c": "network",
+  "d": {
+   "ru": "синхронизация файлов",
+   "en": "file synchronization"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "wget",
+  "v": "",
+  "c": "network",
+  "d": {
+   "ru": "загрузка файлов",
+   "en": "file downloader"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "iputils",
+  "v": "",
+  "c": "network",
+  "d": {
+   "ru": "ping и другие сетевые утилиты",
+   "en": "ping and other network tools"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "net-tools",
+  "v": "",
+  "c": "network",
+  "d": {
+   "ru": "ifconfig, netstat и другие",
+   "en": "ifconfig, netstat and others"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "man-db",
+  "v": "",
+  "c": "tools",
+  "d": {
+   "ru": "чтение man-страниц",
+   "en": "man page reader"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "man-pages",
+  "v": "",
+  "c": "tools",
+  "d": {
+   "ru": "man-страницы linux",
+   "en": "linux man pages"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "gnupg",
+  "v": "",
+  "c": "tools",
+  "d": {
+   "ru": "шифрование и подписи gpg",
+   "en": "gpg encryption and signatures"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "elfutils",
+  "v": "",
+  "c": "lib",
+  "d": {
+   "ru": "библиотеки libelf и libdw",
+   "en": "libelf and libdw libraries"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "pam",
+  "v": "",
+  "c": "system",
+  "d": {
+   "ru": "модули аутентификации",
+   "en": "authentication modules"
+  },
+  "s": "stage3"
+ },
+ {
+  "n": "lzip",
+  "v": "",
+  "c": "tools",
+  "d": {
+   "ru": "архиватор lzip",
+   "en": "lzip archiver"
+  },
+  "s": "stage3"
  }
 ]
