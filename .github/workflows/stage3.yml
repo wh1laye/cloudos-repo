@@ -45,7 +45,7 @@ jobs:
 
       - name: проверка скриптов и cloudpkg
         run: |
-          for f in tools/build-stage3.sh tools/test-cloudpkg.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/neofetch tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/test-firewall.sh cloudpkg/*.sh; do bash -n "$f"; done
+          for f in tools/build-stage3.sh tools/test-cloudpkg.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/neofetch tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/test-firewall.sh tools/test-forum.sh cloudpkg/*.sh; do bash -n "$f"; done
           make -C cloudpkg clean all CC="gcc -Wextra -Werror"
           ./cloudpkg/cloudpkg version
           sudo bash tools/test-cloudpkg.sh
@@ -55,6 +55,9 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq nftables
           sudo bash tools/test-firewall.sh
+
+      - name: проверка форума
+        run: bash tools/test-forum.sh
 
       - name: место на диске
         run: |
