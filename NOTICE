@@ -1,0 +1,79 @@
+cloudos: уведомление о лицензиях
+
+cloudos не одна программа под одной лицензией. это репозиторий с кодом автора и готовые архивы (stage 3 и iso), в которых лежат тысячи чужих программ. у каждой своя лицензия. ниже что под какой лицензией и где взять исходники.
+
+
+1. этот репозиторий
+
+- код, скрипты, сайт, справочник и тексты автора (wh1laye): лицензия mit, текст в файле license
+- файлы, взятые из gentoo: лицензия gpl-2, авторские права остаются у авторов gentoo
+  - tools/stage3/syslog-ng.initd, syslog-ng.confd, syslog-ng.conf
+  - рецепты в cloudpkg/overlay/ (в том числе sys-boot/limine)
+- сайт использует чужие библиотеки со своими лицензиями
+  - supabase-js (docs/forum/supabase.js): mit
+  - cloudflare turnstile подгружается с серверов cloudflare и в репозитории не лежит
+
+
+2. stage 3 и iso
+
+архивы cloudos-stage3-amd64-*.tar.xz и cloudos-live-amd64-*.iso собраны из чужих программ. на них не распространяется лицензия mit. каждая программа остаётся под своей лицензией. основные группы:
+
+основа системы (собрана вручную по lfs)
+- glibc, libxcrypt, glib: lgpl-2.1 или новее
+- gcc, binutils, make, m4, bison, gettext, texinfo, groff, gawk, sed, grep, findutils, diffutils, patch, tar, gzip, cpio, bash, readline, nano, coreutils, gperf, gdbm: gpl-3 или новее (у gcc и bison есть исключения, разрешающие собирать любые программы)
+- linux (ядро): gpl-2 с исключением для системных вызовов
+- util-linux, kmod, kbd, psmisc, procps, iproute2, net-tools, e2fsprogs, btrfs-progs, iptables, git, man-db, elfutils, lzo: gpl-2 (у части библиотек lgpl)
+- dosfstools, rsync, wget, gnupg, mtools: gpl-3 или новее
+- gmp, mpfr, mpc: lgpl-3 или gpl-2 (зависит от пакета, см. исходники)
+- python: psf-2
+- perl: artistic или gpl-1 и новее
+- openssl: apache-2.0
+- curl: лицензия curl (в стиле mit)
+- openssh, openrc, dhcpcd, limine, flex, file, shadow, iputils, pcre2, libcap: bsd (2 или 3 пункта) или близкие, у части двойная лицензия с gpl
+- meson, ninja, cmake, clang и llvm: apache-2.0 (у llvm с исключением), bsd-3 у cmake
+- ncurses: x11 (в стиле mit)
+- zlib: zlib
+- bzip2: bsd-подобная лицензия bzip2
+- xz-utils: 0bsd и публичное достояние, zstd: bsd-3 или gpl-2
+- expat, libffi, json-c, fastfetch: mit
+- pkgconf: isc
+- opendoas (doas): isc и bsd
+- ca-certificates: mpl-2.0 (набор сертификатов mozilla)
+- dracut-ng: gpl-2
+
+собрано отдельно скриптами cloudos
+- syslog-ng: gpl-2 или новее (библиотеки lgpl-2.1)
+- ivykis: lgpl-2.1
+- libburn, libisofs: gpl-2 или новее
+- libisoburn (xorriso): gpl-3 или новее
+- squashfs-tools: gpl-2 или новее
+
+установленное через cloudpkg (portage)
+- рецепты (ebuild) из gentoo распространяются под gpl-2
+- сами программы под своими лицензиями. точная лицензия каждой записана в файле license внутри /var/db/pkg/категория/пакет-версия/ и в самом ebuild
+- состав stage 3 смотри в cloudos-stage3-amd64-*.packages.txt в релизе
+
+список выше краткий и может отставать от версий. когда он расходится с реальностью, верна лицензия, указанная в исходниках конкретной программы.
+
+
+3. исходный код
+
+для программ под gpl и lgpl исходный код доступен:
+- исходники пакетов из portage: зеркала gentoo (distfiles.gentoo.org) и серверы авторов. рецепты сборки и версии записаны в архиве и в дереве gentoo
+- исходники, собранные отдельно: ссылки и контрольные суммы в tools/stage3/SOURCES.txt
+- ядро: kernel.org, версия указана в имени iso и в tools/mkiso.sh
+- скрипты сборки stage 3 и iso: этот репозиторий
+
+если нужного исходного кода не нашёл, открой issue на https://github.com/wh1laye/cloudos-repo/issues, исходники будут выложены. это предложение действует три года с момента выхода релиза.
+
+тексты лицензий лежат в дереве gentoo (каталог licenses), а также на https://spdx.org/licenses/
+
+
+4. торговые марки
+
+linux является торговой маркой линуса торвальдса. gentoo является торговой маркой gentoo foundation. cloudos не связан с ними и не одобрен ими. все остальные названия принадлежат их владельцам.
+
+
+5. гарантии
+
+всё поставляется как есть, без гарантий любого рода, подробнее в license и в лицензиях отдельных программ.
