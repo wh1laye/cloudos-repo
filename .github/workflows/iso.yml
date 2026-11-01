@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: версия
-        default: "1.3"
+        default: "1.4"
       kernel:
         description: версия ядра
         default: "6.18.10"
