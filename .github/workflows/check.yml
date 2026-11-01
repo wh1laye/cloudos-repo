@@ -22,6 +22,12 @@ jobs:
         run: |
           for f in tools/*.sh tools/iso/mkiso-inside.sh tools/iso/init tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/stage3/neofetch cloudpkg/*.sh; do bash -n "$f"; done
 
+      - name: shellcheck
+        continue-on-error: true
+        run: |
+          sudo apt-get install -y -qq shellcheck
+          shellcheck -S error tools/*.sh tools/iso/mkiso-inside.sh tools/iso/init tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/cloudos-firewall tools/stage3/cloudos-audit cloudpkg/*.sh
+
       - name: cloudpkg
         run: |
           make -C cloudpkg clean all CC="gcc -Wextra -Werror"
