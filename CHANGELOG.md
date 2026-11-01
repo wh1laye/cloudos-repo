@@ -1,5 +1,11 @@
 # changelog
 
+## 1.4.1, исправление сборки iso
+
+- `tools/iso/mkiso-inside.sh`: сборка iso больше не падает на «в doas.conf нет правила для wheel». недостающие правила `permit persist :wheel` и `permit nopass root` дописываются в `/etc/doas.conf`, права 600, проверка остаётся после дописывания
+- `tools/stage3/cloudos-users.sh`: правила doas добавляются и в уже существующий `doas.conf`, раньше файл не трогался, если он был. добавляется перевод строки в конце, повторный запуск не плодит дубли
+- `.github/workflows/check.yml`: шаг shellcheck на всех скриптах (уровень error)
+
 ## 1.4, жёсткая безопасность
 
 stage 3:
