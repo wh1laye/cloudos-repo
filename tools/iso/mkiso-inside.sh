@@ -44,8 +44,17 @@ build_kernel() {
     EFI EFI_STUB EFIVAR_FS FB_EFI SYSFB_SIMPLEFB EXFAT_FS NTFS3_FS DRM DRM_SIMPLEDRM DRM_FBDEV_EMULATION FRAMEBUFFER_CONSOLE VT; do
     scripts/config -e "$s"
   done
+  for s in NETFILTER NETFILTER_ADVANCED NF_CONNTRACK NF_TABLES NF_TABLES_INET NF_TABLES_IPV4 NF_TABLES_IPV6 NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NFT_REJECT_INET NFT_NAT NFT_MASQ NFT_COUNTER NFT_CONNLIMIT NFT_QUOTA \
+    NETFILTER_NETLINK NETFILTER_NETLINK_LOG NF_LOG_SYSLOG NF_DEFRAG_IPV4 NF_DEFRAG_IPV6 NF_REJECT_IPV4 NF_REJECT_IPV6 INET IPV6 \
+    STACKPROTECTOR STACKPROTECTOR_STRONG STRICT_KERNEL_RWX STRICT_MODULE_RWX RANDOMIZE_BASE RANDOMIZE_MEMORY HARDENED_USERCOPY FORTIFY_SOURCE \
+    INIT_ON_ALLOC_DEFAULT_ON SLAB_FREELIST_RANDOM SLAB_FREELIST_HARDENED SHUFFLE_PAGE_ALLOCATOR VMAP_STACK RANDOMIZE_KSTACK_OFFSET_DEFAULT \
+    SECURITY SECURITY_YAMA SECURITY_DMESG_RESTRICT STRICT_DEVMEM IO_STRICT_DEVMEM LEGACY_VSYSCALL_NONE BUG_ON_DATA_CORRUPTION \
+    SCHED_STACK_END_CHECK DEBUG_WX; do
+    scripts/config -e "$s"
+  done
+  scripts/config -d LEGACY_VSYSCALL_XONLY -d LEGACY_VSYSCALL_EMULATE -d DEVKMEM -d KEXEC_FILE -d LEGACY_PTYS
   make olddefconfig
-  need="MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
+  need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
   for s in $need; do
     grep -q "^CONFIG_$s=y" .config || die "в .config нет CONFIG_$s=y"
   done
@@ -99,7 +108,7 @@ live_tune() {
   else
     echo "!! нет /etc/init.d/agetty, вход на tty1 не настроен" >&2
   fi
-  for s in udev:sysinit udev-trigger:sysinit dhcpcd:default syslog-ng:default; do
+  for s in udev:sysinit udev-trigger:sysinit sysctl:boot dhcpcd:default syslog-ng:default nftables:default; do
     if [ -e "/etc/init.d/${s%%:*}" ]; then
       rc-update add "${s%%:*}" "${s##*:}" >/dev/null 2>&1 || true
     else
@@ -108,7 +117,7 @@ live_tune() {
   done
   cat > /etc/motd <<EOM
 
-CloudOS $VERSION live. вход выполнен как root, пароля нет.
+CloudOS $VERSION live. вход выполнен как root, пароля нет. фаервол включён: cloudos-firewall status
 установка: cfdisk, mkfs, распаковка stage 3 и настройка по handbook
 https://wh1laye.github.io/cloudos-repo/
 
@@ -135,19 +144,19 @@ timeout: 5
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0
+    cmdline: console=tty0 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none
 
 /CloudOS $VERSION live (serial console)
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 console=ttyS0,115200
+    cmdline: console=tty0 console=ttyS0,115200 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none
 
 /CloudOS $VERSION live (rescue shell in initramfs)
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 cloudos.shell
+    cmdline: console=tty0 cloudos.shell slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none
 EOC
   rm -f "$O/$NAME"
   xorriso -as mkisofs -V CLOUDOS -R -r -J \
