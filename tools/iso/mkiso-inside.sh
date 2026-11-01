@@ -14,7 +14,8 @@ J=$(nproc)
 
 say() { printf '==> %s\n' "$*"; }
 die() { printf '::error::%s\n' "$*" >&2; exit 1; }
-trap 'rc=$?; printf "::error::упал шаг, строка %s, код %s\n" "$LINENO" "$rc" >&2' ERR
+on_err() { printf '::error::упал шаг, строка %s, код %s\n' "$1" "$2" >&2; }
+trap 'on_err "$LINENO" "$?"' ERR
 
 for c in gcc make bc flex bison perl cpio zstd ldd bash mount switch_root mknod mksquashfs xorriso limine depmod openssl useradd usermod; do
   command -v "$c" >/dev/null || die "в stage 3 нет команды $c"
