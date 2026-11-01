@@ -57,6 +57,7 @@ CLOUDOS_ROOT=$T/none bash "$HERE/stage3/cloudos-audit" >/dev/null 2>&1 || true
 pass "audit запускается"
 
 if command -v sshd >/dev/null && command -v ssh-keygen >/dev/null; then
+  mkdir -p /run/sshd /var/empty
   ssh-keygen -q -t ed25519 -N '' -f "$T/hk"
   sshd -t -f "$HERE/stage3/sshd-cloudos.conf" -h "$T/hk" || die "sshd-cloudos.conf не проходит sshd -t"
   pass "sshd-cloudos.conf проходит sshd -t"
