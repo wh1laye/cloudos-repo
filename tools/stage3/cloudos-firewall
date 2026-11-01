@@ -1,0 +1,111 @@
+#!/bin/bash
+set -eu
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+CONF=${NFT_CONF:-/etc/nftables.conf}
+DIR=${NFT_DIR:-/etc/nftables.d}
+APPLY=${NFT_APPLY:-1}
+
+die() { printf '!! %s\n' "$*" >&2; exit 1; }
+need() { [ "$(id -u)" = 0 ] || die "нужен root"; command -v nft >/dev/null || die "нет nft"; }
+
+usage() {
+  cat <<EOU
+cloudos-firewall status
+cloudos-firewall check
+cloudos-firewall reload
+cloudos-firewall on
+cloudos-firewall off
+cloudos-firewall list
+cloudos-firewall allow ssh|http|https|tcp/ПОРТ|udp/ПОРТ [from АДРЕС]
+cloudos-firewall remove ssh|http|https|tcp/ПОРТ|udp/ПОРТ
+cloudos-firewall log
+EOU
+}
+
+resolve() {
+  case $1 in
+    ssh) P=tcp; N=22 ;;
+    http) P=tcp; N=80 ;;
+    https) P=tcp; N=443 ;;
+    tcp/*|udp/*) P=${1%%/*}; N=${1#*/} ;;
+    *) die "не понял правило: $1" ;;
+  esac
+  case $N in ''|*[!0-9]*) die "порт должен быть числом: $N" ;; esac
+  [ "$N" -ge 1 ] && [ "$N" -le 65535 ] || die "порт вне 1-65535: $N"
+  N=$((10#$N))
+}
+
+valid_addr() {
+  if [[ $1 =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}(/[0-9]{1,2})?$ ]]; then ADDRF=ip; return 0; fi
+  if [[ $1 =~ ^[0-9a-fA-F:]+(/[0-9]{1,3})?$ && $1 == *:* ]]; then ADDRF=ip6; return 0; fi
+  return 1
+}
+
+apply() {
+  nft -c -f "$CONF" || return 1
+  [ "$APPLY" = 1 ] || return 0
+  nft -f "$CONF"
+}
+
+cmd=${1:-}
+[ $# -gt 0 ] && shift
+case $cmd in
+  status)
+    need
+    if nft list table inet cloudos >/dev/null 2>&1; then
+      echo "фаервол: включён"
+      nft list chain inet cloudos input | grep -m1 policy | sed 's/^[[:space:]]*/политика input: /'
+      ls "$DIR"/*.nft 2>/dev/null | sed 's|.*/|правило: |' || true
+    else
+      echo "фаервол: выключен"
+      exit 1
+    fi ;;
+  check) need; nft -c -f "$CONF" && echo "правила корректны" ;;
+  reload|on) need; apply && echo "правила загружены" ;;
+  off) need; nft flush ruleset; echo "правила сброшены до перезагрузки или cloudos-firewall on" ;;
+  list) need; nft list ruleset ;;
+  log) tail -n 50 /var/log/messages 2>/dev/null | grep 'nft-drop' || echo "записей нет" ;;
+  allow)
+    need
+    [ $# -ge 1 ] || { usage; exit 1; }
+    spec=$1; shift
+    resolve "$spec"
+    FROM=""
+    if [ "${1:-}" = from ]; then
+      [ -n "${2:-}" ] || die "после from нужен адрес"
+      valid_addr "$2" || die "неверный адрес: $2"
+      FROM=$2; shift 2
+    fi
+    [ $# -eq 0 ] || die "лишние аргументы: $*"
+    install -d -m755 "$DIR"
+    f=$DIR/20-allow-$P-$N.nft
+    prev=""
+    [ -e "$f" ] && prev=$(cat "$f")
+    src=""
+    [ -n "$FROM" ] && src="$ADDRF saddr $FROM "
+    if [ "$spec" = ssh ]; then
+      if [ -n "$FROM" ]; then
+        printf '%s\n' "${src}tcp dport $N ct state new accept" > "$f"
+      else
+        printf '%s\n' "tcp dport $N ct state new meter ssh_flood { ip saddr timeout 1m limit rate over 6/minute burst 6 packets } drop" "tcp dport $N ct state new accept" > "$f"
+      fi
+    else
+      printf '%s\n' "${src}$P dport $N ct state new accept" > "$f"
+    fi
+    chmod 644 "$f"
+    if apply; then
+      echo "разрешено: $P/$N${FROM:+ от $FROM}"
+    else
+      if [ -n "$prev" ]; then printf '%s\n' "$prev" > "$f"; else rm -f "$f"; fi
+      die "nft отклонил правило, изменение отменено"
+    fi ;;
+  remove)
+    need
+    [ $# -eq 1 ] || { usage; exit 1; }
+    resolve "$1"
+    f=$DIR/20-allow-$P-$N.nft
+    [ -e "$f" ] || die "правила нет: $P/$N"
+    rm -f "$f"
+    apply && echo "убрано: $P/$N" ;;
+  *) usage; [ -z "$cmd" ] || exit 1 ;;
+esac

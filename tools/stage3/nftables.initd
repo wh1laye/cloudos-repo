@@ -1,0 +1,41 @@
+#!/sbin/openrc-run
+description="фаервол cloudos на nftables"
+extra_commands="check"
+extra_started_commands="reload"
+conf=${conf:-/etc/nftables.conf}
+
+depend() {
+	before net dhcpcd
+	use logger
+	provide firewall
+}
+
+check() {
+	nft -c -f "$conf"
+}
+
+start_pre() {
+	if ! nft -c -f "$conf" >/dev/null 2>&1; then
+		eerror "правила в $conf не проходят проверку: nft -c -f $conf"
+		return 1
+	fi
+}
+
+start() {
+	ebegin "загрузка правил nftables"
+	nft -f "$conf"
+	eend $?
+}
+
+stop() {
+	ebegin "очистка правил nftables"
+	nft flush ruleset
+	eend $?
+}
+
+reload() {
+	check || return 1
+	ebegin "перезагрузка правил nftables"
+	nft -f "$conf"
+	eend $?
+}

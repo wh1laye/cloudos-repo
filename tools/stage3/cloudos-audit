@@ -1,0 +1,75 @@
+#!/bin/bash
+set -u
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+R=${CLOUDOS_ROOT:-}
+ok=0; bad=0; warn=0
+
+good() { printf '[ ok ] %s\n' "$*"; ok=$((ok + 1)); }
+fail() { printf '[ !! ] %s\n' "$*"; bad=$((bad + 1)); }
+note() { printf '[ .. ] %s\n' "$*"; warn=$((warn + 1)); }
+
+[ -n "$R" ] || [ "$(id -u)" = 0 ] || { echo "нужен root" >&2; exit 2; }
+
+echo "== фаервол"
+if command -v nft >/dev/null && nft list chain inet cloudos input 2>/dev/null | grep -q 'policy drop'; then
+  good "nftables загружен, input drop"
+else
+  fail "нет правил nftables с policy drop (cloudos-firewall on)"
+fi
+
+echo "== ядро"
+if [ -z "$R" ]; then
+  chk() {
+    local v
+    v=$(sysctl -n "$1" 2>/dev/null) || { note "нет параметра $1"; return; }
+    [ "$v" = "$2" ] && good "$1 = $2" || fail "$1 = $v, нужно $2"
+  }
+  chk kernel.kptr_restrict 2
+  chk kernel.dmesg_restrict 1
+  chk kernel.randomize_va_space 2
+  chk kernel.unprivileged_bpf_disabled 1
+  chk fs.protected_symlinks 1
+  chk fs.protected_hardlinks 1
+  chk fs.suid_dumpable 0
+  chk net.ipv4.tcp_syncookies 1
+  chk net.ipv4.conf.all.rp_filter 1
+  chk net.ipv4.conf.all.accept_redirects 0
+  chk net.ipv4.conf.all.accept_source_route 0
+  for o in slab_nomerge init_on_alloc=1 randomize_kstack_offset=on; do
+    grep -qw -- "$o" /proc/cmdline && good "cmdline: $o" || note "в cmdline нет $o"
+  done
+fi
+
+echo "== учётные записи"
+SH=$R/etc/shadow
+if [ -r "$SH" ]; then
+  e=$(awk -F: '$2 == "" { print $1 }' "$SH" | tr '\n' ' ')
+  [ -z "$e" ] && good "нет учёток с пустым паролем" || fail "пустой пароль: $e"
+  m=$(stat -c %a "$SH")
+  case $m in 600|640|400|000) good "/etc/shadow права $m" ;; *) fail "/etc/shadow права $m" ;; esac
+fi
+u=$(awk -F: '$3 == 0 && $1 != "root" { print $1 }' "$R/etc/passwd" | tr '\n' ' ')
+[ -z "$u" ] && good "uid 0 только у root" || fail "лишний uid 0: $u"
+
+echo "== файлы"
+w=$(find "$R/etc" -xdev -type f -perm -0002 2>/dev/null | head -n 10)
+[ -z "$w" ] && good "в /etc нет файлов с записью для всех" || fail "запись для всех: $(echo $w)"
+s=$(find "$R/usr" "$R/bin" "$R/sbin" -xdev -type f -perm -4000 2>/dev/null | sed "s|^$R||" | sort | tr '\n' ' ')
+echo "[ .. ] setuid: $s"
+x=$(find "$R/usr" "$R/bin" "$R/sbin" -xdev -type f -perm -4000 2>/dev/null | sed "s|^$R||" | grep -vE '/(su|passwd|chsh|chfn|newgrp|doas|unix_chkpwd|mount|umount|gpasswd|expiry|chage)$' | head -n 10)
+[ -z "$x" ] && good "setuid только из ожидаемого набора" || note "неожиданные setuid: $(echo $x)"
+
+echo "== сеть"
+if [ -z "$R" ] && command -v ss >/dev/null; then
+  l=$(ss -H -tulpn 2>/dev/null | awk '$5 !~ /^(127\.|\[::1\]|::1)/ { print $1, $5, $7 }')
+  if [ -z "$l" ]; then good "нет сокетов, слушающих снаружи"; else note "слушают снаружи:"; printf '%s\n' "$l" | sed 's/^/       /'; fi
+fi
+if [ -z "$R" ] && command -v sshd >/dev/null && rc-service sshd status >/dev/null 2>&1; then
+  c=$(sshd -T 2>/dev/null)
+  printf '%s\n' "$c" | grep -qi '^permitrootlogin no' && good "sshd: root закрыт" || fail "sshd: root-вход не закрыт"
+  printf '%s\n' "$c" | grep -qi '^permitemptypasswords no' && good "sshd: пустые пароли запрещены" || fail "sshd: пустые пароли разрешены"
+fi
+
+echo
+echo "итог: ok $ok, ошибок $bad, замечаний $warn"
+[ "$bad" = 0 ]

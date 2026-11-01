@@ -123,6 +123,43 @@ do_users() {
   /usr/sbin/cloudos-users
 }
 
+do_firewall() {
+  if ! command -v nft >/dev/null; then
+    say "ставлю net-firewall/nftables через cloudpkg"
+    install -d /etc/portage/package.use
+    if [ -d /etc/portage/package.use ]; then
+      printf '%s\n' 'net-firewall/nftables -python -doc -man -xtables json readline gmp -libedit' > /etc/portage/package.use/cloudos-nftables
+    fi
+    restore_helpers "перед nftables"
+    install_one net-firewall/nftables "$L/nftables.log" || { echo "!! nftables не поставился" >&2; return 1; }
+    restore_helpers "после nftables"
+  fi
+  command -v nft >/dev/null || { echo "!! нет nft после установки" >&2; return 1; }
+  install -m600 "$F/nftables.conf" /etc/nftables.conf
+  install -d -m755 /etc/nftables.d
+  install -m644 "$F/nftables.local" /etc/nftables.d/00-local.nft
+  sed -i 's|^#!.*|#!'"$(command -v nft)"' -f|' /etc/nftables.conf
+  install -m755 "$F/nftables.initd" /etc/init.d/nftables
+  ln -sf /etc/init.d/nftables /etc/runlevels/default/nftables
+  install -m755 "$F/cloudos-firewall" /usr/sbin/cloudos-firewall
+  install -m755 "$F/cloudos-audit" /usr/sbin/cloudos-audit
+  install -d /etc/sysctl.d
+  install -m644 "$F/sysctl-cloudos.conf" /etc/sysctl.d/90-cloudos.conf
+  if [ -e /etc/init.d/sysctl ]; then ln -sf /etc/init.d/sysctl /etc/runlevels/boot/sysctl; fi
+  install -d -m755 /etc/ssh/sshd_config.d
+  install -m644 "$F/sshd-cloudos.conf" /etc/ssh/sshd_config.d/10-cloudos.conf
+  if [ -f /etc/ssh/sshd_config ] && ! grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/' /etc/ssh/sshd_config; then
+    { echo 'Include /etc/ssh/sshd_config.d/*.conf'; cat /etc/ssh/sshd_config; } > /etc/ssh/sshd_config.new
+    mv /etc/ssh/sshd_config.new /etc/ssh/sshd_config
+    chmod 644 /etc/ssh/sshd_config
+  fi
+  if nft list ruleset >/dev/null 2>&1; then
+    nft -c -f /etc/nftables.conf || { echo "!! nftables.conf не проходит nft -c" >&2; return 1; }
+  else
+    echo "!! ядро сборочной машины не даёт проверить правила nft, проверка пропущена" >&2
+  fi
+}
+
 do_limine() { cloudpkg sync; cloudpkg install limine; }
 
 do_logger() {
@@ -516,10 +553,10 @@ do_verify() {
            /usr/share/cloudos/logo.png /etc/xdg/fastfetch/config.jsonc /etc/os-release /etc/portage/make.conf /usr/lib64; do
     if [ -e "$f" ] || [ -L "$f" ]; then :; else echo "!! нет $f"; bad=1; fi
   done
-  for f in syslog-ng fastfetch neofetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd useradd usermod userdel groupadd passwd chpasswd su login cloudos-users cloudos-adduser cloudos-fix portageq; do
+  for f in syslog-ng fastfetch neofetch cloudpkg emerge xorriso mksquashfs mcopy bash python3 gcc git curl doas dhcpcd useradd usermod userdel groupadd passwd chpasswd su login cloudos-users cloudos-adduser cloudos-fix cloudos-firewall cloudos-audit nft portageq; do
     command -v "$f" >/dev/null || { echo "!! нет команды $f"; bad=1; }
   done
-  for f in /etc/login.defs /etc/default/useradd /etc/profile.d/cloudos-path.sh /etc/skel/.bashrc /etc/doas.conf; do
+  for f in /etc/login.defs /etc/default/useradd /etc/profile.d/cloudos-path.sh /etc/skel/.bashrc /etc/doas.conf /etc/nftables.conf /etc/nftables.d/00-local.nft /etc/init.d/nftables /etc/runlevels/default/nftables /etc/sysctl.d/90-cloudos.conf /etc/ssh/sshd_config.d/10-cloudos.conf; do
     [ -e "$f" ] || { echo "!! нет $f"; bad=1; }
   done
   if ldd "$(command -v su)" 2>/dev/null | grep -q libpam; then
@@ -528,6 +565,13 @@ do_verify() {
   for f in su passwd doas; do
     [ -u "$(readlink -f "$(command -v $f)")" ] || { echo "!! у $f нет setuid"; bad=1; }
   done
+  grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/' /etc/ssh/sshd_config 2>/dev/null || { echo "!! sshd_config не подключает sshd_config.d"; bad=1; }
+  grep -q 'policy drop' /etc/nftables.conf || { echo "!! в nftables.conf нет policy drop"; bad=1; }
+  if command -v sshd >/dev/null && command -v ssh-keygen >/dev/null; then
+    hk=$(mktemp -u)
+    ssh-keygen -q -t ed25519 -N '' -f "$hk" && sshd -t -f /etc/ssh/sshd_config -h "$hk" || { echo "!! sshd_config не проходит sshd -t"; bad=1; }
+    rm -f "$hk" "$hk.pub"
+  fi
   grep -q '^wheel:' /etc/group || { echo "!! нет группы wheel"; bad=1; }
   [ ! -e /etc/portage/env/cloudos-noreconf ] || { echo "!! остался /etc/portage/env/cloudos-noreconf"; bad=1; }
   if grep -rlF 'eautoreconf() { :; }' /etc/portage/env 2>/dev/null | grep -q .; then echo "!! остались хуки отключения autoreconf"; bad=1; fi
@@ -641,6 +685,7 @@ step autotools-vdb do_vdb
 step python-vdb do_pyvdb
 do_paxutils || true
 step users do_users
+step firewall do_firewall
 step pam do_pam
 step lzip do_lzip
 step maildir fix_maildir

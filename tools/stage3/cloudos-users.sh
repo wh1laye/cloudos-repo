@@ -59,7 +59,13 @@ has() { [ -n "$MOD" ] && [ -e "$MOD/$1" ]; }
 
 printf '%s\n' 'auth      requisite   pam_nologin.so' 'auth      include     system-auth' 'account   include     system-auth' 'password  include     system-auth' 'session   include     system-auth' | pam login
 for n in su su-l runuser runuser-l; do
-  printf '%s\n' 'auth      sufficient  pam_rootok.so' 'auth      include     system-auth' 'account   include     system-auth' 'session   include     system-auth' | pam $n
+  {
+    echo 'auth      sufficient  pam_rootok.so'
+    [ "$n" = su ] || [ "$n" = su-l ] && has pam_wheel.so && echo 'auth      required    pam_wheel.so use_uid'
+    echo 'auth      include     system-auth'
+    echo 'account   include     system-auth'
+    echo 'session   include     system-auth'
+  } | pam $n
 done
 printf '%s\n' 'auth      include     system-auth' 'account   include     system-auth' 'session   include     system-auth' | pam doas
 printf '%s\n' 'password  include     system-auth' | pam passwd
@@ -94,6 +100,13 @@ setkey CREATE_HOME yes
 setkey ENV_PATH PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 setkey ENV_SUPATH PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 setkey SU_NAME su
+setkey UMASK 027
+setkey HOME_MODE 0750
+setkey LOGIN_RETRIES 5
+setkey LOGIN_TIMEOUT 60
+setkey FAILLOG_ENAB yes
+setkey SHA_CRYPT_MIN_ROUNDS 100000
+setkey SHA_CRYPT_MAX_ROUNDS 200000
 
 say "useradd по умолчанию"
 install -d "$R/etc/default" "$R/etc/skel" "$R/home"
