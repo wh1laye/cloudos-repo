@@ -32,6 +32,9 @@ jobs:
           make -C cloudpkg clean all CC="gcc -Wextra -Werror"
           ./cloudpkg/cloudpkg version
 
+      - name: cloudpkg под sanitizers
+        run: sudo env CFLAGS_EXTRA="-fsanitize=address,undefined -fno-omit-frame-pointer -g" bash tools/test-cloudpkg.sh
+
       - name: форум
         run: bash tools/test-forum.sh
 

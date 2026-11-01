@@ -89,7 +89,9 @@ jobs:
           ACCEL=""
           if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
           timeout 420 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
-            -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || true
+            -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0 cloudos.smoke" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || true
+          grep -aq 'cloudos-smoke: FAIL' smoke.log && { grep -a 'cloudos-smoke:' smoke.log; echo "живая проверка не прошла"; exit 1; }
+          grep -aq 'cloudos-smoke: ok' smoke.log || { echo "нет cloudos-smoke: ok, система не дошла до проверки"; exit 1; }
           grep -aq 'cloudos-init: switch_root' smoke.log || { echo "initramfs не дошёл до switch_root"; exit 1; }
           grep -aq 'is starting up' smoke.log || { echo "openrc не стартовал"; exit 1; }
           grep -aqE 'nftables|нет службы nftables' smoke.log || { echo "в логе загрузки нет nftables"; exit 1; }
