@@ -22,6 +22,8 @@ iso:
 
 - csp в `forum/index.html` (скрипты только с себя и turnstile, соединения только с supabase), referrer policy, защита от встраивания во фрейм (`guard.js`), inline-скрипт вынесен в файл
 - личные сообщения: кнопки «заблокировать» и «разблокировать», заблокированный не может писать (запрет в триггере базы, а не только в браузере), блокирующий не видит, кто его заблокировал. «удалить» у своего сообщения (у обоих) и «удалить переписку» (только у себя). база: `tools/forum-dm-block.sql`
+- `cloudpkg.c`: убраны `system()` и `popen()` из разбора ошибок сборки (лог ищется через `nftw`, хвост читается самой программой), имя команды в `probe_ver` проверяется по белому списку символов
+- `.github/workflows/check.yml`: проверка при каждом push и pull request (синтаксис скриптов, сборка cloudpkg с `-Werror`, тест форума, json, yaml, js), `dependabot.yml` для обновления actions, `SECURITY.md`
 - `tools/test-forum.sh`: проверка форума в actions (csp, нет inline-скриптов, ссылки только http и https)
 - `tools/forum-audit.sql`: запросы для supabase sql editor, проверяют rls, политики для anon, функции security definer, лимиты бакетов
 
