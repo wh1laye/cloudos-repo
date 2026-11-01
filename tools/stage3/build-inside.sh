@@ -308,8 +308,8 @@ STRIPV='s/-[0-9]+(\.[0-9]+)*[a-z]?(_(alpha|beta|pre|rc|p)[0-9]*)*(-r[0-9]+)?$//'
 # смотрим план: если в нём пакет, который у нас уже есть (package.provided) или фишка gentoo,
 # записываем его как установленный и не пересобираем
 provide_planned() {
-  local a=$1 PP=/etc/portage/profile/package.provided i p name ok changed
-  for i in 1 2 3 4; do
+  local a=$1 PP=/etc/portage/profile/package.provided p name ok changed
+  for _ in 1 2 3 4; do
     changed=0
     while read -r p; do
       [ -n "$p" ] || continue
