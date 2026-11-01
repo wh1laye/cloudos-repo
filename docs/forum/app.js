@@ -676,9 +676,13 @@ async function dmList(){
   dmRe=dmList;
   const r=await sb.from('dms').select('*').or('sender.eq.'+me.id+',recipient.eq.'+me.id).order('created_at',{ascending:false}).limit(300);
   if(r.error){app.innerHTML=head+'<div class="warn"><b>сообщения недоступны</b>'+esc(r.error.message)+'</div>';return}
+  const hd=await sb.from('dm_hidden').select('other,cleared_at').eq('user_id',me.id);
+  const hm=new Map((hd.error?[]:(hd.data||[])).map(x=>[x.other,new Date(x.cleared_at)]));
   const cv=new Map();
   (r.data||[]).forEach(x=>{
     const o=x.sender===me.id?x.recipient:x.sender;
+    const hc=hm.get(o);
+    if(hc&&new Date(x.created_at)<=hc)return;
     if(!cv.has(o))cv.set(o,{o,last:x,un:0});
     if(x.recipient===me.id&&!x.read)cv.get(o).un++;
   });
@@ -694,21 +698,33 @@ async function dmChat(uid){
   if(pr.error)pr=await sb.from('profiles').select('id,name,roles(*)').eq('id',uid).maybeSingle();
   const u=pr.data;
   if(!u){app.innerHTML='<div class="warn"><b>не найдено</b>такого участника нет.</div>';return}
-  app.innerHTML='<p><a href="#/messages">сообщения</a> / '+who(u)+'</p><div id="dmp"></div><div id="dml" class="dml"></div><form id="dmf"><textarea id="dmb" rows="3" maxlength="2000" placeholder="сообщение" required></textarea>'+tools('dmb')+'<button class="btn p">отправить</button></form>';
+  app.innerHTML='<p><a href="#/messages">сообщения</a> / '+who(u)+'</p><div id="dmt" class="dmt"></div><div id="dmp"></div><div id="dml" class="dml"></div><form id="dmf"><textarea id="dmb" rows="3" maxlength="2000" placeholder="сообщение" required></textarea>'+tools('dmb')+'<button class="btn p">отправить</button></form>';
   const pvt=b=>b.replace(/\[img:[^\]\s]+\]/g,'['+tr('картинка')+']').replace(/:s_[a-z]+:/g,'['+tr('стикер')+']').replace(/\s+/g,' ').trim().slice(0,90);
-  let pinSet=new Set(),pinOk=true;
+  let pinSet=new Set(),pinOk=true,iBlock=false,clr=null;
+  const loadSt=async()=>{
+    const b=await sb.from('dm_blocks').select('blocked').eq('blocker',me.id).eq('blocked',uid).maybeSingle();
+    iBlock=!b.error&&!!b.data;
+    const h=await sb.from('dm_hidden').select('cleared_at').eq('user_id',me.id).eq('other',uid).maybeSingle();
+    clr=!h.error&&h.data?new Date(h.data.cleared_at):null;
+  };
+  const bar2=()=>{
+    const t=$('#dmt'),f=$('#dmf');
+    if(!t)return;
+    t.innerHTML=(iBlock?'<span class=\"mu\">'+tr('вы заблокировали этого участника: он не может вам писать')+'</span><button type=\"button\" class=\"btn\" data-a=\"dmunblock\">'+tr('разблокировать')+'</button>':'<button type=\"button\" class=\"btn\" data-a=\"dmblock\">'+tr('заблокировать')+'</button>')+'<button type=\"button\" class=\"btn\" data-a=\"dmclear\">'+tr('удалить переписку')+'</button>';
+    if(f)f.hidden=iBlock;
+  };
   const draw=async keep=>{
     const l=$('#dml');
     if(!l)return;
     const r=await sb.from('dms').select('*').or('and(sender.eq.'+me.id+',recipient.eq.'+uid+'),and(sender.eq.'+uid+',recipient.eq.'+me.id+')').order('created_at').limit(300);
-    const rows=r.data||[];
+    const rows=(r.data||[]).filter(x=>!clr||new Date(x.created_at)>clr);
     const pr2=await sb.from('dm_pins').select('dm_id').eq('user_id',me.id);
     pinOk=!pr2.error;
     pinSet=new Set(pinOk?(pr2.data||[]).map(x=>x.dm_id):[]);
     const top=l.scrollTop;
     l.innerHTML=rows.map(x=>{
       const on=pinSet.has(x.id);
-      return '<div class="dmm'+(x.sender===me.id?' me':'')+'" data-id="'+x.id+'"'+(on?' style="box-shadow:inset 3px 0 0 var(--ac)"':'')+'><div class="txt">'+fmtBody(x.body)+'</div><span class="mu">'+fmt(x.created_at)+'</span>'+(pinOk?' <button type="button" class="lk" data-a="dmpin" data-i="'+x.id+'" data-v="'+(on?1:0)+'">'+tr(on?'открепить':'закрепить')+'</button>':'')+'</div>';
+      return '<div class="dmm'+(x.sender===me.id?' me':'')+'" data-id="'+x.id+'"'+(on?' style="box-shadow:inset 3px 0 0 var(--ac)"':'')+'><div class="txt">'+fmtBody(x.body)+'</div><span class="mu">'+fmt(x.created_at)+'</span>'+(pinOk?' <button type="button" class="lk" data-a="dmpin" data-i="'+x.id+'" data-v="'+(on?1:0)+'">'+tr(on?'открепить':'закрепить')+'</button>':'')+(x.sender===me.id?' <button type=\"button\" class=\"lk\" data-a=\"dmdel\" data-i=\"'+x.id+'\">'+tr('удалить')+'</button>':'')+'</div>';
     }).join('')||'<p class="mu">сообщений пока нет</p>';
     const bar=$('#dmp');
     if(bar)bar.innerHTML=rows.filter(x=>pinSet.has(x.id)).slice(-3).reverse().map(x=>'<div data-go="'+x.id+'" style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;margin:0 0 6px;border:1px solid var(--line);border-left:3px solid var(--ac);border-radius:10px;background:var(--surf);font-size:13.5px;cursor:pointer"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>'+tr('закреплено')+':</b> <span data-noi>'+esc(pvt(x.body))+'</span></span><button type="button" class="lk" data-a="dmpin" data-i="'+x.id+'" data-v="1" title="'+tr('открепить')+'">×</button></div>').join('');
@@ -719,6 +735,28 @@ async function dmChat(uid){
     }
   };
   const pc=async e=>{
+    const k=e.target.closest('[data-a="dmblock"],[data-a="dmunblock"],[data-a="dmclear"],[data-a="dmdel"]');
+    if(k){
+      if(k.disabled)return;
+      const a=k.dataset.a;
+      if(a==='dmblock'&&!confirm(tr('заблокировать этого участника? он больше не сможет вам писать')))return;
+      if(a==='dmclear'&&!confirm(tr('удалить переписку у вас? у собеседника она останется')))return;
+      if(a==='dmdel'&&!confirm(tr('удалить это сообщение у обоих?')))return;
+      k.disabled=true;
+      let rr;
+      if(a==='dmblock')rr=await sb.from('dm_blocks').upsert({blocker:me.id,blocked:uid},{onConflict:'blocker,blocked',ignoreDuplicates:true});
+      else if(a==='dmunblock')rr=await sb.from('dm_blocks').delete().eq('blocker',me.id).eq('blocked',uid);
+      else if(a==='dmclear')rr=await sb.rpc('dm_clear',{p_other:uid});
+      else rr=await sb.from('dms').delete().eq('id',+k.dataset.i).eq('sender',me.id);
+      k.disabled=false;
+      if(rr.error)return alert(rr.error.message);
+      if(a==='dmclear')await sb.from('dms').update({read:true}).eq('recipient',me.id).eq('sender',uid).eq('read',false);
+      await loadSt();
+      bar2();
+      await draw(a==='dmdel');
+      refreshMsgs();
+      return;
+    }
     const b=e.target.closest('[data-a="dmpin"]');
     if(b){
       if(b.disabled)return;
@@ -738,12 +776,16 @@ async function dmChat(uid){
   };
   $('#dmp').onclick=pc;
   $('#dml').onclick=pc;
+  $('#dmt').onclick=pc;
   dmRe=draw;
+  await loadSt();
+  bar2();
   $('#dmf').onsubmit=async e=>{
     e.preventDefault();
     if(!await need())return;
     const body=$('#dmb').value.trim();
     if(!body)return;
+    if(iBlock)return alert(tr('вы заблокировали этого участника'));
     const r=await sb.from('dms').insert({recipient:uid,body});
     if(r.error)return alert(r.error.message);
     $('#dmb').value='';

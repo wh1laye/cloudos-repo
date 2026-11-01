@@ -63,7 +63,16 @@ var X={
 "стикер":"sticker",
 "можно закрепить не больше 5 сообщений":"you can pin up to 5 messages",
 "теги через запятую, до 5 (необязательно)":"tags separated by commas, up to 5 (optional)",
-"проверь, что в папке forum лежат app.js, forum2.js, forum3.js, config.js, supabase.js, 591.supabase.js, forum.css":"check that the forum folder contains app.js, forum2.js, forum3.js, config.js, supabase.js, 591.supabase.js, forum.css"
+"проверь, что в папке forum лежат app.js, forum2.js, forum3.js, config.js, supabase.js, 591.supabase.js, forum.css":"check that the forum folder contains app.js, forum2.js, forum3.js, config.js, supabase.js, 591.supabase.js, forum.css",
+"вы заблокировали этого участника: он не может вам писать":"you blocked this member: they cannot message you",
+"разблокировать":"unblock",
+"заблокировать":"block",
+"удалить переписку":"delete conversation",
+"удалить":"delete",
+"заблокировать этого участника? он больше не сможет вам писать":"block this member? they will no longer be able to message you",
+"удалить переписку у вас? у собеседника она останется":"delete the conversation for you? the other person keeps it",
+"удалить это сообщение у обоих?":"delete this message for both of you?",
+"вы заблокировали этого участника":"you blocked this member"
 };
 if(W.I18N)W.I18N.add(X);
 var NAMES={

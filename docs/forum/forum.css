@@ -282,3 +282,6 @@ pre.code .hl-v{color:#c9a7f0}
 .txt .mh2{font-size:1.12em}
 .txt .li{display:inline-block;padding-left:4px}
 .txt s{opacity:.7}
+
+.dmt{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.dmt .mu{flex:1 1 100%}
