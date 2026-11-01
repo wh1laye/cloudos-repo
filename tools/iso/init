@@ -41,6 +41,16 @@ find_iso() {
 
 until find_iso; do rescue "не найден носитель с cloudos/rootfs.squashfs"; done
 
+case " $CMDLINE " in
+  *" cloudos.verify "*)
+    say "проверяю sha256 rootfs.squashfs"
+    if [ -f /mnt/iso/cloudos/rootfs.squashfs.sha256 ]; then
+      ( cd /mnt/iso/cloudos && sha256sum -c rootfs.squashfs.sha256 ) || rescue "sha256 rootfs.squashfs не совпал, образ повреждён или подменён"
+    else
+      rescue "нет cloudos/rootfs.squashfs.sha256"
+    fi ;;
+esac
+
 until mount -t squashfs -o ro,loop /mnt/iso/cloudos/rootfs.squashfs /mnt/sq; do rescue "squashfs не смонтировался"; done
 
 mount -t tmpfs -o mode=755 tmpfs /mnt/rw

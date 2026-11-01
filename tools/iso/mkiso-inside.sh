@@ -16,7 +16,7 @@ say() { printf '==> %s\n' "$*"; }
 die() { printf '::error::%s\n' "$*" >&2; exit 1; }
 trap 'rc=$?; printf "::error::упал шаг, строка %s, код %s\n" "$LINENO" "$rc" >&2' ERR
 
-for c in gcc make bc flex bison perl cpio zstd ldd bash mount switch_root mknod mksquashfs xorriso limine depmod; do
+for c in gcc make bc flex bison perl cpio zstd ldd bash mount switch_root mknod mksquashfs xorriso limine depmod openssl useradd usermod; do
   command -v "$c" >/dev/null || die "в stage 3 нет команды $c"
 done
 [ -e /usr/include/openssl/bio.h ] || die "нет заголовков openssl"
@@ -49,10 +49,10 @@ build_kernel() {
     STACKPROTECTOR STACKPROTECTOR_STRONG STRICT_KERNEL_RWX STRICT_MODULE_RWX RANDOMIZE_BASE RANDOMIZE_MEMORY HARDENED_USERCOPY FORTIFY_SOURCE \
     INIT_ON_ALLOC_DEFAULT_ON SLAB_FREELIST_RANDOM SLAB_FREELIST_HARDENED SHUFFLE_PAGE_ALLOCATOR VMAP_STACK RANDOMIZE_KSTACK_OFFSET_DEFAULT \
     SECURITY SECURITY_YAMA SECURITY_DMESG_RESTRICT STRICT_DEVMEM IO_STRICT_DEVMEM LEGACY_VSYSCALL_NONE BUG_ON_DATA_CORRUPTION \
-    SCHED_STACK_END_CHECK DEBUG_WX; do
+    SCHED_STACK_END_CHECK DEBUG_WX SECCOMP SECCOMP_FILTER SECURITY_LANDLOCK INIT_STACK_ALL_ZERO ZERO_CALL_USED_REGS LIST_HARDENED LIST_HARDENING RANDOM_KMALLOC_CACHES PAGE_TABLE_ISOLATION; do
     scripts/config -e "$s"
   done
-  scripts/config -d LEGACY_VSYSCALL_XONLY -d LEGACY_VSYSCALL_EMULATE -d DEVKMEM -d KEXEC_FILE -d LEGACY_PTYS
+  scripts/config -d LEGACY_VSYSCALL_XONLY -d LEGACY_VSYSCALL_EMULATE -d DEVKMEM -d KEXEC_FILE -d LEGACY_PTYS -d ACPI_CUSTOM_METHOD -d PROC_KCORE -d COMPAT_BRK -d X86_X32_ABI
   make olddefconfig
   need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
   for s in $need; do
@@ -77,11 +77,11 @@ build_initramfs() {
   mkdir -p "$D"/{dev,proc,sys,run,tmp,etc,bin,mnt/iso,mnt/sq,mnt/rw,mnt/new}
   mknod -m 600 "$D/dev/console" c 5 1
   mknod -m 666 "$D/dev/null" c 1 3
-  for b in bash mount umount switch_root blkid mkdir sleep cat ls dmesg; do
+  for b in bash mount umount switch_root blkid mkdir sleep cat ls dmesg sha256sum; do
     p=$(command -v "$b") || die "нет $b для initramfs"
     install -m755 "$p" "$D/bin/$b"
   done
-  libs=$(for b in bash mount umount switch_root blkid mkdir sleep cat ls dmesg; do
+  libs=$(for b in bash mount umount switch_root blkid mkdir sleep cat ls dmesg sha256sum; do
     ldd "$(command -v "$b")" 2>/dev/null || true
   done | awk '{ for (i = 1; i <= NF; i++) if ($i ~ /^\//) print $i }' | sort -u)
   for l in $libs; do
@@ -97,14 +97,38 @@ build_initramfs() {
   say "initramfs: $(du -h "$R/boot/initramfs.img" | cut -f1)"
 }
 
+live_users() {
+  local g h1 h2 salt
+  for g in wheel users video audio; do getent group "$g" >/dev/null || groupadd "$g"; done
+  id cloudos >/dev/null 2>&1 || useradd -m -G wheel,users,video,audio -s /bin/bash cloudos
+  h1=$(openssl passwd -6 -salt "$(openssl rand -hex 8)" cloudos)
+  h2=$(openssl passwd -6 -salt "$(openssl rand -hex 8)" cloudos)
+  usermod -p "$h1" cloudos
+  usermod -p "$h2" root
+  for g in cloudos root; do
+    h1=$(awk -F: -v u="$g" '$1 == u { print $2 }' /etc/shadow)
+    salt=$(printf '%s' "$h1" | cut -d'$' -f3)
+    [ "$(openssl passwd -6 -salt "$salt" cloudos)" = "$h1" ] || die "пароль $g в live не встал"
+  done
+  [ "$(id -nG cloudos | tr ' ' '\n' | grep -cx wheel)" = 1 ] || die "cloudos не в группе wheel"
+  grep -q 'permit persist :wheel' /etc/doas.conf || die "в doas.conf нет правила для wheel"
+  if [ -d /etc/ssh/sshd_config.d ]; then
+    printf '%s\n' 'DenyUsers root cloudos' > /etc/ssh/sshd_config.d/05-cloudos-live.conf
+  fi
+  rc-update del sshd default >/dev/null 2>&1 || true
+  rc-update del sshd boot >/dev/null 2>&1 || true
+  say "live: пользователь cloudos и root, пароль cloudos, по ssh вход им закрыт"
+}
+
 live_tune() {
+  live_users
   local n s
   if [ -e /etc/init.d/agetty ]; then
     for n in 1 2 3; do
       ln -sf agetty "/etc/init.d/agetty.tty$n"
       ln -sf "/etc/init.d/agetty.tty$n" "/etc/runlevels/default/agetty.tty$n"
     done
-    printf 'agetty_options="--autologin root --noclear"\n' > /etc/conf.d/agetty.tty1
+    printf 'agetty_options="--autologin cloudos --noclear"\n' > /etc/conf.d/agetty.tty1
   else
     echo "!! нет /etc/init.d/agetty, вход на tty1 не настроен" >&2
   fi
@@ -117,7 +141,7 @@ live_tune() {
   done
   cat > /etc/motd <<EOM
 
-CloudOS $VERSION live. вход выполнен как root, пароля нет. фаервол включён: cloudos-firewall status
+CloudOS $VERSION live. вход выполнен как cloudos, пароль cloudos (root тоже cloudos, root-права: doas -s). только для live, ssh для них закрыт, фаервол включён: cloudos-firewall status
 установка: cfdisk, mkfs, распаковка stage 3 и настройка по handbook
 https://wh1laye.github.io/cloudos-repo/
 
@@ -130,6 +154,7 @@ build_squashfs() {
   say "squashfs (xz), это самый долгий шаг после ядра"
   mksquashfs / "$R/cloudos/rootfs.squashfs" -comp xz -Xbcj x86 -b 1M -Xdict-size 100% -processors "$J" -noappend \
     -e proc sys dev run tmp var/tmp etc/resolv.conf
+  ( cd "$R/cloudos" && sha256sum rootfs.squashfs > rootfs.squashfs.sha256 )
   say "rootfs.squashfs: $(du -h "$R/cloudos/rootfs.squashfs" | cut -f1)"
 }
 
@@ -144,19 +169,25 @@ timeout: 5
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none
+    cmdline: console=tty0 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
 
 /CloudOS $VERSION live (serial console)
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 console=ttyS0,115200 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none
+    cmdline: console=tty0 console=ttyS0,115200 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
 
 /CloudOS $VERSION live (rescue shell in initramfs)
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 cloudos.shell slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none
+    cmdline: console=tty0 cloudos.shell slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
+
+/CloudOS $VERSION live (проверка sha256 образа при загрузке)
+    protocol: linux
+    path: boot():/boot/vmlinuz
+    module_path: boot():/boot/initramfs.img
+    cmdline: console=tty0 cloudos.verify slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
 EOC
   rm -f "$O/$NAME"
   xorriso -as mkisofs -V CLOUDOS -R -r -J \
@@ -173,7 +204,7 @@ verify_iso() {
   printf '%s\n' "$rep" | grep -E 'El Torito|BIOS|UEFI' || true
   printf '%s\n' "$rep" | grep -q 'BIOS' || die "в iso нет загрузочной записи BIOS"
   printf '%s\n' "$rep" | grep -q 'UEFI' || die "в iso нет загрузочной записи UEFI"
-  xorriso -indev "$O/$NAME" -find / -type f 2>/dev/null | grep -E 'vmlinuz|initramfs|rootfs.squashfs|BOOTX64.EFI|limine.conf|limine-bios.sys' || true
+  xorriso -indev "$O/$NAME" -find / -type f 2>/dev/null | grep -E 'vmlinuz|initramfs|rootfs.squashfs|rootfs.squashfs.sha256|BOOTX64.EFI|limine.conf|limine-bios.sys' || true
   say "iso: $(du -h "$O/$NAME" | cut -f1)"
 }
 
