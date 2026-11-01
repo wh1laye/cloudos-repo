@@ -24,6 +24,8 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -115,6 +117,12 @@ jobs:
         if: always()
         run: |
           cp "$RUNNER_TEMP/build.log" "$PWD/build.log" 2>/dev/null || true
+
+      - name: подпись происхождения (attestation)
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: out/*.iso
 
       - uses: actions/upload-artifact@v4
         if: always()

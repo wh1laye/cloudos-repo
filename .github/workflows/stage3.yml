@@ -25,6 +25,8 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -97,6 +99,12 @@ jobs:
               sed 's/^/    /' "$f"
             done
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: подпись происхождения (attestation)
+        continue-on-error: true
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: out/*.tar.xz
 
       - uses: actions/upload-artifact@v4
         with:
