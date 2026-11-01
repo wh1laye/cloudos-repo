@@ -190,6 +190,10 @@ cloudos-stage3-amd64-1.4.tar.xz.sha256
 <h3 id="s4-1">4.1 проверка(можно пропустить)</h3>
 <pre><code>sha256sum -c cloudos-stage3-amd64-1.4.tar.xz.sha256
 </code></pre>
+<p>подпись minisign (если в релизе есть файл <code>.minisig</code>). публичный ключ лежит на сайте, сверь его отпечаток с тем, что в репозитории:</p>
+<pre><code>curl -LO https://wh1laye.github.io/cloudos-repo/cloudos.pub
+minisign -V -p cloudos.pub -m cloudos-stage3-amd64-1.4.tar.xz
+</code></pre>
 <h3 id="s4-2">4.2 распаковка</h3>
 <pre><code>tar xpvf cloudos-stage3-amd64-1.4.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
 <h3 id="s4-3">4.3 скачивание</h3>
