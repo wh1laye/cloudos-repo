@@ -76,6 +76,13 @@ sha256sum -c cloudos-stage3-amd64-1.4.tar.xz.sha256
 
 Если написано `OK`, всё хорошо.
 
+Подпись minisign (если в релизе есть `.minisig`):
+
+```bash
+curl -LO https://wh1laye.github.io/cloudos-repo/cloudos.pub
+minisign -V -p cloudos.pub -m cloudos-stage3-amd64-1.4.tar.xz
+```
+
 ---
 
 ## 📦 Пакеты

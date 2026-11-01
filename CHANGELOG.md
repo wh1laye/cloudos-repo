@@ -15,6 +15,8 @@
 - `.github/workflows/check.yml`: тест cloudpkg под `-fsanitize=address,undefined` (`CFLAGS_EXTRA` в `tools/test-cloudpkg.sh`)
 - `tools/stage3/build-inside.sh`: итоговая проверка stage 3 требует правило wheel в doas.conf и группу wheel
 - `tools/stage3/sysctl-cloudos.conf`: `legacy_tiocsti`, `mmap_rnd_bits`, `mmap_rnd_compat_bits`, `core_pattern` (необязательные, с `-`)
+- подпись релизов minisign: `tools/sign.sh`, шаги в `stage3.yml` и `iso.yml`, `.minisig` попадают в релиз, проверка по `docs/cloudos.pub`. без секрета `MINISIGN_KEY` сборка идёт без подписи, с предупреждением. инструкция в `tools/README.md`, проверка для пользователей в README и handbook (ru, en), `SECURITY.md` обновлён
+- `DISTROWATCH.md`: чек-лист заявки на distrowatch
 
 ## 1.4, жёсткая безопасность
 
