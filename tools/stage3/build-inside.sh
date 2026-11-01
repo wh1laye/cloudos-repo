@@ -572,6 +572,8 @@ do_verify() {
     [ -u "$(readlink -f "$(command -v $f)")" ] || { echo "!! у $f нет setuid"; bad=1; }
   done
   grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/' /etc/ssh/sshd_config 2>/dev/null || { echo "!! sshd_config не подключает sshd_config.d"; bad=1; }
+  grep -qxF 'permit persist :wheel' /etc/doas.conf || { echo "!! в doas.conf нет правила для wheel"; bad=1; }
+  getent group wheel >/dev/null || { echo "!! нет группы wheel"; bad=1; }
   grep -q 'policy drop' /etc/nftables.conf || { echo "!! в nftables.conf нет policy drop"; bad=1; }
   if command -v sshd >/dev/null && command -v ssh-keygen >/dev/null; then
     hk=$(mktemp -u)
