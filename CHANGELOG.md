@@ -4,7 +4,11 @@
 
 - `tools/iso/mkiso-inside.sh`: сборка iso больше не падает на «в doas.conf нет правила для wheel». недостающие правила `permit persist :wheel` и `permit nopass root` дописываются в `/etc/doas.conf`, права 600, проверка остаётся после дописывания
 - `tools/stage3/cloudos-users.sh`: правила doas добавляются и в уже существующий `doas.conf`, раньше файл не трогался, если он был. добавляется перевод строки в конце, повторный запуск не плодит дубли
-- `.github/workflows/check.yml`: шаг shellcheck на всех скриптах (уровень error)
+- `.github/workflows/check.yml`: шаг shellcheck на всех скриптах (уровень warning, блокирует), `.shellcheckrc` отключает SC2254 для списков исключений с масками
+- `cloudpkg/cloudpkg.c`: `xcalloc` и `xstrdup` с выходом при нехватке памяти вместо разыменования NULL, размеры приведены к `size_t`, чисто под `-Wextra -Wsign-conversion`
+- `cloudpkg/Makefile`: pie, `-fstack-protector-strong`, `_FORTIFY_SOURCE=3`, `relro` и `now`, `-Wextra -Wsign-conversion -Wformat=2`
+- `tools/iso/mkiso-inside.sh`: обработчик ошибок вынесен в функцию `on_err`
+- `tools/stage3/build-inside.sh`: убрана неиспользуемая переменная цикла
 
 ## 1.4, жёсткая безопасность
 
