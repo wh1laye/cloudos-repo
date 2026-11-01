@@ -6,6 +6,7 @@
 - в stage 3 1.3 есть `openssh`, `iptables`, `man-db`, `man-pages`, `rsync`, `wget`, `gnupg`, `iputils`, `net-tools`, а на сайте и в `README.md` было написано, что ssh-сервера, фаервола и man-страниц нет. исправлено в `README.md`, `docs/index.html`, справочнике (разделы 1.2, 1.3, 13 и вопрос про man, ru и en). sshd и фаервол установлены, но выключены, как их включить написано в главе 13
 - `docs/packages/packages.json`: добавлены пакеты из stage 3 1.3
 - `docs/news`, `docs/rss.xml`, `docs/i18n.js`: запись про 1.3
+- `docs/sitemap.xml`: адреса вели на старый домен `cloudos-repo.pages.dev`, теперь `https://wh1laye.github.io/cloudos-repo/`, добавлен `lastmod`
 - `docs/stage3/stage3.js`: карта берётся из `docs/stage3/map.json`, если файла нет, из релиза `1.3`
 
 ## 1.3 (stage 3 и cloudpkg 0.7), правка 2
