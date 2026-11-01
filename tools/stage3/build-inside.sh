@@ -569,6 +569,7 @@ do_verify() {
   grep -q 'policy drop' /etc/nftables.conf || { echo "!! в nftables.conf нет policy drop"; bad=1; }
   if command -v sshd >/dev/null && command -v ssh-keygen >/dev/null; then
     hk=$(mktemp -u)
+    install -d -m755 /run/sshd /var/empty
     ssh-keygen -q -t ed25519 -N '' -f "$hk" && sshd -t -f /etc/ssh/sshd_config -h "$hk" || { echo "!! sshd_config не проходит sshd -t"; bad=1; }
     rm -f "$hk" "$hk.pub"
   fi

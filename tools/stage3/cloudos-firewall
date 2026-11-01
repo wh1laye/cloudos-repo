@@ -54,8 +54,9 @@ case $cmd in
     need
     if nft list table inet cloudos >/dev/null 2>&1; then
       echo "фаервол: включён"
-      nft list chain inet cloudos input | grep -m1 policy | sed 's/^[[:space:]]*/политика input: /'
-      ls "$DIR"/*.nft 2>/dev/null | sed 's|.*/|правило: |' || true
+      pol=$(nft list chain inet cloudos input | grep policy || true)
+      echo "политика input:${pol##*type filter hook input priority filter;}"
+      for f in "$DIR"/*.nft; do [ -e "$f" ] && echo "правило: ${f##*/}"; done || true
     else
       echo "фаервол: выключен"
       exit 1
