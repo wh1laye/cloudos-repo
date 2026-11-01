@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euE
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
-VERSION=${1:-1.3}
+VERSION=${1:-1.4}
 KVER=${2:-6.18.10}
 NAME=${3:-cloudos-live-amd64-$VERSION.iso}
 S=/var/tmp/isosrc
