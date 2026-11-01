@@ -30,6 +30,35 @@
 
 вкладка Actions, workflow `stage3`, Run workflow. он собирает архив на сервере github и кладёт файлы в релиз `1.3`, откуда их берёт `cloudpkg/install.sh`. на одном ядре сборка идёт часами, на сервере с 4 ядрами заметно быстрее.
 
+## mkiso.sh
+
+собирает живой iso cloudos (bios и uefi, загрузчик limine) из stage 3 (нужен root, x86_64, около 15 гб места):
+
+    sudo tools/mkiso.sh
+
+результат в `$OUT`: `cloudos-live-amd64-1.3.iso` и `.sha256`.
+
+как собирается: stage 3 распаковывается в chroot, внутри собирается ядро (`linux-$KVER` с kernel.org, sha256 сверяется с `sha256sums.asc`), свой минимальный initramfs (`iso/init`, без dracut: ищет носитель с `cloudos/rootfs.squashfs`, монтирует squashfs, кладёт поверх overlay в tmpfs, `switch_root`), squashfs (xz) из самого stage 3, затем гибридный iso через xorriso и `limine bios-install`. меню limine: обычная загрузка, serial console, rescue shell в initramfs (`cloudos.shell`).
+
+переменные:
+
+- `BASE`: ссылка или путь к stage 3 (по умолчанию релиз `$VERSION` этого репозитория)
+- `VERSION`: версия (по умолчанию 1.3)
+- `KVER`: версия ядра (по умолчанию 6.18.10)
+- `WORK`: рабочая папка
+- `OUT`: куда положить результат
+
+на live-системе вход на tty1 автоматический под root, пароля нет, включены udev, dhcpcd и syslog-ng.
+
+### сборка iso на github
+
+вкладка Actions, workflow `iso`, Run workflow. берёт stage 3 из релиза `1.3`, собирает iso, проверяет загрузку в qemu (результат в summary, на публикацию не влияет) и кладёт `.iso` и `.sha256` в релиз `1.3`. `docs/` workflow не трогает.
+
+## iso/
+
+- `mkiso-inside.sh`: сборка внутри chroot (ядро, initramfs, настройка live, squashfs, iso, проверка загрузочных записей)
+- `init`: `/init` внутри initramfs
+
 ## stage3/
 
 - `build-inside.sh`: сборка внутри chroot (пакеты, замена sysklogd на syslog-ng, весь набор gentoo stage 3, проверка корня)
