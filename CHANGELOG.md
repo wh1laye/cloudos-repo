@@ -1,5 +1,26 @@
 # changelog
 
+## 1.3.1, безопасность (не выпущено)
+
+новое:
+
+- `tools/stage3/nftables.conf`, `nftables.initd`, `nftables.local`: фаервол nftables включён по умолчанию (input и forward drop, output accept, icmp с лимитом, dhcp, лог отброшенного в `nft-drop:`), свои правила в `/etc/nftables.d/*.nft`
+- `tools/stage3/cloudos-firewall`: `status`, `check`, `reload`, `on`, `off`, `list`, `allow`, `remove`, `log`. порт и адрес проверяются строго, плохое правило откатывается
+- `tools/stage3/cloudos-audit`: проверка системы (фаервол, sysctl, пустые пароли, uid 0, setuid, слушающие порты, sshd), код выхода 1 при ошибках
+- `tools/stage3/sysctl-cloudos.conf`: kptr_restrict, dmesg_restrict, protected_*, rp_filter, syncookies и другое
+- `tools/stage3/sshd-cloudos.conf`: root по ssh закрыт, MaxAuthTries 3, без X11 и проброса
+- `tools/test-firewall.sh`: проверка фаервола в изолированном netns, запускается в github actions
+
+изменения:
+
+- `build-inside.sh`: шаг `firewall` (ставит `net-firewall/nftables`), проверки в `do_verify`
+- `cloudos-users.sh`: UMASK 027, HOME_MODE 0750, LOGIN_RETRIES, rounds для sha512, `su` только для wheel (pam_wheel)
+- `mkiso-inside.sh`: ядро с nf_tables и харденингом, cmdline с `slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none`
+- `mkiso.sh`: проверка gpg-подписи ядра (`KERNEL_GPG=auto|1|0`)
+- `cloudpkg.c`: путь лога с кавычкой или переводом строки не уходит в `system()`
+- workflows: `persist-credentials: false`, проверка `version` и `kernel`, данные из inputs только через env, проверка фаервола в stage3, проверка nftables в smoke iso
+- документация: в stage3 нет iptables в списке пакетов, поэтому упоминания iptables заменены на nftables
+
 ## 1.3, живой iso
 
 новое:
