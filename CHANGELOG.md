@@ -1,5 +1,28 @@
 # changelog
 
+## 1.5, жёсткая безопасность
+
+stage 3:
+
+- `sshd-cloudos.conf`: только ключи (`PasswordAuthentication no`, `AuthenticationMethods publickey`), `DisableForwarding`, `AllowGroups wheel users`, современные kex, шифры, mac и ключи хоста, `LogLevel VERBOSE`, `MaxStartups 3:50:10`
+- `sysctl-cloudos.conf`: `ptrace_scope 2`, `mmap_min_addr`, `perf_event_paranoid`, `io_uring_disabled`, `unprivileged_userfaultfd`, `ldisc_autoload`, временные ipv6-адреса. необязательные ключи с `-`, на старом ядре не ломают загрузку
+- `nftables.conf`: отбрасываются пакеты с невозможными tcp-флагами, новое соединение не с syn, поддельный loopback в адресе отправителя, invalid на выходе
+- `cloudos-users.sh`: pam_faillock (блокировка на 10 минут после 5 неудач), rounds=100000 для sha512, pam_pwquality если есть, сроки паролей в login.defs, пустой пароль root блокируется, у chsh и chfn снят setuid
+- новый шаг `harden`: `modprobe-cloudos.conf` отключает dccp, sctp, rds, tipc и редкие файловые системы, `limits-cloudos.conf` (core 0), права /root 700 и /etc/shadow 600, запуск аудита
+- `cloudos-audit`: проверки ssh, root, faillock, modprobe, ptrace, mmap_min_addr
+- сборка: attestation происхождения для архива stage 3 и iso в github actions
+
+iso:
+
+- live: пользователь `cloudos` (wheel, пароль cloudos), у root пароль cloudos, автовход на tty1 под cloudos, а не под root. хэши sha512 со случайной солью, при сборке проверяются. ssh для обоих закрыт
+- ядро: seccomp, landlock, `INIT_STACK_ALL_ZERO`, `ZERO_CALL_USED_REGS`, `RANDOM_KMALLOC_CACHES`, pti, отключены `PROC_KCORE`, `ACPI_CUSTOM_METHOD`, `X86_X32_ABI`, в cmdline `debugfs=off pti=on`
+- `rootfs.squashfs.sha256` и пункт загрузки `cloudos.verify`: initramfs сверяет образ перед монтированием
+
+форум:
+
+- csp в `forum/index.html` (скрипты только с себя и turnstile, соединения только с supabase), referrer policy, защита от встраивания во фрейм (`guard.js`), inline-скрипт вынесен в файл
+- `tools/forum-audit.sql`: запросы для supabase sql editor, проверяют rls, политики для anon, функции security definer, лимиты бакетов
+
 ## 1.4, безопасность и фаервол, стабильный выпуск
 
 новое:
