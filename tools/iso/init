@@ -17,20 +17,25 @@ CMDLINE=$(cat /proc/cmdline)
 case " $CMDLINE " in *" cloudos.shell "*) rescue "cloudos.shell в командной строке" ;; esac
 
 find_iso() {
-  local n=0 d
+  local n=0 d t
   while [ "$n" -lt 40 ]; do
     for d in /dev/sr* /dev/sd* /dev/vd* /dev/nvme*n* /dev/mmcblk*; do
       [ -b "$d" ] || continue
-      mount -t iso9660 -o ro "$d" /mnt/iso 2>/dev/null || continue
+      t=$(blkid -o value -s TYPE "$d" 2>/dev/null)
+      case $t in iso9660|vfat|ext4|ext3|ext2|exfat|ntfs|btrfs) ;; *) continue ;; esac
+      mount -t "$t" -o ro "$d" /mnt/iso 2>/dev/null || continue
       if [ -f /mnt/iso/cloudos/rootfs.squashfs ]; then
-        say "образ найден на $d"
+        say "образ найден на $d ($t)"
         return 0
       fi
       umount /mnt/iso
     done
     n=$((n + 1))
+    [ $((n % 5)) = 0 ] && say "жду носитель, $n с"
     sleep 1
   done
+  say "устройства и файловые системы:"
+  blkid
   return 1
 }
 

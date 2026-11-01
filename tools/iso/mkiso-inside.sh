@@ -41,7 +41,7 @@ build_kernel() {
     SCSI_VMW_PVSCSI VMXNET3 E1000 E1000E IGB R8169 \
     ISO9660_FS JOLIET ZISOFS UDF_FS SQUASHFS SQUASHFS_XZ SQUASHFS_ZLIB OVERLAY_FS \
     EXT4_FS BTRFS_FS VFAT_FS FAT_FS MSDOS_FS NLS_CODEPAGE_437 NLS_ISO8859_1 NLS_UTF8 \
-    EFI EFI_STUB EFIVAR_FS FB_EFI SYSFB_SIMPLEFB DRM DRM_SIMPLEDRM DRM_FBDEV_EMULATION FRAMEBUFFER_CONSOLE VT; do
+    EFI EFI_STUB EFIVAR_FS FB_EFI SYSFB_SIMPLEFB EXFAT_FS NTFS3_FS DRM DRM_SIMPLEDRM DRM_FBDEV_EMULATION FRAMEBUFFER_CONSOLE VT; do
     scripts/config -e "$s"
   done
   make olddefconfig
@@ -68,11 +68,11 @@ build_initramfs() {
   mkdir -p "$D"/{dev,proc,sys,run,tmp,etc,bin,mnt/iso,mnt/sq,mnt/rw,mnt/new}
   mknod -m 600 "$D/dev/console" c 5 1
   mknod -m 666 "$D/dev/null" c 1 3
-  for b in bash mount umount switch_root mkdir sleep cat ls dmesg; do
+  for b in bash mount umount switch_root blkid mkdir sleep cat ls dmesg; do
     p=$(command -v "$b") || die "нет $b для initramfs"
     install -m755 "$p" "$D/bin/$b"
   done
-  libs=$(for b in bash mount umount switch_root mkdir sleep cat ls dmesg; do
+  libs=$(for b in bash mount umount switch_root blkid mkdir sleep cat ls dmesg; do
     ldd "$(command -v "$b")" 2>/dev/null || true
   done | awk '{ for (i = 1; i <= NF; i++) if ($i ~ /^\//) print $i }' | sort -u)
   for l in $libs; do
