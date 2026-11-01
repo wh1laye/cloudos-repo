@@ -11,6 +11,7 @@ D=/var/tmp/isoinitramfs
 R=/var/tmp/isoroot
 O=/var/tmp/isoout
 J=$(nproc)
+HARDEN='slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1 efi=disable_early_pci_dma iommu.strict=1'
 
 say() { printf '==> %s\n' "$*"; }
 die() { printf '::error::%s\n' "$*" >&2; exit 1; }
@@ -53,9 +54,11 @@ build_kernel() {
     SCHED_STACK_END_CHECK DEBUG_WX SECCOMP SECCOMP_FILTER SECURITY_LANDLOCK INIT_STACK_ALL_ZERO ZERO_CALL_USED_REGS LIST_HARDENED LIST_HARDENING RANDOM_KMALLOC_CACHES PAGE_TABLE_ISOLATION; do
     scripts/config -e "$s"
   done
+  scripts/config -e MODULE_SIG -e MODULE_SIG_ALL -e MODULE_SIG_FORCE -e MODULE_SIG_SHA512 --set-str MODULE_SIG_HASH sha512
+  scripts/config -e MITIGATION_PAGE_TABLE_ISOLATION -e MITIGATION_RETPOLINE -e MITIGATION_RETHUNK -e MITIGATION_IBRS_ENTRY -e MITIGATION_SPECTRE_BHI -e BPF_UNPRIV_DEFAULT_OFF -e RESET_ATTACK_MITIGATION
   scripts/config -d LEGACY_VSYSCALL_XONLY -d LEGACY_VSYSCALL_EMULATE -d DEVKMEM -d KEXEC_FILE -d LEGACY_PTYS -d ACPI_CUSTOM_METHOD -d PROC_KCORE -d COMPAT_BRK -d X86_X32_ABI
   make olddefconfig
-  need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
+  need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
   for s in $need; do
     grep -q "^CONFIG_$s=y" .config || die "в .config нет CONFIG_$s=y"
   done
@@ -127,8 +130,42 @@ live_users() {
   say "live: пользователь cloudos и root, пароль cloudos, по ssh вход им закрыт"
 }
 
+live_smoke() {
+  cat > /etc/init.d/cloudos-smoke <<'EOS'
+#!/sbin/openrc-run
+description="cloudos live smoke test"
+
+depend() {
+	after nftables dhcpcd syslog-ng local
+}
+
+out() { printf 'cloudos-smoke: %s\n' "$*" > /dev/console; }
+
+start() {
+	grep -qw cloudos.smoke /proc/cmdline || return 0
+	local f=0
+	id -nG cloudos 2>/dev/null | tr ' ' '\n' | grep -qx wheel || { out "FAIL cloudos не в wheel"; f=1; }
+	grep -qxF 'permit persist :wheel' /etc/doas.conf || { out "FAIL в doas.conf нет правила wheel"; f=1; }
+	su -s /bin/bash cloudos -c 'doas -C /etc/doas.conf -u root /bin/true' >/dev/null 2>&1 || { out "FAIL doas не разрешает wheel"; f=1; }
+	su -s /bin/bash cloudos -c 'id -u' 2>/dev/null | grep -qx '[1-9][0-9]*' || { out "FAIL su cloudos не работает"; f=1; }
+	awk '$4 == "0A" && $2 ~ /:0016$/ { f = 1 } END { exit !f }' /proc/net/tcp && { out "FAIL порт 22 слушается"; f=1; }
+	nft list ruleset 2>/dev/null | grep -q drop || { out "FAIL в nftables нет drop"; f=1; }
+	[ "$(cat /proc/sys/kernel/kptr_restrict)" = 2 ] || { out "FAIL kptr_restrict"; f=1; }
+	[ "$(cat /proc/sys/kernel/yama/ptrace_scope)" = 2 ] || { out "FAIL ptrace_scope"; f=1; }
+	[ "$(cat /proc/sys/kernel/unprivileged_bpf_disabled)" != 0 ] || { out "FAIL unprivileged_bpf"; f=1; }
+	[ "$f" = 0 ] && out ok
+	sync
+	echo o > /proc/sysrq-trigger
+	return 0
+}
+EOS
+  chmod 755 /etc/init.d/cloudos-smoke
+  rc-update add cloudos-smoke default >/dev/null 2>&1 || die "cloudos-smoke не встал в default"
+}
+
 live_tune() {
   live_users
+  live_smoke
   local n s
   if [ -e /etc/init.d/agetty ]; then
     for n in 1 2 3; do
@@ -176,25 +213,25 @@ timeout: 5
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
+    cmdline: console=tty0 $HARDEN
 
 /CloudOS $VERSION live (serial console)
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 console=ttyS0,115200 slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
+    cmdline: console=tty0 console=ttyS0,115200 $HARDEN
 
 /CloudOS $VERSION live (rescue shell in initramfs)
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 cloudos.shell slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
+    cmdline: console=tty0 cloudos.shell $HARDEN
 
 /CloudOS $VERSION live (проверка sha256 образа при загрузке)
     protocol: linux
     path: boot():/boot/vmlinuz
     module_path: boot():/boot/initramfs.img
-    cmdline: console=tty0 cloudos.verify slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on
+    cmdline: console=tty0 cloudos.verify $HARDEN
 EOC
   rm -f "$O/$NAME"
   xorriso -as mkisofs -V CLOUDOS -R -r -J \
