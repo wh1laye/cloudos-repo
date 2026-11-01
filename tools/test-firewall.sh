@@ -14,7 +14,7 @@ mkdir -p "$T/d"
 sed "s|/etc/nftables.d|$T/d|" "$HERE/stage3/nftables.conf" > "$T/nftables.conf"
 cp "$HERE/stage3/nftables.local" "$T/d/00-local.nft"
 export NFT_CONF=$T/nftables.conf NFT_DIR=$T/d
-FW=$HERE/stage3/cloudos-firewall
+fw() { bash "$HERE/stage3/cloudos-firewall" "$@"; }
 n=0
 pass() { n=$((n + 1)); echo "ok $n: $*"; }
 die() { echo "!! $*" >&2; exit 1; }
@@ -25,32 +25,32 @@ nft -f "$NFT_CONF"
 nft list chain inet cloudos input | grep -q 'policy drop' || die "нет policy drop в input"
 nft list chain inet cloudos forward | grep -q 'policy drop' || die "нет policy drop в forward"
 pass "policy drop в input и forward"
-"$FW" status | grep -q 'включён' || die "status не видит фаервол"
+fw status | grep -q 'включён' || die "status не видит фаервол"
 pass "status"
 
-"$FW" allow ssh >/dev/null
+fw allow ssh >/dev/null
 nft list chain inet cloudos input | grep -q 'dport 22' || die "правило ssh не загрузилось"
 pass "allow ssh"
-"$FW" allow tcp/8080 from 10.0.0.0/8 >/dev/null
+fw allow tcp/8080 from 10.0.0.0/8 >/dev/null
 nft list chain inet cloudos input | grep -q '10.0.0.0/8' || die "правило с адресом не загрузилось"
 pass "allow tcp/8080 from 10.0.0.0/8"
-"$FW" allow udp/5353 from fe80::/10 >/dev/null
+fw allow udp/5353 from fe80::/10 >/dev/null
 pass "allow udp/5353 from fe80::/10"
 
 for bad in "tcp/0" "tcp/65536" "tcp/80;x" "udp/abc" "foo"; do
-  if "$FW" allow "$bad" >/dev/null 2>&1; then die "принял плохое правило: $bad"; fi
+  if fw allow "$bad" >/dev/null 2>&1; then die "принял плохое правило: $bad"; fi
 done
 pass "плохие порты отклонены"
-if "$FW" allow tcp/9000 from '1.1.1.1; drop' >/dev/null 2>&1; then die "принял инъекцию в адресе"; fi
-if "$FW" allow tcp/9000 from '1.1.1.1 accept
+if fw allow tcp/9000 from '1.1.1.1; drop' >/dev/null 2>&1; then die "принял инъекцию в адресе"; fi
+if fw allow tcp/9000 from '1.1.1.1 accept
 flush ruleset' >/dev/null 2>&1; then die "принял инъекцию с переводом строки"; fi
 [ ! -e "$NFT_DIR/20-allow-tcp-9000.nft" ] || die "остался файл от плохого правила"
 pass "инъекции в адресе отклонены"
 
-"$FW" remove ssh >/dev/null
+fw remove ssh >/dev/null
 nft list chain inet cloudos input | grep -q 'dport 22' && die "правило ssh не убралось"
 pass "remove ssh"
-if "$FW" remove tcp/1234 >/dev/null 2>&1; then die "remove несуществующего вернул успех"; fi
+if fw remove tcp/1234 >/dev/null 2>&1; then die "remove несуществующего вернул успех"; fi
 pass "remove несуществующего даёт ошибку"
 
 CLOUDOS_ROOT=$T/none bash "$HERE/stage3/cloudos-audit" >/dev/null 2>&1 || true

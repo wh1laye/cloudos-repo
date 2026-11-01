@@ -2,7 +2,7 @@
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-VERSION=${VERSION:-1.3}
+VERSION=${VERSION:-1.4}
 KVER=${KVER:-6.18.10}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$VERSION/cloudos-stage3-amd64-$VERSION.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-iso-build}

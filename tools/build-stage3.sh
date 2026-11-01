@@ -3,7 +3,7 @@ set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$HERE")
-VERSION=${VERSION:-1.3}
+VERSION=${VERSION:-1.4}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/cloudos/cloudos-stage3-amd64-1.0.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-stage3-build}
 OUT=${OUT:-$PWD}
