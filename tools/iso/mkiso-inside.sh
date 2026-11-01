@@ -111,7 +111,13 @@ live_users() {
     [ "$(openssl passwd -6 -salt "$salt" cloudos)" = "$h1" ] || die "пароль $g в live не встал"
   done
   [ "$(id -nG cloudos | tr ' ' '\n' | grep -cx wheel)" = 1 ] || die "cloudos не в группе wheel"
-  grep -q 'permit persist :wheel' /etc/doas.conf || die "в doas.conf нет правила для wheel"
+  [ -e /etc/doas.conf ] || : > /etc/doas.conf
+  if [ -s /etc/doas.conf ] && [ -n "$(tail -c1 /etc/doas.conf)" ]; then echo >> /etc/doas.conf; fi
+  for rule in 'permit persist :wheel' 'permit nopass root'; do
+    grep -qxF "$rule" /etc/doas.conf || printf '%s\n' "$rule" >> /etc/doas.conf
+  done
+  chmod 600 /etc/doas.conf
+  grep -qxF 'permit persist :wheel' /etc/doas.conf || die "в doas.conf нет правила для wheel"
   if [ -d /etc/ssh/sshd_config.d ]; then
     printf '%s\n' 'DenyUsers root cloudos' > /etc/ssh/sshd_config.d/05-cloudos-live.conf
   fi
