@@ -9,6 +9,12 @@
 - `cloudpkg/Makefile`: pie, `-fstack-protector-strong`, `_FORTIFY_SOURCE=3`, `relro` и `now`, `-Wextra -Wsign-conversion -Wformat=2`
 - `tools/iso/mkiso-inside.sh`: обработчик ошибок вынесен в функцию `on_err`
 - `tools/stage3/build-inside.sh`: убрана неиспользуемая переменная цикла
+- `tools/iso/mkiso-inside.sh`: ядро с подписью модулей (`MODULE_SIG_FORCE`, sha512), `BPF_UNPRIV_DEFAULT_OFF`, `MITIGATION_*` для 6.18 (старое имя `PAGE_TABLE_ISOLATION` в 6.18 не работало), в cmdline добавлены `module.sig_enforce=1`, `efi=disable_early_pci_dma`, `iommu.strict=1`, общие параметры вынесены в `HARDEN`
+- live: служба `cloudos-smoke` включена в default и работает только с `cloudos.smoke` в cmdline. проверяет wheel, правило doas, `doas -C` от cloudos, `su`, закрытый порт 22, drop в nftables, kptr_restrict, ptrace_scope, unprivileged bpf, пишет `cloudos-smoke: ok` или `FAIL ...` и выключает машину
+- `.github/workflows/iso.yml`: проверочная загрузка идёт с `cloudos.smoke` и падает, если нет `cloudos-smoke: ok` или есть `FAIL`
+- `.github/workflows/check.yml`: тест cloudpkg под `-fsanitize=address,undefined` (`CFLAGS_EXTRA` в `tools/test-cloudpkg.sh`)
+- `tools/stage3/build-inside.sh`: итоговая проверка stage 3 требует правило wheel в doas.conf и группу wheel
+- `tools/stage3/sysctl-cloudos.conf`: `legacy_tiocsti`, `mmap_rnd_bits`, `mmap_rnd_compat_bits`, `core_pattern` (необязательные, с `-`)
 
 ## 1.4, жёсткая безопасность
 
