@@ -109,6 +109,15 @@ jobs:
         with:
           subject-path: out/*.tar.xz
 
+      - name: подпись minisign
+        env:
+          MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+        run: |
+          if [ -z "$MINISIGN_KEY" ]; then echo "::warning::секрет MINISIGN_KEY не задан, релиз выйдет без подписи minisign"; exit 0; fi
+          sudo apt-get install -y -qq minisign
+          bash tools/sign.sh out/*.tar.xz out/*.tar.xz.sha256
+
       - uses: actions/upload-artifact@v4
         with:
           name: cloudos-stage3-${{ inputs.version }}

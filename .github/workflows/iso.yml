@@ -126,6 +126,15 @@ jobs:
         with:
           subject-path: out/*.iso
 
+      - name: подпись minisign
+        env:
+          MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+        run: |
+          if [ -z "$MINISIGN_KEY" ]; then echo "::warning::секрет MINISIGN_KEY не задан, релиз выйдет без подписи minisign"; exit 0; fi
+          sudo apt-get install -y -qq minisign
+          bash tools/sign.sh out/*.iso out/*.iso.sha256
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -152,4 +161,6 @@ jobs:
           [ "$SIZE" -lt 2147483648 ] || { echo "iso $SIZE байт, лимит github releases 2 гб"; exit 1; }
           gh release view "$VERSION" >/dev/null 2>&1 || gh release create "$VERSION" --title "CloudOS $VERSION" \
             --notes "cloudos $VERSION. проверка: sha256sum -c cloudos-live-amd64-$VERSION.iso.sha256"
-          gh release upload "$VERSION" "out/cloudos-live-amd64-$VERSION.iso" "out/cloudos-live-amd64-$VERSION.iso.sha256" --clobber
+          FILES=("out/cloudos-live-amd64-$VERSION.iso" "out/cloudos-live-amd64-$VERSION.iso.sha256")
+          for s in out/*.minisig; do [ -e "$s" ] && FILES+=("$s"); done
+          gh release upload "$VERSION" "${FILES[@]}" --clobber
