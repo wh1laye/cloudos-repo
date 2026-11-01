@@ -416,7 +416,7 @@ reboot</code></pre>
 <pre><code>grep wheel /etc/group || groupadd wheel
 useradd -m -G wheel -s /bin/bash name
 passwd name
-echo "permit :wheel" &gt; /etc/doas.conf
+grep -q wheel /etc/doas.conf 2&gt;/dev/null || echo "permit persist :wheel" &gt;&gt; /etc/doas.conf
 chmod 0400 /etc/doas.conf</code></pre>
 <p>instead of <code>name</code> put your own. after that, commands as root are run like this:</p>
 <pre><code>doas cloudpkg install nano</code></pre>
