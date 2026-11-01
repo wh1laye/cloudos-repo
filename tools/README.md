@@ -75,6 +75,16 @@
 - `fastfetch-truecolor.jsonc`, `fastfetch-image.jsonc`: то же облако плавным градиентом (truecolor) и картинкой для терминалов с показом изображений. запуск: `fastfetch -c /usr/share/cloudos/fastfetch-truecolor.jsonc` или `fastfetch -c /usr/share/cloudos/fastfetch-image.jsonc`
 - `logo.png`, `logo.txt`, `logo.ansi`, `make-logo.py`: логотип с сайта и скрипт, который делает из него текстовые варианты (нужен pillow)
 
+## фаервол и безопасность
+
+- `stage3/nftables.conf`: основные правила, `/etc/nftables.conf`. свои правила: `/etc/nftables.d/*.nft`
+- `stage3/cloudos-firewall`: `cloudos-firewall allow ssh`, `allow tcp/8080 from 10.0.0.0/8`, `remove ssh`, `status`, `list`, `log`, `check`, `reload`
+- `stage3/cloudos-audit`: проверка системы, `0` если ошибок нет
+- `stage3/sysctl-cloudos.conf`: `/etc/sysctl.d/90-cloudos.conf`
+- `stage3/sshd-cloudos.conf`: `/etc/ssh/sshd_config.d/10-cloudos.conf`
+- `test-firewall.sh`: проверка в изолированном netns (нужны root и nft)
+- `KERNEL_GPG` для `mkiso.sh`: `auto` проверяет подпись ядра и ругается, `1` останавливает сборку при любой неудаче, `0` отключает
+
 ## test-cloudpkg.sh
 
 проверка cloudpkg на временном корне, без portage (нужен root и gcc): очистка хуков и `package.env`, запись autotools со слотами, повторный запуск, настоящий пакет не затирается, `cloudos-fix --files`. запускается в github actions перед сборкой:

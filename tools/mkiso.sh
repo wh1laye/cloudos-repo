@@ -48,6 +48,30 @@ KSUM=$(awk -v f="$KTAR" '$2 == f { print $1 }' "$WORK/sha256sums.asc")
 [ -f "$WORK/src/$KTAR" ] || fetch "$KURL/$KTAR" "$WORK/src/$KTAR" || die "не скачался $KURL/$KTAR"
 [ "$(sha256sum "$WORK/src/$KTAR" | cut -d' ' -f1)" = "$KSUM" ] || { rm -f "$WORK/src/$KTAR"; die "sha256 $KTAR не совпал"; }
 
+KGPG=${KERNEL_GPG:-auto}
+kgpg_fail() { if [ "$KGPG" = 1 ]; then die "$*"; else printf '!! %s\n' "$*" >&2; fi; }
+if [ "$KGPG" != 0 ]; then
+  if command -v gpg >/dev/null; then
+    GH=$WORK/gnupg
+    rm -rf "$GH"; mkdir -p "$GH"; chmod 700 "$GH"
+    if fetch "$KURL/linux-$KVER.tar.sign" "$WORK/$KTAR.sign" \
+      && gpg --homedir "$GH" --batch -q --auto-key-locate clear,nodefault,wkd --locate-keys torvalds@kernel.org gregkh@kernel.org >/dev/null 2>&1; then
+      KOUT=$(xz -dc "$WORK/src/$KTAR" | gpg --homedir "$GH" --batch --trust-model always --status-fd 1 --verify "$WORK/$KTAR.sign" - 2>/dev/null) || true
+      if printf '%s\n' "$KOUT" | grep -q '^\[GNUPG:\] GOODSIG'; then
+        say "подпись ядра $KTAR проверена"
+      elif printf '%s\n' "$KOUT" | grep -q '^\[GNUPG:\] BADSIG'; then
+        rm -f "$WORK/src/$KTAR"; die "подпись ядра $KTAR неверна"
+      else
+        kgpg_fail "подпись ядра $KTAR не подтвердилась"
+      fi
+    else
+      kgpg_fail "не удалось получить подпись или ключи ядра (KERNEL_GPG=0 отключает проверку)"
+    fi
+  else
+    kgpg_fail "нет gpg, подпись ядра не проверена"
+  fi
+fi
+
 say "распаковка базы в $ROOT"
 rm -rf "$ROOT"
 mkdir -p "$ROOT"
