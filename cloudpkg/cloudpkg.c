@@ -611,6 +611,8 @@ static void fail_hint(time_t t0)
 	path[0] = 0;
 	if (f && fgets(path, sizeof path, f)) {
 		trim(path);
+		if (strchr(path, '\'') || strchr(path, '\n'))
+			path[0] = 0;
 		if (*path) {
 			fprintf(stderr, "\ncloudpkg: сборка не удалась. последние строки лога %s:\n", path);
 			snprintf(cmd, sizeof cmd, "tail -n 25 '%s' >&2", path);
