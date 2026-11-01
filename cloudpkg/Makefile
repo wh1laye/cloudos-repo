@@ -1,6 +1,7 @@
 CC ?= gcc
 CFLAGS ?= -O2
-CFLAGS += -std=gnu17 -Wall
+CFLAGS += -std=gnu17 -Wall -Wextra -Wsign-conversion -Wformat=2 -fstack-protector-strong -fPIE -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3
+LDFLAGS += -pie -Wl,-z,relro,-z,now
 PREFIX ?= /usr
 DESTDIR ?=
 JOBS := $(shell nproc 2>/dev/null || echo 2)
@@ -9,7 +10,7 @@ CONFS := cloudpkg.conf portage/make.conf portage/repos.conf/gentoo.conf portage/
 all: cloudpkg
 
 cloudpkg: cloudpkg.c
-	$(CC) $(CFLAGS) -o $@ $<
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
 
 install: cloudpkg
 	install -Dm755 cloudpkg $(DESTDIR)$(PREFIX)/bin/cloudpkg

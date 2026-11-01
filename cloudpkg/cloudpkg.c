@@ -12,6 +12,28 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
+static void *xcalloc(size_t n, size_t m)
+{
+	void *p = calloc(n, m);
+
+	if (!p) {
+		fputs("cloudpkg: нет памяти\n", stderr);
+		exit(1);
+	}
+	return p;
+}
+
+static char *xstrdup(const char *s)
+{
+	char *p = strdup(s);
+
+	if (!p) {
+		fputs("cloudpkg: нет памяти\n", stderr);
+		exit(1);
+	}
+	return p;
+}
+
 #define VERSION "0.7"
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
 #define INSTALL_URL "https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh"
@@ -105,9 +127,9 @@ static void loadconf(void)
 			v = trim(eq + 1);
 			k = trim(k);
 			if (!strcmp(k, "mirror") && nmir < MAXM)
-				mirrors[nmir++] = strdup(v);
+				mirrors[nmir++] = xstrdup(v);
 			else if (!strcmp(k, "fallback") && nfall < MAXM)
-				falls[nfall++] = strdup(v);
+				falls[nfall++] = xstrdup(v);
 			else if (!strcmp(k, "repo"))
 				snprintf(repo, sizeof repo, "%s", v);
 			else if (!strcmp(k, "snapshot"))
@@ -122,13 +144,13 @@ static void loadconf(void)
 		fclose(f);
 	}
 	if (!nmir) {
-		mirrors[nmir++] = strdup("https://distfiles.gentoo.org");
-		mirrors[nmir++] = strdup("https://mirror.yandex.ru/gentoo-distfiles");
-		mirrors[nmir++] = strdup("https://mirrors.ustc.edu.cn/gentoo");
-		mirrors[nmir++] = strdup("https://mirrors.aliyun.com/gentoo");
+		mirrors[nmir++] = xstrdup("https://distfiles.gentoo.org");
+		mirrors[nmir++] = xstrdup("https://mirror.yandex.ru/gentoo-distfiles");
+		mirrors[nmir++] = xstrdup("https://mirrors.ustc.edu.cn/gentoo");
+		mirrors[nmir++] = xstrdup("https://mirrors.aliyun.com/gentoo");
 	}
 	if (!nfall)
-		falls[nfall++] = strdup("https://codeload.github.com/gentoo-mirror/gentoo/tar.gz/refs/heads/master");
+		falls[nfall++] = xstrdup("https://codeload.github.com/gentoo-mirror/gentoo/tar.gz/refs/heads/master");
 	if (!safe_dir(repo) || !safe_dir(dist)) {
 		fprintf(stderr, "cloudpkg: небезопасный путь в %s (repo=%s distdir=%s)\n", CONF, repo, dist);
 		exit(1);
@@ -207,7 +229,7 @@ static int have(const char *cmd)
 
 	if (!path || !*path)
 		path = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
-	dup = strdup(path);
+	dup = xstrdup(path);
 	for (d = strtok_r(dup, ":", &save); d && !ok; d = strtok_r(NULL, ":", &save)) {
 		snprintf(p, sizeof p, "%s/%s", d, cmd);
 		ok = access(p, X_OK) == 0;
@@ -420,7 +442,7 @@ static int vdb_has(const char *name)
 	d = opendir(p);
 	if (!d)
 		return 0;
-	n = snprintf(pre, sizeof pre, "%s-", name);
+	n = (size_t)snprintf(pre, sizeof pre, "%s-", name);
 	while ((e = readdir(d)))
 		if (!strncmp(e->d_name, pre, n) && e->d_name[n] >= '0' && e->d_name[n] <= '9') {
 			r = 1;
@@ -592,7 +614,7 @@ static char *resolve(char *name)
 	}
 	if (best < 0)
 		best = 0;
-	res = strdup(found[best]);
+	res = xstrdup(found[best]);
 	if (nf > 1) {
 		printf("cloudpkg: %s -> %s (есть ещё:", name, res);
 		for (i = 0; i < nf; i++)
@@ -670,7 +692,7 @@ static int need_portage(void)
 
 static int emerge(char **pre, int npre, char **pk, int npk)
 {
-	char **av = calloc(npre + npk + 2, sizeof *av);
+	char **av = xcalloc((size_t)(npre + npk + 2), sizeof *av);
 	int i, n = 0, r;
 	time_t t0 = time(NULL);
 
@@ -837,8 +859,8 @@ static int cmd_sync(void)
 
 static int cmd_install(int argc, char **argv)
 {
-	char **pre = calloc(argc + 12, sizeof *pre);
-	char **pk = calloc(argc + 1, sizeof *pk);
+	char **pre = xcalloc((size_t)(argc + 12), sizeof *pre);
+	char **pk = xcalloc((size_t)(argc + 1), sizeof *pk);
 	int npre = 0, npk = 0, r;
 
 	pre[npre++] = "--verbose";
@@ -865,8 +887,8 @@ static int cmd_install(int argc, char **argv)
 
 static int cmd_remove(int argc, char **argv)
 {
-	char **pre = calloc(argc + 12, sizeof *pre);
-	char **pk = calloc(argc + 1, sizeof *pk);
+	char **pre = xcalloc((size_t)(argc + 12), sizeof *pre);
+	char **pk = xcalloc((size_t)(argc + 1), sizeof *pk);
 	int npre = 0, npk = 0, r;
 
 	pre[npre++] = "--unmerge";
@@ -886,8 +908,8 @@ static int cmd_remove(int argc, char **argv)
 
 static int cmd_upgrade(int argc, char **argv)
 {
-	char **pre = calloc(argc + 12, sizeof *pre);
-	char **pk = calloc(argc + 2, sizeof *pk);
+	char **pre = xcalloc((size_t)(argc + 12), sizeof *pre);
+	char **pk = xcalloc((size_t)(argc + 2), sizeof *pk);
 	int npre = 0, npk = 0, r;
 
 	pre[npre++] = "--update";
