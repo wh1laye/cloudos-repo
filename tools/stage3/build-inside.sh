@@ -148,17 +148,21 @@ do_firewall() {
   install -d /etc/sysctl.d
   install -m644 "$F/sysctl-cloudos.conf" /etc/sysctl.d/90-cloudos.conf
   if [ -e /etc/init.d/sysctl ]; then ln -sf /etc/init.d/sysctl /etc/runlevels/boot/sysctl; fi
-  install -d -m755 /etc/ssh/sshd_config.d
-  install -m644 "$F/sshd-cloudos.conf" /etc/ssh/sshd_config.d/10-cloudos.conf
-  if [ -f /etc/ssh/sshd_config ] && ! grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/' /etc/ssh/sshd_config; then
-    { echo 'Include /etc/ssh/sshd_config.d/*.conf'; cat /etc/ssh/sshd_config; } > /etc/ssh/sshd_config.new
-    mv /etc/ssh/sshd_config.new /etc/ssh/sshd_config
-    chmod 644 /etc/ssh/sshd_config
-  fi
   if nft list ruleset >/dev/null 2>&1; then
     nft -c -f /etc/nftables.conf || { echo "!! nftables.conf не проходит nft -c" >&2; return 1; }
   else
     echo "!! ядро сборочной машины не даёт проверить правила nft, проверка пропущена" >&2
+  fi
+}
+
+do_sshd() {
+  [ -f /etc/ssh/sshd_config ] || { echo "!! нет /etc/ssh/sshd_config, openssh не установлен" >&2; return 1; }
+  install -d -m755 /etc/ssh/sshd_config.d
+  install -m644 "$F/sshd-cloudos.conf" /etc/ssh/sshd_config.d/10-cloudos.conf
+  if ! grep -qE '^[[:space:]]*Include[[:space:]]+/etc/ssh/sshd_config\.d/' /etc/ssh/sshd_config; then
+    { echo 'Include /etc/ssh/sshd_config.d/*.conf'; cat /etc/ssh/sshd_config; } > /etc/ssh/sshd_config.new
+    mv /etc/ssh/sshd_config.new /etc/ssh/sshd_config
+    chmod 644 /etc/ssh/sshd_config
   fi
 }
 
@@ -694,6 +698,7 @@ step lzip do_lzip
 step maildir fix_maildir
 step elfutils do_elfutils
 step gentoo-stage3-set do_gentoo_set
+step sshd-harden do_sshd
 do_cfgclean
 step verify do_verify
 
