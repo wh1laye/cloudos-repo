@@ -1,5 +1,20 @@
 # changelog
 
+## 1.5.0, live iso без stage 3
+
+- `tools/iso/cloudos-install`: новый установщик. размечает диск (gpt для uefi, dos для bios), форматирует ext4 или btrfs, монтирует в `/mnt/cloudos`, распаковывает `rootfs.squashfs` через `unsquashfs`, пишет fstab и `limine.conf` с `root=PARTUUID`, ставит limine, убирает следы live (пользователь cloudos, smoke, автологин, ключи ssh), создаёт пользователя и пароли. запуск без вопросов через переменные `CLOUDOS_*`
+- `tools/iso/mkiso-inside.sh`: установщик кладётся в `/usr/sbin`, ставятся `dosfstools` и по возможности `btrfs-progs`, из squashfs убрана документация
+- `tools/iso/mkiso-inside.sh`: оптимизация ядра: zstd для ядра, zswap и zram с zstd, tcp bbr, fq и fq_codel, планировщики bfq, kyber и deadline, schedutil, pstate, thp по запросу
+- `tools/iso/mkiso-inside.sh`: в cloudos-smoke режим `cloudos.itest` для тестовой установки на второй диск
+- `.github/workflows/iso.yml`: iso больше не требует публичного stage 3, база берётся из внутреннего релиза (`base_tag`, `base_version`), версия iso по умолчанию 1.0, новый шаг тестовой установки в qemu и загрузки установленной системы до openrc
+- `.github/workflows/stage3.yml`: результат идёт во внутренний релиз как prerelease, а не как публичный stage 3
+- `.github/workflows/check.yml`: `cloudos-install` проверяется `bash -n` и shellcheck
+- `tools/mkiso.sh`: база задаётся `BASE_TAG` и `BASE_VERSION`
+- `docs/handbook/index.html`, `docs/handbook/en/index.html`: справочник переписан под live iso: установка одной командой, установка вручную, первые шаги, пакеты, свое ядро, ошибки
+- `docs/index.html`, `docs/news/index.html`, `docs/wizard/`: новая главная, очищен раздел новое, мастер собирает команду `cloudos-install`
+- `docs/releases/`: страница показывает только live iso, внутренняя база скрыта
+- убраны страницы `docs/kernel/` и `docs/stage3/`, ссылки на них из меню, палитры и определения железа
+
 ## 1.4.2, wifi
 
 - `docs/handbook/index.html`, `docs/handbook/en/index.html`: глава 8 в правильном порядке (8.1 fstab, 8.2 initramfs, 8.3 limine), dracut читает fstab, поэтому fstab первый; убран `cloudpkg install dracut` (он уже в stage 3), добавлены проверки `/lib/modules` и `mountpoint /boot` и флаг `--force`; в примерах 11.3 убраны limine и dracut
