@@ -1,5 +1,18 @@
 # changelog
 
+## 1.6.0, luks, x86-64-v3, темы, без мастера
+
+- `tools/iso/cloudos-install`: шифрование корня luks2 (aes-xts-plain64, 512 бит, argon2id), переменные `CLOUDOS_LUKS` и `CLOUDOS_LUKSPASS`, в интерактивном режиме вопрос; initramfs для установленной системы собирается через dracut с модулем crypt, в `limine.conf` добавляется `module_path`, в cmdline `rd.luks.uuid` и `root=UUID`; mapper закрывается при выходе
+- `tools/iso/cloudos-install`: образ под x86-64-v3 не ставится на процессор без avx2, fma, bmi1, bmi2, movbe, f16c
+- `tools/iso/mkiso-inside.sh`: в ядро добавлены `DM_CRYPT`, `BLK_DEV_DM`, `CRYPTO_XTS`, `CRYPTO_AES_NI_INTEL`, `RD_ZSTD`, `DM_CRYPT` в обязательной проверке конфига; ставится `sys-fs/cryptsetup`; параметр `MARCH` (`x86-64` или `x86-64-v3`) задаёт `KCFLAGS` ядра и `-march` в `/etc/portage/make.conf`, метка в `/etc/cloudos-march`
+- `tools/mkiso.sh`, `.github/workflows/iso.yml`: вход `march`
+- `docs/releases/app.js`: страница релизов скрывает всё с подписью stage3 (релизы и файлы) и показывает только релизы с `.iso`
+- удалён мастер установки: `docs/wizard/`, ссылки в меню, палитре ctrl+k, справочнике, определении железа, sitemap и сравнении
+- `docs/themes/`: новые темы лес (`forest.js`), осень (`autumn.js`), океан (`ocean.js`), палитры в `themes.css`, осень включается в режиме авто с 15 октября по 9 декабря, кроме хэллоуина
+- `docs/themes/themes.js`, `themes.css`: настройка «интерфейс → плавные переходы» отключает transition и animation на всём сайте, кроме анимаций тем
+- `docs/news/index.html`, `docs/index.html`, `README.md`: статус планов обновлён
+- `docs/sw.js`, `docs/theme.js`: версии кэша подняты
+
 ## 1.5.0, live iso без stage 3
 
 - `tools/iso/cloudos-install`: новый установщик. размечает диск (gpt для uefi, dos для bios), форматирует ext4 или btrfs, монтирует в `/mnt/cloudos`, распаковывает `rootfs.squashfs` через `unsquashfs`, пишет fstab и `limine.conf` с `root=PARTUUID`, ставит limine, убирает следы live (пользователь cloudos, smoke, автологин, ключи ssh), создаёт пользователя и пароли. запуск без вопросов через переменные `CLOUDOS_*`

@@ -51,7 +51,7 @@ CloudOS это Linux система, которую я собираю сам, ш
 
 - ❌ нет графики и окружений рабочего стола
 - ❌ sshd выключен по умолчанию (`openssh` стоит, включается через `rc-update add sshd default` и `cloudos-firewall allow ssh`), root по ssh закрыт
-- ❌ нет графического установщика (есть консольный установщик `cloudos-install`, а [мастер установки](https://wh1laye.github.io/cloudos-repo/wizard/) собирает для него команду)
+- ❌ нет графического установщика (есть консольный установщик `cloudos-install`)
 
 ---
 
@@ -79,7 +79,7 @@ curl -LO https://wh1laye.github.io/cloudos-repo/cloudos.pub
 minisign -V -p cloudos.pub -m cloudos-live-amd64-1.0.iso
 ```
 
-Secure boot с подписанной цепочкой и шифрование диска запланированы на live iso 2.0.
+Шифрование диска luks2 есть в установщике (`CLOUDOS_LUKS=1`), iso можно собрать под x86-64-v3. Secure boot с подписанной цепочкой запланирован на live iso 2.0.
 
 ---
 
