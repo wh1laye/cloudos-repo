@@ -4,6 +4,7 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 VERSION=${VERSION:-1.0}
 KVER=${KVER:-6.18.10}
+MARCH=${MARCH:-x86-64}
 BASE_TAG=${BASE_TAG:-1.4}
 BASE_VERSION=${BASE_VERSION:-1.4}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
@@ -14,6 +15,7 @@ NAME=cloudos-live-amd64-$VERSION.iso
 
 say() { printf '==> %s\n' "$*"; }
 die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
+case "$MARCH" in x86-64|x86-64-v3) ;; *) die "MARCH: x86-64 или x86-64-v3" ;; esac
 [ "$(id -u)" = 0 ] || die "нужен root: sudo $0"
 [ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
 for c in curl tar xz sha256sum unshare mount chroot awk; do command -v "$c" >/dev/null || die "нет команды $c"; done
@@ -95,7 +97,7 @@ exec chroot "$R" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/
 }
 
 say "сборка iso внутри chroot (ядро, initramfs, squashfs, limine)"
-enter bash /var/tmp/isofiles/mkiso-inside.sh "$VERSION" "$KVER" "$NAME" || die "сборка внутри chroot оборвалась, причина выше"
+enter bash /var/tmp/isofiles/mkiso-inside.sh "$VERSION" "$KVER" "$NAME" "$MARCH" || die "сборка внутри chroot оборвалась, причина выше"
 
 [ -s "$ROOT/var/tmp/isoout/$NAME" ] || die "iso не появился"
 mv "$ROOT/var/tmp/isoout/$NAME" "$OUT/$NAME"
