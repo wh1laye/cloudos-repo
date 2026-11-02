@@ -405,6 +405,6 @@ d.addEventListener('keydown',function(e){if(e.key==='Escape')sh(false)});
 var s=document.currentScript;
 if(!s||!s.src)return;
 var e=document.createElement('script');
-e.src=s.src.replace(/theme\.js.*$/,'')+'themes/themes.js?v=5';
+e.src=s.src.replace(/theme\.js.*$/,'')+'themes/themes.js?v=6';
 document.head.appendChild(e);
 })();
