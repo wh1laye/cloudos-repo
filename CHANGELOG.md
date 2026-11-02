@@ -2,6 +2,8 @@
 
 ## 1.4.2, wifi
 
+- `tools/iso/mkiso-inside.sh`: установка `linux-firmware` падала в pretend-фазе (`mount-boot` читает `/etc/fstab`), теперь `-initramfs` в package.use, `DONT_MOUNT_BOOT=1` и пустой `/etc/fstab` на время сборки
+- `docs/handbook/index.html`, `docs/handbook/en/index.html`: wifi в справочнике: iwctl в live (2.3), ядро (7.1), установка iwd и прошивок на диск (10.5), шпаргалка (15.2), решение проблем (14.8)
 - `tools/iso/mkiso-inside.sh`: wifi в live-системе: пакеты `iwd`, `iw`, `wireless-regdb`, `linux-firmware` ставятся через cloudpkg, службы `dbus` и `iwd` включены в default, dhcp для wlan делает уже стоящий dhcpcd (`EnableNetworkConfiguration=false`), пользователь cloudos добавлен в группу netdev для iwctl
 - `tools/iso/mkiso-inside.sh`: ядро с wifi: `CFG80211`, `MAC80211`, `RFKILL` встроены, драйверы модулями (intel iwlwifi, atheros ath9k/10k/11k/12k, realtek rtl и rtw88/89, mediatek mt76, broadcom brcmfmac, ralink), `regulatory.db` встроен в ядро, включён `CRYPTO_USER_API` для iwd, сжатые прошивки xz и zstd
 - `tools/iso/mkiso-inside.sh`: в cloudos-smoke проверка iwd и iwctl, в motd подсказка по iwctl
