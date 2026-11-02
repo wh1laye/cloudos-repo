@@ -79,7 +79,7 @@ async function render(){
   const path=location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent);
   let rels;
   try{rels=await load()}catch(e){return fail(e.message)}
-  rels=rels.filter(r=>!r.draft).sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
+  rels=rels.filter(r=>!r.draft&&!/^base\b/i.test(r.name||'')).sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
   const newest=rels[0]?rels[0].id:null;
   const tags=r=>(r.id===newest?' · <span class="tag lt">последний</span>':'')+((r.prerelease||/beta|бета/i.test((r.name||'')+' '+r.tag_name))?' · <span class="tag">бета</span>':'');
   const groups=R.groups.map(g=>({n:g.n,d:g.d})).concat([{n:'другое',d:'остальные релизы'}]).filter(g=>rels.some(r=>groupOf(r)===g.n));
