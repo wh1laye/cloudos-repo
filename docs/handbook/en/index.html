@@ -135,7 +135,11 @@ ping -c1 github.com</code></pre>
 ip addr</code></pre>
 <p>if there is no address, run dhcpcd again for the needed interface (see the name in <code>ip link</code>):</p>
 <pre><code>dhcpcd eth0</code></pre>
-<p>only wired network is set up out of the box. wifi is not configured in the live iso.</p>
+<p>wired network works by itself through dhcpcd. wifi is set up through iwd, which is already in the live iso. run <code>iwctl</code> and inside it:</p>
+<pre><code>station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect network_name</code></pre>
+<p>iwctl asks for the network password. see the interface name with <code>ip link</code>, it may differ (for example <code>wlp2s0</code>). leave iwctl with <code>exit</code>, dhcpcd gives the address, check with <code>ping -c1 github.com</code>. if there is no interface, see <code>rfkill list</code> and section <a href="#s14-8">14.8</a>.</p>
 <h3 id="s2-4">2.4 if sites do not open</h3>
 <p>github, kernel.org and some mirrors may be unavailable from your network. then download the file on another device and move it with a usb stick:</p>
 <pre><code>mkdir -p /mnt/usb
@@ -300,6 +304,7 @@ cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
 <tr><td><code>ATA</code>, <code>SATA_AHCI</code>, <code>BLK_DEV_SD</code></td><td>sata disks</td></tr>
 <tr><td><code>USB_XHCI_HCD</code>, <code>USB_XHCI_PCI</code>, <code>USB_HID</code></td><td>usb ports and keyboard</td></tr>
 <tr><td><code>NET</code>, <code>INET</code>, <code>PACKET</code>, <code>UNIX</code></td><td>network. without <code>PACKET</code> dhcpcd will not work</td></tr>
+<tr><td><code>CFG80211</code>, <code>MAC80211</code>, <code>RFKILL</code>, wifi driver</td><td>needed for wifi. pick the driver by <code>lspci</code> or <code>lsusb</code>, for example <code>IWLWIFI</code> and <code>IWLMVM</code> for intel, <code>ATH9K</code> and <code>ATH10K</code> for atheros, <code>RTW88</code> and <code>RTW89</code> for realtek, <code>MT7921E</code> for mediatek, <code>BRCMFMAC</code> for broadcom. for iwd enable <code>CRYPTO_USER_API_HASH</code> and <code>CRYPTO_USER_API_SKCIPHER</code></td></tr>
 <tr><td>network card driver</td><td>for example <code>E1000E</code> for intel, <code>R8169</code> for realtek. find out your card with the command <code>lspci</code> in the live iso</td></tr>
 <tr><td><code>INOTIFY_USER</code>, <code>SIGNALFD</code>, <code>TIMERFD</code>, <code>EPOLL</code>, <code>FHANDLE</code></td><td>udev needs this</td></tr>
 <tr><td><code>CGROUPS</code></td><td>openrc needs this</td></tr>
@@ -444,6 +449,19 @@ static ip_address=192.168.1.50/24
 static routers=192.168.1.1
 static domain_name_servers=1.1.1.1 8.8.8.8</code></pre>
 <p>then restart the service: <code>rc-service dhcpcd restart</code>.</p>
+<p>for wifi install iwd, firmware and the regulatory database, enable the services and add yourself to the netdev group (replace <code>user</code> with your login):</p>
+<pre><code>cloudpkg sync
+cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware
+groupadd -f netdev
+usermod -aG netdev user
+rc-update add dbus default
+rc-update add iwd default
+rc-service dbus start
+rc-service iwd start</code></pre>
+<p>the kernel must be built with wifi, see <a href="#s7-1">7.1</a>. dhcpcd does dhcp for wlan, so create <code>/etc/iwd/main.conf</code>:</p>
+<pre><code>[General]
+EnableNetworkConfiguration=false</code></pre>
+<p>after <code>rc-service iwd restart</code> connect through <code>iwctl</code> as in section <a href="#s2-3">2.3</a>. the network is remembered in <code>/var/lib/iwd</code> and connects by itself on the next boot.</p>
 <h3 id="s10-6">10.6 openrc services</h3>
 <div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
 <tr><td><code>rc-status</code></td><td>shows the running services</td></tr>
@@ -657,7 +675,8 @@ dhcpcd eth0</code></pre>
 <details class="err"><summary>login incorrect</summary><div>
 <p>wrong password or it was not set. boot from the live iso, enter chroot and set the password again with the command <code>passwd</code>.</p></div></details>
 <details class="err"><summary>no network after booting</summary><div>
-<p>check <code>rc-status</code>. if <code>dhcpcd</code> is not running, run <code>rc-update add dhcpcd default</code> and <code>rc-service dhcpcd start</code>. if the interface is not in <code>ip link</code>, the kernel has no driver for the card.</p></div></details>
+<p>check <code>rc-status</code>. if <code>dhcpcd</code> is not running, run <code>rc-update add dhcpcd default</code> and <code>rc-service dhcpcd start</code>. if the interface is not in <code>ip link</code>, the kernel has no driver for the card.</p>
+<p>if wifi does not work: check that <code>rc-status</code> shows <code>dbus</code> and <code>iwd</code>, that <code>rfkill list</code> does not show <code>blocked: yes</code> (unblock with <code>rfkill unblock wifi</code>), that <code>sys-kernel/linux-firmware</code> is installed and that <code>dmesg | grep -i firmware</code> has no firmware loading errors. if <code>iwctl</code> reports permission denied, add yourself to the <code>netdev</code> group and log in again.</p></div></details>
 <details class="err"><summary>doas: Operation not permitted</summary><div>
 <p>the user is not in the wheel group or there is no file <code>/etc/doas.conf</code>. check with <a href="#s10-2">10.2</a>: <code>id name</code> must show the group <code>wheel</code>.</p></div></details>
 <details class="err"><summary>setlocale: LC_ALL: cannot change locale</summary><div>
@@ -725,6 +744,10 @@ cloudpkg install name</code></pre></div></details>
 <tr><td><code>ip addr</code></td><td>interface addresses</td></tr>
 <tr><td><code>ip route</code></td><td>routes and gateway</td></tr>
 <tr><td><code>dhcpcd eth0</code></td><td>get an address on an interface</td></tr>
+<tr><td><code>iwctl</code></td><td>wifi console (iwd)</td></tr>
+<tr><td><code>iwctl station wlan0 connect name</code></td><td>connect to a wifi network</td></tr>
+<tr><td><code>iwctl known-networks list</code></td><td>saved wifi networks</td></tr>
+<tr><td><code>rfkill list</code></td><td>check wifi blocking</td></tr>
 <tr><td><code>ping -c1 github.com</code></td><td>check connectivity and names</td></tr>
 <tr><td><code>curl -LO link</code></td><td>download a file</td></tr></table></div>
 <h3 id="s15-3">15.3 system</h3>
