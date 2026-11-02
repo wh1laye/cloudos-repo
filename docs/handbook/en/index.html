@@ -43,7 +43,7 @@
 <div class="tmode" role="group" aria-label="boot mode"><span class="tl">boot mode</span><div class="seg2"><button type="button" data-m="uefi">uefi</button><button type="button" data-m="bios">bios</button></div></div>
 <button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>search</span><kbd>ctrl k</kbd></button>
 <details open><summary>contents</summary>
-<ol><li class="tg">installation</li><li><a href="#about">1. about cloudos</a><ol><li><a href="#s1-1">1.1 what you need</a></li><li><a href="#s1-2">1.2 what is inside stage 3</a></li><li><a href="#s1-3">1.3 what the system does not have</a></li><li><a href="#s1-4">1.4 installation order</a></li><li><a href="#s1-5">1.5 how to use the handbook</a></li></ol></li><li><a href="#prep">2. preparation</a><ol><li><a href="#s2-1">2.1 date and time</a></li><li><a href="#s2-2">2.2 disks</a></li><li><a href="#s2-3">2.3 network</a></li><li><a href="#s2-4">2.4 if sites do not open</a></li></ol></li><li><a href="#disk">3. disk and filesystems</a><ol><li><a href="#s3-1">3.1 partitioning</a></li><li><a href="#s3-2">3.2 filesystems</a></li><li><a href="#s3-3">3.3 mounting</a></li><li><a href="#s3-4">3.4 example layout</a></li><li><a href="#s3-5">3.5 checking</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 verification (can be skipped)</a></li><li><a href="#s4-2">4.2 unpacking</a></li><li><a href="#s4-3">4.3 downloading</a></li><li><a href="#s4-4">4.4 after unpacking</a></li></ol></li><li><a href="#chroot">5. entering chroot</a><ol><li><a href="#s5-1">5.1 what the commands do</a></li><li><a href="#s5-2">5.2 prompt</a></li><li><a href="#s5-3">5.3 entering again</a></li><li><a href="#s5-4">5.4 leaving</a></li></ol></li><li><a href="#conf">6. build setup</a><ol><li><a href="#s6-1">6.1 locales</a></li><li><a href="#s6-2">6.2 build flags</a></li><li><a href="#s6-3">6.3 parallel build</a></li><li><a href="#s6-4">6.4 gcc 15 and build errors</a></li></ol></li><li><a href="#kernel">7. kernel</a><ol><li><a href="#s7-1">7.1 what to enable in menuconfig</a></li><li><a href="#s7-2">7.2 what the build commands do</a></li><li><a href="#s7-3">7.3 kernel mirrors</a></li><li><a href="#s7-4">7.4 another kernel version</a></li></ol></li><li><a href="#boot">8. bootloader</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 check before rebooting</a></li><li><a href="#s8-5">8.5 writing to nvram (uefi only, optional)</a></li><li><a href="#s8-6">8.6 several kernels</a></li></ol></li><li><a href="#final">9. finishing</a><ol><li><a href="#s9-1">9.1 checking services</a></li><li><a href="#s9-2">9.2 first boot</a></li></ol></li><li class="tg">after installation</li><li><a href="#first">10. first boot</a><ol><li><a href="#s10-1">10.1 login</a></li><li><a href="#s10-2">10.2 user and doas</a></li><li><a href="#s10-3">10.3 computer name</a></li><li><a href="#s10-4">10.4 time zone</a></li><li><a href="#s10-5">10.5 network</a></li><li><a href="#s10-6">10.6 openrc services</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. packages and cloudpkg</a><ol><li><a href="#s11-1">11.1 commands</a></li><li><a href="#s11-2">11.2 how the installation goes</a></li><li><a href="#s11-3">11.3 examples</a></li><li><a href="#s11-4">11.4 if a package failed to build</a></li><li><a href="#s11-5">11.5 one-command install</a></li></ol></li><li><a href="#maint">12. maintenance</a><ol><li><a href="#s12-1">12.1 updating packages</a></li><li><a href="#s12-2">12.2 updating the kernel</a></li><li><a href="#s12-3">12.3 backup</a></li><li><a href="#s12-4">12.4 freeing space</a></li></ol></li><li><a href="#next">13. what next</a><ol><li><a href="#s13-1">13.1 other locales</a></li><li><a href="#s13-2">13.2 help and feedback</a></li></ol></li><li class="tg">help</li><li><a href="#errors">14. errors and fixes</a><ol><li><a href="#s14-1">14.1 live iso, network and time</a></li><li><a href="#s14-2">14.2 partitioning and filesystems</a></li><li><a href="#s14-3">14.3 downloading and unpacking</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 building packages</a></li><li><a href="#s14-6">14.6 kernel</a></li><li><a href="#s14-7">14.7 booting</a></li><li><a href="#s14-8">14.8 after booting</a></li><li><a href="#s14-9">14.9 emergency system access</a></li><li><a href="#s14-10">14.10 how to report an error</a></li><li><a href="#s14-11">14.11 installer wizard</a></li><li><a href="#s14-12">14.12 cloudpkg and portage</a></li></ol></li><li><a href="#cheat">15. cheat sheet</a><ol><li><a href="#s15-1">15.1 disks</a></li><li><a href="#s15-2">15.2 network</a></li><li><a href="#s15-3">15.3 system</a></li><li><a href="#s15-4">15.4 files and archives</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. questions and answers</a></li><li class="tg">appendices</li><li><a href="#appa">appendix a. disk names</a></li><li><a href="#appb">appendix b. btrfs with subvolumes</a></li><li><a href="#appc">appendix c. glossary</a></li></ol></details>
+<ol><li class="tg">installation</li><li><a href="#about">1. about cloudos</a><ol><li><a href="#s1-1">1.1 what you need</a></li><li><a href="#s1-2">1.2 what is inside stage 3</a></li><li><a href="#s1-3">1.3 what the system does not have</a></li><li><a href="#s1-4">1.4 installation order</a></li><li><a href="#s1-5">1.5 how to use the handbook</a></li></ol></li><li><a href="#prep">2. preparation</a><ol><li><a href="#s2-1">2.1 date and time</a></li><li><a href="#s2-2">2.2 disks</a></li><li><a href="#s2-3">2.3 network</a></li><li><a href="#s2-4">2.4 if sites do not open</a></li></ol></li><li><a href="#disk">3. disk and filesystems</a><ol><li><a href="#s3-1">3.1 partitioning</a></li><li><a href="#s3-2">3.2 filesystems</a></li><li><a href="#s3-3">3.3 mounting</a></li><li><a href="#s3-4">3.4 example layout</a></li><li><a href="#s3-5">3.5 checking</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 verification (can be skipped)</a></li><li><a href="#s4-2">4.2 unpacking</a></li><li><a href="#s4-3">4.3 downloading</a></li><li><a href="#s4-4">4.4 after unpacking</a></li></ol></li><li><a href="#chroot">5. entering chroot</a><ol><li><a href="#s5-1">5.1 what the commands do</a></li><li><a href="#s5-2">5.2 prompt</a></li><li><a href="#s5-3">5.3 entering again</a></li><li><a href="#s5-4">5.4 leaving</a></li></ol></li><li><a href="#conf">6. build setup</a><ol><li><a href="#s6-1">6.1 locales</a></li><li><a href="#s6-2">6.2 build flags</a></li><li><a href="#s6-3">6.3 parallel build</a></li><li><a href="#s6-4">6.4 gcc 15 and build errors</a></li></ol></li><li><a href="#kernel">7. kernel</a><ol><li><a href="#s7-1">7.1 what to enable in menuconfig</a></li><li><a href="#s7-2">7.2 what the build commands do</a></li><li><a href="#s7-3">7.3 kernel mirrors</a></li></ol></li><li><a href="#boot">8. bootloader</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 check before rebooting</a></li><li><a href="#s8-5">8.5 writing to nvram (uefi only, optional)</a></li><li><a href="#s8-6">8.6 several kernels</a></li></ol></li><li><a href="#final">9. finishing</a><ol><li><a href="#s9-1">9.1 enable network and log</a></li><li><a href="#s9-2">9.2 wifi (optional)</a></li><li><a href="#s9-3">9.3 first boot</a></li></ol></li><li class="tg">after installation</li><li><a href="#first">10. first boot</a><ol><li><a href="#s10-1">10.1 login</a></li><li><a href="#s10-2">10.2 user and doas</a></li><li><a href="#s10-3">10.3 computer name</a></li><li><a href="#s10-4">10.4 time zone</a></li><li><a href="#s10-5">10.5 network</a></li><li><a href="#s10-6">10.6 openrc services</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. packages and cloudpkg</a><ol><li><a href="#s11-1">11.1 commands</a></li><li><a href="#s11-2">11.2 how the installation goes</a></li><li><a href="#s11-3">11.3 examples</a></li><li><a href="#s11-4">11.4 if a package failed to build</a></li><li><a href="#s11-5">11.5 one-command install</a></li></ol></li><li><a href="#maint">12. maintenance</a><ol><li><a href="#s12-1">12.1 updating packages</a></li><li><a href="#s12-2">12.2 updating the kernel</a></li><li><a href="#s12-3">12.3 backup</a></li><li><a href="#s12-4">12.4 freeing space</a></li></ol></li><li><a href="#next">13. what next</a><ol><li><a href="#s13-1">13.1 other locales</a></li><li><a href="#s13-2">13.2 help and feedback</a></li></ol></li><li class="tg">help</li><li><a href="#errors">14. errors and fixes</a><ol><li><a href="#s14-1">14.1 live iso, network and time</a></li><li><a href="#s14-2">14.2 partitioning and filesystems</a></li><li><a href="#s14-3">14.3 downloading and unpacking</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 building packages</a></li><li><a href="#s14-6">14.6 kernel</a></li><li><a href="#s14-7">14.7 booting</a></li><li><a href="#s14-8">14.8 after booting</a></li><li><a href="#s14-9">14.9 emergency system access</a></li><li><a href="#s14-10">14.10 how to report an error</a></li><li><a href="#s14-11">14.11 installer wizard</a></li><li><a href="#s14-12">14.12 cloudpkg and portage</a></li></ol></li><li><a href="#cheat">15. cheat sheet</a><ol><li><a href="#s15-1">15.1 disks</a></li><li><a href="#s15-2">15.2 network</a></li><li><a href="#s15-3">15.3 system</a></li><li><a href="#s15-4">15.4 files and archives</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. questions and answers</a></li><li class="tg">appendices</li><li><a href="#appa">appendix a. disk names</a></li><li><a href="#appb">appendix b. btrfs with subvolumes</a></li><li><a href="#appc">appendix c. glossary</a></li></ol></details>
 </nav>
 <main id="cloud">
 <h1>cloudos handbook</h1>
@@ -330,10 +330,6 @@ cp System.map /boot/System.map-6.18.10</code></pre>
 <pre><code>curl -LO https://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.18.10.tar.xz
 curl -LO https://mirrors.ustc.edu.cn/kernel.org/linux/kernel/v6.x/linux-6.18.10.tar.xz</code></pre>
 <p>paths on mirrors sometimes change. if the link does not work, open the mirror directory in the browser and find the file by hand.</p>
-<h3 id="s7-4">7.4 another kernel version</h3>
-<p>in all commands replace <code>6.18.10</code> with your version. the file names in /boot, in initramfs and in limine.conf must match.</p>
-
-<div class="note"><b>note</b>do not want to hunt for drivers in menuconfig? the <a href="../../kernel/">kernel helper</a> gives you a ready configuration command for your hardware.</div>
 <h2 id="boot">8. bootloader</h2>
 <h3 id="initramfs">8.1 initramfs</h3>
 <pre><code>cloudpkg install dracut
@@ -347,8 +343,11 @@ UUID=ESP_UUID   /boot  vfat  defaults  0 2</code></pre>
 UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
 <p>if the root is on btrfs, replace <code>ext4</code> in the first line with <code>btrfs</code>.</p>
 <h3 id="limine">8.3 limine</h3>
-<pre><code>cloudpkg install limine</code></pre>
-<p>the file <code>/boot/limine.conf</code> is the same for uefi and bios:</p>
+<p>limine is already in stage 3, you do not need to install it. check that everything is in place:</p>
+<pre><code>ls /usr/share/limine
+command -v limine</code></pre>
+<p>the list must contain <code>BOOTX64.EFI</code> and <code>limine-bios.sys</code>, and the <code>limine</code> command must print a path. if there is nothing, stage 3 was not unpacked completely, go back to chapter 4. fallback: <code>cloudpkg sync</code>, then <code>cloudpkg install limine</code>.</p>
+<p>first find the uuid of the root partition with <code>blkid</code>. then create <code>/boot/limine.conf</code>, it is the same for uefi and bios. put your uuid instead of <code>ROOT_UUID</code>:</p>
 <pre><code>timeout: 5
 
 /CloudOS
@@ -356,12 +355,12 @@ UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
     path: boot():/vmlinuz-6.18.10
     cmdline: root=UUID=ROOT_UUID rw
     module_path: boot():/initramfs-6.18.10.img</code></pre>
-<div class="m-uefi"><p>installation for uefi:</p>
+<div class="m-uefi"><p>install for uefi:</p>
 <pre><code>mkdir -p /boot/EFI/BOOT
 cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre></div>
-<div class="m-bios"><p>installation for bios, put it on the partition:</p>
+<div class="m-bios"><p>install for bios. the <code>limine bios-install</code> command writes the loader to the whole disk, not to a partition: give <code>/dev/sda</code> or <code>/dev/nvme0n1</code>, without a partition number.</p>
 <pre><code>cp /usr/share/limine/limine-bios.sys /boot/
-limine bios-install /dev/ (your disk name /dev/sda1 /dev/sdb1 /dev/nvme0n1)</code></pre></div>
+limine bios-install /dev/sda</code></pre></div>
 <h3 id="s8-4">8.4 check before rebooting</h3>
 <p>look at what is in <code>/boot</code>:</p>
 <pre><code>ls -l /boot</code></pre>
@@ -409,15 +408,27 @@ umount -R /mnt/cloudos
 reboot</code></pre>
 <div class="note"><b>note</b>cloudos does not create other users!), you add the user and doas yourself.</div>
 <div class="note"><b>important</b>the disk you install to can be nvme as well as sda or sdb, tested on 7 5700X (AMD) RX9060XT (AMD) and on sda (not nvme. i chose limine for speed and convenience. </div>
-<h3 id="s9-1">9.1 checking services</h3>
-<p>before rebooting make sure the services are added:</p>
-<pre><code>rc-update show</code></pre>
-<p>the list should contain <code>dhcpcd</code> and the log at the level <code>default</code>.</p>
-<h3 id="s9-2">9.2 first boot</h3>
-<p>after the reboot remove the usb stick and choose the disk in the boot menu if it was not chosen by itself. the prompt will appear <code>login:</code> on tty1. enter <code>root</code> and the password you set with the command <code>passwd</code>.</p>
-<p>then set up the system, it is described in chapter <a href="#first">10</a>.</p>
-
-<div class="note"><b>note</b>stage 3 already includes cloudpkg, dhcpcd, syslog-ng, limine, dracut, doas, xorriso, squashfs-tools and fastfetch, so there is no need to install them again. cloudpkg works on top of portage: <code>cloudpkg sync</code> updates the recipe tree, <code>cloudpkg install name</code> builds from source, <code>cloudpkg doctor</code> checks the setup.</div>
+<h3 id="s9-1">9.1 enable network and log</h3>
+<p>do all of this inside chroot, before rebooting. dhcpcd and syslog-ng are already in stage 3, you only need to enable them:</p>
+<pre><code>rc-update add dhcpcd default
+rc-update add syslog-ng default
+rc-update show</code></pre>
+<p>the list must contain <code>dhcpcd</code> and <code>syslog-ng</code> in the <code>default</code> level. after the first boot the wired network works by itself.</p>
+<h3 id="s9-2">9.2 wifi (optional)</h3>
+<p>if you need wifi, install the packages now, while you still have internet from the live system: after a reboot without a cable there is nothing to download them from. the kernel must be built with wifi, see <a href="#s7-1">7.1</a>. the install takes 10 minutes and downloads about 650 mb of firmware:</p>
+<pre><code>printf '#!/bin/sh\nexec bison -y "$@"\n' > /usr/bin/yacc.bison
+chmod 755 /usr/bin/yacc.bison
+cloudpkg sync
+cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware
+mkdir -p /etc/iwd
+printf '[General]\nEnableNetworkConfiguration=false\n' > /etc/iwd/main.conf
+rc-update add dbus default
+rc-update add iwd default</code></pre>
+<p>the first two lines create the missing <code>yacc.bison</code> wrapper, without it the libnl library does not build. connecting to a network after boot is described in <a href="#s2-3">2.3</a>.</p>
+<h3 id="s9-3">9.3 first boot</h3>
+<p>leave chroot and reboot. remove the usb stick and choose the disk in the boot menu if it was not chosen by itself. the <code>login:</code> prompt appears on tty1. enter <code>root</code> and the password you set with <code>passwd</code>.</p>
+<p>then configure the system, it is described in chapter <a href="#first">10</a>.</p>
+<div class="note"><b>note</b>stage 3 already has cloudpkg, dhcpcd, syslog-ng, limine, dracut, doas, xorriso, squashfs-tools and fastfetch, do not install them again. cloudpkg works on top of portage: <code>cloudpkg sync</code> updates the recipe tree, <code>cloudpkg install name</code> installs from source, <code>cloudpkg doctor</code> checks the setup.</div>
 <h2 id="first">10. first boot</h2>
 <p>after installation the system has only a console and root. this chapter is about what is worth doing right away.</p>
 <h3 id="s10-1">10.1 login</h3>
@@ -451,19 +462,7 @@ static ip_address=192.168.1.50/24
 static routers=192.168.1.1
 static domain_name_servers=1.1.1.1 8.8.8.8</code></pre>
 <p>then restart the service: <code>rc-service dhcpcd restart</code>.</p>
-<p>for wifi install iwd, firmware and the regulatory database, enable the services and add yourself to the netdev group (replace <code>user</code> with your login):</p>
-<pre><code>cloudpkg sync
-cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware
-groupadd -f netdev
-usermod -aG netdev user
-rc-update add dbus default
-rc-update add iwd default
-rc-service dbus start
-rc-service iwd start</code></pre>
-<p>the kernel must be built with wifi, see <a href="#s7-1">7.1</a>. dhcpcd does dhcp for wlan, so create <code>/etc/iwd/main.conf</code>:</p>
-<pre><code>[General]
-EnableNetworkConfiguration=false</code></pre>
-<p>after <code>rc-service iwd restart</code> connect through <code>iwctl</code> as in section <a href="#s2-3">2.3</a>. the network is remembered in <code>/var/lib/iwd</code> and connects by itself on the next boot.</p>
+<p>wifi: the packages are installed at the end of the installation, see <a href="#s9-2">9.2</a>, connecting to a network is described in <a href="#s2-3">2.3</a>.</p>
 <h3 id="s10-6">10.6 openrc services</h3>
 <div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
 <tr><td><code>rc-status</code></td><td>shows the running services</td></tr>
@@ -656,7 +655,7 @@ dhcpcd eth0</code></pre>
 <h3 id="s14-7">14.7 booting</h3>
 <details class="err"><summary>after the reboot no bootable device or another system boots right away</summary><div>
 <div class="m-uefi"><p>check that the file <code>/boot/EFI/BOOT/BOOTX64.EFI</code>exists, that partition 1 has type efi system and that secure boot is off in the firmware. choose the disk in the boot menu manually (usually the key <kbd>f12</kbd> or <kbd>esc</kbd> at power on).</p></div>
-<div class="m-bios"><p>check that the /boot partition is marked with the flag <code>bootable</code> and that the command <code>limine bios-install</code> was run for the right disk or partition. in the firmware settings enable legacy or csm mode.</p></div></div></details>
+<div class="m-bios"><p>check that the /boot partition is marked with the flag <code>bootable</code> and that the command <code>limine bios-install</code> was run for the whole disk (for example /dev/sda), not a partition. in the firmware settings enable legacy or csm mode.</p></div></div></details>
 <details class="err"><summary>limine shows the menu, but the kernel does not start (file not found)</summary><div>
 <p>the path in <code>limine.conf</code> does not match the file name. check <code>ls /boot</code> and fix <code>path:</code> and <code>module_path:</code>.</p></div></details>
 <details class="err"><summary>Kernel panic: VFS: Unable to mount root fs on unknown-block</summary><div>
