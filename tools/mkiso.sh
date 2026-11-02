@@ -52,7 +52,7 @@ KSUM=$(awk -v f="$KTAR" '$2 == f { print $1 }' "$WORK/sha256sums.asc")
 [ -f "$WORK/src/$KTAR" ] || fetch "$KURL/$KTAR" "$WORK/src/$KTAR" || die "не скачался $KURL/$KTAR"
 [ "$(sha256sum "$WORK/src/$KTAR" | cut -d' ' -f1)" = "$KSUM" ] || { rm -f "$WORK/src/$KTAR"; die "sha256 $KTAR не совпал"; }
 
-KGPG=${KERNEL_GPG:-auto}
+KGPG=${KERNEL_GPG:-1}
 kgpg_fail() { if [ "$KGPG" = 1 ]; then die "$*"; else printf '!! %s\n' "$*" >&2; fi; }
 if [ "$KGPG" != 0 ]; then
   if command -v gpg >/dev/null; then
