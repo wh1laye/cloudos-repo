@@ -1,5 +1,11 @@
 # changelog
 
+## 1.4.2, wifi
+
+- `tools/iso/mkiso-inside.sh`: wifi в live-системе: пакеты `iwd`, `iw`, `wireless-regdb`, `linux-firmware` ставятся через cloudpkg, службы `dbus` и `iwd` включены в default, dhcp для wlan делает уже стоящий dhcpcd (`EnableNetworkConfiguration=false`), пользователь cloudos добавлен в группу netdev для iwctl
+- `tools/iso/mkiso-inside.sh`: ядро с wifi: `CFG80211`, `MAC80211`, `RFKILL` встроены, драйверы модулями (intel iwlwifi, atheros ath9k/10k/11k/12k, realtek rtl и rtw88/89, mediatek mt76, broadcom brcmfmac, ralink), `regulatory.db` встроен в ядро, включён `CRYPTO_USER_API` для iwd, сжатые прошивки xz и zstd
+- `tools/iso/mkiso-inside.sh`: в cloudos-smoke проверка iwd и iwctl, в motd подсказка по iwctl
+
 ## 1.4.1, исправление сборки iso
 
 - `tools/iso/mkiso-inside.sh`: в конфиг ядра добавлены `BPF`, `BPF_SYSCALL`, `BPF_JIT`, `BPF_JIT_ALWAYS_ON`, без `BPF_SYSCALL` опция `BPF_UNPRIV_DEFAULT_OFF` скрыта и проверка конфига падала
