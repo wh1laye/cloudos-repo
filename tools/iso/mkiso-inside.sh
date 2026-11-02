@@ -56,9 +56,25 @@ build_kernel() {
   done
   scripts/config -e MODULE_SIG -e MODULE_SIG_ALL -e MODULE_SIG_FORCE -e MODULE_SIG_SHA512 --set-str MODULE_SIG_HASH sha512
   scripts/config -e MITIGATION_PAGE_TABLE_ISOLATION -e MITIGATION_RETPOLINE -e MITIGATION_RETHUNK -e MITIGATION_IBRS_ENTRY -e MITIGATION_SPECTRE_BHI -e BPF -e BPF_SYSCALL -e BPF_JIT -e BPF_JIT_ALWAYS_ON -e BPF_UNPRIV_DEFAULT_OFF -e RESET_ATTACK_MITIGATION
+  for s in WIRELESS WLAN CFG80211 MAC80211 RFKILL WLAN_VENDOR_INTEL WLAN_VENDOR_ATH WLAN_VENDOR_REALTEK WLAN_VENDOR_MEDIATEK WLAN_VENDOR_BROADCOM WLAN_VENDOR_RALINK \
+    CRYPTO_USER_API CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER CRYPTO_USER_API_AEAD CRYPTO_HMAC CRYPTO_CMAC CRYPTO_MD4 CRYPTO_MD5 CRYPTO_SHA1 CRYPTO_SHA256 CRYPTO_SHA512 \
+    CRYPTO_AES CRYPTO_ECB CRYPTO_CBC CRYPTO_CTR CRYPTO_DES CRYPTO_ARC4 CRYPTO_RSA CRYPTO_ECDH CRYPTO_DH KEY_DH_OPERATIONS KEYS ASYMMETRIC_KEY_TYPE ASYMMETRIC_PUBLIC_KEY_SUBTYPE \
+    X509_CERTIFICATE_PARSER PKCS7_MESSAGE_PARSER PKCS8_PRIVATE_KEY_PARSER FW_LOADER_COMPRESS FW_LOADER_COMPRESS_XZ FW_LOADER_COMPRESS_ZSTD; do
+    scripts/config -e "$s"
+  done
+  for s in IWLWIFI IWLDVM IWLMVM ATH9K ATH9K_HTC ATH10K ATH10K_PCI ATH11K ATH11K_PCI ATH12K RTL8XXXU RTW88 RTW88_PCI RTW88_USB RTW88_8822BE RTW88_8822CE RTW88_8723DE RTW88_8821CE \
+    RTW89 RTW89_PCI RTW89_8852AE RTW89_8852BE RTW89_8852CE RTL8187 RTLWIFI RTL8192CE RTL8192SE RTL8821AE RTL8192CU MT7601U MT76x2E MT76x2U MT7921E MT7921U MT7915E \
+    BRCMFMAC BRCMFMAC_PCIE BRCMFMAC_USB BRCMFMAC_SDIO RT2800USB RT2800PCI; do
+    scripts/config -m "$s"
+  done
+  if [ -f /lib/firmware/regulatory.db ] && [ -f /lib/firmware/regulatory.db.p7s ]; then
+    scripts/config --set-str EXTRA_FIRMWARE "regulatory.db regulatory.db.p7s" --set-str EXTRA_FIRMWARE_DIR /lib/firmware
+  else
+    echo "!! нет /lib/firmware/regulatory.db, регдомен wifi будет мировой" >&2
+  fi
   scripts/config -d LEGACY_VSYSCALL_XONLY -d LEGACY_VSYSCALL_EMULATE -d DEVKMEM -d KEXEC_FILE -d LEGACY_PTYS -d ACPI_CUSTOM_METHOD -d PROC_KCORE -d COMPAT_BRK -d X86_X32_ABI
   make olddefconfig
-  need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
+  need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
   for s in $need; do
     grep -q "^CONFIG_$s=y" .config || die "в .config нет CONFIG_$s=y"
   done
@@ -130,13 +146,55 @@ live_users() {
   say "live: пользователь cloudos и root, пароль cloudos, по ssh вход им закрыт"
 }
 
+build_wifi() {
+  say "wifi: iwd, wireless-regdb, iw, linux-firmware"
+  cloudpkg sync
+  cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware || die "wifi пакеты не поставились, причина выше"
+  command -v iwctl >/dev/null || die "после установки нет iwctl"
+  [ -d /lib/firmware ] && [ -n "$(ls -A /lib/firmware)" ] || die "в /lib/firmware пусто, linux-firmware не встал"
+  [ -f /lib/firmware/regulatory.db ] || echo "!! нет /lib/firmware/regulatory.db" >&2
+  rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/*
+  say "wifi пакеты готовы, прошивки $(du -sh /lib/firmware | cut -f1)"
+}
+
+live_wifi() {
+  local bin
+  getent group netdev >/dev/null || groupadd netdev
+  usermod -aG netdev cloudos
+  install -d -m755 /etc/iwd
+  install -d -m700 /var/lib/iwd
+  printf '[General]\nEnableNetworkConfiguration=false\n' > /etc/iwd/main.conf
+  if [ ! -e /etc/init.d/iwd ]; then
+    for bin in /usr/libexec/iwd /usr/lib/iwd/iwd /usr/sbin/iwd /usr/bin/iwd; do
+      [ -x "$bin" ] && break
+      bin=
+    done
+    [ -n "$bin" ] || die "нет бинарника iwd"
+    cat > /etc/init.d/iwd <<EOS
+#!/sbin/openrc-run
+description="iwd wireless daemon"
+command=$bin
+command_background=true
+pidfile=/run/iwd.pid
+
+depend() {
+	need dbus
+	after bootmisc modules
+	before dhcpcd
+}
+EOS
+    chmod 755 /etc/init.d/iwd
+  fi
+  say "live: wifi через iwctl, dhcp делает dhcpcd, пользователь cloudos в группе netdev"
+}
+
 live_smoke() {
   cat > /etc/init.d/cloudos-smoke <<'EOS'
 #!/sbin/openrc-run
 description="cloudos live smoke test"
 
 depend() {
-	after nftables dhcpcd syslog-ng local
+	after nftables dhcpcd iwd syslog-ng local
 }
 
 out() { printf 'cloudos-smoke: %s\n' "$*" > /dev/console; }
@@ -153,6 +211,8 @@ start() {
 	[ "$(cat /proc/sys/kernel/kptr_restrict)" = 2 ] || { out "FAIL kptr_restrict"; f=1; }
 	[ "$(cat /proc/sys/kernel/yama/ptrace_scope)" = 2 ] || { out "FAIL ptrace_scope"; f=1; }
 	[ "$(cat /proc/sys/kernel/unprivileged_bpf_disabled)" != 0 ] || { out "FAIL unprivileged_bpf"; f=1; }
+	[ -e /etc/init.d/iwd ] && command -v iwctl >/dev/null || { out "FAIL нет iwd или iwctl"; f=1; }
+	rc-service -q iwd status >/dev/null 2>&1 || { out "FAIL iwd не запущен"; f=1; }
 	[ "$f" = 0 ] && out ok
 	sync
 	echo o > /proc/sysrq-trigger
@@ -165,6 +225,7 @@ EOS
 
 live_tune() {
   live_users
+  live_wifi
   live_smoke
   local n s
   if [ -e /etc/init.d/agetty ]; then
@@ -176,7 +237,7 @@ live_tune() {
   else
     echo "!! нет /etc/init.d/agetty, вход на tty1 не настроен" >&2
   fi
-  for s in udev:sysinit udev-trigger:sysinit sysctl:boot dhcpcd:default syslog-ng:default nftables:default; do
+  for s in udev:sysinit udev-trigger:sysinit sysctl:boot dbus:default iwd:default dhcpcd:default syslog-ng:default nftables:default; do
     if [ -e "/etc/init.d/${s%%:*}" ]; then
       rc-update add "${s%%:*}" "${s##*:}" >/dev/null 2>&1 || true
     else
@@ -186,6 +247,7 @@ live_tune() {
   cat > /etc/motd <<EOM
 
 CloudOS $VERSION live. вход выполнен как cloudos, пароль cloudos (root тоже cloudos, root-права: doas -s). только для live, ssh для них закрыт, фаервол включён: cloudos-firewall status
+wifi: iwctl, затем station wlan0 scan, station wlan0 get-networks, station wlan0 connect имя_сети
 установка: cfdisk, mkfs, распаковка stage 3 и настройка по handbook
 https://wh1laye.github.io/cloudos-repo/
 
@@ -254,6 +316,7 @@ verify_iso() {
 
 rm -rf "$R" "$O"
 mkdir -p "$R" "$O"
+build_wifi
 build_kernel
 build_initramfs
 live_tune
