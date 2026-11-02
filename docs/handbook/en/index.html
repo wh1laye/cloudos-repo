@@ -135,11 +135,13 @@ ping -c1 github.com</code></pre>
 ip addr</code></pre>
 <p>if there is no address, run dhcpcd again for the needed interface (see the name in <code>ip link</code>):</p>
 <pre><code>dhcpcd eth0</code></pre>
-<p>wired network works by itself through dhcpcd. wifi is set up through iwd, which is already in the live iso. run <code>iwctl</code> and inside it:</p>
-<pre><code>station wlan0 scan
-station wlan0 get-networks
-station wlan0 connect network_name</code></pre>
-<p>iwctl asks for the network password. see the interface name with <code>ip link</code>, it may differ (for example <code>wlp2s0</code>). leave iwctl with <code>exit</code>, dhcpcd gives the address, check with <code>ping -c1 github.com</code>. if there is no interface, see <code>rfkill list</code> and section <a href="#s14-8">14.8</a>.</p>
+<p>wired network works by itself through dhcpcd. wifi is set up through iwd, which is already in the live iso. run the commands through <code>doas</code> and with arguments, the interactive <code>iwctl</code> without arguments crashes with a segfault in the live iso:</p>
+<pre><code>doas iwctl station wlan0 scan
+doas iwctl station wlan0 get-networks
+doas iwctl station wlan0 connect network_name
+doas dhcpcd wlan0
+doas ping -c 1 1.1.1.1</code></pre>
+<p><code>connect</code> asks for the network password. after it <code>dhcpcd</code> gives the address, check it with <code>ip addr show wlan0</code>, there must be an <code>inet</code> line. see the interface name in <code>ip link</code>, it may differ (for example <code>wlp2s0</code>). hidden network: <code>doas iwctl station wlan0 connect-hidden network_name</code>. <code>ping</code> without <code>doas</code> does not work: a normal user has no right to raw sockets, this is a system protection. if there is no interface, see <code>rfkill list</code> and section <a href="#s14-8">14.8</a>. the network is not kept between boots of the live iso, on an installed system iwd remembers it by itself.</p>
 <h3 id="s2-4">2.4 if sites do not open</h3>
 <p>github, kernel.org and some mirrors may be unavailable from your network. then download the file on another device and move it with a usb stick:</p>
 <pre><code>mkdir -p /mnt/usb
@@ -744,8 +746,8 @@ cloudpkg install name</code></pre></div></details>
 <tr><td><code>ip addr</code></td><td>interface addresses</td></tr>
 <tr><td><code>ip route</code></td><td>routes and gateway</td></tr>
 <tr><td><code>dhcpcd eth0</code></td><td>get an address on an interface</td></tr>
-<tr><td><code>iwctl</code></td><td>wifi console (iwd)</td></tr>
-<tr><td><code>iwctl station wlan0 connect name</code></td><td>connect to a wifi network</td></tr>
+<tr><td><code>doas iwctl station wlan0 scan</code></td><td>scan for wifi networks</td></tr>
+<tr><td><code>doas iwctl station wlan0 connect name</code></td><td>connect to a wifi network</td></tr>
 <tr><td><code>iwctl known-networks list</code></td><td>saved wifi networks</td></tr>
 <tr><td><code>rfkill list</code></td><td>check wifi blocking</td></tr>
 <tr><td><code>ping -c1 github.com</code></td><td>check connectivity and names</td></tr>
