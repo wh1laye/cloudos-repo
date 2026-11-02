@@ -1,5 +1,14 @@
 # changelog
 
+## 1.7.0, secure boot, профили, оптимизация, аудит
+
+- `tools/iso/cloudos-secureboot`: новая команда. `init` создаёт свои ключи PK, KEK, db (rsa 3072) в `/etc/cloudos/secureboot`, `sign` вписывает blake2b-хеши ядра и initramfs в `limine.conf`, вшивает хеш конфига в limine (`limine enroll-config`), подписывает `BOOTX64.EFI` ключом db, удаляет `BOOTIA32.EFI`, кладёт публичные ключи в `/boot/cloudos-keys`, `enroll` записывает ключи в прошивку в setup mode, `status` показывает состояние. цепочка: прошивка проверяет limine по db, limine проверяет конфиг по вшитому хешу, конфиг проверяет ядро и initramfs по хешам
+- `tools/iso/cloudos-install`: `CLOUDOS_SECUREBOOT=1` (только uefi), `CLOUDOS_PROFILE=balanced|secure|fast`. secure: `mitigations=auto,nosmt lockdown=integrity init_on_free=1`, fast: `nowatchdog audit=0`
+- `tools/iso/mkiso-inside.sh`: ядро с `PREEMPT`, `HZ_1000`, `SECURITY_LOCKDOWN_LSM`, `LOCK_DOWN_IN_EFI_SECURE_BOOT`, `EFI_STUB`; ставятся `sbsigntools` и `efitools`; в образ попадают `cloudos-secureboot`, `cloudos-audit` и `/etc/sysctl.d/91-cloudos-perf.conf`
+- `tools/iso/sysctl-perf.conf`: swappiness под zswap, vfs_cache_pressure, page-cluster, dirty, nmi_watchdog, tcp fastopen, somaxconn (все ключи необязательные)
+- `tools/stage3/cloudos-audit`: раздел «загрузка и диск» (secure boot, lockdown, подпись модулей, luks, smt, уязвимости процессора из sysfs) и итоговая оценка из 100
+- `tools/mkiso.sh`, `.github/workflows/iso.yml`, `check.yml`: новые файлы в проверках и копировании
+
 ## 1.6.0, luks, x86-64-v3, темы, без мастера
 
 - `tools/iso/cloudos-install`: шифрование корня luks2 (aes-xts-plain64, 512 бит, argon2id), переменные `CLOUDOS_LUKS` и `CLOUDOS_LUKSPASS`, в интерактивном режиме вопрос; initramfs для установленной системы собирается через dracut с модулем crypt, в `limine.conf` добавляется `module_path`, в cmdline `rd.luks.uuid` и `root=UUID`; mapper закрывается при выходе

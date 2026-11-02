@@ -79,7 +79,7 @@ curl -LO https://wh1laye.github.io/cloudos-repo/cloudos.pub
 minisign -V -p cloudos.pub -m cloudos-live-amd64-1.0.iso
 ```
 
-Шифрование диска luks2 есть в установщике (`CLOUDOS_LUKS=1`), iso можно собрать под x86-64-v3. Secure boot с подписанной цепочкой запланирован на live iso 2.0.
+Шифрование диска luks2 есть в установщике (`CLOUDOS_LUKS=1`), iso можно собрать под x86-64-v3. Secure boot на своих ключах: `CLOUDOS_SECUREBOOT=1`, подробности в `cloudos-secureboot`. Профили установки: `CLOUDOS_PROFILE=balanced|secure|fast`. Проверка защиты: `doas cloudos-audit`.
 
 ---
 
