@@ -9,6 +9,7 @@ LS=/usr/share/limine
 HARDEN='slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1 efi=disable_early_pci_dma iommu.strict=1'
 EXTRA=${CLOUDOS_CMDLINE_EXTRA:-}
 MOUNTED=0
+LUKSOPEN=0
 
 say() { printf '==> %s\n' "$*"; }
 die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
@@ -29,6 +30,8 @@ cloudos-install: установка cloudos на диск за одну кома
   CLOUDOS_ROOTPASS=пароль        пароль root
   CLOUDOS_FW=uefi|bios           режим загрузки, по умолчанию определяется сам
   CLOUDOS_YES=1                  не спрашивать подтверждение стирания диска
+  CLOUDOS_LUKS=1                 зашифровать корень luks2 (нужны cryptsetup и dracut)
+  CLOUDOS_LUKSPASS=пароль        пароль шифрования диска
   CLOUDOS_CMDLINE_EXTRA="..."    дополнительные параметры ядра
 EOU
 }
@@ -39,6 +42,7 @@ cleanup() {
     sync || true
     umount -R "$T" 2>/dev/null || { sleep 1; umount -R -l "$T" 2>/dev/null || true; }
   fi
+  if [ "$LUKSOPEN" = 1 ]; then cryptsetup close cloudcrypt 2>/dev/null || true; fi
   exit "$rc"
 }
 trap cleanup EXIT
@@ -47,6 +51,9 @@ case "${1:-}" in -h|--help) usage; exit 0 ;; esac
 
 [ "$(id -u)" = 0 ] || die "нужен root: doas cloudos-install"
 [ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
+if [ "$(cat /etc/cloudos-march 2>/dev/null)" = x86-64-v3 ]; then
+  for f in avx2 fma bmi1 bmi2 movbe f16c; do grep -qw "$f" /proc/cpuinfo || die "этот iso собран под x86-64-v3, процессор не поддерживает $f"; done
+fi
 for c in sfdisk wipefs blkid lsblk findmnt mount umount unsquashfs mkfs.vfat mkfs.ext4 limine chroot install awk sed; do
   command -v "$c" >/dev/null || die "нет команды $c"
 done
@@ -105,6 +112,16 @@ if [ -z "$FS" ]; then
 fi
 case $FS in ext4) ;; btrfs) command -v mkfs.btrfs >/dev/null || die "в этом iso нет mkfs.btrfs, используй ext4" ;; *) die "файловая система: ext4 или btrfs" ;; esac
 
+LUKS=${CLOUDOS_LUKS:-}
+if [ -z "$LUKS" ]; then
+  if [ "${CLOUDOS_YES:-0}" = 1 ]; then LUKS=0; else ask LUKS "шифровать диск luks (yes/no)" no; fi
+fi
+case $LUKS in 1|yes|y) LUKS=1 ;; 0|no|n) LUKS=0 ;; *) die "CLOUDOS_LUKS: 1 или 0" ;; esac
+if [ "$LUKS" = 1 ]; then
+  for c in cryptsetup dracut; do command -v "$c" >/dev/null || die "для luks нет команды $c"; done
+  askpass CLOUDOS_LUKSPASS "пароль шифрования диска"
+fi
+
 ask CLOUDOS_HOST "имя компьютера" cloudos
 HOSTN=$CLOUDOS_HOST
 printf '%s' "$HOSTN" | grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' || die "неверное имя компьютера"
@@ -141,17 +158,25 @@ done
 
 say "файловые системы"
 mkfs.vfat -F32 -n CLOUDBOOT "${P}1" >/dev/null
+ROOTDEV=${P}2
+if [ "$LUKS" = 1 ]; then
+  say "шифрование luks2 (aes-xts, argon2id)"
+  printf '%s' "$CLOUDOS_LUKSPASS" | cryptsetup luksFormat --type luks2 --cipher aes-xts-plain64 --key-size 512 --hash sha512 --pbkdf argon2id --batch-mode "${P}2" -
+  printf '%s' "$CLOUDOS_LUKSPASS" | cryptsetup open --type luks2 "${P}2" cloudcrypt -
+  LUKSOPEN=1
+  ROOTDEV=/dev/mapper/cloudcrypt
+fi
 if [ "$FS" = ext4 ]; then
-  mkfs.ext4 -q -F -L cloudos "${P}2"
+  mkfs.ext4 -q -F -L cloudos "$ROOTDEV"
   ROPTS=noatime,errors=remount-ro
 else
-  mkfs.btrfs -q -f -L cloudos "${P}2"
+  mkfs.btrfs -q -f -L cloudos "$ROOTDEV"
   ROPTS=noatime,compress=zstd:1
 fi
 
 say "монтирование в $T"
 mkdir -p "$T"
-mount -o "$ROPTS" "${P}2" "$T"
+mount -o "$ROPTS" "$ROOTDEV" "$T"
 MOUNTED=1
 
 say "распаковка системы из iso (это основной шаг)"
@@ -165,10 +190,12 @@ mount -o umask=0077,noatime "${P}1" "$T/boot"
 install -m644 "$BS/vmlinuz" "$T/boot/vmlinuz"
 mkdir -p "$T/boot/limine"
 PU=$(blkid -s PARTUUID -o value "${P}2")
-RU=$(blkid -s UUID -o value "${P}2")
+RU=$(blkid -s UUID -o value "$ROOTDEV")
+LU=
+if [ "$LUKS" = 1 ]; then LU=$(blkid -s UUID -o value "${P}2"); [ -n "$LU" ] || die "не удалось получить uuid luks"; ROOTARG="rd.luks.uuid=$LU root=UUID=$RU"; else ROOTARG="root=PARTUUID=$PU"; fi
 BU=$(blkid -s UUID -o value "${P}1")
 [ -n "$PU" ] && [ -n "$RU" ] && [ -n "$BU" ] || die "не удалось получить uuid разделов"
-CMD="root=PARTUUID=$PU rootfstype=$FS rw quiet $HARDEN"
+CMD="$ROOTARG rootfstype=$FS rw quiet $HARDEN"
 VER=$(sed -n 's/^VERSION_ID=\(.*\)/\1/p' "$T/etc/os-release" | tr -d '"')
 cat > "$T/boot/limine/limine.conf" <<EOC
 timeout: 3
@@ -181,8 +208,11 @@ timeout: 3
 /CloudOS ${VER} (подробный вывод)
     protocol: linux
     path: boot():/vmlinuz
-    cmdline: root=PARTUUID=$PU rootfstype=$FS rw $HARDEN $EXTRA
+    cmdline: $ROOTARG rootfstype=$FS rw $HARDEN $EXTRA
 EOC
+if [ "$LUKS" = 1 ]; then
+  sed -i 's|^    path: boot():/vmlinuz$|&\n    module_path: boot():/initramfs.img|' "$T/boot/limine/limine.conf"
+fi
 if [ "$FW" = uefi ]; then
   install -D -m644 "$LS/BOOTX64.EFI" "$T/boot/EFI/BOOT/BOOTX64.EFI"
   install -D -m644 "$LS/BOOTIA32.EFI" "$T/boot/EFI/BOOT/BOOTIA32.EFI"
@@ -213,6 +243,14 @@ mount -t tmpfs tmpfs "$T/run"
 cat /etc/resolv.conf > "$T/etc/resolv.conf" 2>/dev/null || echo 'nameserver 1.1.1.1' > "$T/etc/resolv.conf"
 inroot() { chroot "$T" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root TERM="${TERM:-linux}" LANG=C.UTF-8 "$@"; }
 
+if [ "$LUKS" = 1 ]; then
+  say "initramfs с luks (dracut)"
+  KREL=$(ls "$T/lib/modules" | head -n1)
+  [ -n "$KREL" ] || die "нет модулей ядра в $T/lib/modules"
+  inroot dracut --force --no-hostonly --kver "$KREL" --add crypt --compress zstd /boot/initramfs.img
+  [ -s "$T/boot/initramfs.img" ] || die "initramfs не создан"
+fi
+
 rm -f "$T/etc/init.d/cloudos-smoke" "$T/etc/runlevels/default/cloudos-smoke" "$T/etc/conf.d/agetty.tty1" \
   "$T/etc/ssh/sshd_config.d/05-cloudos-live.conf" "$T/etc/machine-id" "$T/var/lib/dbus/machine-id"
 rm -f "$T"/etc/ssh/ssh_host_*
@@ -237,7 +275,7 @@ grep -q "^$USERN:" "$T/etc/passwd" || die "пользователь $USERN не 
 ! grep -q '^cloudos:' "$T/etc/passwd" || die "live пользователь не удалён"
 [ -s "$T/boot/limine/limine.conf" ] && [ -s "$T/boot/vmlinuz" ] || die "загрузчик не записан"
 
-say "готово: cloudos установлена на $DISK ($FW, $FS)"
+say "готово: cloudos установлена на $DISK ($FW, $FS$([ "$LUKS" = 1 ] && echo ', luks2'))"
 if [ "${CLOUDOS_YES:-0}" != 1 ]; then
   echo "выполни reboot и вытащи носитель"
 fi

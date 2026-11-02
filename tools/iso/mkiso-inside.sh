@@ -4,6 +4,7 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 VERSION=${1:-1.4}
 KVER=${2:-6.18.10}
 NAME=${3:-cloudos-live-amd64-$VERSION.iso}
+MARCH=${4:-x86-64}
 S=/var/tmp/isosrc
 F=/var/tmp/isofiles
 B=/var/tmp/isobuild
@@ -76,14 +77,17 @@ build_kernel() {
   scripts/config -e KERNEL_ZSTD -e CRYPTO_ZSTD -e ZSWAP -e ZSWAP_COMPRESSOR_DEFAULT_ZSTD -m ZRAM -e ZRAM_BACKEND_ZSTD
   scripts/config -e TCP_CONG_BBR -e DEFAULT_BBR --set-str DEFAULT_TCP_CONG bbr -e NET_SCH_FQ -e NET_SCH_FQ_CODEL
   scripts/config -e TRANSPARENT_HUGEPAGE -e TRANSPARENT_HUGEPAGE_MADVISE -e MQ_IOSCHED_DEADLINE -e MQ_IOSCHED_KYBER -e IOSCHED_BFQ
+  scripts/config -e BLK_DEV_DM -e DM_CRYPT -e CRYPTO_XTS -e CRYPTO_AES_NI_INTEL -e BLK_DEV_INITRD -e RD_ZSTD -e RD_GZIP
   scripts/config -e CPU_FREQ_DEFAULT_GOV_SCHEDUTIL -e X86_INTEL_PSTATE -e X86_AMD_PSTATE -e X86_ACPI_CPUFREQ
   make olddefconfig
-  need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
+  need="DM_CRYPT BLK_DEV_DM NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
   for s in $need; do
     grep -q "^CONFIG_$s=y" .config || die "в .config нет CONFIG_$s=y"
   done
   say "ядро $KVER, сборка на $J ядрах"
-  make -j"$J" bzImage modules || { echo "!! make -j$J упал, повтор -j1 V=1"; make -j1 V=1 bzImage modules; }
+  KC="-O2"
+  [ "$MARCH" = x86-64 ] || KC="-O2 -march=$MARCH"
+  make -j"$J" KCFLAGS="$KC" bzImage modules || { echo "!! make -j$J упал, повтор -j1 V=1"; make -j1 V=1 KCFLAGS="$KC" bzImage modules; }
   KREL=$(make -s kernelrelease)
   mkdir -p "$R/boot"
   install -m644 arch/x86/boot/bzImage "$R/boot/vmlinuz"
@@ -174,6 +178,8 @@ build_wifi() {
   command -v mkfs.vfat >/dev/null || die "после установки нет mkfs.vfat"
   command -v mkfs.btrfs >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-fs/btrfs-progs || echo "!! btrfs-progs не поставился, установщик будет без btrfs" >&2
   for c in sfdisk wipefs lsblk findmnt blkid unsquashfs limine; do command -v "$c" >/dev/null || die "установщику нужна команда $c"; done
+  command -v cryptsetup >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-fs/cryptsetup || echo "!! cryptsetup не поставился, установщик будет без luks" >&2
+  command -v dracut >/dev/null || echo "!! нет dracut, luks в установщике не заработает" >&2
   rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/*
   say "wifi пакеты готовы, прошивки $(du -sh /lib/firmware | cut -f1)"
 }
@@ -294,6 +300,14 @@ EOM
   rc-update show -v || true
 }
 
+apply_march() {
+  printf '%s\n' "$MARCH" > /etc/cloudos-march
+  if [ "$MARCH" != x86-64 ] && [ -f /etc/portage/make.conf ]; then
+    sed -i "s/-march=x86-64\b/-march=$MARCH/" /etc/portage/make.conf
+  fi
+  say "микроархитектура: $MARCH"
+}
+
 build_squashfs() {
   mkdir -p "$R/cloudos"
   say "squashfs (xz), это самый долгий шаг после ядра"
@@ -359,6 +373,7 @@ build_wifi
 build_kernel
 build_initramfs
 live_tune
+apply_march
 build_squashfs
 build_iso
 verify_iso
