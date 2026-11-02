@@ -1,5 +1,20 @@
 # changelog
 
+## 1.7.2, безопасность
+
+- `cloudpkg/cloudpkg.c`: `probe_ver` больше не использует `popen` и shell, запуск через `fork` и `execlp` без оболочки, имя команды с ведущим `-` отклоняется
+- `cloudpkg/cloudpkg-box.sh`: убран `eval` при переносе переменных прокси
+- `tools/mkiso.sh`: проверка gpg-подписи ядра включена по умолчанию, при сбое сборка падает (`KERNEL_GPG=0` отключает)
+- `tools/test-hardening.sh`, `check.yml`: проверка в ci, что в `cloudpkg.c` нет `popen` и `system`, в `cloudpkg-box.sh` нет `eval`, подпись ядра включена, `cloudpkg.c` собирается с `-Werror`
+
+## 1.7.1, сайт: темы и фишки
+
+- `docs/site.js`: кнопка скачивания на главной берёт только `.iso`, `.tar.xz` (stage3) больше не подхватывается
+- `docs/themes/aurora.js`, `cyber.js`, `sunset.js`, `rain.js`: новые темы сияние, киберпанк, закат, дождь
+- `docs/themes/ocean.js`, `forest.js`, `autumn.js`: океан с китом, медузами и водорослями, лес с лунным светом, туманом и совой, осень с ветром, гусями и кучей листьев
+- `docs/themes/fun.js`: фишки в настройках: след за курсором, конфетти по клику, crt-экран, моно-шрифт, полоса прокрутки, звук кликов, радужный режим, форма углов, секретный konami-код
+- `docs/themes/themes.js`, `themes.css`, `docs/theme.js`, `docs/sw.js`: подключение новых тем, цвета для светлой и серой, сброс кэша
+
 ## 1.7.0, secure boot, профили, оптимизация, аудит
 
 - `tools/iso/cloudos-secureboot`: новая команда. `init` создаёт свои ключи PK, KEK, db (rsa 3072) в `/etc/cloudos/secureboot`, `sign` вписывает blake2b-хеши ядра и initramfs в `limine.conf`, вшивает хеш конфига в limine (`limine enroll-config`), подписывает `BOOTX64.EFI` ключом db, удаляет `BOOTIA32.EFI`, кладёт публичные ключи в `/boot/cloudos-keys`, `enroll` записывает ключи в прошивку в setup mode, `status` показывает состояние. цепочка: прошивка проверяет limine по db, limine проверяет конфиг по вшитому хешу, конфиг проверяет ядро и initramfs по хешам
