@@ -91,14 +91,12 @@ function show(text){
   if(R.disks.length){
     var dc=el('div','dcard');dc.appendChild(el('h3','',tr('диски')));
     R.disks.forEach(function(x){
-      var r=el('div','dd'),h=el('div','dn'),nm=el('b','', '/dev/'+x.name),a=el('a','btn');
+      var r=el('div','dd'),h=el('div','dn'),nm=el('b','', '/dev/'+x.name);
       h.appendChild(nm);if(x.size)h.appendChild(el('span','dm',' '+x.size));
-      a.href='../wizard/#d='+encodeURIComponent('/dev/'+x.name)+(R.boot?'&m='+R.boot:'');a.textContent=tr('использовать в мастере');
-      h.appendChild(a);r.appendChild(h);
+      r.appendChild(h);
       if(x.parts.length)r.appendChild(el('div','dp',x.parts.map(function(p){return p.name+(p.fs?' '+p.fs:'')+(p.size?' '+p.size:'')}).join('  ·  ')));
       dc.appendChild(r);
     });
-    dc.appendChild(el('p','mu',tr('в мастере выбирай чистый диск: все данные на нём будут стёрты.')));
     out.appendChild(dc);
   }
   var hc=el('div','dcard');hc.appendChild(el('h3','',tr('в таблицу железа')));
