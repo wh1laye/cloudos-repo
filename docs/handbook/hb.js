@@ -465,10 +465,9 @@ hashTarget();
   var lead=main.querySelector('.lead');
   if(lead&&!main.querySelector('.hbq')){
     var en=/\/en\/?$/.test(location.pathname.replace(/index\.html$/,''));
-    var wz=en?'../../wizard/':'../wizard/';
     var q=d.createElement('div');
     q.className='hbq';
-    q.innerHTML='<a class="hbq1" href="'+wz+'"><b>'+esc(T('я новичок'))+'</b><span>'+esc(T('мастер сам подберёт команды под твой диск'))+'</span></a><a class="hbq1" href="#prep"><b>'+esc(T('иду по шагам'))+'</b><span>'+esc(T('8 шагов от live iso до первой загрузки'))+'</span></a><a class="hbq1" href="#errors"><b>'+esc(T('что-то сломалось'))+'</b><span>'+esc(T('ошибки, решения и диагностика по тексту ошибки'))+'</span></a>';
+    q.innerHTML='<a class="hbq1" href="#prep"><b>'+esc(T('иду по шагам'))+'</b><span>'+esc(T('8 шагов от live iso до первой загрузки'))+'</span></a><a class="hbq1" href="#errors"><b>'+esc(T('что-то сломалось'))+'</b><span>'+esc(T('ошибки, решения и диагностика по тексту ошибки'))+'</span></a>';
     lead.parentNode.insertBefore(q,lead.nextSibling);
   }
   var tm=d.querySelector('.tmode');
