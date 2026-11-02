@@ -406,17 +406,42 @@ static const struct stub stubs[] = {
 
 static int probe_ver(const char *cmd, char *ver, size_t n)
 {
-	char c[BUF], line[BUF], *t, *s;
+	char line[BUF], *t, *s;
+	int p[2], ok = 0, st, z;
+	pid_t pid;
 	FILE *f;
-	int ok = 0;
 
+	if (!*cmd || *cmd == '-')
+		return 0;
 	for (t = (char *)cmd; *t; t++)
 		if (!((*t >= 'a' && *t <= 'z') || (*t >= '0' && *t <= '9') || *t == '-' || *t == '_'))
 			return 0;
-	snprintf(c, sizeof c, "%s --version 2>/dev/null", cmd);
-	f = popen(c, "r");
-	if (!f)
+	if (pipe(p) < 0)
 		return 0;
+	pid = fork();
+	if (pid < 0) {
+		close(p[0]);
+		close(p[1]);
+		return 0;
+	}
+	if (pid == 0) {
+		z = open("/dev/null", O_WRONLY);
+		if (dup2(p[1], 1) < 0)
+			_exit(127);
+		if (z >= 0)
+			dup2(z, 2);
+		close(p[0]);
+		close(p[1]);
+		execlp(cmd, cmd, "--version", (char *)NULL);
+		_exit(127);
+	}
+	close(p[1]);
+	f = fdopen(p[0], "r");
+	if (!f) {
+		close(p[0]);
+		waitpid(pid, &st, 0);
+		return 0;
+	}
 	if (fgets(line, sizeof line, f)) {
 		t = trim(line);
 		s = strrchr(t, ' ');
@@ -426,7 +451,8 @@ static int probe_ver(const char *cmd, char *ver, size_t n)
 		if (ok)
 			snprintf(ver, n, "%s", t);
 	}
-	pclose(f);
+	fclose(f);
+	waitpid(pid, &st, 0);
 	return ok;
 }
 

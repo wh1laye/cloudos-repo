@@ -124,7 +124,7 @@ else
 	HOMEDIR=/root
 fi
 for v in http_proxy https_proxy all_proxy no_proxy HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY; do
-	eval "val=\${$v-}"
+	val=$(printenv "$v" 2>/dev/null) || continue
 	[ -n "$val" ] && set -- "$v=$val" "$@"
 done
 if [ "$MODE" = user ]; then
