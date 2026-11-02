@@ -15,6 +15,13 @@ on:
       kernel:
         description: версия ядра
         default: "6.18.10"
+      march:
+        description: микроархитектура (v3 только для процессоров с avx2, 2013 и новее)
+        type: choice
+        options:
+          - x86-64
+          - x86-64-v3
+        default: x86-64
       smoke:
         description: проверочная загрузка в qemu
         type: boolean
@@ -78,6 +85,7 @@ jobs:
         env:
           VERSION: ${{ inputs.version }}
           BASE_VERSION: ${{ inputs.base_version }}
+          MARCH: ${{ inputs.march }}
           KVER: ${{ inputs.kernel }}
         run: |
           set -o pipefail
