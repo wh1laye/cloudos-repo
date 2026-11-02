@@ -8,7 +8,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="cloudos">
 <meta property="og:title" content="cloudos handbook">
-<meta property="og:description" content="step by step cloudos installation: disk partitioning, stage 3, kernel, limine, system setup, errors and fixes">
+<meta property="og:description" content="installing cloudos from the live iso: one command or by hand, first steps, packages and fixes">
 <meta property="og:url" content="https://wh1laye.github.io/cloudos-repo/handbook/en/">
 <meta property="og:image" content="https://wh1laye.github.io/cloudos-repo/og.png">
 <meta property="og:image:width" content="1200">
@@ -17,7 +17,7 @@
 <meta name="theme-color" content="#1a1c20">
 <link rel="alternate" type="application/rss+xml" title="cloudos: новое" href="../../rss.xml">
 <link rel="alternate" type="application/atom+xml" title="cloudos: релизы" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
-<meta name="description" content="step by step cloudos installation: disk partitioning, stage 3, kernel, limine, system setup, errors and fixes">
+<meta name="description" content="installing cloudos from the live iso: one command or by hand, first steps, packages and fixes">
 <link rel="icon" href="../../icon.svg" type="image/svg+xml">
 <link rel="icon" href="../../favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="../../apple-touch-icon.png">
@@ -36,829 +36,230 @@
 <body>
 <header class="top">
 <a class="brand" href="../../" aria-label="cloudos"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M29.72 1.00C29.24 1.04 28.61 1.12 28.05 1.21C27.50 1.31 26.94 1.43 26.39 1.59C25.83 1.74 25.28 1.93 24.72 2.13C24.17 2.34 23.61 2.56 23.05 2.83C22.50 3.09 21.94 3.38 21.39 3.73C20.83 4.08 20.26 4.48 19.72 4.90C19.19 5.32 18.66 5.78 18.18 6.25C17.69 6.72 17.24 7.21 16.81 7.74C16.38 8.26 15.95 8.85 15.59 9.41C15.23 9.96 15.07 10.75 14.63 11.07C14.20 11.40 13.53 11.25 12.98 11.36C12.43 11.46 11.87 11.55 11.32 11.71C10.76 11.87 10.20 12.07 9.65 12.31C9.09 12.56 8.54 12.83 7.98 13.16C7.43 13.50 6.83 13.91 6.31 14.33C5.80 14.75 5.36 15.19 4.91 15.68C4.46 16.18 4.00 16.76 3.62 17.31C3.24 17.86 2.94 18.42 2.66 18.98C2.38 19.54 2.15 20.09 1.95 20.65C1.76 21.20 1.61 21.76 1.49 22.31C1.38 22.87 1.30 23.43 1.26 23.98C1.22 24.54 1.24 25.09 1.26 25.65C1.28 26.20 1.32 26.76 1.40 27.31C1.49 27.87 1.60 28.43 1.76 28.98C1.92 29.54 2.12 30.09 2.36 30.65C2.61 31.20 2.88 31.76 3.23 32.31C3.58 32.87 4.01 33.46 4.44 33.98C4.86 34.50 5.30 34.97 5.80 35.42C6.31 35.87 6.91 36.32 7.47 36.69C8.02 37.07 8.58 37.38 9.13 37.65C9.69 37.92 10.25 38.13 10.80 38.31C11.36 38.49 11.91 38.63 12.47 38.73C13.02 38.84 13.58 38.88 14.13 38.93C14.69 38.97 15.25 38.99 15.80 39.00C16.36 39.01 16.91 39.00 17.47 39.00C18.02 39.00 18.58 39.00 19.14 39.00C19.69 39.00 20.25 39.00 20.80 39.00C21.36 39.00 21.91 39.00 22.47 39.00C23.02 39.00 23.58 39.00 24.14 39.00C24.69 39.00 25.25 39.00 25.80 39.00C26.36 39.00 26.91 39.00 27.47 39.00C28.03 39.00 28.58 39.00 29.14 39.00C29.69 39.00 30.25 39.00 30.80 39.00C31.36 39.00 31.91 39.00 32.47 39.00C33.03 39.00 33.58 39.00 34.14 39.00C34.69 39.00 35.25 39.00 35.80 39.00C36.36 39.00 36.91 39.00 37.47 39.00C38.03 39.00 38.58 39.00 39.14 39.00C39.69 39.00 40.25 39.00 40.80 39.00C41.36 39.00 41.92 39.00 42.47 39.00C43.03 39.00 43.58 39.00 44.14 39.00C44.69 39.00 45.25 39.00 45.80 39.00C46.36 39.00 46.92 39.00 47.47 39.00C48.03 39.00 48.58 39.00 49.14 39.00C49.69 39.00 50.25 39.00 50.80 39.00C51.36 39.00 51.92 39.05 52.47 39.00C53.03 38.95 53.58 38.85 54.14 38.70C54.69 38.54 55.25 38.33 55.81 38.08C56.36 37.82 56.93 37.54 57.47 37.17C58.02 36.81 58.60 36.35 59.09 35.88C59.58 35.41 60.02 34.90 60.42 34.37C60.81 33.84 61.17 33.26 61.46 32.71C61.75 32.15 61.97 31.59 62.15 31.04C62.34 30.48 62.46 29.93 62.56 29.37C62.66 28.82 62.72 28.26 62.74 27.70C62.76 27.15 62.74 26.59 62.67 26.04C62.60 25.48 62.47 24.93 62.31 24.37C62.16 23.82 61.99 23.26 61.75 22.70C61.50 22.15 61.19 21.59 60.82 21.04C60.46 20.49 60.02 19.90 59.56 19.41C59.11 18.91 58.60 18.46 58.08 18.06C57.55 17.66 56.96 17.30 56.41 17.01C55.85 16.72 55.30 16.51 54.74 16.32C54.19 16.13 53.63 16.00 53.07 15.90C52.52 15.79 51.96 15.71 51.41 15.68C50.85 15.66 50.15 15.95 49.74 15.75C49.33 15.56 49.16 15.01 48.94 14.53C48.72 14.05 48.62 13.42 48.41 12.86C48.20 12.31 47.95 11.75 47.67 11.20C47.39 10.64 47.08 10.08 46.73 9.53C46.37 8.97 45.95 8.39 45.52 7.86C45.09 7.33 44.64 6.84 44.16 6.36C43.67 5.87 43.16 5.40 42.63 4.97C42.10 4.55 41.52 4.15 40.96 3.80C40.41 3.46 39.85 3.17 39.30 2.90C38.74 2.63 38.19 2.38 37.63 2.17C37.07 1.96 36.52 1.77 35.96 1.62C35.41 1.47 34.85 1.34 34.30 1.25C33.74 1.15 33.19 1.09 32.63 1.05C32.07 1.01 31.45 1.01 30.96 1.00C30.48 0.99 30.21 0.96 29.72 1.00Z" fill="url(#g)"/></svg>cloudos<span>handbook</span></a>
-<nav class="hl"><a class="gh" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>home</span></a><a class="gh on" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>handbook</span></a><div class="ddw"><button type="button" class="gh" id="ob" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg><span>more</span></button><div class="ddm" id="om" hidden><div class="ddh">install</div><a class="ddi" href="../../wizard/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM7 9l3 3-3 3M12 15h5"/></svg>install wizard</a><a class="ddi" href="../../kernel/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>kernel helper</a><a class="ddi" href="../../detect/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg>hardware detection</a><a class="ddi" href="../../boot/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8M6.5 6.5a8 8 0 1 0 11 0"/></svg>boot flow</a><div class="ddh">project</div><a class="ddi" href="../../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg>news</a><a class="ddi" href="../../hardware/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>hardware</a><a class="ddi" href="../../packages/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>packages</a><a class="ddi" href="../../stage3/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"/></svg>stage 3 contents</a><a class="ddi" href="../../compare/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 20h14M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0z"/></svg>comparison</a></div></div><a class="gh" href="../../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>forum</span></a><a class="gh" href="../../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>releases</span></a></nav>
+<nav class="hl"><a class="gh" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>home</span></a><a class="gh on" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>handbook</span></a><div class="ddw"><button type="button" class="gh" id="ob" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg><span>more</span></button><div class="ddm" id="om" hidden><div class="ddh">install</div><a class="ddi" href="../../wizard/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4zM7 9l3 3-3 3M12 15h5"/></svg>install wizard</a><a class="ddi" href="../../detect/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg>hardware detection</a><a class="ddi" href="../../boot/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8M6.5 6.5a8 8 0 1 0 11 0"/></svg>boot flow</a><div class="ddh">project</div><a class="ddi" href="../../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg>news</a><a class="ddi" href="../../hardware/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>hardware</a><a class="ddi" href="../../packages/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>packages</a><a class="ddi" href="../../compare/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 20h14M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0z"/></svg>comparison</a></div></div><a class="gh" href="../../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>forum</span></a><a class="gh" href="../../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>releases</span></a></nav>
 </header>
 <div class="layout">
 <nav class="toc" aria-label="contents">
 <div class="tmode" role="group" aria-label="boot mode"><span class="tl">boot mode</span><div class="seg2"><button type="button" data-m="uefi">uefi</button><button type="button" data-m="bios">bios</button></div></div>
 <button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>search</span><kbd>ctrl k</kbd></button>
 <details open><summary>contents</summary>
-<ol><li class="tg">installation</li><li><a href="#about">1. about cloudos</a><ol><li><a href="#s1-1">1.1 what you need</a></li><li><a href="#s1-2">1.2 what is inside stage 3</a></li><li><a href="#s1-3">1.3 what the system does not have</a></li><li><a href="#s1-4">1.4 installation order</a></li><li><a href="#s1-5">1.5 how to use the handbook</a></li></ol></li><li><a href="#prep">2. preparation</a><ol><li><a href="#s2-1">2.1 date and time</a></li><li><a href="#s2-2">2.2 disks</a></li><li><a href="#s2-3">2.3 network</a></li><li><a href="#s2-4">2.4 if sites do not open</a></li></ol></li><li><a href="#disk">3. disk and filesystems</a><ol><li><a href="#s3-1">3.1 partitioning</a></li><li><a href="#s3-2">3.2 filesystems</a></li><li><a href="#s3-3">3.3 mounting</a></li><li><a href="#s3-4">3.4 example layout</a></li><li><a href="#s3-5">3.5 checking</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 verification (can be skipped)</a></li><li><a href="#s4-2">4.2 unpacking</a></li><li><a href="#s4-3">4.3 downloading</a></li><li><a href="#s4-4">4.4 after unpacking</a></li></ol></li><li><a href="#chroot">5. entering chroot</a><ol><li><a href="#s5-1">5.1 what the commands do</a></li><li><a href="#s5-2">5.2 prompt</a></li><li><a href="#s5-3">5.3 entering again</a></li><li><a href="#s5-4">5.4 leaving</a></li></ol></li><li><a href="#conf">6. build setup</a><ol><li><a href="#s6-1">6.1 locales</a></li><li><a href="#s6-2">6.2 build flags</a></li><li><a href="#s6-3">6.3 parallel build</a></li><li><a href="#s6-4">6.4 gcc 15 and build errors</a></li></ol></li><li><a href="#kernel">7. kernel</a><ol><li><a href="#s7-1">7.1 what to enable in menuconfig</a></li><li><a href="#s7-2">7.2 what the build commands do</a></li><li><a href="#s7-3">7.3 kernel mirrors</a></li></ol></li><li><a href="#boot">8. bootloader</a><ol><li><a href="#fstab">8.1 fstab</a></li><li><a href="#initramfs">8.2 initramfs</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 check before rebooting</a></li><li><a href="#s8-5">8.5 writing to nvram (uefi only, optional)</a></li><li><a href="#s8-6">8.6 several kernels</a></li></ol></li><li><a href="#final">9. finishing</a><ol><li><a href="#s9-1">9.1 enable network and log</a></li><li><a href="#s9-2">9.2 wifi (optional)</a></li><li><a href="#s9-3">9.3 first boot</a></li></ol></li><li class="tg">after installation</li><li><a href="#first">10. first boot</a><ol><li><a href="#s10-1">10.1 login</a></li><li><a href="#s10-2">10.2 user and doas</a></li><li><a href="#s10-3">10.3 computer name</a></li><li><a href="#s10-4">10.4 time zone</a></li><li><a href="#s10-5">10.5 network</a></li><li><a href="#s10-6">10.6 openrc services</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. packages and cloudpkg</a><ol><li><a href="#s11-1">11.1 commands</a></li><li><a href="#s11-2">11.2 how the installation goes</a></li><li><a href="#s11-3">11.3 examples</a></li><li><a href="#s11-4">11.4 if a package failed to build</a></li><li><a href="#s11-5">11.5 one-command install</a></li></ol></li><li><a href="#maint">12. maintenance</a><ol><li><a href="#s12-1">12.1 updating packages</a></li><li><a href="#s12-2">12.2 updating the kernel</a></li><li><a href="#s12-3">12.3 backup</a></li><li><a href="#s12-4">12.4 freeing space</a></li></ol></li><li><a href="#next">13. what next</a><ol><li><a href="#s13-1">13.1 other locales</a></li><li><a href="#s13-2">13.2 help and feedback</a></li></ol></li><li class="tg">help</li><li><a href="#errors">14. errors and fixes</a><ol><li><a href="#s14-1">14.1 live iso, network and time</a></li><li><a href="#s14-2">14.2 partitioning and filesystems</a></li><li><a href="#s14-3">14.3 downloading and unpacking</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 building packages</a></li><li><a href="#s14-6">14.6 kernel</a></li><li><a href="#s14-7">14.7 booting</a></li><li><a href="#s14-8">14.8 after booting</a></li><li><a href="#s14-9">14.9 emergency system access</a></li><li><a href="#s14-10">14.10 how to report an error</a></li><li><a href="#s14-11">14.11 installer wizard</a></li><li><a href="#s14-12">14.12 cloudpkg and portage</a></li></ol></li><li><a href="#cheat">15. cheat sheet</a><ol><li><a href="#s15-1">15.1 disks</a></li><li><a href="#s15-2">15.2 network</a></li><li><a href="#s15-3">15.3 system</a></li><li><a href="#s15-4">15.4 files and archives</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. questions and answers</a></li><li class="tg">appendices</li><li><a href="#appa">appendix a. disk names</a></li><li><a href="#appb">appendix b. btrfs with subvolumes</a></li><li><a href="#appc">appendix c. glossary</a></li></ol></details>
+<ol><li><a href="#about">1. about cloudos</a><ol><li><a href="#s1-1">1.1 requirements</a></li><li><a href="#s1-2">1.2 what is inside</a></li><li><a href="#s1-3">1.3 what is tuned for speed and security</a></li><li><a href="#s1-4">1.4 what is not there yet</a></li></ol></li><li><a href="#prep">2. preparation</a><ol><li><a href="#s2-1">2.1 writing the iso to a stick</a></li><li><a href="#s2-2">2.2 logging in to the live system</a></li><li><a href="#s2-3">2.3 network</a></li></ol></li><li><a href="#quick">3. one-command install</a><ol></ol></li><li><a href="#manual">4. manual install</a><ol><li><a href="#s4-1">4.1 partitioning</a></li><li><a href="#s4-2">4.2 filesystems and mounting</a></li><li><a href="#s4-3">4.3 unpacking the system</a></li><li><a href="#s4-4">4.4 fstab</a></li><li><a href="#s4-5">4.5 limine bootloader</a></li><li><a href="#s4-6">4.6 configuration inside</a></li><li><a href="#s4-7">4.7 finishing</a></li></ol></li><li><a href="#after">5. after the install</a><ol><li><a href="#s5-1">5.1 login and rights</a></li><li><a href="#s5-2">5.2 timezone and hostname</a></li><li><a href="#s5-3">5.3 network</a></li><li><a href="#s5-4">5.4 services and firewall</a></li><li><a href="#s5-5">5.5 swap and zram</a></li></ol></li><li><a href="#cpkg">6. packages and cloudpkg</a><ol></ol></li><li><a href="#kernel">7. your own kernel (optional)</a><ol></ol></li><li><a href="#maint">8. maintenance</a><ol></ol></li><li><a href="#errors">9. errors and fixes</a><ol></ol></li><li><a href="#cheat">10. cheat sheet</a><ol></ol></li><li><a href="#faq">11. questions</a><ol><li><a href="#s11-1">can it run on a server</a></li><li><a href="#s11-2">what happened to stage 3</a></li><li><a href="#s11-3">why no secure boot</a></li></ol></li></ol></details>
 </nav>
 <main id="cloud">
 <h1>cloudos handbook</h1>
-<p class="lead">installing cloudos 1.4 on x86_64. </p>
+<p class="lead">installing cloudos live iso 1.0 on x86_64.</p>
 <h2 id="about">1. about cloudos</h2>
-<p>cloudos is a minimal linux that you build yourself. after installation the system has only a console.</p>
-<table><tr><th>parameter</th><th>value</th></tr>
-<tr><td>architecture</td><td>x86_64</td></tr>
+<p>cloudos is a fast hardened x86_64 linux: openrc, vanilla kernel, limine, packages built from source with cloudpkg. it installs from the live iso with one command and boots to a plain console.</p>
+<div class="sc"><table><tr><th>parameter</th><th>value</th></tr>
+<tr><td>архитектура</td><td>x86_64</td></tr>
 <tr><td>libc</td><td>glibc</td></tr>
 <tr><td>init</td><td>openrc</td></tr>
-<tr><td>kernel</td><td>vanilla from kernel.org</td></tr>
-<tr><td>bootloader</td><td>limine</td></tr>
-<tr><td>filesystems</td><td>ext4 and btrfs</td></tr>
-<tr><td>packages</td><td>only from source, the command <code>cloudpkg</code></td></tr></table>
-<div class="note"><b>note</b>the handbook is meant for those who are ready to figure things out. for a quick install there is the <a href="../../wizard/">install wizard</a>: it gives you a ready script for your disk, while this handbook describes every step.</div>
-<h3 id="s1-1">1.1 what you need</h3>
-<div class="sc"><table><tr><th>what</th><th>guideline</th></tr>
-<tr><td>cpu</td><td>x86_64. arm is not supported</td></tr>
-<tr><td>ram</td><td>from 2 gb, for building the kernel and packages 4 gb or more is better</td></tr>
-<tr><td>disk</td><td>from 10 gb, for building packages 20 gb or more is better</td></tr>
-<tr><td>boot</td><td>uefi or legacy bios</td></tr>
-<tr><td>network</td><td>wired, address by dhcp</td></tr>
-<tr><td>media</td><td>a usb stick with the cloudos live iso</td></tr></table></div>
-<p>the numbers are approximate, there are no hard checks.</p>
-<h3 id="s1-2">1.2 what is inside stage 3</h3>
-<p>stage 3 is built from scratch following lfs 12.4 (sysv variant) and extended with everything needed for installation and building packages. versions are given for cloudos 1.4.</p>
-<div class="sc"><table><tr><th>part</th><th>what is inside</th></tr>
-<tr><td>toolchain</td><td>gcc 15.2.0, glibc 2.42, binutils 2.45, python 3.13.7</td></tr>
-<tr><td>init</td><td>openrc 0.63, <code>/sbin/init</code> points to <code>openrc-init</code></td></tr>
-<tr><td>devices and console</td><td>udev, agetty on tty1</td></tr>
-<tr><td>log</td><td>syslog-ng</td></tr>
-<tr><td>network</td><td>dhcpcd 10.1.0, curl 8.15.0, git 2.51.0, ca-certificates</td></tr>
-<tr><td>remote access</td><td>openssh (sshd and ssh), rsync, wget, iputils, net-tools</td></tr>
-<tr><td>firewall</td><td>nftables, incoming closed, outgoing open</td></tr>
-<tr><td>help</td><td>man-db and man-pages, <code>man command</code></td></tr>
-<tr><td>encryption</td><td>gnupg</td></tr>
-<tr><td>permissions</td><td>opendoas 6.8.2 instead of sudo</td></tr>
-<tr><td>editor</td><td>nano 8.4</td></tr>
-<tr><td>disks</td><td>dosfstools 4.2, btrfs-progs 6.16.1, ext4 from e2fsprogs</td></tr>
-<tr><td>boot</td><td>dracut-ng for initramfs. stage 3 has no kernel or bootloader</td></tr></table></div>
-<h3 id="s1-3">1.3 what the system does not have</h3>
-<ul>
-<li>graphics and desktop environments. after installation there is only a console</li>
-<li>sshd enabled by default. it is installed but off, the nftables firewall is on, see <a href="#next">chapter 13</a></li>
-<li>sudo. doas is used instead</li>
-<li>users other than root, locales and swap. you create them yourself</li>
-<li>a bootloader and a kernel. you build the kernel and install the bootloader through the package manager</li>
-</ul>
-<h3 id="s1-4">1.4 installation order</h3>
-<ol class="steps">
-<li><a href="#prep">boot from the live iso</a>, check the network and boot mode</li>
-<li><a href="#disk">partition the disk</a> and create the filesystems</li>
-<li><a href="#stage">download and unpack stage 3</a></li>
-<li><a href="#chroot">enter chroot</a> and <a href="#conf">set up the build</a></li>
-<li><a href="#kernel">build the kernel</a></li>
-<li><a href="#boot">make the fstab, the initramfs and install limine</a></li>
-<li><a href="#final">set a password, enable services</a> and reboot</li>
-<li><a href="#first">set up the system after the first boot</a></li>
-</ol>
-<h3 id="s1-5">1.5 how to use the handbook</h3>
-<p>at the top of the left panel there is a switch between <b>uefi</b> and <b>bios</b>. choose your mode and only the needed commands will remain in the handbook. the choice is remembered in the browser.</p>
-<p>search opens with the button in the header or with the keys <kbd>ctrl</kbd> + <kbd>k</kbd>. every command block has a copy button at the top right.</p>
-<p>commands contain placeholders, replace them with your own values:</p>
-<div class="sc"><table><tr><th>placeholder</th><th>what to put</th></tr>
-<tr><td><code>/dev/sda</code>, <code>/dev/sda1</code>, <code>/dev/sda2</code></td><td>your disk and partitions from <code>lsblk</code>. nvme has different names, see <a href="#appa">appendix a</a></td></tr>
-<tr><td><code>ROOT_UUID</code></td><td>uuid of the root partition from <code>blkid</code></td></tr>
-<tr><td><code>ESP_UUID</code>, <code>BOOT_UUID</code></td><td>uuid of the /boot partition from <code>blkid</code></td></tr>
-<tr><td><code>6.18.10</code></td><td>kernel version, if you build a different one</td></tr></table></div>
-
+<tr><td>vanilla kernel from kernel.org, disk drivers built in, no initramfs needed</td></tr>
+<tr><td>загрузчик</td><td>limine</td></tr>
+<tr><td>файловые системы</td><td>ext4 and btrfs (zstd)</td></tr>
+<tr><td>packages</td><td>from source only, the <code>cloudpkg</code> command</td></tr>
+</table></div>
+<h3 id="s1-1">1.1 requirements</h3>
+<div class="sc"><table><tr><th>item</th><th>guideline</th></tr>
+<tr><td>cpu</td><td>any x86_64, one image for all</td></tr>
+<tr><td>ram</td><td>2 gb or more</td></tr>
+<tr><td>disk</td><td>10 gb or more, 20 gb if you build packages</td></tr>
+<tr><td>boot</td><td>uefi or bios (up to 2 tb in bios)</td></tr>
+<tr><td>network</td><td>wired dhcp or wifi through iwctl</td></tr>
+<tr><td>media</td><td>usb stick or disc with the live iso</td></tr>
+</table></div>
+<h3 id="s1-2">1.2 what is inside</h3>
+<p>gcc, glibc, binutils, python, openrc, udev, dhcpcd, iwd for wifi, opendoas instead of sudo, curl, git, nano, wget, rsync, openssh (disabled), nftables, gnupg, man-db, dosfstools, cloudpkg. no graphics or desktop.</p>
+<h3 id="s1-3">1.3 what is tuned for speed and security</h3>
+<div class="sc"><table><tr><th>area</th><th>what is done</th></tr>
+<tr><td>boot speed</td><td>no initramfs, disks and ext4/btrfs built in, openrc starts services in parallel, zstd compressed kernel</td></tr>
+<tr><td>runtime speed</td><td>noatime, btrfs with zstd compression, tcp bbr, bfq, kyber and deadline disk schedulers, schedutil, zswap and zram with zstd, thp on request only</td></tr>
+<tr><td>kernel</td><td>kspp-style options: randomization, hardened usercopy, memory init, enforced module signatures, yama ptrace_scope 2, kexec, devkmem and vsyscall disabled</td></tr>
+<tr><td>network</td><td>nftables with a drop policy on from the first boot, ssh off, sysctl against spoofing, redirects and source routing</td></tr>
+<tr><td>access</td><td>root rights only through doas and the wheel group, passwords are set during install, no default passwords</td></tr>
+</table></div>
+<div class="note"><b>note</b>the image is built without <code>-march=native</code>, so it runs on any x86_64. an x86-64-v3 build and extra userland optimizations are planned for later.</div>
+<h3 id="s1-4">1.4 what is not there yet</h3>
+<p>there is no signed secure boot chain, disk encryption, mandatory access control (apparmor, selinux) or graphics yet. a secure boot chain and luks are planned for live iso 2.0. honestly: no system is unhackable, cloudos gives a hardened baseline, not a guarantee.</p>
 <h2 id="prep">2. preparation</h2>
-<p>boot from the cloudos live iso and check the network.</p>
-<pre><code>dhcpcd
-ping -c1 github.com</code></pre>
-<p>determine the boot mode. </p>
-<pre><code>[ -d /sys/firmware/efi ] &amp;&amp; echo uefi || echo bios</code></pre>
-<h3 id="s2-1">2.1 date and time</h3>
-<p>if the system date is wrong, https certificates will fail verification and downloads will fail with confusing errors. check the date:</p>
-<pre><code>date</code></pre>
-<p>if it differs a lot from the real one, set it manually (format year-month-day hour:minutes:seconds):</p>
-<pre><code>date -s "YYYY-MM-DD HH:MM:SS"</code></pre>
-<h3 id="s2-2">2.2 disks</h3>
-<p>look at the disks and partitions. the disk name you need is then used everywhere instead of <code>/dev/sda</code>.</p>
-<pre><code>lsblk -f</code></pre>
-<p>sata and usb disks are called <code>sda</code>, <code>sdb</code>, nvme is <code>nvme0n1</code>, virtual <code>vda</code>. you can tell which one is the live iso stick by its size.</p>
-<div class="warn"><b>important</b>do not mix up the disk. the partitioning and formatting commands irreversibly erase data.</div>
+<h3 id="s2-1">2.1 writing the iso to a stick</h3>
+<p>download the iso and checksum from the <a href="../../releases/">releases</a> page and verify:</p>
+<pre><code>sha256sum -c cloudos-live-amd64-1.0.iso.sha256</code></pre>
+<p>write the image to the stick (careful: pick the stick, its data will be erased):</p>
+<pre><code>sudo dd if=cloudos-live-amd64-1.0.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
+<h3 id="s2-2">2.2 logging in to the live system</h3>
+<p>boot from the stick. login is automatic: user <code>cloudos</code>, password <code>cloudos</code>, root through <code>doas -s</code>. this is for the live system only, ssh is closed for these accounts and the firewall is on.</p>
 <h3 id="s2-3">2.3 network</h3>
-<p>check that the interface is visible and got an address:</p>
-<pre><code>ip link
-ip addr</code></pre>
-<p>if there is no address, run dhcpcd again for the needed interface (see the name in <code>ip link</code>):</p>
-<pre><code>dhcpcd eth0</code></pre>
-<p>wired network works by itself through dhcpcd. wifi is set up through iwd, which is already in the live iso. run the commands through <code>doas</code> and with arguments, the interactive <code>iwctl</code> without arguments crashes with a segfault in the live iso:</p>
+<p>the install itself needs no network. wired comes up by itself. wifi:</p>
 <pre><code>doas iwctl station wlan0 scan
 doas iwctl station wlan0 get-networks
-doas iwctl station wlan0 connect network_name
-doas dhcpcd wlan0
-doas ping -c 1 1.1.1.1</code></pre>
-<p><code>connect</code> asks for the network password. after it <code>dhcpcd</code> gives the address, check it with <code>ip addr show wlan0</code>, there must be an <code>inet</code> line. see the interface name in <code>ip link</code>, it may differ (for example <code>wlp2s0</code>). hidden network: <code>doas iwctl station wlan0 connect-hidden network_name</code>. <code>ping</code> without <code>doas</code> does not work: a normal user has no right to raw sockets, this is a system protection. if there is no interface, see <code>rfkill list</code> and section <a href="#s14-8">14.8</a>. the network is not kept between boots of the live iso, on an installed system iwd remembers it by itself.</p>
-<h3 id="s2-4">2.4 if sites do not open</h3>
-<p>github, kernel.org and some mirrors may be unavailable from your network. then download the file on another device and move it with a usb stick:</p>
-<pre><code>mkdir -p /mnt/usb
-mount /dev/sdb1 /mnt/usb
-ls /mnt/usb</code></pre>
-<p>instead of <code>/dev/sdb1</code> put the partition of your second usb stick from <code>lsblk</code>. there are mirrors for the kernel, see <a href="#s7-3">7.3</a>.</p>
+doas iwctl station wlan0 connect имя_сети</code></pre>
+<pre><code>ip addr
+ping -c1 github.com</code></pre>
+<h2 id="quick">3. one-command install</h2>
+<p>in the live system run:</p>
+<pre><code>doas cloudos-install</code></pre>
+<p>the installer asks for the disk, filesystem (ext4 or btrfs), hostname, username and two passwords. then it does everything itself:</p>
+<ol class="steps"><li>partitions the disk: gpt with a 512 mb efi partition for uefi, dos with a 512 mb boot partition for bios, the rest is root</li><li>formats the partitions and mounts them at <code>/mnt/cloudos</code></li><li>unpacks the system from the iso with <code>unsquashfs</code></li><li>writes fstab, installs limine and the kernel into <code>/boot</code></li><li>removes live leftovers, creates the user and passwords</li><li>checks the result and unmounts the disk</li></ol>
+<div class="warn"><b>important</b>the chosen disk is erased completely. the installer refuses the media the iso booted from and asks you to type the disk path to confirm.</div>
+<p>when you see the done message run <code>reboot</code> and remove the stick. for scripts the installer takes variables instead of questions, see <code>cloudos-install --help</code>. the <a href="../../wizard/">wizard</a> page builds such a command for your disk.</p>
+<h2 id="manual">4. manual install</h2>
+<p>the same thing <code>cloudos-install</code> does, step by step. use it for a custom layout or to see how it works. run as root (<code>doas -s</code>). <code>/dev/sda</code> below is an example, check your disk with <code>lsblk</code>.</p>
+<h3 id="s4-1">4.1 partitioning</h3>
+<div class="m-uefi"><pre><code>sfdisk /dev/sda &lt;&lt;EOF
+label: gpt
+,512M,U
+,,L
+EOF</code></pre>
+</div>
+<div class="m-bios"><pre><code>sfdisk /dev/sda &lt;&lt;EOF
+label: dos
+,512M,c,*
+,,L
+EOF</code></pre>
+</div>
+<div class="warn"><b>important</b>all data on the chosen disk is erased. on nvme the partitions are named <code>nvme0n1p1</code> and <code>nvme0n1p2</code>.</div>
+<h3 id="s4-2">4.2 filesystems and mounting</h3>
+<pre><code>mkfs.vfat -F32 /dev/sda1
+mkfs.ext4 /dev/sda2
+mkdir -p /mnt/cloudos
+mount -o noatime /dev/sda2 /mnt/cloudos</code></pre>
+<p>btrfs with compression can replace ext4:</p>
+<pre><code>mkfs.btrfs /dev/sda2
+mount -o noatime,compress=zstd:1 /dev/sda2 /mnt/cloudos</code></pre>
+<h3 id="s4-3">4.3 unpacking the system</h3>
+<pre><code>unsquashfs -f -d /mnt/cloudos /media/cdrom/cloudos/rootfs.squashfs
+mkdir -p /mnt/cloudos/{proc,sys,dev,run,tmp,var/tmp,mnt,media}
+chmod 1777 /mnt/cloudos/tmp /mnt/cloudos/var/tmp
+mount -o umask=0077 /dev/sda1 /mnt/cloudos/boot
+cp /media/cdrom/boot/vmlinuz /mnt/cloudos/boot/vmlinuz</code></pre>
+<p>if the iso is not mounted at <code>/media/cdrom</code>, check <code>findmnt</code>.</p>
+<h3 id="s4-4">4.4 fstab</h3>
+<pre><code>blkid /dev/sda1 /dev/sda2</code></pre>
+<p>take the UUID and PARTUUID values from the output. file <code>/mnt/cloudos/etc/fstab</code>:</p>
+<pre><code>UUID=UUID_КОРНЯ / ext4 noatime,errors=remount-ro 0 1
+UUID=UUID_BOOT /boot vfat umask=0077,noatime 0 2
+tmpfs /tmp tmpfs nosuid,nodev,mode=1777 0 0</code></pre>
+<h3 id="s4-5">4.5 limine bootloader</h3>
+<pre><code>mkdir -p /mnt/cloudos/boot/limine
+nano /mnt/cloudos/boot/limine/limine.conf</code></pre>
+<p>content (root partition PARTUUID from <code>blkid</code>, your filesystem type):</p>
+<pre><code>timeout: 3
 
-<div class="note"><b>note</b>not sure what hardware your computer has? <a href="../../detect/">detect it automatically</a>: paste the output of two commands and get disks for the wizard and kernel settings.</div>
-<h2 id="disk">3. disk and filesystems</h2>
-<h3 id="s3-1">3.1 partitioning</h3>
-<pre><code>cfdisk /dev/sda</code></pre>
-<div class="sc"><table><tr><th>mode</th><th>table</th><th>partitions</th></tr>
-<tr class="m-uefi"><td>uefi</td><td>gpt</td><td>sda1 512 mb, type efi system. sda2 the rest</td></tr>
-<tr class="m-bios"><td>bios</td><td>dos</td><td>sda1 512 mb, bootable flag, this is /boot. sda2 the rest</td></tr></table></div>
-<div class="warn"><b>important</b>all data on the disk will be erased (only on the one you chose) </div>
-<h3 id="s3-2">3.2 filesystems</h3>
-<div class="m-uefi"><p>for uefi the /boot partition is formatted as fat32:</p>
-<pre><code>mkfs.fat -F32 /dev/sda1</code></pre></div>
-<div class="m-bios"><p>for bios the /boot partition is always fat32:</p>
-<pre><code>mkfs.fat -F32 /dev/sda1</code></pre></div>
-<p>format the root partition as ext4:</p>
-<pre><code>mkfs.ext4 /dev/sda2</code></pre>
-<p>or as btrfs:</p>
-<pre><code>mkfs.btrfs /dev/sda2</code></pre>
-<h3 id="s3-3">3.3 mounting</h3>
-<pre><code>mkdir -p /mnt/cloudos
-mount /dev/sda2 /mnt/cloudos
-mkdir -p /mnt/cloudos/boot
-mount /dev/sda1 /mnt/cloudos/boot</code></pre>
-<h3 id="s3-4">3.4 example layout</h3>
-<div class="m-uefi sc"><table><tr><th>partition</th><th>size</th><th>type</th><th>mount point</th><th>filesystem</th></tr>
-<tr><td>sda1</td><td>512 mb</td><td>efi system</td><td>/boot</td><td>fat32</td></tr>
-<tr><td>sda2</td><td>the rest</td><td>linux filesystem</td><td>/</td><td>ext4 or btrfs</td></tr></table></div>
-<div class="m-bios sc"><table><tr><th>partition</th><th>size</th><th>flag</th><th>mount point</th><th>filesystem</th></tr>
-<tr><td>sda1</td><td>512 mb</td><td>bootable</td><td>/boot</td><td>fat32</td></tr>
-<tr><td>sda2</td><td>the rest</td><td>-</td><td>/</td><td>ext4 or btrfs</td></tr></table></div>
-<p>if you need a swap partition, make it the third, not the first. more about swap in <a href="#s10-7">10.7</a>. swap can also be a file after installation, then a separate partition is not needed.</p>
-<h3 id="s3-5">3.5 checking</h3>
-<p>make sure everything is mounted as it should be:</p>
-<pre><code>lsblk -f
-findmnt /mnt/cloudos
-findmnt /mnt/cloudos/boot</code></pre>
-<p>the root should be on the second partition, <code>/boot</code> on the first. if one of the commands printed nothing, the partition is not mounted.</p>
-<div class="note"><b>note</b>if the root is on btrfs and you want subvolumes, see <a href="#appb">appendix b</a> before mounting.</div>
-
-<h2 id="stage">4. stage 3</h2>
-<p>stage 3 is a ready base cloudos system without a kernel and bootloader. the files are in the releases section of the repository.</p>
-<p><a href="https://github.com/wh1laye/cloudos-repo/releases">github.com/wh1laye/cloudos-repo/releases</a></p>
-<pre><code>cloudos-stage3-amd64-1.4.tar.xz
-cloudos-stage3-amd64-1.4.tar.xz.sha256
-</code></pre>
-<h3 id="s4-1">4.1 verification (can be skipped)</h3>
-<pre><code>sha256sum -c cloudos-stage3-amd64-1.4.tar.xz.sha256
-</code></pre>
-<p>minisign signature (if the release has a <code>.minisig</code> file). the public key is on the site, compare its fingerprint with the one in the repository:</p>
-<pre><code>curl -LO https://wh1laye.github.io/cloudos-repo/cloudos.pub
-minisign -V -p cloudos.pub -m cloudos-stage3-amd64-1.4.tar.xz
-</code></pre>
-<h3 id="s4-2">4.2 unpacking</h3>
-<pre><code>tar xpvf cloudos-stage3-amd64-1.4.tar.xz --xattrs-include='*.*' --numeric-owner -C /mnt/cloudos</code></pre>
-<h3 id="s4-3">4.3 downloading</h3>
-<p>download straight onto the root partition, the live system has little memory:</p>
-<pre><code>cd /mnt/cloudos
-curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.4/cloudos-stage3-amd64-1.4.tar.xz
-curl -LO https://github.com/wh1laye/cloudos-repo/releases/download/1.4/cloudos-stage3-amd64-1.4.tar.xz.sha256</code></pre>
-<p>then do the verification from <a href="#s4-1">4.1</a> and the unpacking from <a href="#s4-2">4.2</a>. run the unpacking from the same folder where the archive is.</p>
-<h3 id="s4-4">4.4 after unpacking</h3>
-<p>the archive is no longer needed, delete it so it does not take space:</p>
-<pre><code>rm /mnt/cloudos/cloudos-stage3-amd64-1.4.tar.xz*
-ls /mnt/cloudos</code></pre>
-<p>the list should contain <code>bin</code>, <code>boot</code>, <code>etc</code>, <code>usr</code>, <code>var</code> and other system folders. if the folder is empty, the archive was unpacked to the wrong place.</p>
-<div class="note"><b>note</b>you can always download the archive manually from the <a href="../../releases/">releases</a> page and put it on the disk through a usb stick.</div>
-
-<h2 id="chroot">5. entering chroot</h2>
-<pre><code>mount --types proc /proc /mnt/cloudos/proc
+/CloudOS
+    protocol: linux
+    path: boot():/vmlinuz
+    cmdline: root=PARTUUID=PARTUUID_КОРНЯ rootfstype=ext4 rw quiet slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1</code></pre>
+<div class="m-uefi"><pre><code>mkdir -p /mnt/cloudos/boot/EFI/BOOT
+cp /usr/share/limine/BOOTX64.EFI /usr/share/limine/BOOTIA32.EFI /mnt/cloudos/boot/EFI/BOOT/</code></pre>
+</div>
+<div class="m-bios"><pre><code>cp /usr/share/limine/limine-bios.sys /mnt/cloudos/boot/limine/
+limine bios-install /dev/sda</code></pre>
+</div>
+<h3 id="s4-6">4.6 configuration inside</h3>
+<pre><code>mount --rbind /dev /mnt/cloudos/dev
+mount -t proc proc /mnt/cloudos/proc
 mount --rbind /sys /mnt/cloudos/sys
-mount --make-rslave /mnt/cloudos/sys
-mount --rbind /dev /mnt/cloudos/dev
-mount --make-rslave /mnt/cloudos/dev
-cp --dereference /etc/resolv.conf /mnt/cloudos/etc/
-chroot /mnt/cloudos /bin/bash
-source /etc/profile</code></pre>
-<h3 id="s5-1">5.1 what the commands do</h3>
-<div class="sc"><table><tr><th>command</th><th>why</th></tr>
-<tr><td><code>mount --types proc</code></td><td>gives the system in chroot access to process information</td></tr>
-<tr><td><code>mount --rbind /sys</code>, <code>/dev</code></td><td>passes devices and sysfs from the live system inside</td></tr>
-<tr><td><code>--make-rslave</code></td><td>so that unmounting inside chroot does not affect the live system</td></tr>
-<tr><td><code>cp --dereference /etc/resolv.conf</code></td><td>carries over dns settings, without them there will be no site names inside chroot</td></tr>
-<tr><td><code>chroot /mnt/cloudos /bin/bash</code></td><td>makes /mnt/cloudos the root and starts bash in it</td></tr>
-<tr><td><code>source /etc/profile</code></td><td>pulls in the cloudos paths and environment variables</td></tr></table></div>
-<h3 id="s5-2">5.2 prompt</h3>
-<p>so you do not forget you are in chroot, change the prompt:</p>
-<pre><code>export PS1="(cloudos chroot) $PS1"</code></pre>
-<h3 id="s5-3">5.3 entering again</h3>
-<p>if you rebooted the live iso or left chroot, mount the partitions again and repeat the entry. you do not need to unpack the archive again:</p>
-<pre><code>mount /dev/sda2 /mnt/cloudos
-mount /dev/sda1 /mnt/cloudos/boot
-mount --types proc /proc /mnt/cloudos/proc
-mount --rbind /sys /mnt/cloudos/sys
-mount --make-rslave /mnt/cloudos/sys
-mount --rbind /dev /mnt/cloudos/dev
-mount --make-rslave /mnt/cloudos/dev
-cp --dereference /etc/resolv.conf /mnt/cloudos/etc/
-chroot /mnt/cloudos /bin/bash
-source /etc/profile</code></pre>
-<p>you enter the system the same way for repair if it stopped booting, see <a href="#s14-9">14.9</a>.</p>
-<h3 id="s5-4">5.4 leaving</h3>
+mount -t tmpfs tmpfs /mnt/cloudos/run
+chroot /mnt/cloudos /bin/bash</code></pre>
+<p>inside the chroot remove live leftovers, create the user and passwords:</p>
+<pre><code>rm -f /etc/init.d/cloudos-smoke /etc/runlevels/default/cloudos-smoke /etc/conf.d/agetty.tty1 /etc/ssh/sshd_config.d/05-cloudos-live.conf
+userdel -r cloudos
+useradd -m -G wheel,users,video,audio,netdev -s /bin/bash имя
+passwd имя
+passwd
+echo "permit persist :wheel" &gt; /etc/doas.conf
+chmod 600 /etc/doas.conf
+echo 'hostname="cloudos"' &gt; /etc/conf.d/hostname</code></pre>
+<h3 id="s4-7">4.7 finishing</h3>
 <pre><code>exit
-umount -R /mnt/cloudos</code></pre>
-<p>if unmounting says <code>target is busy</code>, close all terminal windows where you were in chroot and repeat.</p>
-
-<h2 id="conf">6. build setup</h2>
-<p>build flags are set in one file, <code>/etc/portage/make.conf</code>:</p>
-<pre><code>CC="gcc"
-CFLAGS="-O2 -march=native"
-MAKEOPTS="-j$(nproc)"
-USE=""</code></pre>
-<p>for clang set <code>CC="clang"</code>. then update the recipe list:</p>
-<pre><code>cloudpkg sync</code></pre>
-<h3 id="s6-1">6.1 locales</h3>
-<pre><code>echo "en_US.UTF-8 UTF-8" &gt; /etc/locale.gen
-localedef -i en_US -f UTF-8 en_US.UTF-8
-echo "LANG=en_US.UTF-8" &gt; /etc/locale.conf</code></pre>
-<h3 id="s6-2">6.2 build flags</h3>
-<div class="sc"><table><tr><th>parameter</th><th>what it means</th></tr>
-<tr><td><code>CC</code></td><td>compiler: <code>gcc</code> or <code>clang</code></td></tr>
-<tr><td><code>CFLAGS</code></td><td>compilation flags. <code>-O2</code> is ordinary optimization</td></tr>
-<tr><td><code>-march=native</code></td><td>code for the cpu of this machine. faster, but will not run on an older cpu</td></tr>
-<tr><td><code>-march=x86-64</code></td><td>generic code, will run on any x86_64</td></tr>
-<tr><td><code>MAKEOPTS</code></td><td>make parameters. <code>-j</code> is the number of parallel jobs</td></tr>
-<tr><td><code>USE</code></td><td>package feature switches, empty by default</td></tr></table></div>
-<p>if you build on the same machine where you will work, leave <code>-march=native</code>. if you later move the disk to another computer, change it to <code>-march=x86-64</code>. stage 3 itself is built with generic flags.</p>
-<h3 id="s6-3">6.3 parallel build</h3>
-<p><code>-j$(nproc)</code> starts as many jobs as the cpu has threads. with little ram the build may fail with the message <code>killed</code>. then reduce the number:</p>
-<pre><code>MAKEOPTS="-j2"</code></pre>
-<h3 id="s6-4">6.4 gcc 15 and build errors</h3>
-<p>gcc 15 uses the c23 standard by default, and some old packages do not build with it. typical signs: errors about <code>bool</code>, <code>true</code>, <code>false</code> or function declarations without arguments. in that case return the previous standard:</p>
-<pre><code>CC="gcc -std=gnu17"</code></pre>
-<p>change the value <code>CC</code> in <code>/etc/portage/make.conf</code> and repeat the package installation.</p>
-
-<h2 id="kernel">7. kernel</h2>
-<p>the kernel is taken from kernel.org and configured by hand </p>
+umount -R /mnt/cloudos
+reboot</code></pre>
+<h2 id="after">5. after the install</h2>
+<h3 id="s5-1">5.1 login and rights</h3>
+<p>log in as the user you created. root commands go through doas:</p>
+<pre><code>doas cloudpkg install nano</code></pre>
+<h3 id="s5-2">5.2 timezone and hostname</h3>
+<pre><code>ls /usr/share/zoneinfo
+doas ln -sfv /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+date</code></pre>
+<h3 id="s5-3">5.3 network</h3>
+<p>dhcpcd gets an address by itself. for wifi:</p>
+<pre><code>doas iwctl station wlan0 connect имя_сети
+ip addr</code></pre>
+<p>a static address goes into <code>/etc/dhcpcd.conf</code>.</p>
+<h3 id="s5-4">5.4 services and firewall</h3>
+<pre><code>rc-update show
+doas rc-service sshd start
+doas rc-update add sshd default
+doas cloudos-firewall status
+doas cloudos-audit</code></pre>
+<p>ssh is off by default and the nftables firewall runs with a drop policy. open the port with <code>cloudos-firewall</code> before enabling sshd (run <code>cloudos-firewall</code> with no arguments for help).</p>
+<h3 id="s5-5">5.5 swap and zram</h3>
+<p>swap is optional. as a file:</p>
+<pre><code>doas dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
+doas chmod 600 /swapfile
+doas mkswap /swapfile
+doas swapon /swapfile</code></pre>
+<p>plus a line in <code>/etc/fstab</code>: <code>/swapfile none swap defaults 0 0</code>. the kernel supports zswap and zram with zstd.</p>
+<h2 id="cpkg">6. packages and cloudpkg</h2>
+<p>cloudpkg builds packages from source using gentoo based recipes.</p>
+<pre><code>doas cloudpkg sync
+cloudpkg search имя
+cloudpkg info имя
+doas cloudpkg install имя
+doas cloudpkg remove имя
+doas cloudpkg upgrade
+doas cloudpkg clean</code></pre>
+<p>if a package fails, read the last log lines and look in <a href="#errors">errors and fixes</a>. builds need free space in <code>/var/tmp</code> and enough ram.</p>
+<h2 id="kernel">7. your own kernel (optional)</h2>
+<p>the kernel from the iso fits most machines and needs no tuning. build your own only if you need a driver the image lacks. gcc, make and the rest are already installed.</p>
 <pre><code>cd /usr/src
 curl -LO https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.10.tar.xz
 tar xf linux-6.18.10.tar.xz
 cd linux-6.18.10
+zcat /proc/config.gz &gt; .config 2&gt;/dev/null || make defconfig
 make menuconfig
 make -j$(nproc)
-make modules_install
-cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
-<div class="warn"><b>important</b> you need to use everywhere the name of the disk you want to install to, you can find it with the lsblk command (again, the disk can be called /dev/nvme0n1 /dev/sda /dev/sdb  </div>
-<h3 id="s7-1">7.1 what to enable in menuconfig</h3>
-<p>in <code>make menuconfig</code> search opens with the key <kbd>/</kbd>, there you can find any option by name. a kernel without the needed drivers will not boot, so check at least these items. an asterisk <code>[*]</code> means built into the kernel, <code>M</code> means a module.</p>
-<div class="sc"><table><tr><th>option</th><th>why</th></tr>
-<tr><td><code>DEVTMPFS</code>, <code>DEVTMPFS_MOUNT</code></td><td>the /dev directory, needed by udev</td></tr>
-<tr><td><code>BLK_DEV_INITRD</code></td><td>booting with initramfs</td></tr>
-<tr><td><code>RD_GZIP</code>, <code>RD_XZ</code>, <code>RD_ZSTD</code></td><td>unpacking initramfs. enable all three so you do not have to guess how dracut compressed it</td></tr>
-<tr><td><code>EXT4_FS</code>, <code>BTRFS_FS</code></td><td>the root filesystem. enable <b>built in</b>, not as a module</td></tr>
-<tr><td><code>VFAT_FS</code>, <code>FAT_FS</code>, <code>NLS_CODEPAGE_437</code>, <code>NLS_ISO8859_1</code></td><td>the /boot partition on fat32</td></tr>
-<tr><td><code>TMPFS</code>, <code>PROC_FS</code>, <code>SYSFS</code></td><td>basic virtual filesystems</td></tr>
-<tr><td><code>BLK_DEV_NVME</code></td><td>nvme disks</td></tr>
-<tr><td><code>ATA</code>, <code>SATA_AHCI</code>, <code>BLK_DEV_SD</code></td><td>sata disks</td></tr>
-<tr><td><code>USB_XHCI_HCD</code>, <code>USB_XHCI_PCI</code>, <code>USB_HID</code></td><td>usb ports and keyboard</td></tr>
-<tr><td><code>NET</code>, <code>INET</code>, <code>PACKET</code>, <code>UNIX</code></td><td>network. without <code>PACKET</code> dhcpcd will not work</td></tr>
-<tr><td><code>CFG80211</code>, <code>MAC80211</code>, <code>RFKILL</code>, wifi driver</td><td>needed for wifi. pick the driver by <code>lspci</code> or <code>lsusb</code>, for example <code>IWLWIFI</code> and <code>IWLMVM</code> for intel, <code>ATH9K</code> and <code>ATH10K</code> for atheros, <code>RTW88</code> and <code>RTW89</code> for realtek, <code>MT7921E</code> for mediatek, <code>BRCMFMAC</code> for broadcom. for iwd enable <code>CRYPTO_USER_API_HASH</code> and <code>CRYPTO_USER_API_SKCIPHER</code></td></tr>
-<tr><td>network card driver</td><td>for example <code>E1000E</code> for intel, <code>R8169</code> for realtek. find out your card with the command <code>lspci</code> in the live iso</td></tr>
-<tr><td><code>INOTIFY_USER</code>, <code>SIGNALFD</code>, <code>TIMERFD</code>, <code>EPOLL</code>, <code>FHANDLE</code></td><td>udev needs this</td></tr>
-<tr><td><code>CGROUPS</code></td><td>openrc needs this</td></tr>
-<tr><td><code>VT</code>, <code>VT_CONSOLE</code>, <code>FRAMEBUFFER_CONSOLE</code>, <code>DRM_SIMPLEDRM</code></td><td>console output to the screen without a video card driver</td></tr></table></div>
-<div class="note"><b>note</b>video card drivers (amdgpu, i915, nouveau) require firmware files <code>firmware</code>, which stage 3 does not have. without a driver the console still works through <code>DRM_SIMPLEDRM</code>.</div>
-<p>a convenient start: if the live iso is built with support for <code>/proc/config.gz</code>, take its config as a base and add to it:</p>
-<pre><code>zcat /proc/config.gz &gt; .config
-make olddefconfig
-make menuconfig</code></pre>
-<h3 id="s7-2">7.2 what the build commands do</h3>
-<div class="sc"><table><tr><th>command</th><th>why</th></tr>
-<tr><td><code>make menuconfig</code></td><td>kernel configuration, the result is written to the file <code>.config</code></td></tr>
-<tr><td><code>make -j$(nproc)</code></td><td>kernel build, takes from several minutes to an hour depending on the cpu</td></tr>
-<tr><td><code>make modules_install</code></td><td>installs the modules into <code>/lib/modules/6.18.10</code>, they are needed by dracut</td></tr>
-<tr><td><code>cp arch/x86/boot/bzImage</code></td><td>puts the kernel itself into /boot</td></tr></table></div>
-<p>save the config and the symbol map, they will be useful when updating the kernel:</p>
-<pre><code>cp .config /boot/config-6.18.10
-cp System.map /boot/System.map-6.18.10</code></pre>
-<h3 id="s7-3">7.3 kernel mirrors</h3>
-<p>if <code>cdn.kernel.org</code> does not open, download the same archive from a mirror:</p>
-<pre><code>curl -LO https://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.18.10.tar.xz
-curl -LO https://mirrors.ustc.edu.cn/kernel.org/linux/kernel/v6.x/linux-6.18.10.tar.xz</code></pre>
-<p>paths on mirrors sometimes change. if the link does not work, open the mirror directory in the browser and find the file by hand.</p>
-<h2 id="boot">8. bootloader</h2>
-<h3 id="fstab">8.1 fstab</h3>
-<p>partition uuids are shown by <code>blkid</code>. the file <code>/etc/fstab</code> for uefi:</p>
-<pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
-UUID=ESP_UUID   /boot  vfat  defaults  0 2</code></pre>
-<p>for bios:</p>
-<pre><code>UUID=ROOT_UUID  /      ext4  defaults  0 1
-UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
-<p>if the root is on btrfs, replace <code>ext4</code> in the first line with <code>btrfs</code>.</p>
-<h3 id="initramfs">8.2 initramfs</h3>
-<p>dracut is already in stage 3, you do not need to install it. dracut reads <code>/etc/fstab</code> (that is why it is done in 8.1) and the kernel modules from <code>/lib/modules</code>. check that they exist, then build the initramfs:</p>
-<pre><code>ls /lib/modules
-mountpoint /boot
-dracut --force --kver 6.18.10 /boot/initramfs-6.18.10.img
-ls -l /boot/initramfs-6.18.10.img</code></pre>
-<p>the first command must show the folder <code>6.18.10</code>, the second the message <code>/boot is a mountpoint</code>. if the folder is missing, you skipped <code>make modules_install</code> from <a href="#s7-2">7.2</a>. if <code>/boot</code> is not mounted, mount the partition (3.3). at the end a file of several megabytes must appear.</p>
-<h3 id="limine">8.3 limine</h3>
-<p>limine is already in stage 3, you do not need to install it. check that everything is in place:</p>
-<pre><code>ls /usr/share/limine
-command -v limine</code></pre>
-<p>the list must contain <code>BOOTX64.EFI</code> and <code>limine-bios.sys</code>, and the <code>limine</code> command must print a path. if there is nothing, stage 3 was not unpacked completely, go back to chapter 4. fallback: <code>cloudpkg sync</code>, then <code>cloudpkg install limine</code>.</p>
-<p>first find the uuid of the root partition with <code>blkid</code>. then create <code>/boot/limine.conf</code>, it is the same for uefi and bios. put your uuid instead of <code>ROOT_UUID</code>:</p>
-<pre><code>timeout: 5
-
-/CloudOS
-    protocol: linux
-    path: boot():/vmlinuz-6.18.10
-    cmdline: root=UUID=ROOT_UUID rw
-    module_path: boot():/initramfs-6.18.10.img</code></pre>
-<div class="m-uefi"><p>install for uefi:</p>
-<pre><code>mkdir -p /boot/EFI/BOOT
-cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre></div>
-<div class="m-bios"><p>install for bios. the <code>limine bios-install</code> command writes the loader to the whole disk, not to a partition: give <code>/dev/sda</code> or <code>/dev/nvme0n1</code>, without a partition number.</p>
-<pre><code>cp /usr/share/limine/limine-bios.sys /boot/
-limine bios-install /dev/sda</code></pre></div>
-<h3 id="s8-4">8.4 check before rebooting</h3>
-<p>look at what is in <code>/boot</code>:</p>
-<pre><code>ls -l /boot</code></pre>
-<div class="m-uefi"><p>there should be <code>vmlinuz-6.18.10</code>, <code>initramfs-6.18.10.img</code>, <code>limine.conf</code> and the folder <code>EFI/BOOT</code> with the file <code>BOOTX64.EFI</code>.</p></div>
-<div class="m-bios"><p>there should be <code>vmlinuz-6.18.10</code>, <code>initramfs-6.18.10.img</code>, <code>limine.conf</code> and <code>limine-bios.sys</code>.</p></div>
-<p>compare the uuids in the configs with the real ones:</p>
-<pre><code>blkid
-grep UUID /etc/fstab /boot/limine.conf</code></pre>
-<p>the uuid of the root partition in <code>limine.conf</code> and in <code>fstab</code> must match the output of <code>blkid</code>. most failed first boots are due to a typo here.</p>
-<h3 id="s8-5">8.5 writing to nvram (uefi only, optional)</h3>
-<div class="m-bios"><p>this step is not needed in bios mode.</p></div>
-<div class="m-uefi">
-<p>the file <code>BOOTX64.EFI</code> in <code>EFI/BOOT</code> the firmware finds by itself, and that is enough. if you want a separate boot menu entry, create it with this command from the live iso (not from chroot):</p>
-<pre><code>efibootmgr --create --disk /dev/sda --part 1 --loader '\EFI\BOOT\BOOTX64.EFI' --label CloudOS</code></pre>
-<p>for an nvme disk: <code>--disk /dev/nvme0n1 --part 1</code>. in the firmware settings disable secure boot, limine without a signature will not boot.</p>
-</div>
-<h3 id="s8-6">8.6 several kernels</h3>
-<p>before updating the kernel add a second entry to <code>/boot/limine.conf</code>, and do not delete the old one. if the new kernel does not boot, you pick the old one in the menu:</p>
-<pre><code>timeout: 5
-
-/CloudOS
-    protocol: linux
-    path: boot():/vmlinuz-NEW
-    cmdline: root=UUID=ROOT_UUID rw
-    module_path: boot():/initramfs-NEW.img
-
-/CloudOS (old kernel)
-    protocol: linux
-    path: boot():/vmlinuz-OLD
-    cmdline: root=UUID=ROOT_UUID rw
-    module_path: boot():/initramfs-OLD.img</code></pre>
-<p>instead of <code>NEW</code> and <code>OLD</code> put the kernel versions.</p>
-
-<div class="note"><b>note</b>how all of this fits together is shown on the <a href="../../boot/">boot flow</a> page: files of every stage, check commands and typical failures.</div>
-<h2 id="final">9. finishing</h2>
-<p>enable the network and the log, set the root password:</p>
-<pre><code>cloudpkg install dhcpcd
-cloudpkg install syslog-ng
-rc-update add dhcpcd default
-rc-update add syslog-ng default
-passwd</code></pre>
-<p>leave chroot, unmount and reboot:</p>
-<pre><code>exit
-umount -R /mnt/cloudos
-reboot</code></pre>
-<div class="note"><b>note</b>cloudos does not create other users!), you add the user and doas yourself.</div>
-<div class="note"><b>important</b>the disk you install to can be nvme as well as sda or sdb, tested on 7 5700X (AMD) RX9060XT (AMD) and on sda (not nvme. i chose limine for speed and convenience. </div>
-<h3 id="s9-1">9.1 enable network and log</h3>
-<p>do all of this inside chroot, before rebooting. dhcpcd and syslog-ng are already in stage 3, you only need to enable them:</p>
-<pre><code>rc-update add dhcpcd default
-rc-update add syslog-ng default
-rc-update show</code></pre>
-<p>the list must contain <code>dhcpcd</code> and <code>syslog-ng</code> in the <code>default</code> level. after the first boot the wired network works by itself.</p>
-<h3 id="s9-2">9.2 wifi (optional)</h3>
-<p>if you need wifi, install the packages now, while you still have internet from the live system: after a reboot without a cable there is nothing to download them from. the kernel must be built with wifi, see <a href="#s7-1">7.1</a>. the install takes 10 minutes and downloads about 650 mb of firmware:</p>
-<pre><code>printf '#!/bin/sh\nexec bison -y "$@"\n' > /usr/bin/yacc.bison
-chmod 755 /usr/bin/yacc.bison
-cloudpkg sync
-cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware
-mkdir -p /etc/iwd
-printf '[General]\nEnableNetworkConfiguration=false\n' > /etc/iwd/main.conf
-rc-update add dbus default
-rc-update add iwd default</code></pre>
-<p>the first two lines create the missing <code>yacc.bison</code> wrapper, without it the libnl library does not build. connecting to a network after boot is described in <a href="#s2-3">2.3</a>.</p>
-<h3 id="s9-3">9.3 first boot</h3>
-<p>leave chroot and reboot. remove the usb stick and choose the disk in the boot menu if it was not chosen by itself. the <code>login:</code> prompt appears on tty1. enter <code>root</code> and the password you set with <code>passwd</code>.</p>
-<p>then configure the system, it is described in chapter <a href="#first">10</a>.</p>
-<div class="note"><b>note</b>stage 3 already has cloudpkg, dhcpcd, syslog-ng, limine, dracut, doas, xorriso, squashfs-tools and fastfetch, do not install them again. cloudpkg works on top of portage: <code>cloudpkg sync</code> updates the recipe tree, <code>cloudpkg install name</code> installs from source, <code>cloudpkg doctor</code> checks the setup.</div>
-<h2 id="first">10. first boot</h2>
-<p>after installation the system has only a console and root. this chapter is about what is worth doing right away.</p>
-<h3 id="s10-1">10.1 login</h3>
-<p>at the prompt <code>login:</code> , enter <code>root</code> and the password you set in chapter <a href="#final">9</a>. if you did not set one, the password is empty, set it right away with the command <code>passwd</code>.</p>
-<h3 id="s10-2">10.2 user and doas</h3>
-<p>working as root all the time is unsafe. create a regular user and allow the wheel group to use doas:</p>
-<pre><code>grep wheel /etc/group || groupadd wheel
-useradd -m -G wheel -s /bin/bash name
-passwd name
-grep -q wheel /etc/doas.conf 2&gt;/dev/null || echo "permit persist :wheel" &gt;&gt; /etc/doas.conf
-chmod 0400 /etc/doas.conf</code></pre>
-<p>instead of <code>name</code> put your own. after that, commands as root are run like this:</p>
-<pre><code>doas cloudpkg install nano</code></pre>
-<p>if you do not want to type the password every time, replace the rule with <code>permit nopass :wheel</code>. this is more convenient, but safer with a password.</p>
-<h3 id="s10-3">10.3 computer name</h3>
-<pre><code>echo "cloudos" &gt; /etc/hostname
-echo 'hostname="cloudos"' &gt; /etc/conf.d/hostname
-rc-update add hostname boot</code></pre>
-<p>if the service <code>hostname</code> is already enabled, the last command will report that and change nothing. instead of <code>cloudos</code> you can write any name in latin letters.</p>
-<h3 id="s10-4">10.4 time zone</h3>
-<pre><code>ls /usr/share/zoneinfo
-ln -sfv /usr/share/zoneinfo/Europe/Moscow /etc/localtime</code></pre>
-<p>instead of <code>Europe/Moscow</code> choose your zone from the list. check the result with the command <code>date</code>.</p>
-<h3 id="s10-5">10.5 network</h3>
-<p>dhcpcd gets the address and dns automatically. check:</p>
-<pre><code>ip addr
-ping -c1 github.com</code></pre>
-<p>if you need a permanent address, add to <code>/etc/dhcpcd.conf</code> (see the interface name in <code>ip link</code>):</p>
-<pre><code>interface eth0
-static ip_address=192.168.1.50/24
-static routers=192.168.1.1
-static domain_name_servers=1.1.1.1 8.8.8.8</code></pre>
-<p>then restart the service: <code>rc-service dhcpcd restart</code>.</p>
-<p>wifi: the packages are installed at the end of the installation, see <a href="#s9-2">9.2</a>, connecting to a network is described in <a href="#s2-3">2.3</a>.</p>
-<h3 id="s10-6">10.6 openrc services</h3>
+doas make modules_install
+doas cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
+<p>add a second entry to <code>/boot/limine/limine.conf</code> with <code>path: boot():/vmlinuz-6.18.10</code> and reboot. the disk driver and root filesystem must be built in (<code>=y</code>) since there is no initramfs. the cmdline has <code>module.sig_enforce=1</code>: modules of your own kernel must be signed or the parameter removed.</p>
+<h2 id="maint">8. maintenance</h2>
+<pre><code>doas cloudpkg sync
+doas cloudpkg upgrade
+doas cloudpkg clean
+df -h</code></pre>
+<p>system updates ship as new live iso versions: reinstall or update packages with cloudpkg. backup:</p>
+<pre><code>doas tar cpf /mnt/usb/cloudos-backup.tar.xz --xattrs-include='*.*' --numeric-owner --one-file-system -I xz /</code></pre>
+<h2 id="errors">9. errors and fixes</h2>
+<div class="sc"><table><tr><th>problem</th><th>what to do</th></tr>
+<tr><td>installer says mkfs.btrfs is missing</td><td>this iso has no btrfs-progs, choose ext4</td></tr>
+<tr><td>installer sees no disk</td><td>check <code>lsblk</code>. the iso media is excluded on purpose</td></tr>
+<tr><td>uefi does not boot after install</td><td>pick the disk in the firmware boot menu. the file must be at <code>/boot/EFI/BOOT/BOOTX64.EFI</code></td></tr>
+<tr><td>kernel panic: unable to mount root</td><td>compare <code>root=PARTUUID=</code> in <code>limine.conf</code> with <code>blkid</code>. controllers other than sata, nvme, virtio and usb storage may need your own kernel, see 7</td></tr>
+<tr><td>no wifi</td><td><code>doas iwctl station wlan0 scan</code>, then connect. firmware is already in the system</td></tr>
+<tr><td>forgot the password</td><td>boot the live iso, mount root at <code>/mnt/cloudos</code>, <code>chroot</code>, <code>passwd</code></td></tr>
+<tr><td>a package failed to build</td><td><code>doas cloudpkg sync</code> and retry. if it fails, post the last log lines on the forum</td></tr>
+</table></div>
+<h2 id="cheat">10. cheat sheet</h2>
 <div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>rc-status</code></td><td>shows the running services</td></tr>
-<tr><td><code>rc-update show</code></td><td>shows the services and the runlevels they are enabled on</td></tr>
-<tr><td><code>rc-update add name default</code></td><td>enables the service at boot</td></tr>
-<tr><td><code>rc-update del name default</code></td><td>disables autostart</td></tr>
-<tr><td><code>rc-service name start</code></td><td>starts the service now</td></tr>
-<tr><td><code>rc-service name stop</code></td><td>stops it</td></tr>
-<tr><td><code>rc-service name restart</code></td><td>restarts it</td></tr>
-<tr><td><code>rc-service name status</code></td><td>shows the status</td></tr></table></div>
-<p>levels: <code>boot</code> for what is needed early (for example the computer name), <code>default</code> for ordinary services.</p>
-<h3 id="s10-7">10.7 swap</h3>
-<p>swap is not required, but it helps when building big packages with little ram. the easiest way is a file.</p>
-<p>for ext4:</p>
-<pre><code>dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
-chmod 600 /swapfile
-mkswap /swapfile
-swapon /swapfile</code></pre>
-<p>for btrfs (also works for ext4):</p>
-<pre><code>btrfs filesystem mkswapfile --size 4g /swapfile
-swapon /swapfile</code></pre>
-<p>so that swap turns on by itself, add a line to <code>/etc/fstab</code>:</p>
-<pre><code>/swapfile  none  swap  defaults  0 0</code></pre>
-<p>a swap partition is made like this: <code>mkswap /dev/sda3</code>, <code>swapon /dev/sda3</code> and a fstab line with <code>UUID=...</code> instead of <code>/swapfile</code>.</p>
-
-<h2 id="cpkg">11. packages and cloudpkg</h2>
-<p>all packages in cloudos are built from source. this is done by the manager <code>cloudpkg</code>. its recipes are taken from gentoo.</p>
-<div class="warn"><b>important</b>there are no package signatures, the integrity of sources is checked only by the sha256 from the recipe. some recipes may need fixes.</div>
-<p>cloudpkg is included in stage 3. if it is missing from the system, it is installed with one command, see <a href="#s11-5">11.5</a>.</p>
-<h3 id="s11-1">11.1 commands</h3>
-<div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>cloudpkg sync</code></td><td>updates the recipe list</td></tr>
-<tr><td><code>cloudpkg install name</code></td><td>builds and installs a package together with its dependencies</td></tr>
-<tr><td><code>cloudpkg remove name</code></td><td>removes a package</td></tr>
-<tr><td><code>cloudpkg upgrade</code></td><td>updates installed packages to newer versions</td></tr>
-<tr><td><code>cloudpkg clean</code></td><td>cleans downloaded sources and temporary build files</td></tr>
-<tr><td><code>cloudpkg search string</code></td><td>searches for a package</td></tr>
-<tr><td><code>cloudpkg info name</code></td><td>shows what would be installed</td></tr>
-<tr><td><code>cloudpkg list</code></td><td>lists installed packages</td></tr>
-<tr><td><code>cloudpkg doctor</code></td><td>checks the setup</td></tr>
-<tr><td><code>-p</code>, <code>-a</code></td><td>dry run and ask for confirmation (for install, remove, upgrade)</td></tr></table></div>
-<h3 id="s11-2">11.2 how the installation goes</h3>
-<ol class="steps">
-<li>the package recipe and its dependency list are read</li>
-<li>the sources are downloaded through curl</li>
-<li>sha256 is checked</li>
-<li>the package is built with your flags from <code>/etc/portage/make.conf</code></li>
-<li>the result is installed into the system</li>
-</ol>
-<p>a build takes time and disk space. big packages such as compilers build for a long time, this is normal.</p>
-<h3 id="s11-3">11.3 examples</h3>
-<pre><code>cloudpkg sync
-cloudpkg install nano</code></pre>
-<h3 id="s11-4">11.4 if a package failed to build</h3>
-<ol class="steps">
-<li>read the last lines with <code>error</code></li>
-<li>if the error is about the c standard, set <code>CC="gcc -std=gnu17"</code>, see <a href="#s6-4">6.4</a></li>
-<li>if the build fails with <code>killed</code>, reduce <code>-j</code> in <code>MAKEOPTS</code></li>
-<li>try <code>cloudpkg sync</code> and repeat, maybe the recipe is already fixed</li>
-<li>write on the <a href="../../forum/">forum</a> in the questions section, attaching the last 10-15 lines of output</li>
-</ol>
-<h3 id="s11-5">11.5 one-command install</h3>
-<p>as root (or through doas) run:</p>
-<pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre>
-<p>the script works out where it runs. in cloudos it builds cloudpkg, installs portage and downloads the recipe tree. on another distribution (arch, debian, ubuntu, fedora and others, x86_64 only) your system is not touched: the script downloads the cloudos stage 3, checks its sha256, unpacks it into <code>/var/lib/cloudpkg/box</code> and installs cloudpkg there. it needs 4 gb of free space, and it installs missing host tools (curl, tar, xz) by itself.</p>
-<p>on another distribution the commands are the same, and what you install lives in the box:</p>
-<pre><code>cloudpkg install nano
-cloudpkg run nano file
-cloudpkg export nano</code></pre>
-<p><code>run</code> starts a program from the box, <code>export</code> makes it a normal command on the host, <code>shell</code> opens a shell inside the box. to remove everything: <code>rm -rf /var/lib/cloudpkg /usr/local/bin/cloudpkg</code>.</p>
-<div class="note"><b>note</b>the box separates files, not security. builds run as root inside a chroot, this is not a sandbox.</div>
-
-<h2 id="maint">12. maintenance</h2>
-<h3 id="s12-1">12.1 updating packages</h3>
-<pre><code>cloudpkg sync
-cloudpkg upgrade
-cloudpkg clean</code></pre>
-<h3 id="s12-2">12.2 updating the kernel</h3>
-<p>a new version is installed next to the old one. do not delete the old kernel until you are sure the new one boots.</p>
-<ol class="steps">
-<li>download and unpack the new kernel into <code>/usr/src</code>, as in chapter <a href="#kernel">7</a></li>
-<li>take the old config as a base and pull in the new options:</li>
-</ol>
-<pre><code>cd /usr/src/linux-NEW
-cp /boot/config-OLD .config
-make olddefconfig</code></pre>
-<ol class="steps" start="3">
-<li>build and install:</li>
-</ol>
-<pre><code>make -j$(nproc)
-make modules_install
-cp arch/x86/boot/bzImage /boot/vmlinuz-NEW
-cp .config /boot/config-NEW
-dracut --kver NEW /boot/initramfs-NEW.img</code></pre>
-<ol class="steps" start="4">
-<li>add a second entry to <code>/boot/limine.conf</code>, as in <a href="#s8-6">8.6</a>, and reboot</li>
-<li>if everything works, the old files can be deleted:</li>
-</ol>
-<pre><code>rm /boot/vmlinuz-OLD /boot/initramfs-OLD.img /boot/config-OLD
-rm -r /lib/modules/OLD</code></pre>
-<p>instead of <code>NEW</code> and <code>OLD</code> put the versions, for example <code>6.18.10</code>.</p>
-<h3 id="s12-3">12.3 backup</h3>
-<p>a full copy of the system in one archive with the same keys as when unpacking stage 3. save it to another disk or usb stick:</p>
-<pre><code>tar cpf /mnt/usb/cloudos-backup.tar.xz --xattrs-include='*.*' --numeric-owner --one-file-system -I xz /</code></pre>
-<p>btrfs has snapshots, they are faster and take less space, see <a href="#appb">appendix b</a>.</p>
-<h3 id="s12-4">12.4 freeing space</h3>
-<pre><code>df -h
-cloudpkg clean
-du -sh /usr/src/* /var/* 2&gt;/dev/null</code></pre>
-<p>the old kernel folders in <code>/usr/src</code> can be deleted if you have their configs saved in <code>/boot</code>.</p>
-
-<h2 id="next">13. what next</h2>
-<p>cloudos is installed minimal. everything else you add as needed.</p>
-<div class="sc"><table><tr><th>what</th><th>how</th></tr>
-<tr><td>sound</td><td>you install pipewire yourself through <code>cloudpkg install</code>, if there is a recipe for it</td></tr>
-<tr><td>graphics and desktop</td><td>none by default. install the components by hand from recipes, you will need a video card driver in the kernel and firmware files</td></tr>
-<tr><td>ssh server</td><td>openssh is already installed but off. set a root password or add a user and a key, then <code>rc-update add sshd default</code> and <code>rc-service sshd start</code></td></tr>
-<tr><td>firewall</td><td>nftables is on from the start: incoming closed, replies to your connections pass. open a port: <code>cloudos-firewall allow ssh</code> or <code>cloudos-firewall allow tcp/8080 from 10.0.0.0/8</code>, close it: <code>cloudos-firewall remove ssh</code>. system check: <code>cloudos-audit</code></td></tr>
-<tr><td>other editors and utilities</td><td>through <code>cloudpkg install</code></td></tr>
-<tr><td>man pages</td><td>are installed (man-db and man-pages): <code>man command</code>. if it says there is no page, run <code>mandb</code></td></tr></table></div>
-<h3 id="s13-1">13.1 other locales</h3>
-<p>in chapter <a href="#s6-1">6.1</a> one locale was created. to add another, for example russian:</p>
-<pre><code>localedef -i ru_RU -f UTF-8 ru_RU.UTF-8
-echo "LANG=ru_RU.UTF-8" &gt; /etc/locale.conf</code></pre>
-<p>in the kernel console cyrillic may display incorrectly without a separate font, so for the console it is safer to keep <code>en_US.UTF-8</code>.</p>
-<h3 id="s13-2">13.2 help and feedback</h3>
-<ul>
-<li>questions and discussion on the <a href="../../forum/">forum</a></li>
-<li>new versions and images on the <a href="../../releases/">releases page</a></li>
-<li>bugs and suggestions in <a href="https://github.com/wh1laye/cloudos-repo/issues">issues on github</a></li>
-</ul>
-
-<h2 id="errors">14. errors and fixes</h2>
-<p>click the error text to see the cause and what to do. if your error is not in the list, use search.</p>
-<h3 id="s14-1">14.1 live iso, network and time</h3>
-<details class="err"><summary>ping: connect: network is unreachable or no reply</summary><div>
-<p>the interface did not get an address. check the cable, then:</p>
-<pre><code>ip link
-dhcpcd eth0</code></pre>
-<p>take the interface name from <code>ip link</code>. if the interface is not in the list, the live iso has no driver for your network card.</p></div></details>
-<details class="err"><summary>ping by ip works, by name does not (temporary failure in name resolution)</summary><div>
-<p>dns is not set up. in the live iso it comes from dhcpcd. inside chroot check that this was done: <code>cp --dereference /etc/resolv.conf /mnt/cloudos/etc/</code>.</p></div></details>
-<details class="err"><summary>certificate verify failed or ssl certificate problem</summary><div>
-<p>almost always a wrong date. set it with <a href="#s2-1">2.1</a> and repeat. if that does not help, download the file on another device and move it with a usb stick.</p></div></details>
-<details class="err"><summary>curl: (6) could not resolve host or (7) failed to connect</summary><div>
-<p>no network or the site is unavailable from your network. check <code>ping</code> against another site. for github and kernel.org see <a href="#s2-4">2.4</a>.</p></div></details>
-<h3 id="s14-2">14.2 partitioning and filesystems</h3>
-<details class="err"><summary>mount: unknown filesystem type or wrong fs type</summary><div>
-<p>the partition is not formatted or you specified the wrong partition. check <code>lsblk -f</code>: in the column <code>FSTYPE</code> there must be a filesystem. if empty, repeat the formatting from <a href="#s3-2">3.2</a>.</p></div></details>
-<details class="err"><summary>mount: special device does not exist</summary><div>
-<p>wrong partition name. nvme ones are called <code>nvme0n1p1</code>, not <code>nvme0n11</code>, see <a href="#appa">appendix a</a>.</p></div></details>
-<details class="err"><summary>mkfs.fat: command not found or mkfs.btrfs: command not found</summary><div>
-<p>the live iso lacks the needed tool. dosfstools and btrfs-progs must be part of the image, check that you have an up-to-date iso.</p></div></details>
-<details class="err"><summary>cfdisk does not see the disk</summary><div>
-<p>the live iso has no driver for the disk controller. for a virtual machine choose a sata or nvme disk, not a non-standard controller.</p></div></details>
-<h3 id="s14-3">14.3 downloading and unpacking</h3>
-<details class="err"><summary>sha256sum: WARNING: 1 computed checksum did NOT match</summary><div>
-<p>the file was not downloaded fully or is corrupted. delete the archive and download again. make sure the <code>.sha256</code> file and the archive are in the same folder and the names match.</p></div></details>
-<details class="err"><summary>tar: Unexpected EOF in archive or xz: file format not recognized</summary><div>
-<p>the archive is truncated. download again and compare the size with the one shown on the <a href="../../releases/">releases page</a>.</p></div></details>
-<details class="err"><summary>tar: No space left on device</summary><div>
-<p>there was not enough space on the partition or the archive was in the live iso's ram. download straight into <code>/mnt/cloudos</code>, as in <a href="#s4-3">4.3</a>, and check the partition size with the command <code>df -h /mnt/cloudos</code>.</p></div></details>
-<h3 id="s14-4">14.4 chroot</h3>
-<details class="err"><summary>chroot: failed to run command '/bin/bash': No such file or directory</summary><div>
-<p>stage 3 is not unpacked or unpacked into another folder. run <code>ls /mnt/cloudos/bin</code>. if the folder is empty, go back to <a href="#s4-2">4.2</a>.</p></div></details>
-<details class="err"><summary>mount: /mnt/cloudos/proc: mount point does not exist</summary><div>
-<p>the same thing, stage 3 is not unpacked, so the proc, sys, dev folders do not exist yet.</p></div></details>
-<details class="err"><summary>sites do not open inside chroot</summary><div>
-<p>copy the dns settings again: <code>cp --dereference /etc/resolv.conf /mnt/cloudos/etc/</code> (run outside chroot).</p></div></details>
-<details class="err"><summary>umount: target is busy</summary><div>
-<p>some program is still using the files. close all terminals where you were in chroot and repeat <code>umount -R /mnt/cloudos</code>.</p></div></details>
-<h3 id="s14-5">14.5 building packages</h3>
-<details class="err"><summary>errors about bool, true, false, prototype</summary><div>
-<p>an old package does not build with the c23 standard enabled in gcc 15. add to make.conf <code>CC="gcc -std=gnu17"</code>, see <a href="#s6-4">6.4</a>.</p></div></details>
-<details class="err"><summary>gcc: fatal error: Killed signal terminated program cc1</summary><div>
-<p>not enough ram. reduce <code>-j</code> in <code>MAKEOPTS</code> or enable swap, see <a href="#s10-7">10.7</a>.</p></div></details>
-<details class="err"><summary>sha256 does not match when downloading sources</summary><div>
-<p>the file at the source may have changed or was downloaded with an error. run <code>cloudpkg sync</code> and repeat the installation. if the error repeats, write about it on the forum.</p></div></details>
-<details class="err"><summary>No space left on device during the build</summary><div>
-<p>out of space. run <code>cloudpkg clean</code> and check <code>df -h</code>. for building packages it is better to have 20 gb or more.</p></div></details>
-<h3 id="s14-6">14.6 kernel</h3>
-<details class="err"><summary>make menuconfig: Unable to find the ncurses libraries</summary><div>
-<p>the system has no ncurses with headers. install the package through cloudpkg or use <code>make config</code> (slow) or move a ready <code>.config</code>.</p></div></details>
-<details class="err"><summary>dracut: Cannot find module directory /lib/modules/6.18.10</summary><div>
-<p>you did not run <code>make modules_install</code> or the version in the command does not match the one you built. run <code>ls /lib/modules</code> and use the version you have.</p></div></details>
-<details class="err"><summary>make: *** No rule to make target ...</summary><div>
-<p>you ran make not in the kernel source folder. go to <code>/usr/src/linux-6.18.10</code> and repeat.</p></div></details>
-<h3 id="s14-7">14.7 booting</h3>
-<details class="err"><summary>after the reboot no bootable device or another system boots right away</summary><div>
-<div class="m-uefi"><p>check that the file <code>/boot/EFI/BOOT/BOOTX64.EFI</code>exists, that partition 1 has type efi system and that secure boot is off in the firmware. choose the disk in the boot menu manually (usually the key <kbd>f12</kbd> or <kbd>esc</kbd> at power on).</p></div>
-<div class="m-bios"><p>check that the /boot partition is marked with the flag <code>bootable</code> and that the command <code>limine bios-install</code> was run for the whole disk (for example /dev/sda), not a partition. in the firmware settings enable legacy or csm mode.</p></div></div></details>
-<details class="err"><summary>limine shows the menu, but the kernel does not start (file not found)</summary><div>
-<p>the path in <code>limine.conf</code> does not match the file name. check <code>ls /boot</code> and fix <code>path:</code> and <code>module_path:</code>.</p></div></details>
-<details class="err"><summary>Kernel panic: VFS: Unable to mount root fs on unknown-block</summary><div>
-<p>the kernel did not find the root partition. the most common causes:</p>
-<ul>
-<li>wrong <code>ROOT_UUID</code> in <code>cmdline</code>, compare with <code>blkid</code></li>
-<li>the kernel has no disk driver (<code>BLK_DEV_NVME</code> or <code>SATA_AHCI</code>) or filesystem (<code>EXT4_FS</code>, <code>BTRFS_FS</code>)</li>
-<li>the <code>module_path</code> with initramfs is not specified in <code>limine.conf</code></li>
-</ul>
-<p>boot from the live iso, enter chroot (<a href="#s14-9">14.9</a>), fix it and rebuild.</p></div></details>
-<details class="err"><summary>dracut: waits for the root device and drops to the dracut console</summary><div>
-<p>initramfs did not find the root. compare the uuid, and also check that the disk driver and the root filesystem are built into the kernel.</p></div></details>
-<details class="err"><summary>empty screen after choosing the limine entry</summary><div>
-<p>most likely the console is not output. enable in the kernel <code>DRM_SIMPLEDRM</code>, <code>FRAMEBUFFER_CONSOLE</code>, <code>VT_CONSOLE</code>, see <a href="#s7-1">7.1</a>. video card drivers without firmware files can give a black screen, then do not enable them.</p></div></details>
-<details class="err"><summary>Kernel panic: No init found</summary><div>
-<p>the root mounted, but there is no <code>/sbin/init</code>in it. check that stage 3 is fully unpacked and that the root partition is the right one.</p></div></details>
-<h3 id="s14-8">14.8 after booting</h3>
-<details class="err"><summary>login incorrect</summary><div>
-<p>wrong password or it was not set. boot from the live iso, enter chroot and set the password again with the command <code>passwd</code>.</p></div></details>
-<details class="err"><summary>no network after booting</summary><div>
-<p>check <code>rc-status</code>. if <code>dhcpcd</code> is not running, run <code>rc-update add dhcpcd default</code> and <code>rc-service dhcpcd start</code>. if the interface is not in <code>ip link</code>, the kernel has no driver for the card.</p>
-<p>if wifi does not work: check that <code>rc-status</code> shows <code>dbus</code> and <code>iwd</code>, that <code>rfkill list</code> does not show <code>blocked: yes</code> (unblock with <code>rfkill unblock wifi</code>), that <code>sys-kernel/linux-firmware</code> is installed and that <code>dmesg | grep -i firmware</code> has no firmware loading errors. if <code>iwctl</code> reports permission denied, add yourself to the <code>netdev</code> group and log in again.</p></div></details>
-<details class="err"><summary>doas: Operation not permitted</summary><div>
-<p>the user is not in the wheel group or there is no file <code>/etc/doas.conf</code>. check with <a href="#s10-2">10.2</a>: <code>id name</code> must show the group <code>wheel</code>.</p></div></details>
-<details class="err"><summary>setlocale: LC_ALL: cannot change locale</summary><div>
-<p>the specified locale was not created. create it with the command <code>localedef</code> from <a href="#s6-1">6.1</a> or change <code>LANG</code> to an existing one.</p></div></details>
-<details class="err"><summary>the service does not start: rc-service ... start</summary><div>
-<p>look at the output of the command and the log. the list of the service with an error is given by <code>rc-status --crashed</code>.</p></div></details>
-<h3 id="s14-9">14.9 emergency system access</h3>
-<p>if the system does not boot, it can almost always be repaired from the live iso:</p>
-<ol class="steps">
-<li>boot from the live iso and check the network</li>
-<li>mount the partitions and enter chroot per <a href="#s5-3">5.3</a></li>
-<li>fix the config, rebuild initramfs with the command <code>dracut --kver 6.18.10 /boot/initramfs-6.18.10.img --force</code> or fix <code>limine.conf</code></li>
-<li>leave chroot, unmount and reboot</li>
-</ol>
-<h3 id="s14-10">14.10 how to report an error</h3>
-<p>so that you get help quickly, attach:</p>
-<ul>
-<li>which chapter of the handbook you were doing and on which command it failed</li>
-<li>the lines with <code>error</code> or the last 10-15 lines of output</li>
-<li>boot mode (uefi or bios), disk name (sda or nvme) and the root filesystem</li>
-<li>the output of <code>dmesg | tail -50</code>, if the error is after booting</li>
-</ul>
-
-<h3 id="s14-11">14.11 installer wizard</h3>
-<details class="err"><summary>no disk /dev/sda or no partitions (wizard script message)</summary><div><p>the script could not find the disk or the partitions. check the disk name and that partitions have the right names (nvme adds the letter p: nvme0n1p1):</p><pre><code>lsblk
-partprobe /dev/sda</code></pre><p>if the name differs, fix the disk field in the wizard and copy the script again.</p></div></details>
-<details class="err"><summary>the wizard script exits immediately and does not ask for yes</summary><div><p>the script was not run from a terminal (through a pipe or with replaced input), so it cannot read your answer. run it directly:</p><pre><code>bash /root/cloudos-s1.sh</code></pre></div></details>
-<details class="err"><summary>limine not found in the live system</summary><div><p>the live image does not include limine. install the bootloader from the handbook inside chroot (<a href="#limine">8.3</a>). check what the live system has:</p><pre><code>ls /usr/share/limine</code></pre></div></details>
-<details class="err"><summary>curl: (22) The requested URL returned error: 404 when downloading stage 3</summary><div><p>the file name or the release tag has changed. open the releases page, copy the exact file name and put it at the top of the script (the <code>STAGE</code> variable), then run the script again.</p></div></details>
-<details class="err"><summary>curl: (28) connection timed out when downloading the kernel in step 2</summary><div><p>the mirror is unreachable. the script tries three addresses in turn. if none answers, download <code>linux-6.18.10.tar.xz</code> in a browser (with a vpn), put it into <code>/mnt/cloudos/usr/src</code> and run step 2 again: the download will be skipped.</p></div></details>
-<details class="err"><summary>menuconfig: Your display is too small to run Menuconfig</summary><div><p>the terminal is too small. you need at least 80 columns and 19 rows. enlarge the window or reduce the font and run step 2 again.</p></div></details>
-<details class="err"><summary>efibootmgr: EFI variables are not supported on this system</summary><div><p>the system was booted in bios mode. reboot in uefi mode. the bootloader itself installs without efibootmgr: an nvram entry is optional.</p></div></details>
-<h3 id="s14-12">14.12 cloudpkg and portage</h3>
-<details class="err"><summary>cloudpkg: no mirror answered</summary><div><p>the tree snapshot was not downloaded. turn on a vpn and repeat <code>cloudpkg sync</code>, or download <code>portage-latest.tar.xz</code> (the snapshots folder on any gentoo mirror) in a browser, put it into <code>/var/cache/distfiles</code> and run sync again.</p></div></details>
-<details class="err"><summary>!!! Invalid Repository Location (not a dir): '/var/db/repos/gentoo'</summary><div><p>the recipe tree has not been downloaded yet. run:</p><pre><code>cloudpkg sync
-cloudpkg doctor</code></pre></div></details>
-<details class="err"><summary>cloudpkg doctor shows НЕТ for the profile (make.profile)</summary><div><p>the profile link is created after the first sync. create it by hand:</p><pre><code>ln -sfn /var/db/repos/gentoo/profiles/default/linux/amd64/23.0 /etc/portage/make.profile</code></pre></div></details>
-<details class="err"><summary>emerge: command not found or ModuleNotFoundError: No module named 'portage'</summary><div><p>portage is not installed or is broken. run the installer again, it repairs both portage and cloudpkg:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
-<details class="err"><summary>!!! /usr/etc/portage/make.profile is not a symlink</summary><div><p>portage was installed from pip as a module. it looks for its settings in <code>/usr/etc</code> and does not see <code>/etc/portage</code>. run the installer again, it replaces it with a system build:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
-<details class="err"><summary>cloudpkg: this system is not cloudos</summary><div><p>cloudpkg does not install packages straight into a foreign system: that would break its package manager (pacman, apt, dnf). install the isolated mode, it changes nothing on the host, see <a href="#s11-5">11.5</a>:</p><pre><code>curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh</code></pre></div></details>
-<details class="err"><summary>cloudpkg: root rights required</summary><div><p>install, remove, upgrade and clean work only as root. log in as root or use doas:</p><pre><code>doas cloudpkg install name</code></pre></div></details>
-<details class="err"><summary>emerge: there are no ebuilds to satisfy ...</summary><div><p>there is no such package or the name is incomplete. find the exact name with the category:</p><pre><code>cloudpkg search name
-cloudpkg install category/name</code></pre><p>if the tree is old, run <code>cloudpkg sync</code> first.</p></div></details>
-<details class="err"><summary>The following keyword changes are necessary to proceed (masked by ~amd64)</summary><div><p>the needed version exists only in the testing branch. if you accept a less tested version, add the <code>-t</code> flag:</p><pre><code>cloudpkg install -t category/name</code></pre></div></details>
-<details class="err"><summary>emerge wants to rebuild glibc, gcc or bash (blocked packages, slot conflict)</summary><div><p>portage does not know these packages are already built by hand. declare the package in <code>/etc/portage/profile/package.provided</code> (one line per package, with a version):</p><pre><code>echo "sys-libs/glibc-2.42" &gt;&gt; /etc/portage/profile/package.provided
-cloudpkg install -p name</code></pre><p>the version must not be lower than the one the package requires.</p></div></details>
-<details class="err"><summary>Fetch failed for ... or Digest verification failed</summary><div><p>the sources were not downloaded or were downloaded corrupted. clean the cache and retry. if a mirror does not answer, change the order of addresses in <code>GENTOO_MIRRORS</code> in <code>/etc/portage/make.conf</code>:</p><pre><code>cloudpkg clean
-cloudpkg install name</code></pre></div></details>
-<details class="err"><summary>* ERROR: ... failed (compile phase)</summary><div><p>the package failed to build. the path to the build log is in the message (the build.log file). show the last lines:</p><pre><code>tail -n 30 /var/tmp/portage/category/name/temp/build.log</code></pre><p>a common cause is the new gcc 15. <code>make.conf</code> already has <code>CC="gcc -std=gnu17"</code>, check that the line is in place. attach the last 15 lines when you report an error.</p></div></details>
-<h2 id="cheat">15. cheat sheet</h2>
-<h3 id="s15-1">15.1 disks</h3>
-<div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>lsblk -f</code></td><td>disks, partitions, filesystems, uuid</td></tr>
-<tr><td><code>blkid</code></td><td>uuid and filesystem type of partitions</td></tr>
-<tr><td><code>fdisk -l</code></td><td>partition tables in detail</td></tr>
-<tr><td><code>cfdisk /dev/sda</code></td><td>disk partitioning menu</td></tr>
-<tr><td><code>mount /dev/sda2 /mnt/cloudos</code></td><td>mount a partition</td></tr>
-<tr><td><code>umount -R /mnt/cloudos</code></td><td>unmount everything recursively</td></tr>
-<tr><td><code>findmnt</code></td><td>what is mounted where</td></tr>
-<tr><td><code>df -h</code></td><td>free space on partitions</td></tr>
-<tr><td><code>du -sh folder</code></td><td>how much a folder takes</td></tr></table></div>
-<h3 id="s15-2">15.2 network</h3>
-<div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>ip link</code></td><td>list of network interfaces</td></tr>
-<tr><td><code>ip addr</code></td><td>interface addresses</td></tr>
-<tr><td><code>ip route</code></td><td>routes and gateway</td></tr>
-<tr><td><code>dhcpcd eth0</code></td><td>get an address on an interface</td></tr>
-<tr><td><code>doas iwctl station wlan0 scan</code></td><td>scan for wifi networks</td></tr>
-<tr><td><code>doas iwctl station wlan0 connect name</code></td><td>connect to a wifi network</td></tr>
-<tr><td><code>iwctl known-networks list</code></td><td>saved wifi networks</td></tr>
-<tr><td><code>rfkill list</code></td><td>check wifi blocking</td></tr>
-<tr><td><code>ping -c1 github.com</code></td><td>check connectivity and names</td></tr>
-<tr><td><code>curl -LO link</code></td><td>download a file</td></tr></table></div>
-<h3 id="s15-3">15.3 system</h3>
-<div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>dmesg | tail -50</code></td><td>latest kernel messages</td></tr>
-<tr><td><code>free -h</code></td><td>memory and swap</td></tr>
-<tr><td><code>top</code></td><td>processes and load</td></tr>
-<tr><td><code>uname -r</code></td><td>version of the running kernel</td></tr>
-<tr><td><code>lsmod</code></td><td>loaded kernel modules</td></tr>
-<tr><td><code>lspci</code></td><td>pci devices, shows the network and video card</td></tr>
-<tr><td><code>date</code></td><td>date and time</td></tr>
-<tr><td><code>reboot</code>, <code>poweroff</code></td><td>reboot and shutdown</td></tr></table></div>
-<h3 id="s15-4">15.4 files and archives</h3>
-<div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>tar xf archive.tar.xz</code></td><td>unpack an archive</td></tr>
-<tr><td><code>tar cf archive.tar.xz folder -I xz</code></td><td>create an xz archive</td></tr>
-<tr><td><code>cp -a what where</code></td><td>copy preserving permissions</td></tr>
-<tr><td><code>nano file</code></td><td>open the editor. save <kbd>ctrl</kbd> + <kbd>o</kbd>, exit <kbd>ctrl</kbd> + <kbd>x</kbd></td></tr>
-<tr><td><code>grep text file</code></td><td>find a line in a file</td></tr></table></div>
-<h3 id="s15-5">15.5 btrfs</h3>
-<div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>btrfs filesystem df /</code></td><td>space used by data types</td></tr>
-<tr><td><code>btrfs subvolume list /</code></td><td>list of subvolumes</td></tr>
-<tr><td><code>btrfs subvolume snapshot -r source target</code></td><td>read-only snapshot of a subvolume</td></tr>
-<tr><td><code>btrfs scrub start /</code></td><td>data integrity check</td></tr></table></div>
-<h3 id="s15-6">15.6 cloudpkg</h3>
-<div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
-<tr><td><code>cloudpkg sync</code></td><td>update recipes</td></tr>
-<tr><td><code>cloudpkg install name</code></td><td>install a package</td></tr>
-<tr><td><code>cloudpkg remove name</code></td><td>remove a package</td></tr>
-<tr><td><code>cloudpkg upgrade</code></td><td>update packages</td></tr>
-<tr><td><code>cloudpkg clean</code></td><td>clean the build cache</td></tr>
-<tr><td><code>cloudpkg search string</code></td><td>find a package</td></tr>
-<tr><td><code>cloudpkg info name</code></td><td>what would be installed</td></tr>
-<tr><td><code>cloudpkg list</code></td><td>installed packages</td></tr>
-<tr><td><code>cloudpkg doctor</code></td><td>check the setup</td></tr></table></div>
-<p>openrc services are collected in the table <a href="#s10-6">10.6</a>.</p>
-
-<h2 id="faq">16. questions and answers</h2>
-<details class="err"><summary>why is cloudos built by hand, is there an installer</summary><div>
-<p>the idea is to understand every step and control the whole system. the installation goes like in gentoo: partitioning, stage 3, chroot, kernel, bootloader.</p><p>if you do not want to type commands one by one, use the <a href="../../wizard/">install wizard</a> on the site: it builds a script for your disk. understanding the steps is still useful.</p></div></details>
-<details class="err"><summary>which bootloader is used</summary><div>
-<p>limine: it is fast and configured with one file. the install wizard installs it.</p></div></details>
-<details class="err"><summary>why openrc and not systemd</summary><div>
-<p>openrc is simple, without extra dependencies and fits a minimal system. init in cloudos is <code>openrc-init</code>.</p></div></details>
-<details class="err"><summary>can it be installed on arm</summary><div>
-<p>no, only x86_64 is supported, in uefi and legacy bios modes.</p></div></details>
-<details class="err"><summary>what is the root password after unpacking stage 3</summary><div>
-<p>the password is empty. set it in <a href="#final">chapter 9</a> with the command <code>passwd</code>.</p></div></details>
-<details class="err"><summary>how to read man pages</summary><div>
-<p>man-db and man-pages are in stage 3, run <code>man command</code>. if pages are not found, rebuild the index with <code>mandb</code>. the key <code>--help</code> works too.</p></div></details>
-<details class="err"><summary>can sudo be used</summary><div>
-<p>doas is used instead, it is simpler and smaller. the rules are in <code>/etc/doas.conf</code>, see <a href="#s10-2">10.2</a>.</p></div></details>
-<details class="err"><summary>how to install a graphical environment</summary><div>
-<p>there is none by default. it has to be built by hand through cloudpkg, and the kernel will need a video card driver with firmware files, see <a href="#next">chapter 13</a>.</p></div></details>
-<details class="err"><summary>what license</summary><div>
-<p>the project's own parts are under mit, you must keep the author's name and the project name. package recipes are based on gentoo and stay under gpl-2.</p></div></details>
-<details class="err"><summary>where to get the live iso</summary><div>
-<p>the image is prepared after the stage 3 release and will appear on the <a href="../../releases/">releases page</a>. until then you can use any live linux with the set of utilities from <a href="#s1-1">1.1</a>.</p></div></details>
-
-<h2 id="appa">appendix a. disk names</h2>
-<p>the partition name depends on the disk type. for nvme the letter is added before the partition number: <code>p</code>.</p>
-<div class="sc"><table><tr><th>disk type</th><th>disk</th><th>first partition</th><th>second partition</th></tr>
-<tr><td>sata, usb</td><td><code>/dev/sda</code></td><td><code>/dev/sda1</code></td><td><code>/dev/sda2</code></td></tr>
-<tr><td>nvme</td><td><code>/dev/nvme0n1</code></td><td><code>/dev/nvme0n1p1</code></td><td><code>/dev/nvme0n1p2</code></td></tr>
-<tr><td>virtual (virtio)</td><td><code>/dev/vda</code></td><td><code>/dev/vda1</code></td><td><code>/dev/vda2</code></td></tr></table></div>
-<p>if you install on nvme, replace <code>/dev/sda1</code> with <code>/dev/nvme0n1p1</code> and <code>/dev/sda2</code> with <code>/dev/nvme0n1p2</code> in all commands.</p>
-<h2 id="appb">appendix b. btrfs with subvolumes</h2>
-<p>optional. subvolumes allow fast system snapshots and rollbacks. described for the layout from <a href="#s3-4">3.4</a>.</p>
-<h3>b.1 creating subvolumes</h3>
-<pre><code>mkfs.btrfs /dev/sda2
-mount /dev/sda2 /mnt/cloudos
-btrfs subvolume create /mnt/cloudos/@
-btrfs subvolume create /mnt/cloudos/@home
-umount /mnt/cloudos</code></pre>
-<h3>b.2 mounting</h3>
-<pre><code>mount -o subvol=@ /dev/sda2 /mnt/cloudos
-mkdir -p /mnt/cloudos/boot /mnt/cloudos/home
-mount /dev/sda1 /mnt/cloudos/boot
-mount -o subvol=@home /dev/sda2 /mnt/cloudos/home</code></pre>
-<h3>b.3 fstab and bootloader</h3>
-<pre><code>UUID=ROOT_UUID  /      btrfs  subvol=@,noatime      0 0
-UUID=ROOT_UUID  /home  btrfs  subvol=@home,noatime  0 0
-UUID=ESP_UUID   /boot  vfat   defaults              0 2</code></pre>
-<p>in <code>/boot/limine.conf</code> in the line <code>cmdline</code> add the subvolume parameter:</p>
-<pre><code>cmdline: root=UUID=ROOT_UUID rootflags=subvol=@ rw</code></pre>
-<h3>b.4 system snapshot</h3>
-<pre><code>mkdir -p /mnt/top
-mount -o subvolid=5 /dev/sda2 /mnt/top
-btrfs subvolume snapshot -r /mnt/top/@ /mnt/top/@-snap-1
-umount /mnt/top</code></pre>
-<p>the snapshot lies next to the subvolume <code>@</code> and takes no space until the data changes.</p>
-<h2 id="appc">appendix c. glossary</h2>
-<div class="sc"><table><tr><th>word</th><th>what it means</th></tr>
-<tr><td>stage 3</td><td>a ready base system in one archive, without a kernel and bootloader</td></tr>
-<tr><td>chroot</td><td>starting a shell with a different root directory. this is how you work in the new system while the live iso is loaded</td></tr>
-<tr><td>uefi</td><td>modern firmware. boots from the esp partition</td></tr>
-<tr><td>bios (legacy, csm)</td><td>old firmware, the bootloader is written to the start of the disk or partition</td></tr>
-<tr><td>esp</td><td>efi system partition, a fat32 partition with the bootloader for uefi</td></tr>
-<tr><td>initramfs</td><td>a small temporary system that boots before the main one and finds the root partition</td></tr>
-<tr><td>uuid</td><td>a unique partition identifier, does not change when the disk name changes</td></tr>
-<tr><td>limine</td><td>a bootloader that reads <code>/boot/limine.conf</code></td></tr>
-<tr><td>dracut</td><td>a program that builds initramfs</td></tr>
-<tr><td>openrc</td><td>init and service management system</td></tr>
-<tr><td>doas</td><td>running commands as root, a replacement for sudo</td></tr>
-<tr><td>recipe</td><td>a package description for cloudpkg: where to get the sources and how to build</td></tr>
-<tr><td>subvolume</td><td>a separate branch of the btrfs filesystem for which snapshots can be made</td></tr></table></div>
-
+<tr><td><code>doas cloudos-install</code></td><td>install to disk</td></tr>
+<tr><td><code>doas -s</code></td><td>root shell</td></tr>
+<tr><td><code>cloudpkg install имя</code></td><td>install a package</td></tr>
+<tr><td><code>rc-update show</code></td><td>services by runlevel</td></tr>
+<tr><td><code>rc-service имя restart</code></td><td>restart a service</td></tr>
+<tr><td><code>cloudos-firewall status</code></td><td>firewall state</td></tr>
+<tr><td><code>cloudos-audit</code></td><td>security settings check</td></tr>
+<tr><td><code>iwctl</code></td><td>wifi</td></tr>
+<tr><td><code>lsblk -f</code></td><td>disks and filesystems</td></tr>
+</table></div>
+<h2 id="faq">11. questions</h2>
+<h3 id="s11-1">can it run on a server</h3>
+<p>yes, with honest limits in mind: no secure boot chain, disk encryption or mandatory access control, and updates are manual. for critical systems wait for live iso 2.0 and judge the risks yourself.</p>
+<h3 id="s11-2">what happened to stage 3</h3>
+<p>a separate stage 3 is no longer published. the system installs straight from the live iso and the handbook covers only that way.</p>
+<h3 id="s11-3">why no secure boot</h3>
+<p>it needs a signed bootloader and kernel and your own key chain. it is planned for live iso 2.0.</p>
 <footer>
 <p>© 2026 wh1laye. mit license. </p>
 <p>package recipes are based on gentoo (gpl-2).</p>
