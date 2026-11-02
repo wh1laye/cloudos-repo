@@ -89,6 +89,26 @@ if [ -z "$R" ] && command -v sshd >/dev/null && rc-service sshd status >/dev/nul
   printf '%s\n' "$c" | grep -qi '^permitemptypasswords no' && good "sshd: пустые пароли запрещены" || fail "sshd: пустые пароли разрешены"
 fi
 
+echo "== загрузка и диск"
+if [ -z "$R" ]; then
+  gv=8be4df61-93ca-11d2-aa0d-00e098032b8c
+  if [ -r /sys/firmware/efi/efivars/SecureBoot-$gv ]; then
+    [ "$(od -An -t u1 /sys/firmware/efi/efivars/SecureBoot-$gv | awk '{ print $NF }')" = 1 ] && good "secure boot включён" || note "secure boot выключен (cloudos-secureboot)"
+  else
+    note "загрузка не через uefi, secure boot недоступен"
+  fi
+  grep -q '\[\(integrity\|confidentiality\)\]' /sys/kernel/security/lockdown 2>/dev/null && good "kernel lockdown включён" || note "kernel lockdown выключен"
+  [ "$(cat /sys/module/module/parameters/sig_enforce 2>/dev/null)" = Y ] && good "модули ядра только с подписью" || fail "подпись модулей не обязательна"
+  rs=$(findmnt -no SOURCE / 2>/dev/null || true)
+  if [ -n "$rs" ] && lsblk -srno TYPE "$rs" 2>/dev/null | grep -q crypt; then good "корень на luks"; else note "корень не зашифрован (luks)"; fi
+  [ "$(cat /sys/devices/system/cpu/smt/control 2>/dev/null)" = on ] && note "smt включён (профиль secure его отключает)" || true
+  for v in /sys/devices/system/cpu/vulnerabilities/*; do
+    [ -r "$v" ] || continue
+    if grep -q '^Vulnerable' "$v"; then note "cpu $(basename "$v"): $(cat "$v")"; fi
+  done
+fi
+
 echo
 echo "итог: ok $ok, ошибок $bad, замечаний $warn"
+awk -v o=$ok -v b=$bad -v w=$warn 'BEGIN { t = o + b * 2 + w * 0.5; printf "оценка: %d из 100\n", (t > 0 ? o * 100 / t : 0) }'
 [ "$bad" = 0 ]
