@@ -43,7 +43,7 @@
 <div class="tmode" role="group" aria-label="режим загрузки"><span class="tl">режим загрузки</span><div class="seg2"><button type="button" data-m="uefi">uefi</button><button type="button" data-m="bios">bios</button></div></div>
 <button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>поиск</span><kbd>ctrl k</kbd></button>
 <details open><summary>содержание</summary>
-<ol><li class="tg">установка</li><li><a href="#about">1. о cloudos</a><ol><li><a href="#s1-1">1.1 что нужно</a></li><li><a href="#s1-2">1.2 что внутри stage 3</a></li><li><a href="#s1-3">1.3 чего в системе нет</a></li><li><a href="#s1-4">1.4 порядок установки</a></li><li><a href="#s1-5">1.5 как пользоваться справочником</a></li></ol></li><li><a href="#prep">2. подготовка</a><ol><li><a href="#s2-1">2.1 дата и время</a></li><li><a href="#s2-2">2.2 диски</a></li><li><a href="#s2-3">2.3 сеть</a></li><li><a href="#s2-4">2.4 если сайты не открываются</a></li></ol></li><li><a href="#disk">3. диск и файловые системы</a><ol><li><a href="#s3-1">3.1 разметка</a></li><li><a href="#s3-2">3.2 файловые системы</a></li><li><a href="#s3-3">3.3 монтирование</a></li><li><a href="#s3-4">3.4 пример схемы</a></li><li><a href="#s3-5">3.5 проверка</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 проверка(можно пропустить)</a></li><li><a href="#s4-2">4.2 распаковка</a></li><li><a href="#s4-3">4.3 скачивание</a></li><li><a href="#s4-4">4.4 после распаковки</a></li></ol></li><li><a href="#chroot">5. вход в chroot</a><ol><li><a href="#s5-1">5.1 что делают команды</a></li><li><a href="#s5-2">5.2 приглашение</a></li><li><a href="#s5-3">5.3 войти повторно</a></li><li><a href="#s5-4">5.4 выход</a></li></ol></li><li><a href="#conf">6. настройка сборки</a><ol><li><a href="#s6-1">6.1 локали</a></li><li><a href="#s6-2">6.2 флаги сборки</a></li><li><a href="#s6-3">6.3 параллельная сборка</a></li><li><a href="#s6-4">6.4 gcc 15 и ошибки сборки</a></li></ol></li><li><a href="#kernel">7. ядро</a><ol><li><a href="#s7-1">7.1 что включить в menuconfig</a></li><li><a href="#s7-2">7.2 что делают команды сборки</a></li><li><a href="#s7-3">7.3 зеркала ядра</a></li><li><a href="#s7-4">7.4 другая версия ядра</a></li></ol></li><li><a href="#boot">8. загрузчик</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 проверка перед перезагрузкой</a></li><li><a href="#s8-5">8.5 запись в nvram (только uefi, по желанию)</a></li><li><a href="#s8-6">8.6 несколько ядер</a></li></ol></li><li><a href="#final">9. завершение</a><ol><li><a href="#s9-1">9.1 проверка служб</a></li><li><a href="#s9-2">9.2 первая загрузка</a></li></ol></li><li class="tg">после установки</li><li><a href="#first">10. первая загрузка</a><ol><li><a href="#s10-1">10.1 вход</a></li><li><a href="#s10-2">10.2 пользователь и doas</a></li><li><a href="#s10-3">10.3 имя компьютера</a></li><li><a href="#s10-4">10.4 часовой пояс</a></li><li><a href="#s10-5">10.5 сеть</a></li><li><a href="#s10-6">10.6 службы openrc</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. пакеты и cloudpkg</a><ol><li><a href="#s11-1">11.1 команды</a></li><li><a href="#s11-2">11.2 как проходит установка</a></li><li><a href="#s11-3">11.3 примеры</a></li><li><a href="#s11-4">11.4 если пакет не собрался</a></li><li><a href="#s11-5">11.5 установка одной командой</a></li></ol></li><li><a href="#maint">12. обслуживание</a><ol><li><a href="#s12-1">12.1 обновление пакетов</a></li><li><a href="#s12-2">12.2 обновление ядра</a></li><li><a href="#s12-3">12.3 резервная копия</a></li><li><a href="#s12-4">12.4 очистка места</a></li></ol></li><li><a href="#next">13. что дальше</a><ol><li><a href="#s13-1">13.1 другие локали</a></li><li><a href="#s13-2">13.2 помощь и обратная связь</a></li></ol></li><li class="tg">помощь</li><li><a href="#errors">14. ошибки и решения</a><ol><li><a href="#s14-1">14.1 live iso, сеть и время</a></li><li><a href="#s14-2">14.2 разметка и файловые системы</a></li><li><a href="#s14-3">14.3 скачивание и распаковка</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 сборка пакетов</a></li><li><a href="#s14-6">14.6 ядро</a></li><li><a href="#s14-7">14.7 загрузка</a></li><li><a href="#s14-8">14.8 после загрузки</a></li><li><a href="#s14-9">14.9 аварийный вход в систему</a></li><li><a href="#s14-10">14.10 как сообщить об ошибке</a></li><li><a href="#s14-11">14.11 мастер установки</a></li><li><a href="#s14-12">14.12 cloudpkg и portage</a></li></ol></li><li><a href="#cheat">15. шпаргалка</a><ol><li><a href="#s15-1">15.1 диски</a></li><li><a href="#s15-2">15.2 сеть</a></li><li><a href="#s15-3">15.3 система</a></li><li><a href="#s15-4">15.4 файлы и архивы</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. вопросы и ответы</a></li><li class="tg">приложения</li><li><a href="#appa">приложение а. имена дисков</a></li><li><a href="#appb">приложение б. btrfs с подтомами</a></li><li><a href="#appc">приложение в. словарь</a></li></ol></details>
+<ol><li class="tg">установка</li><li><a href="#about">1. о cloudos</a><ol><li><a href="#s1-1">1.1 что нужно</a></li><li><a href="#s1-2">1.2 что внутри stage 3</a></li><li><a href="#s1-3">1.3 чего в системе нет</a></li><li><a href="#s1-4">1.4 порядок установки</a></li><li><a href="#s1-5">1.5 как пользоваться справочником</a></li></ol></li><li><a href="#prep">2. подготовка</a><ol><li><a href="#s2-1">2.1 дата и время</a></li><li><a href="#s2-2">2.2 диски</a></li><li><a href="#s2-3">2.3 сеть</a></li><li><a href="#s2-4">2.4 если сайты не открываются</a></li></ol></li><li><a href="#disk">3. диск и файловые системы</a><ol><li><a href="#s3-1">3.1 разметка</a></li><li><a href="#s3-2">3.2 файловые системы</a></li><li><a href="#s3-3">3.3 монтирование</a></li><li><a href="#s3-4">3.4 пример схемы</a></li><li><a href="#s3-5">3.5 проверка</a></li></ol></li><li><a href="#stage">4. stage 3</a><ol><li><a href="#s4-1">4.1 проверка(можно пропустить)</a></li><li><a href="#s4-2">4.2 распаковка</a></li><li><a href="#s4-3">4.3 скачивание</a></li><li><a href="#s4-4">4.4 после распаковки</a></li></ol></li><li><a href="#chroot">5. вход в chroot</a><ol><li><a href="#s5-1">5.1 что делают команды</a></li><li><a href="#s5-2">5.2 приглашение</a></li><li><a href="#s5-3">5.3 войти повторно</a></li><li><a href="#s5-4">5.4 выход</a></li></ol></li><li><a href="#conf">6. настройка сборки</a><ol><li><a href="#s6-1">6.1 локали</a></li><li><a href="#s6-2">6.2 флаги сборки</a></li><li><a href="#s6-3">6.3 параллельная сборка</a></li><li><a href="#s6-4">6.4 gcc 15 и ошибки сборки</a></li></ol></li><li><a href="#kernel">7. ядро</a><ol><li><a href="#s7-1">7.1 что включить в menuconfig</a></li><li><a href="#s7-2">7.2 что делают команды сборки</a></li><li><a href="#s7-3">7.3 зеркала ядра</a></li></ol></li><li><a href="#boot">8. загрузчик</a><ol><li><a href="#initramfs">8.1 initramfs</a></li><li><a href="#fstab">8.2 fstab</a></li><li><a href="#limine">8.3 limine</a></li><li><a href="#s8-4">8.4 проверка перед перезагрузкой</a></li><li><a href="#s8-5">8.5 запись в nvram (только uefi, по желанию)</a></li><li><a href="#s8-6">8.6 несколько ядер</a></li></ol></li><li><a href="#final">9. завершение</a><ol><li><a href="#s9-1">9.1 включи сеть и журнал</a></li><li><a href="#s9-2">9.2 wifi (по желанию)</a></li><li><a href="#s9-3">9.3 первая загрузка</a></li></ol></li><li class="tg">после установки</li><li><a href="#first">10. первая загрузка</a><ol><li><a href="#s10-1">10.1 вход</a></li><li><a href="#s10-2">10.2 пользователь и doas</a></li><li><a href="#s10-3">10.3 имя компьютера</a></li><li><a href="#s10-4">10.4 часовой пояс</a></li><li><a href="#s10-5">10.5 сеть</a></li><li><a href="#s10-6">10.6 службы openrc</a></li><li><a href="#s10-7">10.7 swap</a></li></ol></li><li><a href="#cpkg">11. пакеты и cloudpkg</a><ol><li><a href="#s11-1">11.1 команды</a></li><li><a href="#s11-2">11.2 как проходит установка</a></li><li><a href="#s11-3">11.3 примеры</a></li><li><a href="#s11-4">11.4 если пакет не собрался</a></li><li><a href="#s11-5">11.5 установка одной командой</a></li></ol></li><li><a href="#maint">12. обслуживание</a><ol><li><a href="#s12-1">12.1 обновление пакетов</a></li><li><a href="#s12-2">12.2 обновление ядра</a></li><li><a href="#s12-3">12.3 резервная копия</a></li><li><a href="#s12-4">12.4 очистка места</a></li></ol></li><li><a href="#next">13. что дальше</a><ol><li><a href="#s13-1">13.1 другие локали</a></li><li><a href="#s13-2">13.2 помощь и обратная связь</a></li></ol></li><li class="tg">помощь</li><li><a href="#errors">14. ошибки и решения</a><ol><li><a href="#s14-1">14.1 live iso, сеть и время</a></li><li><a href="#s14-2">14.2 разметка и файловые системы</a></li><li><a href="#s14-3">14.3 скачивание и распаковка</a></li><li><a href="#s14-4">14.4 chroot</a></li><li><a href="#s14-5">14.5 сборка пакетов</a></li><li><a href="#s14-6">14.6 ядро</a></li><li><a href="#s14-7">14.7 загрузка</a></li><li><a href="#s14-8">14.8 после загрузки</a></li><li><a href="#s14-9">14.9 аварийный вход в систему</a></li><li><a href="#s14-10">14.10 как сообщить об ошибке</a></li><li><a href="#s14-11">14.11 мастер установки</a></li><li><a href="#s14-12">14.12 cloudpkg и portage</a></li></ol></li><li><a href="#cheat">15. шпаргалка</a><ol><li><a href="#s15-1">15.1 диски</a></li><li><a href="#s15-2">15.2 сеть</a></li><li><a href="#s15-3">15.3 система</a></li><li><a href="#s15-4">15.4 файлы и архивы</a></li><li><a href="#s15-5">15.5 btrfs</a></li><li><a href="#s15-6">15.6 cloudpkg</a></li></ol></li><li><a href="#faq">16. вопросы и ответы</a></li><li class="tg">приложения</li><li><a href="#appa">приложение а. имена дисков</a></li><li><a href="#appb">приложение б. btrfs с подтомами</a></li><li><a href="#appc">приложение в. словарь</a></li></ol></details>
 </nav>
 <main id="cloud">
 <h1>cloudos справочник</h1>
@@ -330,10 +330,6 @@ cp System.map /boot/System.map-6.18.10</code></pre>
 <pre><code>curl -LO https://mirrors.aliyun.com/linux-kernel/v6.x/linux-6.18.10.tar.xz
 curl -LO https://mirrors.ustc.edu.cn/kernel.org/linux/kernel/v6.x/linux-6.18.10.tar.xz</code></pre>
 <p>пути на зеркалах иногда меняются. если ссылка не работает, открой каталог зеркала в браузере и найди файл вручную.</p>
-<h3 id="s7-4">7.4 другая версия ядра</h3>
-<p>во всех командах замени <code>6.18.10</code> на свою версию. имена файлов в /boot, в initramfs и в limine.conf должны совпадать.</p>
-
-<div class="note"><b>заметка</b>не хочешь искать драйверы в menuconfig? <a href="../kernel/">помощник по ядру</a> по твоему железу выдаёт готовую команду настройки.</div>
 <h2 id="boot">8. загрузчик</h2>
 <h3 id="initramfs">8.1 initramfs</h3>
 <pre><code>cloudpkg install dracut
@@ -347,8 +343,11 @@ UUID=ESP_UUID   /boot  vfat  defaults  0 2</code></pre>
 UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
 <p>если корень на btrfs, замени <code>ext4</code> в первой строке на <code>btrfs</code>.</p>
 <h3 id="limine">8.3 limine</h3>
-<pre><code>cloudpkg install limine</code></pre>
-<p>файл <code>/boot/limine.conf</code> одинаковый для uefi и bios:</p>
+<p>limine уже есть в stage 3, ставить его не нужно. проверь, что всё на месте:</p>
+<pre><code>ls /usr/share/limine
+command -v limine</code></pre>
+<p>в списке должны быть <code>BOOTX64.EFI</code> и <code>limine-bios.sys</code>, а команда <code>limine</code> должна вывести путь. если ничего нет, stage 3 распакован не полностью, вернись к главе 4. запасной вариант: <code>cloudpkg sync</code>, потом <code>cloudpkg install limine</code>.</p>
+<p>сначала узнай uuid корневого раздела командой <code>blkid</code>. потом создай <code>/boot/limine.conf</code>, он одинаковый для uefi и bios. вместо <code>ROOT_UUID</code> вставь свой uuid:</p>
 <pre><code>timeout: 5
 
 /CloudOS
@@ -359,9 +358,9 @@ UUID=BOOT_UUID  /boot  vfat  defaults  0 2</code></pre>
 <div class="m-uefi"><p>установка для uefi:</p>
 <pre><code>mkdir -p /boot/EFI/BOOT
 cp /usr/share/limine/BOOTX64.EFI /boot/EFI/BOOT/BOOTX64.EFI</code></pre></div>
-<div class="m-bios"><p>установка для bios, ставь на раздел:</p>
+<div class="m-bios"><p>установка для bios. команда <code>limine bios-install</code> пишет загрузчик на весь диск, а не на раздел: укажи <code>/dev/sda</code> или <code>/dev/nvme0n1</code>, без номера раздела.</p>
 <pre><code>cp /usr/share/limine/limine-bios.sys /boot/
-limine bios-install /dev/ (твое имя диска /dev/sda1 /dev/sdb1 /dev/nvme0n1)</code></pre></div>
+limine bios-install /dev/sda</code></pre></div>
 <h3 id="s8-4">8.4 проверка перед перезагрузкой</h3>
 <p>посмотри, что лежит в <code>/boot</code>:</p>
 <pre><code>ls -l /boot</code></pre>
@@ -409,14 +408,26 @@ umount -R /mnt/cloudos
 reboot</code></pre>
 <div class="note"><b>заметка</b>других пользователей cloudos не создаёт!), пользователя и doas добавишь сам.</div>
 <div class="note"><b>важно</b>диск на который вы ставите может быть как nvme так и sda sdb, тестил на 7 5700X(AMD) RX9060XT(AMD) и на sda(не nvme limine выбрал изза скорости и удобства. </div>
-<h3 id="s9-1">9.1 проверка служб</h3>
-<p>перед перезагрузкой убедись, что службы добавлены:</p>
-<pre><code>rc-update show</code></pre>
-<p>в списке должны быть <code>dhcpcd</code> и журнал в уровне <code>default</code>.</p>
-<h3 id="s9-2">9.2 первая загрузка</h3>
-<p>после перезагрузки вытащи флешку и выбери диск в меню загрузки, если он не выбрался сам. появится приглашение <code>login:</code> на tty1. введи <code>root</code> и пароль, который задал командой <code>passwd</code>.</p>
+<h3 id="s9-1">9.1 включи сеть и журнал</h3>
+<p>всё это делай внутри chroot, перед перезагрузкой. dhcpcd и syslog-ng уже стоят в stage 3, их нужно только включить:</p>
+<pre><code>rc-update add dhcpcd default
+rc-update add syslog-ng default
+rc-update show</code></pre>
+<p>в списке должны быть <code>dhcpcd</code> и <code>syslog-ng</code> в уровне <code>default</code>. после первой загрузки проводная сеть заработает сама.</p>
+<h3 id="s9-2">9.2 wifi (по желанию)</h3>
+<p>если нужен wifi, поставь пакеты сейчас, пока у тебя есть интернет из live-системы: после перезагрузки без кабеля их будет не из чего скачать. ядро должно быть собрано с wifi, см. <a href="#s7-1">7.1</a>. установка занимает 10 минут и скачивает около 650 мб прошивок:</p>
+<pre><code>printf '#!/bin/sh\nexec bison -y "$@"\n' > /usr/bin/yacc.bison
+chmod 755 /usr/bin/yacc.bison
+cloudpkg sync
+cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware
+mkdir -p /etc/iwd
+printf '[General]\nEnableNetworkConfiguration=false\n' > /etc/iwd/main.conf
+rc-update add dbus default
+rc-update add iwd default</code></pre>
+<p>первые две строки создают недостающую обёртку <code>yacc.bison</code>, без неё не соберётся библиотека libnl. подключение к сети после загрузки описано в <a href="#s2-3">2.3</a>.</p>
+<h3 id="s9-3">9.3 первая загрузка</h3>
+<p>выйди из chroot и перезагрузись. вытащи флешку и выбери диск в меню загрузки, если он не выбрался сам. появится приглашение <code>login:</code> на tty1. введи <code>root</code> и пароль, который задал командой <code>passwd</code>.</p>
 <p>дальше настрой систему, это описано в главе <a href="#first">10</a>.</p>
-
 <div class="note"><b>заметка</b>в stage 3 уже есть cloudpkg, dhcpcd, syslog-ng, limine, dracut, doas, xorriso, squashfs-tools и fastfetch, ставить их заново не нужно. cloudpkg работает поверх portage: <code>cloudpkg sync</code> обновляет дерево рецептов, <code>cloudpkg install имя</code> ставит из исходников, <code>cloudpkg doctor</code> проверяет настройку.</div>
 <h2 id="first">10. первая загрузка</h2>
 <p>после установки в системе только консоль и root. эта глава про то, что стоит сделать сразу.</p>
@@ -451,19 +462,7 @@ static ip_address=192.168.1.50/24
 static routers=192.168.1.1
 static domain_name_servers=1.1.1.1 8.8.8.8</code></pre>
 <p>потом перезапусти службу: <code>rc-service dhcpcd restart</code>.</p>
-<p>для wifi поставь iwd, прошивки и регдомен, включи службы и добавь себя в группу netdev (вместо <code>user</code> подставь свой логин):</p>
-<pre><code>cloudpkg sync
-cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware
-groupadd -f netdev
-usermod -aG netdev user
-rc-update add dbus default
-rc-update add iwd default
-rc-service dbus start
-rc-service iwd start</code></pre>
-<p>ядро должно быть собрано с wifi, см. <a href="#s7-1">7.1</a>. dhcp для wlan делает dhcpcd, поэтому создай <code>/etc/iwd/main.conf</code>:</p>
-<pre><code>[General]
-EnableNetworkConfiguration=false</code></pre>
-<p>после перезапуска <code>rc-service iwd restart</code> подключайся через <code>iwctl</code>, как в разделе <a href="#s2-3">2.3</a>. сеть запоминается в <code>/var/lib/iwd</code> и подключается сама при следующей загрузке.</p>
+<p>wifi: пакеты ставятся в конце установки, см. <a href="#s9-2">9.2</a>, подключение к сети описано в <a href="#s2-3">2.3</a>.</p>
 <h3 id="s10-6">10.6 службы openrc</h3>
 <div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
 <tr><td><code>rc-status</code></td><td>показывает запущенные службы</td></tr>
@@ -656,7 +655,7 @@ dhcpcd eth0</code></pre>
 <h3 id="s14-7">14.7 загрузка</h3>
 <details class="err"><summary>после перезагрузки no bootable device или сразу загружается другая система</summary><div>
 <div class="m-uefi"><p>проверь, что есть файл <code>/boot/EFI/BOOT/BOOTX64.EFI</code>, что раздел 1 имеет тип efi system и что в прошивке выключен secure boot. выбери диск в меню загрузки вручную (обычно клавиша <kbd>f12</kbd> или <kbd>esc</kbd> при включении).</p></div>
-<div class="m-bios"><p>проверь, что раздел /boot помечен флагом <code>bootable</code> и что выполнена команда <code>limine bios-install</code> для нужного диска или раздела. в настройках прошивки включи режим legacy или csm.</p></div></div></details>
+<div class="m-bios"><p>проверь, что раздел /boot помечен флагом <code>bootable</code> и что выполнена команда <code>limine bios-install</code> для всего диска (например /dev/sda), а не раздела. в настройках прошивки включи режим legacy или csm.</p></div></div></details>
 <details class="err"><summary>limine показывает меню, но ядро не стартует (file not found)</summary><div>
 <p>путь в <code>limine.conf</code> не совпадает с именем файла. проверь <code>ls /boot</code> и поправь <code>path:</code> и <code>module_path:</code>.</p></div></details>
 <details class="err"><summary>Kernel panic: VFS: Unable to mount root fs on unknown-block</summary><div>
