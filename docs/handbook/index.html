@@ -135,7 +135,11 @@ ping -c1 github.com</code></pre>
 ip addr</code></pre>
 <p>если адреса нет, запусти dhcpcd ещё раз для нужного интерфейса (имя смотри в <code>ip link</code>):</p>
 <pre><code>dhcpcd eth0</code></pre>
-<p>из коробки настроена только проводная сеть. wifi в live iso не настраивается.</p>
+<p>проводная сеть работает сама через dhcpcd. wifi настраивается через iwd, он уже стоит в live iso. запусти <code>iwctl</code> и внутри него:</p>
+<pre><code>station wlan0 scan
+station wlan0 get-networks
+station wlan0 connect имя_сети</code></pre>
+<p>iwctl спросит пароль сети. имя интерфейса смотри командой <code>ip link</code>, оно может быть другим (например <code>wlp2s0</code>). выйди из iwctl командой <code>exit</code>, адрес выдаст dhcpcd, проверь <code>ping -c1 github.com</code>. если интерфейса нет, смотри <code>rfkill list</code> и раздел <a href="#s14-8">14.8</a>.</p>
 <h3 id="s2-4">2.4 если сайты не открываются</h3>
 <p>github, kernel.org и некоторые зеркала могут быть недоступны из твоей сети. тогда скачай файл на другом устройстве и перенеси на флешку:</p>
 <pre><code>mkdir -p /mnt/usb
@@ -300,6 +304,7 @@ cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
 <tr><td><code>ATA</code>, <code>SATA_AHCI</code>, <code>BLK_DEV_SD</code></td><td>sata диски</td></tr>
 <tr><td><code>USB_XHCI_HCD</code>, <code>USB_XHCI_PCI</code>, <code>USB_HID</code></td><td>usb порты и клавиатура</td></tr>
 <tr><td><code>NET</code>, <code>INET</code>, <code>PACKET</code>, <code>UNIX</code></td><td>сеть. без <code>PACKET</code> не заработает dhcpcd</td></tr>
+<tr><td><code>CFG80211</code>, <code>MAC80211</code>, <code>RFKILL</code>, драйвер wifi</td><td>нужны для wifi. драйвер выбери по <code>lspci</code> или <code>lsusb</code>, например <code>IWLWIFI</code> и <code>IWLMVM</code> у intel, <code>ATH9K</code> и <code>ATH10K</code> у atheros, <code>RTW88</code> и <code>RTW89</code> у realtek, <code>MT7921E</code> у mediatek, <code>BRCMFMAC</code> у broadcom. для iwd включи <code>CRYPTO_USER_API_HASH</code> и <code>CRYPTO_USER_API_SKCIPHER</code></td></tr>
 <tr><td>драйвер сетевой карты</td><td>например <code>E1000E</code> у intel, <code>R8169</code> у realtek. узнай свою карту командой <code>lspci</code> в live iso</td></tr>
 <tr><td><code>INOTIFY_USER</code>, <code>SIGNALFD</code>, <code>TIMERFD</code>, <code>EPOLL</code>, <code>FHANDLE</code></td><td>нужны udev</td></tr>
 <tr><td><code>CGROUPS</code></td><td>нужны openrc</td></tr>
@@ -444,6 +449,19 @@ static ip_address=192.168.1.50/24
 static routers=192.168.1.1
 static domain_name_servers=1.1.1.1 8.8.8.8</code></pre>
 <p>потом перезапусти службу: <code>rc-service dhcpcd restart</code>.</p>
+<p>для wifi поставь iwd, прошивки и регдомен, включи службы и добавь себя в группу netdev (вместо <code>user</code> подставь свой логин):</p>
+<pre><code>cloudpkg sync
+cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware
+groupadd -f netdev
+usermod -aG netdev user
+rc-update add dbus default
+rc-update add iwd default
+rc-service dbus start
+rc-service iwd start</code></pre>
+<p>ядро должно быть собрано с wifi, см. <a href="#s7-1">7.1</a>. dhcp для wlan делает dhcpcd, поэтому создай <code>/etc/iwd/main.conf</code>:</p>
+<pre><code>[General]
+EnableNetworkConfiguration=false</code></pre>
+<p>после перезапуска <code>rc-service iwd restart</code> подключайся через <code>iwctl</code>, как в разделе <a href="#s2-3">2.3</a>. сеть запоминается в <code>/var/lib/iwd</code> и подключается сама при следующей загрузке.</p>
 <h3 id="s10-6">10.6 службы openrc</h3>
 <div class="sc"><table><tr><th>команда</th><th>что делает</th></tr>
 <tr><td><code>rc-status</code></td><td>показывает запущенные службы</td></tr>
@@ -657,7 +675,8 @@ dhcpcd eth0</code></pre>
 <details class="err"><summary>login incorrect</summary><div>
 <p>неверный пароль или он не был задан. загрузись с live iso, зайди в chroot и задай пароль заново командой <code>passwd</code>.</p></div></details>
 <details class="err"><summary>нет сети после загрузки</summary><div>
-<p>проверь <code>rc-status</code>. если <code>dhcpcd</code> не запущен, выполни <code>rc-update add dhcpcd default</code> и <code>rc-service dhcpcd start</code>. если интерфейса нет в <code>ip link</code>, в ядре нет драйвера карты.</p></div></details>
+<p>проверь <code>rc-status</code>. если <code>dhcpcd</code> не запущен, выполни <code>rc-update add dhcpcd default</code> и <code>rc-service dhcpcd start</code>. если интерфейса нет в <code>ip link</code>, в ядре нет драйвера карты.</p>
+<p>если не работает wifi: проверь, что в <code>rc-status</code> есть <code>dbus</code> и <code>iwd</code>, что <code>rfkill list</code> не показывает <code>blocked: yes</code> (снять блок: <code>rfkill unblock wifi</code>), что поставлен <code>sys-kernel/linux-firmware</code> и что в <code>dmesg | grep -i firmware</code> нет ошибок загрузки прошивки. если <code>iwctl</code> пишет об отказе в доступе, добавь себя в группу <code>netdev</code> и войди заново.</p></div></details>
 <details class="err"><summary>doas: Operation not permitted</summary><div>
 <p>пользователь не в группе wheel или нет файла <code>/etc/doas.conf</code>. проверь по <a href="#s10-2">10.2</a>: <code>id имя</code> должен показать группу <code>wheel</code>.</p></div></details>
 <details class="err"><summary>setlocale: LC_ALL: cannot change locale</summary><div>
@@ -725,6 +744,10 @@ cloudpkg install имя</code></pre></div></details>
 <tr><td><code>ip addr</code></td><td>адреса интерфейсов</td></tr>
 <tr><td><code>ip route</code></td><td>маршруты и шлюз</td></tr>
 <tr><td><code>dhcpcd eth0</code></td><td>получить адрес на интерфейсе</td></tr>
+<tr><td><code>iwctl</code></td><td>консоль wifi (iwd)</td></tr>
+<tr><td><code>iwctl station wlan0 connect имя</code></td><td>подключиться к wifi сети</td></tr>
+<tr><td><code>iwctl known-networks list</code></td><td>сохранённые wifi сети</td></tr>
+<tr><td><code>rfkill list</code></td><td>проверить блокировку wifi</td></tr>
 <tr><td><code>ping -c1 github.com</code></td><td>проверить связь и имена</td></tr>
 <tr><td><code>curl -LO ссылка</code></td><td>скачать файл</td></tr></table></div>
 <h3 id="s15-3">15.3 система</h3>
