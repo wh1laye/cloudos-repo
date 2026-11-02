@@ -1,7 +1,7 @@
 (function(){
 var d=document,rows=d.getElementById('rows'),q=d.getElementById('q'),c=d.getElementById('c'),cnt=d.getElementById('cnt');
 var CAT={system:['система','system'],toolchain:['инструменты сборки','toolchain'],init:['инициализация','init'],network:['сеть','network'],tools:['утилиты','tools'],lib:['библиотеки','libraries'],fs:['файловые системы','filesystems'],boot:['загрузка','boot']};
-var ST={stage3:['в stage 3','in stage 3'],cloudpkg:['через cloudpkg','via cloudpkg']};
+var ST={stage3:['в системе','in the system'],cloudpkg:['через cloudpkg','via cloudpkg']};
 var data=[];
 function en(){return window.CloudTheme&&window.CloudTheme.getLang()==='en'?1:0}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]})}
