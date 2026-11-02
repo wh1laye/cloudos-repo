@@ -88,15 +88,7 @@ function hl(el,q){
 }
 
 var h2s=qa('h2[id]',main);
-h2s.forEach(function(x,i){
-  var nav=d.createElement('div');
-  nav.className='hbn';
-  var pv=h2s[i-1],nx=h2s[i+1];
-  function lab(e){return e.textContent.replace(/#$/,'')}
-  nav.innerHTML=(pv?'<a href="#'+pv.id+'"><small>назад</small><strong>'+esc(lab(pv))+'</strong></a>':'<span></span>')+(nx?'<a class="nx" href="#'+nx.id+'"><small>дальше</small><strong>'+esc(lab(nx))+'</strong></a>':'');
-  var before=nx||main.querySelector('footer');
-  main.insertBefore(nav,before);
-});
+function T(x){return window.I18N&&window.I18N.t?window.I18N.t(x):x}
 
 var tocLinks={};
 qa('.toc a[href^="#"]').forEach(function(a){tocLinks[a.getAttribute('href').slice(1)]=a});
@@ -106,7 +98,9 @@ function track(){
   var id=h2s.length?h2s[0].id:null;
   for(var i=0;i<h2s.length;i++){if(h2s[i].getBoundingClientRect().top<=140)id=h2s[i].id}
   if(id===curCh)return;
+  var prevI=curCh===null?-1:h2s.map(function(x){return x.id}).indexOf(curCh);
   curCh=id;
+  if(ready)stepUI(id,prevI);
   qa('.toc li.open').forEach(function(li){li.classList.remove('open')});
   var a=tocLinks[id];
   if(a&&a.parentElement)a.parentElement.classList.add('open');
@@ -120,7 +114,6 @@ function build(){
   idx=[];
   var s2='',s3='';
   qa('h2,h3,summary,p,li,td,pre',main).forEach(function(el){
-    if(el.closest('.hbn'))return;
     var tag=el.tagName;
     var t=el.textContent.replace(/#$/,'').replace(/\s+/g,' ').trim();
     if(!t)return;
@@ -239,20 +232,18 @@ if(hl){
   hl.insertBefore(b,hl.firstChild);
 }
 
+var ready=false;
 var DONE=[];
 try{DONE=JSON.parse(localStorage.getItem('hbdone')||'[]')}catch(e){}
 if(!Array.isArray(DONE))DONE=[];
 function saveDone(){try{localStorage.setItem('hbdone',JSON.stringify(DONE))}catch(e){}}
 var chs=h2s.slice(0,13);
-var ftr=main.querySelector('footer');
-var dbtn={},progBox=null;
+var progBox=null;
 function paintDone(){
   var n=0;
   chs.forEach(function(c){
     var on=DONE.indexOf(c.id)>-1;
     if(on)n++;
-    var b=dbtn[c.id];
-    if(b){b.classList.toggle('on',on);b.textContent=on?'пройдена':'отметить как пройденную';b.setAttribute('aria-pressed',on?'true':'false')}
     var a=tocLinks[c.id];
     if(a&&a.parentElement)a.parentElement.classList.toggle('done',on);
   });
@@ -261,22 +252,6 @@ function paintDone(){
     progBox.querySelector('b').style.width=(chs.length?Math.round(n*100/chs.length):0)+'%';
   }
 }
-chs.forEach(function(c,i){
-  var nxt=h2s[i+1]||ftr;
-  var nav=nxt?nxt.previousElementSibling:null;
-  var box=d.createElement('div');
-  box.className='hbd2';
-  var b=d.createElement('button');
-  b.type='button';b.className='btn s';
-  b.onclick=function(){
-    var k=DONE.indexOf(c.id);
-    if(k>-1)DONE.splice(k,1);else DONE.push(c.id);
-    saveDone();paintDone();
-  };
-  box.appendChild(b);
-  dbtn[c.id]=b;
-  main.insertBefore(box,nav&&nav.classList.contains('hbn')?nav:nxt);
-});
 var tocOl=d.querySelector('.toc ol,.toc ul');
 if(tocOl&&chs.length){
   progBox=d.createElement('div');
@@ -285,6 +260,32 @@ if(tocOl&&chs.length){
   tocOl.parentNode.insertBefore(progBox,tocOl);
 }
 paintDone();
+var ribbon=d.createElement('div');
+ribbon.className='hbs';
+ribbon.innerHTML='<span class="hbs-n"></span><b class="hbs-t"></b><i><u></u></i>';
+main.insertBefore(ribbon,main.firstChild);
+var STEPS=8;
+function stepUI(id,prevI){
+  var i=-1;
+  for(var k=0;k<h2s.length;k++)if(h2s[k].id===id)i=k;
+  if(i<0)return;
+  var t=h2s[i].textContent.replace(/#$/,'').replace(/^\s*\d+\.\s*/,'').trim();
+  var n,pct;
+  if(i===0){n=T('знакомство');pct=0}
+  else if(i<=STEPS){n=T('шаг')+' '+i+' '+T('из')+' '+STEPS;pct=Math.round(i*100/STEPS)}
+  else if(i<13){n=T('после установки');pct=100}
+  else if(i<16){n=T('помощь');pct=100}
+  else{n=T('приложения');pct=100}
+  ribbon.querySelector('.hbs-n').textContent=n;
+  ribbon.querySelector('.hbs-t').textContent=t;
+  ribbon.querySelector('u').style.width=pct+'%';
+  if(prevI===i-1&&prevI>=0&&prevI<chs.length&&DONE.indexOf(chs[prevI].id)<0){
+    DONE.push(chs[prevI].id);saveDone();paintDone();
+  }
+}
+var ready=true;
+curCh=null;
+track();
 window.addEventListener('storage',function(e){
   if(e.key==='hbdone'){try{DONE=JSON.parse(e.newValue||'[]')}catch(x){DONE=[]}paintDone()}
 });
@@ -460,4 +461,30 @@ if(errs.length){
   });
 }
 hashTarget();
+(function(){
+  var lead=main.querySelector('.lead');
+  if(lead&&!main.querySelector('.hbq')){
+    var en=/\/en\/?$/.test(location.pathname.replace(/index\.html$/,''));
+    var wz=en?'../../wizard/':'../wizard/';
+    var q=d.createElement('div');
+    q.className='hbq';
+    q.innerHTML='<a class="hbq1" href="'+wz+'"><b>'+esc(T('я новичок'))+'</b><span>'+esc(T('мастер сам подберёт команды под твой диск'))+'</span></a><a class="hbq1" href="#prep"><b>'+esc(T('иду по шагам'))+'</b><span>'+esc(T('8 шагов от live iso до первой загрузки'))+'</span></a><a class="hbq1" href="#errors"><b>'+esc(T('что-то сломалось'))+'</b><span>'+esc(T('ошибки, решения и диагностика по тексту ошибки'))+'</span></a>';
+    lead.parentNode.insertBefore(q,lead.nextSibling);
+  }
+  var tm=d.querySelector('.tmode');
+  if(tm&&!tm.querySelector('.tmh')){
+    var a=d.createElement('a');
+    a.className='tmh';a.href='#prep';
+    a.textContent=T('не знаешь свой режим? смотри главу 2');
+    tm.appendChild(a);
+  }
+  qa('h3[id]',main).forEach(function(x){
+    if(/по желанию|можно пропустить|optional|can be skipped|skip/i.test(x.textContent)){
+      x.classList.add('opt');
+      var b=d.createElement('span');
+      b.className='hbo';b.textContent=T('необязательно');
+      x.insertBefore(b,x.firstChild);
+    }
+  });
+})();
 })();

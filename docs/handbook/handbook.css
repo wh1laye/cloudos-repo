@@ -32,12 +32,6 @@ details.err summary:hover{background:var(--side)}
 details.err[open] summary{border-bottom:1px solid var(--line)}
 details.err>div{padding:14px 18px 4px}
 details.err .cw,details.err>div>pre{margin-bottom:14px}
-.hbn{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:34px 0 0}
-.hbn a{display:flex;flex-direction:column;gap:2px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surf);color:var(--ink);text-decoration:none;transition:border-color .12s}
-.hbn a:hover{border-color:var(--ac)}
-.hbn a.nx{grid-column:2;text-align:right}
-.hbn small{font-size:12px;color:var(--mute)}
-.hbn strong{font-weight:500}
 .hf{animation:hf 2s ease-out}
 @keyframes hf{0%,55%{box-shadow:0 0 0 4px var(--soft);background:var(--soft)}100%{box-shadow:0 0 0 4px transparent;background:transparent}}
 .sx{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;align-items:flex-start;padding:9vh 16px 16px;background:rgba(10,14,22,.5)}
@@ -55,19 +49,15 @@ details.err .cw,details.err>div>pre{margin-bottom:14px}
 .sxh.on mark{background:var(--surf)}
 .sxe{padding:22px 16px;color:var(--mute);text-align:center}
 .sxf{display:flex;gap:14px;padding:9px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
-@media(max-width:860px){.hbn{grid-template-columns:1fr}.hbn a.nx{grid-column:1;text-align:left}.sx{padding-top:5vh}.sxf{display:none}}
+@media(max-width:860px){.sx{padding-top:5vh}.sxf{display:none}}
 @media print{
-  .top,.toc,.hbn,.cpb,.anc,.sx{display:none!important}
+  .top,.toc,.hbs,.hbq,.cpb,.anc,.sx{display:none!important}
   .layout{display:block}
   .m-uefi,.m-bios{display:block!important}
   tr.m-uefi,tr.m-bios{display:table-row!important}
   details.err>div{display:block}
 }
 
-.hbd2{display:flex;justify-content:flex-end;margin:26px 0 0}
-.hbd2 .btn.s{padding:8px 16px;font-size:14px;background:var(--surf);color:var(--mute);border:1px solid var(--line)}
-.hbd2 .btn.s:hover{border-color:var(--ac);color:var(--ac)}
-.hbd2 .btn.s.on{background:var(--abg,var(--ac));border-color:transparent;color:var(--onac)}
 .hbp{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin:6px 12px 10px;font-size:12px;color:var(--mute)}
 .hbp em{font-style:normal;color:var(--ink);margin-left:auto}
 .hbp i{flex:0 0 100%;display:block;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
@@ -106,3 +96,20 @@ details.err .cw,details.err>div>pre{margin-bottom:14px}
 .hlp .hl1{margin:4px 0}
 .hlp ul{margin:2px 0 8px;padding-left:22px;color:var(--mute)}
 .hlp code{font-family:var(--mono);color:var(--ac)}
+
+.hbs{position:sticky;top:54px;z-index:12;display:flex;flex-wrap:wrap;align-items:center;gap:2px 12px;margin:0 0 18px;padding:10px 14px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surf)}
+.hbs-n{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--ac)}
+.hbs-t{flex:1;min-width:0;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbs i{flex:0 0 100%;display:block;height:4px;margin-top:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.hbs u{display:block;height:100%;width:0;border-radius:99px;background:var(--ac);text-decoration:none;transition:width .25s}
+.hbq{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0 8px}
+.hbq1{display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surf);color:var(--ink);text-decoration:none;transition:border-color .12s}
+.hbq1:hover{border-color:var(--ac)}
+.hbq1 b{font-weight:600}
+.hbq1 span{font-size:14px;color:var(--mute);line-height:1.45}
+.tmh{display:block;margin-top:8px;font-size:13px;color:var(--mute)}
+.hbo{display:inline-block;margin-right:10px;padding:0 8px;border:1px solid var(--line);border-radius:999px;background:var(--side);color:var(--mute);font-size:11px;font-weight:500;line-height:20px;vertical-align:3px;letter-spacing:.02em}
+h3.opt{color:var(--mute)}
+main h2{scroll-margin-top:120px}
+main h3{scroll-margin-top:120px}
+@media(max-width:860px){.hbq{grid-template-columns:1fr}.hbs{top:54px}}
