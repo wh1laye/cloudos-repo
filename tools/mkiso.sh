@@ -20,7 +20,7 @@ case "$MARCH" in x86-64|x86-64-v3) ;; *) die "MARCH: x86-64 или x86-64-v3" ;;
 [ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
 for c in curl tar xz sha256sum unshare mount chroot awk; do command -v "$c" >/dev/null || die "нет команды $c"; done
 case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасная рабочая папка: $WORK" ;; esac
-for f in iso/init iso/mkiso-inside.sh iso/cloudos-install; do [ -f "$HERE/$f" ] || die "нет $HERE/$f"; done
+for f in iso/init iso/mkiso-inside.sh iso/cloudos-install iso/cloudos-secureboot iso/sysctl-perf.conf stage3/cloudos-audit; do [ -f "$HERE/$f" ] || die "нет $HERE/$f"; done
 
 mkdir -p "$WORK/src" "$OUT"
 
@@ -85,6 +85,7 @@ grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похож
 mkdir -p "$ROOT/var/tmp/isosrc" "$ROOT/var/tmp/isofiles"
 cp "$WORK/src/$KTAR" "$ROOT/var/tmp/isosrc/"
 cp -R "$HERE"/iso/. "$ROOT/var/tmp/isofiles/"
+cp "$HERE/stage3/cloudos-audit" "$ROOT/var/tmp/isofiles/"
 
 enter() {
   unshare -m sh -c '
