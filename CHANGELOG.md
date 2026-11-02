@@ -2,6 +2,7 @@
 
 ## 1.4.2, wifi
 
+- `docs/handbook/index.html`, `docs/handbook/en/index.html`: 8.3 limine переписан (он уже есть в stage 3, `cloudpkg install limine` не нужен, `limine bios-install` на весь диск, а не на раздел, добавлен шаг с blkid), глава 9 переделана (9.1 включить dhcpcd и syslog-ng, 9.2 wifi в chroot до перезагрузки, 9.3 первая загрузка), убран раздел 7.4 и дубль установки wifi в 10.5
 - `docs/handbook/index.html`, `docs/handbook/en/index.html`: в разделе про сеть wifi через `doas iwctl` с аргументами (интерактивный iwctl в live падает), проверено на железе, добавлены `dhcpcd wlan0`, `ip addr`, `connect-hidden` и пояснение про `ping` только через doas
 - `tools/iso/mkiso-inside.sh`: сборка `libnl` падала на `yacc.bison: No such file or directory` (в stage 3 нет app-alternatives/yacc), теперь создаётся обёртка `/usr/bin/yacc.bison` над `bison -y`, только если её нет
 - `tools/iso/mkiso-inside.sh`: установка `linux-firmware` падала в pretend-фазе (`mount-boot` читает `/etc/fstab`), теперь `-initramfs` в package.use, `DONT_MOUNT_BOOT=1` и пустой `/etc/fstab` на время сборки
