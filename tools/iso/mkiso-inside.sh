@@ -148,8 +148,17 @@ live_users() {
 
 build_wifi() {
   say "wifi: iwd, wireless-regdb, iw, linux-firmware"
+  if [ -d /etc/portage/package.use ]; then
+    echo 'sys-kernel/linux-firmware -initramfs' > /etc/portage/package.use/cloudos-wifi
+  elif [ -f /etc/portage/package.use ]; then
+    echo 'sys-kernel/linux-firmware -initramfs' >> /etc/portage/package.use
+  else
+    mkdir -p /etc/portage/package.use
+    echo 'sys-kernel/linux-firmware -initramfs' > /etc/portage/package.use/cloudos-wifi
+  fi
+  [ -e /etc/fstab ] || : > /etc/fstab
   cloudpkg sync
-  cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware || die "wifi пакеты не поставились, причина выше"
+  DONT_MOUNT_BOOT=1 cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware || die "wifi пакеты не поставились, причина выше"
   command -v iwctl >/dev/null || die "после установки нет iwctl"
   [ -d /lib/firmware ] && [ -n "$(ls -A /lib/firmware)" ] || die "в /lib/firmware пусто, linux-firmware не встал"
   [ -f /lib/firmware/regulatory.db ] || echo "!! нет /lib/firmware/regulatory.db" >&2
