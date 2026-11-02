@@ -101,14 +101,6 @@ function show(text){
     dc.appendChild(el('p','mu',tr('в мастере выбирай чистый диск: все данные на нём будут стёрты.')));
     out.appendChild(dc);
   }
-  var kc=el('div','dcard');kc.appendChild(el('h3','',tr('для настройки ядра')));
-  var h='c='+X.c+'&b='+X.b+'&s='+X.s.join(',')+'&f='+X.f.join(',')+'&n='+X.n.join(',')+'&g='+X.g+'&v='+X.v;
-  var summ=[X.c,X.b,X.s.join('+'),X.n.join('+')||'-'].join(', ');
-  kc.appendChild(el('p','',summ));
-  var a2=el('a','btn p');a2.href='../kernel/#'+h;a2.textContent=tr('открыть в помощнике по ядру');kc.appendChild(a2);
-  X.notes.forEach(function(n){kc.appendChild(el('p','mu',n))});
-  if(R.virt==='hw')kc.appendChild(el('p','mu',tr('для консольной системы хватает простой графики (efifb), драйвер видеокарты нужен только для графической среды.')));
-  out.appendChild(kc);
   var hc=el('div','dcard');hc.appendChild(el('h3','',tr('в таблицу железа')));
   var gpu=R.gpu[0]||'-',cpu=R.cpu||'-',dk=X.s.join('+')+(R.disks[0]?' ('+R.disks[0].name+')':'');
   var title='железо: '+cpu+(R.gpu[0]?' + '+gpu:'');
