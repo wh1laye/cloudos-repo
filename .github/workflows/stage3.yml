@@ -15,9 +15,12 @@ on:
         type: boolean
         default: true
       publish:
-        description: выложить результат в релиз
+        description: выложить результат во внутренний релиз
         type: boolean
         default: true
+      release_tag:
+        description: тег внутреннего релиза базы для сборки iso
+        default: "1.4"
 
 concurrency:
   group: stage3-${{ inputs.version }}
@@ -144,7 +147,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
+          TAG: ${{ inputs.release_tag }}
         run: |
-          gh release view "$VERSION" >/dev/null 2>&1 || gh release create "$VERSION" --title "CloudOS $VERSION" \
-            --notes "stage 3 cloudos $VERSION. проверка: sha256sum -c cloudos-stage3-amd64-$VERSION.tar.xz.sha256"
-          gh release upload "$VERSION" out/* --clobber
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --prerelease --title "base $TAG (внутренняя база для сборки iso)" \
+            --notes "внутренний артефакт сборки live iso, для установки не предназначен. ставь систему с live iso через cloudos-install."
+          gh release upload "$TAG" out/* --clobber
