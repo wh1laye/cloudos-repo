@@ -1,9 +1,9 @@
 (function(){
 var d=document,h=d.documentElement,sc=d.currentScript;
 var BASE=sc?sc.src.replace(/themes\.js.*$/,''):'';
-var V='5';
-var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',cs:'space'};
-var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['cs','космос']];
+var V='6';
+var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',cs:'space',fo:'forest',au:'autumn',oc:'ocean'};
+var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['cs','космос'],['fo','лес'],['au','осень'],['oc','океан']];
 var FXN=[['full','полные'],['low','лёгкие'],['off','выкл']];
 var DEVN=[['auto','авто'],['pc','компьютер'],['phone','телефон']];
 var M={},root=null,back=null,frames=[],rsz=[],obs=[],raf=0,last=0,token=0,q=1,ema=0,jank=16,nf=0;
@@ -15,6 +15,7 @@ function autoSeason(){
   var t=new Date(),m=t.getMonth()+1,dd=t.getDate();
   if((m===12&&dd>=10)||(m===1&&dd<=14))return 'ny';
   if((m===10&&dd>=15)||(m===11&&dd<=2))return 'hw';
+  if((m===11&&dd>2)||(m===9)||(m===10&&dd<15))return 'au';
   if(m>=6&&m<=8)return 'su';
   if((m===3&&dd>=15)||m===4||m===5)return 'sp';
   return 'off';
@@ -163,7 +164,10 @@ function apply(){
 }
 var rt=0;
 window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(function(){rsz.forEach(function(f){f()})},120)});
+function calm(){return ls('calm')==='1'}
+function applyCalm(){if(calm())h.setAttribute('data-calm','1');else h.removeAttribute('data-calm')}
 function mark(){
+  [].forEach.call(d.querySelectorAll('[data-calm]'),function(b){b.classList.toggle('on',(b.getAttribute('data-calm')==='1')===calm())});
   [].forEach.call(d.querySelectorAll('[data-zs]'),function(b){b.classList.toggle('on',b.getAttribute('data-zs')===season())});
   [].forEach.call(d.querySelectorAll('[data-zsf]'),function(b){b.classList.toggle('on',b.getAttribute('data-zsf')===fx())});
   [].forEach.call(d.querySelectorAll('[data-zsd]'),function(b){b.classList.toggle('on',b.getAttribute('data-zsd')===dev())});
@@ -176,22 +180,27 @@ function ui(){
   s.className='sps zss';
   s.innerHTML='<h4>сезонные темы</h4><div class="zsg">'+NAMES.map(function(n){return '<button type="button" data-zs="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="spm">анимации</p><div class="zsg">'+FXN.map(function(n){return '<button type="button" data-zsf="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="spm">устройство</p><div class="zsg">'+DEVN.map(function(n){return '<button type="button" data-zsd="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="zsn">компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам</p>';
   if(first&&first.nextSibling)spb.insertBefore(s,first.nextSibling);else spb.appendChild(s);
+  var u=d.createElement('div');u.className='sps zss';
+  u.innerHTML='<h4>интерфейс</h4><p class="spm">плавные переходы</p><div class="zsg"><button type="button" data-calm="0">включены</button><button type="button" data-calm="1">отключены</button></div><p class="zsn">отключи, если сайт тормозит</p>';
+  s.parentNode.insertBefore(u,s.nextSibling);
   mark();
 }
 d.addEventListener('click',function(e){
-  var b=e.target.closest?e.target.closest('[data-zs],[data-zsf],[data-zsd]'):null;
+  var b=e.target.closest?e.target.closest('[data-zs],[data-zsf],[data-zsd],[data-calm]'):null;
   if(!b)return;
+  if(b.hasAttribute('data-calm')){ls('calm',b.getAttribute('data-calm'));applyCalm();mark();return}
   if(b.hasAttribute('data-zs'))ls('season',b.getAttribute('data-zs'));
   else if(b.hasAttribute('data-zsd')){ls('seasondev',b.getAttribute('data-zsd'));q=1;ls('seasonq','1')}
   else{ls('seasonfx',b.getAttribute('data-zsf'));q=1;ls('seasonq','1')}
   apply();mark();
 });
-var T={'сезонные темы':'seasonal themes','выкл':'off','авто':'auto','новый год':'new year','хэллоуин':'halloween','лето':'summer','весна':'spring','анимации':'animations','полные':'full','лёгкие':'light','устройство':'device','компьютер':'computer','телефон':'phone','компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам':'computer — complex effects, phone — light ones. auto picks by itself'};
+var T={'сезонные темы':'seasonal themes','выкл':'off','авто':'auto','новый год':'new year','хэллоуин':'halloween','лето':'summer','весна':'spring','анимации':'animations','лес':'forest','осень':'autumn','океан':'ocean','интерфейс':'interface','плавные переходы':'smooth transitions','включены':'on','отключены':'off','отключи, если сайт тормозит':'turn off if the site lags','полные':'full','лёгкие':'light','устройство':'device','компьютер':'computer','телефон':'phone','компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам':'computer — complex effects, phone — light ones. auto picks by itself'};
 function dict(){if(window.I18N&&window.I18N.add)window.I18N.add(T);else{window.I18N_EXTRA=window.I18N_EXTRA||{};for(var k in T)window.I18N_EXTRA[k]=T[k]}}
 dict();
 var lk=d.createElement('link');lk.rel='stylesheet';lk.href=BASE+'themes.css?v='+V;d.head.appendChild(lk);
 window.CloudSeason={reg:function(id,m){M[id]=m},get:season,set:function(s){ls('season',s);apply();mark()},apply:apply,stats:function(){return {q:q,cost:ema,gap:jank,frames:nf}}};
 function boot(){
+  applyCalm();
   new MutationObserver(function(){ui()}).observe(d.body,{childList:true,subtree:true});
   ui();apply();
 }

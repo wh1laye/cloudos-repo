@@ -8,6 +8,13 @@ html[data-season="sp"][data-theme="gray"]{--bg:#1e1723;--surf:#2b2031;--side:#35
 html[data-season="sp"][data-theme="light"]{--bg:#fff3f8;--surf:#fff;--side:#ffe6ef;--line:#f5cadb;--ink:#4a1f33;--mute:#a0637f;--ac:#e0507f;--soft:#ffe0ec;--onac:#fff;--code:#ffeaf2}
 html[data-season="cs"][data-theme="gray"]{--bg:#0a0a12;--surf:#12121e;--side:#1a1a2e;--line:#2a2a4e;--ink:#e8eaf6;--mute:#b0b0d0;--ac:#bb86fc;--soft:#1f1f3d;--onac:#0a0a12;--code:#0d0d1a}
 html[data-season="cs"][data-theme="light"]{--bg:#e8eaf6;--surf:#fff;--side:#c5cae9;--line:#9fa8da;--ink:#303f9f;--mute:#7986cb;--ac:#5c6bc0;--soft:#e8eaf6;--onac:#fff;--code:#e8eaf6}
+html[data-season="fo"][data-theme="gray"]{--bg:#0b1a12;--surf:#12261a;--side:#173120;--line:#24492f;--ink:#e6f6ea;--mute:#8fc4a0;--ac:#5fd47f;--soft:#17321f;--onac:#04200d;--code:#0d1f15}
+html[data-season="fo"][data-theme="light"]{--bg:#eaf6ec;--surf:#fff;--side:#d9eddc;--line:#b7dbbf;--ink:#123320;--mute:#4d8a62;--ac:#2e9e55;--soft:#d8f0de;--onac:#fff;--code:#e1f2e5}
+html[data-season="au"][data-theme="gray"]{--bg:#1d130c;--surf:#2a1b10;--side:#35221a;--line:#55361f;--ink:#fdf0e0;--mute:#d1a67c;--ac:#ff8a2b;--soft:#432a17;--onac:#2a1100;--code:#22160d}
+html[data-season="au"][data-theme="light"]{--bg:#fff4e6;--surf:#fff;--side:#fde6cc;--line:#f0cda1;--ink:#3a1f0b;--mute:#94683c;--ac:#d9631a;--soft:#fde3c6;--onac:#fff;--code:#fdeed9}
+html[data-season="oc"][data-theme="gray"]{--bg:#06161f;--surf:#0b2330;--side:#0f2d3e;--line:#1a465c;--ink:#e4f6fb;--mute:#86bfd3;--ac:#2cc3e6;--soft:#0f3345;--onac:#02212b;--code:#08202c}
+html[data-season="oc"][data-theme="light"]{--bg:#e6f6fb;--surf:#fff;--side:#d3ecf6;--line:#a9d8ea;--ink:#0a3447;--mute:#4c8aa3;--ac:#0c8fb5;--soft:#d2eef8;--onac:#fff;--code:#dff2f9}
+html[data-calm="1"] body>*:not(.zs):not(.zsb),html[data-calm="1"] body>*:not(.zs):not(.zsb) *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 .zs{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden;contain:layout style}
 .zsb{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:layout style}
 .zs *,.zsb *{pointer-events:none}

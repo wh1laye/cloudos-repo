@@ -1,0 +1,45 @@
+(function(){
+function fish(c,col){
+  c.fillStyle=col;c.beginPath();c.ellipse(0,0,11,5,0,0,6.283);c.fill();
+  c.beginPath();c.moveTo(-9,0);c.lineTo(-17,-5);c.lineTo(-17,5);c.closePath();c.fill();
+  c.fillStyle='rgba(255,255,255,.9)';c.beginPath();c.arc(5,-1.5,1.4,0,6.283);c.fill();
+}
+window.CloudSeason.reg('oc',{
+  init:function(k){
+    var m=k.mobile(),B=[],nb=k.n(30),F=[],nf=m?3:6,j,o;
+    for(j=0;j<nb;j++)B.push({x:Math.random(),y:Math.random(),v:k.rnd(18,48),r:k.rnd(1.5,5),p:k.rnd(0,6.28),s:k.rnd(.8,2)});
+    for(j=0;j<nf;j++)F.push({x:Math.random(),y:k.rnd(.3,.85),v:k.rnd(.015,.05)*(Math.random()<.5?-1:1),z:k.rnd(.7,1.5),p:k.rnd(0,6.28),c:['#ff9f43','#48dbfb','#feca57','#ff6b81','#1dd1a1'][j%5]});
+    k.canvas(function(c,dt,t,w,h){
+      var g=c.createLinearGradient(0,0,0,h*.7),i,x,y,cnt,base;
+      g.addColorStop(0,'rgba(120,220,255,.16)');g.addColorStop(1,'rgba(120,220,255,0)');
+      c.fillStyle=g;
+      for(i=0;i<4;i++){
+        x=w*(.12+i*.26)+Math.sin(t*.25+i*1.7)*w*.04;
+        c.beginPath();c.moveTo(x,0);c.lineTo(x+w*.1,0);c.lineTo(x+w*.1+w*.16,h*.7);c.lineTo(x-w*.04,h*.7);c.closePath();c.fill();
+      }
+      for(j=0;j<nf;j++){
+        o=F[j];o.x+=o.v*dt;
+        if(o.x>1.1)o.x=-.1;if(o.x<-.1)o.x=1.1;
+        c.save();c.translate(o.x*w,(o.y+Math.sin(t*.8+o.p)*.015)*h);
+        c.scale(o.v<0?-o.z:o.z,o.z);c.globalAlpha=.75;fish(c,o.c);c.restore();
+      }
+      c.globalAlpha=1;
+      cnt=Math.ceil(nb*k.q());
+      for(j=0;j<cnt;j++){
+        o=B[j];o.y-=o.v*dt/h;
+        if(o.y<-.05){o.y=1.05;o.x=Math.random()}
+        x=(o.x+Math.sin(t*o.s+o.p)*.012)*w;y=o.y*h;
+        c.strokeStyle='rgba(200,240,255,.65)';c.lineWidth=1.2;c.beginPath();c.arc(x,y,o.r,0,6.283);c.stroke();
+        c.fillStyle='rgba(255,255,255,.35)';c.beginPath();c.arc(x-o.r*.35,y-o.r*.35,o.r*.3,0,6.283);c.fill();
+      }
+      for(i=0;i<3;i++){
+        base=h-(m?26:44)+i*(m?9:14);
+        c.beginPath();c.moveTo(0,h);
+        for(x=0;x<=w;x+=12)c.lineTo(x,base+Math.sin(x*.012+t*(.8+i*.35)+i*2)*(m?6:10));
+        c.lineTo(w,h);c.closePath();
+        c.fillStyle=['rgba(20,110,150,.5)','rgba(14,85,125,.6)','rgba(8,55,95,.75)'][i];c.fill();
+      }
+    },true,30,true);
+  }
+});
+})();
