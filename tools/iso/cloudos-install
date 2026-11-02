@@ -32,6 +32,8 @@ cloudos-install: установка cloudos на диск за одну кома
   CLOUDOS_YES=1                  не спрашивать подтверждение стирания диска
   CLOUDOS_LUKS=1                 зашифровать корень luks2 (нужны cryptsetup и dracut)
   CLOUDOS_LUKSPASS=пароль        пароль шифрования диска
+  CLOUDOS_PROFILE=balanced|secure|fast  secure: без smt, lockdown, init_on_free; fast: без watchdog и аудита
+  CLOUDOS_SECUREBOOT=1           свои ключи secure boot, подпись limine, хеши ядра (только uefi)
   CLOUDOS_CMDLINE_EXTRA="..."    дополнительные параметры ядра
 EOU
 }
@@ -120,6 +122,21 @@ case $LUKS in 1|yes|y) LUKS=1 ;; 0|no|n) LUKS=0 ;; *) die "CLOUDOS_LUKS: 1 ил�
 if [ "$LUKS" = 1 ]; then
   for c in cryptsetup dracut; do command -v "$c" >/dev/null || die "для luks нет команды $c"; done
   askpass CLOUDOS_LUKSPASS "пароль шифрования диска"
+fi
+
+PROFILE=${CLOUDOS_PROFILE:-balanced}
+case $PROFILE in
+  balanced) PA= ;;
+  secure) PA='mitigations=auto,nosmt lockdown=integrity init_on_free=1' ;;
+  fast) PA='nowatchdog audit=0' ;;
+  *) die "CLOUDOS_PROFILE: balanced, secure или fast" ;;
+esac
+EXTRA="$EXTRA $PA"
+SB=${CLOUDOS_SECUREBOOT:-0}
+case $SB in 0|1) ;; *) die "CLOUDOS_SECUREBOOT: 1 или 0" ;; esac
+if [ "$SB" = 1 ]; then
+  [ "$FW" = uefi ] || die "secure boot есть только в режиме uefi"
+  for c in cloudos-secureboot sbsign sbverify cert-to-efi-sig-list sign-efi-sig-list b2sum openssl; do command -v "$c" >/dev/null || die "для secure boot нет команды $c"; done
 fi
 
 ask CLOUDOS_HOST "имя компьютера" cloudos
@@ -251,6 +268,13 @@ if [ "$LUKS" = 1 ]; then
   [ -s "$T/boot/initramfs.img" ] || die "initramfs не создан"
 fi
 
+if [ "$SB" = 1 ]; then
+  say "secure boot: ключи, хеши ядра, подпись limine"
+  export CLOUDOS_SBDIR="$T/etc/cloudos/secureboot" CLOUDOS_BOOT="$T/boot" CLOUDOS_LIMINE_EFI="$LS/BOOTX64.EFI"
+  cloudos-secureboot init
+  cloudos-secureboot sign
+fi
+
 rm -f "$T/etc/init.d/cloudos-smoke" "$T/etc/runlevels/default/cloudos-smoke" "$T/etc/conf.d/agetty.tty1" \
   "$T/etc/ssh/sshd_config.d/05-cloudos-live.conf" "$T/etc/machine-id" "$T/var/lib/dbus/machine-id"
 rm -f "$T"/etc/ssh/ssh_host_*
@@ -278,4 +302,8 @@ grep -q "^$USERN:" "$T/etc/passwd" || die "пользователь $USERN не 
 say "готово: cloudos установлена на $DISK ($FW, $FS$([ "$LUKS" = 1 ] && echo ', luks2'))"
 if [ "${CLOUDOS_YES:-0}" != 1 ]; then
   echo "выполни reboot и вытащи носитель"
+  if [ "$SB" = 1 ]; then
+    echo "secure boot: сохрани копию /etc/cloudos/secureboot, зайди в uefi, очисти ключи secure boot (setup mode),"
+    echo "загрузись в cloudos, выполни doas cloudos-secureboot enroll, затем включи secure boot в прошивке"
+  fi
 fi

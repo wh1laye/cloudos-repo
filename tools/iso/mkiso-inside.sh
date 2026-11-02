@@ -78,6 +78,7 @@ build_kernel() {
   scripts/config -e TCP_CONG_BBR -e DEFAULT_BBR --set-str DEFAULT_TCP_CONG bbr -e NET_SCH_FQ -e NET_SCH_FQ_CODEL
   scripts/config -e TRANSPARENT_HUGEPAGE -e TRANSPARENT_HUGEPAGE_MADVISE -e MQ_IOSCHED_DEADLINE -e MQ_IOSCHED_KYBER -e IOSCHED_BFQ
   scripts/config -e BLK_DEV_DM -e DM_CRYPT -e CRYPTO_XTS -e CRYPTO_AES_NI_INTEL -e BLK_DEV_INITRD -e RD_ZSTD -e RD_GZIP
+  scripts/config -d HZ_250 -d HZ_300 -e HZ_1000 -d PREEMPT_VOLUNTARY -e PREEMPT -e SECURITY_LOCKDOWN_LSM -e SECURITY_LOCKDOWN_LSM_EARLY -e LOCK_DOWN_IN_EFI_SECURE_BOOT -e EFI_STUB
   scripts/config -e CPU_FREQ_DEFAULT_GOV_SCHEDUTIL -e X86_INTEL_PSTATE -e X86_AMD_PSTATE -e X86_ACPI_CPUFREQ
   make olddefconfig
   need="DM_CRYPT BLK_DEV_DM NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
@@ -179,6 +180,8 @@ build_wifi() {
   command -v mkfs.btrfs >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-fs/btrfs-progs || echo "!! btrfs-progs не поставился, установщик будет без btrfs" >&2
   for c in sfdisk wipefs lsblk findmnt blkid unsquashfs limine; do command -v "$c" >/dev/null || die "установщику нужна команда $c"; done
   command -v cryptsetup >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-fs/cryptsetup || echo "!! cryptsetup не поставился, установщик будет без luks" >&2
+  command -v sbsign >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/sbsigntools || echo "!! sbsigntools не поставился, secure boot в установщике недоступен" >&2
+  command -v cert-to-efi-sig-list >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/efitools || echo "!! efitools не поставился, secure boot в установщике недоступен" >&2
   command -v dracut >/dev/null || echo "!! нет dracut, luks в установщике не заработает" >&2
   rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/*
   say "wifi пакеты готовы, прошивки $(du -sh /lib/firmware | cut -f1)"
@@ -264,6 +267,11 @@ EOS
 live_installer() {
   install -m755 "$F/cloudos-install" /usr/sbin/cloudos-install
   bash -n /usr/sbin/cloudos-install || die "cloudos-install с ошибкой синтаксиса"
+  install -m755 "$F/cloudos-secureboot" /usr/sbin/cloudos-secureboot
+  bash -n /usr/sbin/cloudos-secureboot || die "cloudos-secureboot с ошибкой синтаксиса"
+  install -m755 "$F/cloudos-audit" /usr/sbin/cloudos-audit
+  install -d /etc/sysctl.d
+  install -m644 "$F/sysctl-perf.conf" /etc/sysctl.d/91-cloudos-perf.conf
   say "установщик cloudos-install на месте"
 }
 

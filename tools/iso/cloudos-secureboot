@@ -1,0 +1,118 @@
+#!/bin/bash
+set -euo pipefail
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+K=${CLOUDOS_SBDIR:-/etc/cloudos/secureboot}
+B=${CLOUDOS_BOOT:-/boot}
+SRC=${CLOUDOS_LIMINE_EFI:-/usr/share/limine/BOOTX64.EFI}
+CONF=$B/limine/limine.conf
+EFI=$B/EFI/BOOT/BOOTX64.EFI
+VARS=/sys/firmware/efi/efivars
+GV=8be4df61-93ca-11d2-aa0d-00e098032b8c
+
+say() { printf '==> %s\n' "$*"; }
+die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
+need() { for c in "$@"; do command -v "$c" >/dev/null || die "нет команды $c"; done; }
+efibyte() { [ -r "$VARS/$1-$2" ] && od -An -t u1 "$VARS/$1-$2" | awk '{ print $NF }' || echo -; }
+
+usage() {
+  cat <<'EOU'
+cloudos-secureboot: цепочка secure boot на своих ключах
+
+  init      создать ключи PK, KEK, db в /etc/cloudos/secureboot (только root)
+  sign      хеши ядра и initramfs в limine.conf, хеш конфига внутри limine, подпись limine ключом db
+  enroll    записать ключи в прошивку (нужен setup mode), иначе подсказка
+  status    состояние secure boot, lockdown и подписи
+
+после каждого обновления ядра или initramfs запусти: cloudos-secureboot sign
+ключи из /etc/cloudos/secureboot сохрани в надёжное место, без db.key подписать новое не получится
+EOU
+}
+
+init() {
+  need openssl cert-to-efi-sig-list sign-efi-sig-list
+  [ ! -e "$K/db.key" ] || die "ключи уже есть в $K"
+  install -d -m700 "$K"
+  umask 077
+  local n g
+  g=$(cat /proc/sys/kernel/random/uuid)
+  printf '%s\n' "$g" > "$K/GUID"
+  for n in PK KEK db; do
+    openssl req -new -x509 -newkey rsa:3072 -nodes -sha256 -days 3650 -subj "/CN=cloudos secure boot $n/" -keyout "$K/$n.key" -out "$K/$n.crt" 2>/dev/null
+    cert-to-efi-sig-list -g "$g" "$K/$n.crt" "$K/$n.esl"
+  done
+  sign-efi-sig-list -g "$g" -k "$K/PK.key" -c "$K/PK.crt" PK "$K/PK.esl" "$K/PK.auth"
+  sign-efi-sig-list -g "$g" -k "$K/PK.key" -c "$K/PK.crt" KEK "$K/KEK.esl" "$K/KEK.auth"
+  sign-efi-sig-list -g "$g" -k "$K/KEK.key" -c "$K/KEK.crt" db "$K/db.esl" "$K/db.auth"
+  openssl x509 -outform DER -in "$K/db.crt" -out "$K/db.cer"
+  say "ключи созданы в $K"
+}
+
+hashpaths() {
+  local l f h
+  while IFS= read -r l || [ -n "$l" ]; do
+    case $l in
+      *"path: boot():/"*)
+        f=${l#*boot():/}; f=${f%%#*}
+        [ -f "$B/$f" ] || die "в конфиге есть $f, а файла нет в $B"
+        h=$(b2sum "$B/$f" | cut -d' ' -f1)
+        l="${l%%boot():/*}boot():/$f#$h" ;;
+    esac
+    printf '%s\n' "$l"
+  done < "$CONF"
+}
+
+sign() {
+  need sbsign sbverify limine b2sum
+  [ -f "$K/db.key" ] || die "нет ключей, сначала: cloudos-secureboot init"
+  [ -f "$CONF" ] || die "нет $CONF"
+  [ -f "$SRC" ] || die "нет $SRC"
+  say "хеши ядра и initramfs в limine.conf"
+  hashpaths > "$CONF.new"
+  mv "$CONF.new" "$CONF"
+  say "хеш конфига внутри limine и подпись"
+  install -d "$B/EFI/BOOT"
+  cp "$SRC" "$EFI.new"
+  limine enroll-config "$EFI.new" "$(b2sum "$CONF" | cut -d' ' -f1)" >/dev/null
+  sbsign --key "$K/db.key" --cert "$K/db.crt" --output "$EFI.signed" "$EFI.new" >/dev/null
+  mv "$EFI.signed" "$EFI"
+  rm -f "$EFI.new" "$B/EFI/BOOT/BOOTIA32.EFI"
+  sbverify --cert "$K/db.crt" "$EFI" >/dev/null || die "подпись не прошла проверку"
+  install -d -m755 "$B/cloudos-keys"
+  install -m644 "$K/PK.auth" "$K/KEK.auth" "$K/db.auth" "$K/db.cer" "$B/cloudos-keys/"
+  say "готово: BOOTX64.EFI подписан, публичные ключи в $B/cloudos-keys"
+}
+
+enroll() {
+  need efi-updatevar
+  [ -d "$VARS" ] || die "система загружена не в uefi"
+  [ "$(efibyte SetupMode $GV)" = 1 ] || {
+    echo "прошивка не в setup mode. зайди в настройки uefi, очисти ключи secure boot (clear keys или custom mode)"
+    echo "и выполни эту команду снова. запасной путь: $B/cloudos-keys (db.auth, KEK.auth, PK.auth через меню ключей прошивки)"
+    exit 1
+  }
+  efi-updatevar -f "$K/db.auth" db
+  efi-updatevar -f "$K/KEK.auth" KEK
+  efi-updatevar -f "$K/PK.auth" PK
+  say "ключи записаны, включи secure boot в прошивке и перезагрузись"
+}
+
+status() {
+  local sb sm lk
+  sb=$(efibyte SecureBoot $GV); sm=$(efibyte SetupMode $GV)
+  echo "secure boot: $([ "$sb" = 1 ] && echo включён || echo выключен)"
+  echo "setup mode: $([ "$sm" = 1 ] && echo да || echo нет)"
+  lk=$(cat /sys/kernel/security/lockdown 2>/dev/null || echo "нет данных")
+  echo "lockdown: $lk"
+  if [ -f "$EFI" ] && [ -f "$K/db.crt" ] && command -v sbverify >/dev/null; then
+    sbverify --cert "$K/db.crt" "$EFI" >/dev/null 2>&1 && echo "BOOTX64.EFI: подпись db верна" || echo "BOOTX64.EFI: подпись не совпадает, запусти sign"
+  fi
+}
+
+[ "$(id -u)" = 0 ] || die "нужен root"
+case "${1:-}" in
+  init) init ;;
+  sign) sign ;;
+  enroll) enroll ;;
+  status) status ;;
+  *) usage ;;
+esac
