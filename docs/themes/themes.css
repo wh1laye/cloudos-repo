@@ -14,6 +14,14 @@ html[data-season="au"][data-theme="gray"]{--bg:#1d130c;--surf:#2a1b10;--side:#35
 html[data-season="au"][data-theme="light"]{--bg:#fff4e6;--surf:#fff;--side:#fde6cc;--line:#f0cda1;--ink:#3a1f0b;--mute:#94683c;--ac:#d9631a;--soft:#fde3c6;--onac:#fff;--code:#fdeed9}
 html[data-season="oc"][data-theme="gray"]{--bg:#06161f;--surf:#0b2330;--side:#0f2d3e;--line:#1a465c;--ink:#e4f6fb;--mute:#86bfd3;--ac:#2cc3e6;--soft:#0f3345;--onac:#02212b;--code:#08202c}
 html[data-season="oc"][data-theme="light"]{--bg:#e6f6fb;--surf:#fff;--side:#d3ecf6;--line:#a9d8ea;--ink:#0a3447;--mute:#4c8aa3;--ac:#0c8fb5;--soft:#d2eef8;--onac:#fff;--code:#dff2f9}
+html[data-season="ar"][data-theme="gray"]{--bg:#070f1c;--surf:#0e1a2c;--side:#12223a;--line:#1f3a56;--ink:#e6fbf3;--mute:#8fc9b8;--ac:#4df0b0;--soft:#11302f;--onac:#03160f;--code:#0a1626}
+html[data-season="ar"][data-theme="light"]{--bg:#eafaf4;--surf:#fff;--side:#d6f2e8;--line:#a8dcc9;--ink:#0d3a30;--mute:#4a8f7c;--ac:#14a37a;--soft:#d3f3e6;--onac:#fff;--code:#dcf3ea}
+html[data-season="cy"][data-theme="gray"]{--bg:#050a07;--surf:#0b140e;--side:#0f1c13;--line:#1c3a24;--ink:#d8ffe6;--mute:#6fbf88;--ac:#00ff6a;--soft:#0d2a16;--onac:#00170a;--code:#08120b}
+html[data-season="cy"][data-theme="light"]{--bg:#eefcf2;--surf:#fff;--side:#d8f7e2;--line:#a6e6bb;--ink:#0a2e17;--mute:#3f8a58;--ac:#0a9a45;--soft:#d2f5df;--onac:#fff;--code:#dff6e6}
+html[data-season="sk"][data-theme="gray"]{--bg:#1f1226;--surf:#2d1a36;--side:#38203f;--line:#5a3358;--ink:#ffeee6;--mute:#e0a9a0;--ac:#ff7a59;--soft:#4a2640;--onac:#2a0c05;--code:#25142c}
+html[data-season="sk"][data-theme="light"]{--bg:#fff1e6;--surf:#fff;--side:#ffe0cc;--line:#f5bfa6;--ink:#4a1c1c;--mute:#a35d52;--ac:#e0553a;--soft:#ffe1d3;--onac:#fff;--code:#ffe9dc}
+html[data-season="rn"][data-theme="gray"]{--bg:#0c1219;--surf:#141d28;--side:#1a2634;--line:#2a3d52;--ink:#e3edf7;--mute:#8aa3bd;--ac:#6aa8ff;--soft:#1a2c44;--onac:#04101f;--code:#0f1822}
+html[data-season="rn"][data-theme="light"]{--bg:#e9eff5;--surf:#fff;--side:#d8e3ee;--line:#b4c6d8;--ink:#1b2b3c;--mute:#5d7690;--ac:#3b78d8;--soft:#d9e6f7;--onac:#fff;--code:#e1eaf3}
 html[data-calm="1"] body>*:not(.zs):not(.zsb),html[data-calm="1"] body>*:not(.zs):not(.zsb) *{transition:none!important;animation:none!important;scroll-behavior:auto!important}
 .zs{position:fixed;inset:0;z-index:60;pointer-events:none;overflow:hidden;contain:layout style}
 .zsb{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;contain:layout style}
