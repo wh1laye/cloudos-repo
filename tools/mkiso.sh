@@ -2,9 +2,11 @@
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-VERSION=${VERSION:-1.4}
+VERSION=${VERSION:-1.0}
 KVER=${KVER:-6.18.10}
-BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$VERSION/cloudos-stage3-amd64-$VERSION.tar.xz}
+BASE_TAG=${BASE_TAG:-1.4}
+BASE_VERSION=${BASE_VERSION:-1.4}
+BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-iso-build}
 OUT=${OUT:-$PWD}
 ROOT=$WORK/root
@@ -16,7 +18,7 @@ die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
 [ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
 for c in curl tar xz sha256sum unshare mount chroot awk; do command -v "$c" >/dev/null || die "нет команды $c"; done
 case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасная рабочая папка: $WORK" ;; esac
-for f in iso/init iso/mkiso-inside.sh; do [ -f "$HERE/$f" ] || die "нет $HERE/$f"; done
+for f in iso/init iso/mkiso-inside.sh iso/cloudos-install; do [ -f "$HERE/$f" ] || die "нет $HERE/$f"; done
 
 mkdir -p "$WORK/src" "$OUT"
 
@@ -76,7 +78,7 @@ say "распаковка базы в $ROOT"
 rm -rf "$ROOT"
 mkdir -p "$ROOT"
 xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*'
-grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на stage 3 cloudos"
+grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на базу cloudos"
 
 mkdir -p "$ROOT/var/tmp/isosrc" "$ROOT/var/tmp/isofiles"
 cp "$WORK/src/$KTAR" "$ROOT/var/tmp/isosrc/"
