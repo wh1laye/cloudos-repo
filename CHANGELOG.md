@@ -2,6 +2,7 @@
 
 ## 1.4.2, wifi
 
+- `tools/iso/mkiso-inside.sh`: сборка `libnl` падала на `yacc.bison: No such file or directory` (в stage 3 нет app-alternatives/yacc), теперь создаётся обёртка `/usr/bin/yacc.bison` над `bison -y`, только если её нет
 - `tools/iso/mkiso-inside.sh`: установка `linux-firmware` падала в pretend-фазе (`mount-boot` читает `/etc/fstab`), теперь `-initramfs` в package.use, `DONT_MOUNT_BOOT=1` и пустой `/etc/fstab` на время сборки
 - `docs/handbook/index.html`, `docs/handbook/en/index.html`: wifi в справочнике: iwctl в live (2.3), ядро (7.1), установка iwd и прошивок на диск (10.5), шпаргалка (15.2), решение проблем (14.8)
 - `tools/iso/mkiso-inside.sh`: wifi в live-системе: пакеты `iwd`, `iw`, `wireless-regdb`, `linux-firmware` ставятся через cloudpkg, службы `dbus` и `iwd` включены в default, dhcp для wlan делает уже стоящий dhcpcd (`EnableNetworkConfiguration=false`), пользователь cloudos добавлен в группу netdev для iwctl
