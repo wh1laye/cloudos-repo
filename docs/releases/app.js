@@ -53,7 +53,7 @@ async function shaOf(a){
 function link(path){return '#/'+path.map(encodeURIComponent).join('/')}
 
 async function load(){
-  const k='rel_cache_v2';
+  const k='rel_cache_v3';
   try{
     const c=JSON.parse(sessionStorage.getItem(k)||'null');
     if(c&&Date.now()-c.t<600000)return c.d;
@@ -79,7 +79,8 @@ async function render(){
   const path=location.hash.slice(1).split('/').filter(Boolean).map(decodeURIComponent);
   let rels;
   try{rels=await load()}catch(e){return fail(e.message)}
-  rels=rels.filter(r=>!r.draft&&!/^base\b/i.test(r.name||'')).sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
+  const S3=/stage\s*-?3/i;
+  rels=rels.filter(r=>!r.draft&&!/^base\b/i.test(r.name||'')&&!S3.test((r.name||'')+' '+r.tag_name)).map(r=>Object.assign({},r,{assets:(r.assets||[]).filter(a=>!S3.test(a.name))})).filter(r=>r.assets.some(a=>/\.iso$/i.test(a.name))).sort((a,b)=>new Date(b.published_at)-new Date(a.published_at));
   const newest=rels[0]?rels[0].id:null;
   const tags=r=>(r.id===newest?' · <span class="tag lt">последний</span>':'')+((r.prerelease||/beta|бета/i.test((r.name||'')+' '+r.tag_name))?' · <span class="tag">бета</span>':'');
   const groups=R.groups.map(g=>({n:g.n,d:g.d})).concat([{n:'другое',d:'остальные релизы'}]).filter(g=>rels.some(r=>groupOf(r)===g.n));
