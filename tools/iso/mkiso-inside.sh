@@ -73,6 +73,10 @@ build_kernel() {
     echo "!! нет /lib/firmware/regulatory.db, регдомен wifi будет мировой" >&2
   fi
   scripts/config -d LEGACY_VSYSCALL_XONLY -d LEGACY_VSYSCALL_EMULATE -d DEVKMEM -d KEXEC_FILE -d LEGACY_PTYS -d ACPI_CUSTOM_METHOD -d PROC_KCORE -d COMPAT_BRK -d X86_X32_ABI
+  scripts/config -e KERNEL_ZSTD -e CRYPTO_ZSTD -e ZSWAP -e ZSWAP_COMPRESSOR_DEFAULT_ZSTD -m ZRAM -e ZRAM_BACKEND_ZSTD
+  scripts/config -e TCP_CONG_BBR -e DEFAULT_BBR --set-str DEFAULT_TCP_CONG bbr -e NET_SCH_FQ -e NET_SCH_FQ_CODEL
+  scripts/config -e TRANSPARENT_HUGEPAGE -e TRANSPARENT_HUGEPAGE_MADVISE -e MQ_IOSCHED_DEADLINE -e MQ_IOSCHED_KYBER -e IOSCHED_BFQ
+  scripts/config -e CPU_FREQ_DEFAULT_GOV_SCHEDUTIL -e X86_INTEL_PSTATE -e X86_AMD_PSTATE -e X86_ACPI_CPUFREQ
   make olddefconfig
   need="NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
   for s in $need; do
@@ -166,6 +170,10 @@ build_wifi() {
   command -v iwctl >/dev/null || die "после установки нет iwctl"
   [ -d /lib/firmware ] && [ -n "$(ls -A /lib/firmware)" ] || die "в /lib/firmware пусто, linux-firmware не встал"
   [ -f /lib/firmware/regulatory.db ] || echo "!! нет /lib/firmware/regulatory.db" >&2
+  command -v mkfs.vfat >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-fs/dosfstools || die "dosfstools не поставился, установщику нужен mkfs.vfat"
+  command -v mkfs.vfat >/dev/null || die "после установки нет mkfs.vfat"
+  command -v mkfs.btrfs >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-fs/btrfs-progs || echo "!! btrfs-progs не поставился, установщик будет без btrfs" >&2
+  for c in sfdisk wipefs lsblk findmnt blkid unsquashfs limine; do command -v "$c" >/dev/null || die "установщику нужна команда $c"; done
   rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/*
   say "wifi пакеты готовы, прошивки $(du -sh /lib/firmware | cut -f1)"
 }
@@ -227,6 +235,17 @@ start() {
 	[ -e /etc/init.d/iwd ] && command -v iwctl >/dev/null || { out "FAIL нет iwd или iwctl"; f=1; }
 	rc-service -q iwd status >/dev/null 2>&1 || { out "FAIL iwd не запущен"; f=1; }
 	[ "$f" = 0 ] && out ok
+	if grep -qw cloudos.itest /proc/cmdline; then
+		local d= x
+		for x in /dev/vda /dev/vdb /dev/sdb; do [ -b "$x" ] && { d=$x; break; }; done
+		if [ -z "$d" ]; then
+			out "itest FAIL нет диска для установки"
+		elif CLOUDOS_YES=1 CLOUDOS_DISK=$d CLOUDOS_FS=ext4 CLOUDOS_FW=bios CLOUDOS_HOST=itest CLOUDOS_USER=tester CLOUDOS_PASS=tester-pass CLOUDOS_ROOTPASS=root-pass CLOUDOS_CMDLINE_EXTRA="console=ttyS0,115200" /usr/sbin/cloudos-install > /dev/console 2>&1; then
+			out "itest ok"
+		else
+			out "itest FAIL установщик завершился с ошибкой"
+		fi
+	fi
 	sync
 	echo o > /proc/sysrq-trigger
 	return 0
@@ -236,8 +255,15 @@ EOS
   rc-update add cloudos-smoke default >/dev/null 2>&1 || die "cloudos-smoke не встал в default"
 }
 
+live_installer() {
+  install -m755 "$F/cloudos-install" /usr/sbin/cloudos-install
+  bash -n /usr/sbin/cloudos-install || die "cloudos-install с ошибкой синтаксиса"
+  say "установщик cloudos-install на месте"
+}
+
 live_tune() {
   live_users
+  live_installer
   live_wifi
   live_smoke
   local n s
@@ -261,7 +287,7 @@ live_tune() {
 
 CloudOS $VERSION live. вход выполнен как cloudos, пароль cloudos (root тоже cloudos, root-права: doas -s). только для live, ssh для них закрыт, фаервол включён: cloudos-firewall status
 wifi: iwctl, затем station wlan0 scan, station wlan0 get-networks, station wlan0 connect имя_сети
-установка: cfdisk, mkfs, распаковка stage 3 и настройка по handbook
+установка: doas cloudos-install, всё делается одной командой. вручную: handbook, раздел «установка вручную»
 https://wh1laye.github.io/cloudos-repo/
 
 EOM
@@ -272,7 +298,7 @@ build_squashfs() {
   mkdir -p "$R/cloudos"
   say "squashfs (xz), это самый долгий шаг после ядра"
   mksquashfs / "$R/cloudos/rootfs.squashfs" -comp xz -Xbcj x86 -b 1M -Xdict-size 100% -processors "$J" -noappend \
-    -e proc sys dev run tmp var/tmp etc/resolv.conf
+    -e proc sys dev run tmp var/tmp etc/resolv.conf usr/share/doc usr/share/gtk-doc
   ( cd "$R/cloudos" && sha256sum rootfs.squashfs > rootfs.squashfs.sha256 )
   say "rootfs.squashfs: $(du -h "$R/cloudos/rootfs.squashfs" | cut -f1)"
 }

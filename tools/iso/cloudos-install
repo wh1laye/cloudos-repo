@@ -1,0 +1,243 @@
+#!/bin/bash
+set -euo pipefail
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+T=${CLOUDOS_TARGET:-/mnt/cloudos}
+SQ=${CLOUDOS_SQUASHFS:-/media/cdrom/cloudos/rootfs.squashfs}
+BS=${CLOUDOS_BOOTSRC:-/media/cdrom/boot}
+LS=/usr/share/limine
+HARDEN='slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1 efi=disable_early_pci_dma iommu.strict=1'
+EXTRA=${CLOUDOS_CMDLINE_EXTRA:-}
+MOUNTED=0
+
+say() { printf '==> %s\n' "$*"; }
+die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
+
+usage() {
+  cat <<'EOU'
+cloudos-install: установка cloudos на диск за одну команду
+
+  cloudos-install                интерактивно
+  cloudos-install --help         эта справка
+
+переменные для запуска без вопросов:
+  CLOUDOS_DISK=/dev/sda          диск, он будет полностью стёрт
+  CLOUDOS_FS=ext4|btrfs          файловая система корня
+  CLOUDOS_HOST=имя               имя компьютера
+  CLOUDOS_USER=имя               обычный пользователь (группа wheel, doas)
+  CLOUDOS_PASS=пароль            пароль пользователя
+  CLOUDOS_ROOTPASS=пароль        пароль root
+  CLOUDOS_FW=uefi|bios           режим загрузки, по умолчанию определяется сам
+  CLOUDOS_YES=1                  не спрашивать подтверждение стирания диска
+  CLOUDOS_CMDLINE_EXTRA="..."    дополнительные параметры ядра
+EOU
+}
+
+cleanup() {
+  local rc=$?
+  if [ "$MOUNTED" = 1 ]; then
+    sync || true
+    umount -R "$T" 2>/dev/null || { sleep 1; umount -R -l "$T" 2>/dev/null || true; }
+  fi
+  exit "$rc"
+}
+trap cleanup EXIT
+
+case "${1:-}" in -h|--help) usage; exit 0 ;; esac
+
+[ "$(id -u)" = 0 ] || die "нужен root: doas cloudos-install"
+[ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
+for c in sfdisk wipefs blkid lsblk findmnt mount umount unsquashfs mkfs.vfat mkfs.ext4 limine chroot install awk sed; do
+  command -v "$c" >/dev/null || die "нет команды $c"
+done
+[ -f "$SQ" ] || die "нет $SQ, загрузись с live iso cloudos"
+[ -f "$BS/vmlinuz" ] || die "нет $BS/vmlinuz"
+for f in limine-bios.sys BOOTX64.EFI BOOTIA32.EFI; do [ -f "$LS/$f" ] || die "нет $LS/$f"; done
+if findmnt -rn "$T" >/dev/null 2>&1; then die "$T уже смонтирован"; fi
+
+ask() {
+  local var=$1 prompt=$2 def=${3:-} val
+  if [ -n "${!var:-}" ]; then return 0; fi
+  if [ -n "$def" ]; then read -r -p "$prompt [$def]: " val; val=${val:-$def}; else read -r -p "$prompt: " val; fi
+  printf -v "$var" '%s' "$val"
+}
+
+askpass() {
+  local var=$1 prompt=$2 a b
+  if [ -n "${!var:-}" ]; then return 0; fi
+  while :; do
+    read -r -s -p "$prompt: " a; echo
+    read -r -s -p "повтори пароль: " b; echo
+    if [ -z "$a" ]; then echo "пароль не может быть пустым"; continue; fi
+    if [ "$a" != "$b" ]; then echo "пароли не совпали"; continue; fi
+    break
+  done
+  printf -v "$var" '%s' "$a"
+}
+
+FW=${CLOUDOS_FW:-}
+if [ -z "$FW" ]; then if [ -d /sys/firmware/efi ]; then FW=uefi; else FW=bios; fi; fi
+case $FW in uefi|bios) ;; *) die "CLOUDOS_FW должен быть uefi или bios" ;; esac
+say "режим загрузки: $FW"
+
+LIVEDISK=
+src=$(findmnt -rn -o SOURCE /media/cdrom 2>/dev/null || true)
+if [ -n "$src" ] && [ -b "$src" ]; then
+  LIVEDISK=$(lsblk -no PKNAME "$src" 2>/dev/null | head -n1 || true)
+  [ -n "$LIVEDISK" ] && LIVEDISK=/dev/$LIVEDISK
+fi
+
+CLOUDOS_DISK=${CLOUDOS_DISK:-}
+if [ -z "$CLOUDOS_DISK" ]; then
+  echo "диски:"
+  lsblk -dpo NAME,SIZE,TYPE,TRAN,MODEL | awk 'NR == 1 || $3 == "disk"'
+fi
+ask CLOUDOS_DISK "диск для установки (он будет стёрт)"
+DISK=$CLOUDOS_DISK
+[ -b "$DISK" ] || die "$DISK не блочное устройство"
+[ "$(lsblk -dno TYPE "$DISK")" = disk ] || die "$DISK не диск целиком"
+[ "$DISK" != "$LIVEDISK" ] || die "$DISK это носитель, с которого загружен live iso"
+if lsblk -nrpo MOUNTPOINT "$DISK" | grep -q .; then die "на $DISK есть смонтированные разделы, размонтируй их"; fi
+
+FS=${CLOUDOS_FS:-}
+if [ -z "$FS" ]; then
+  if command -v mkfs.btrfs >/dev/null; then ask FS "файловая система корня (ext4 или btrfs)" ext4; else FS=ext4; fi
+fi
+case $FS in ext4) ;; btrfs) command -v mkfs.btrfs >/dev/null || die "в этом iso нет mkfs.btrfs, используй ext4" ;; *) die "файловая система: ext4 или btrfs" ;; esac
+
+ask CLOUDOS_HOST "имя компьютера" cloudos
+HOSTN=$CLOUDOS_HOST
+printf '%s' "$HOSTN" | grep -Eq '^[A-Za-z0-9]([A-Za-z0-9-]{0,61}[A-Za-z0-9])?$' || die "неверное имя компьютера"
+ask CLOUDOS_USER "имя пользователя"
+USERN=$CLOUDOS_USER
+printf '%s' "$USERN" | grep -Eq '^[a-z_][a-z0-9_-]{0,30}$' || die "неверное имя пользователя"
+case $USERN in root|cloudos) die "это имя занято, выбери другое" ;; esac
+askpass CLOUDOS_PASS "пароль пользователя $USERN"
+askpass CLOUDOS_ROOTPASS "пароль root"
+
+if [ "${CLOUDOS_YES:-0}" != 1 ]; then
+  echo
+  echo "диск $DISK будет полностью стёрт: $(lsblk -dno SIZE,MODEL "$DISK")"
+  read -r -p "для подтверждения введи путь диска ($DISK): " c
+  [ "$c" = "$DISK" ] || die "не подтверждено, диск не тронут"
+fi
+
+case $DISK in *[0-9]) P=${DISK}p ;; *) P=$DISK ;; esac
+
+say "разметка $DISK ($FW)"
+wipefs -a "$DISK" >/dev/null
+if [ "$FW" = uefi ]; then
+  printf 'label: gpt\n,512M,U\n,,L\n' | sfdisk -q "$DISK"
+else
+  printf 'label: dos\n,512M,c,*\n,,L\n' | sfdisk -q "$DISK"
+fi
+blockdev --rereadpt "$DISK" 2>/dev/null || true
+command -v udevadm >/dev/null && udevadm settle 2>/dev/null || true
+n=0
+until [ -b "${P}1" ] && [ -b "${P}2" ]; do
+  n=$((n + 1)); [ "$n" -lt 20 ] || die "разделы ${P}1 и ${P}2 не появились"
+  sleep 0.5
+done
+
+say "файловые системы"
+mkfs.vfat -F32 -n CLOUDBOOT "${P}1" >/dev/null
+if [ "$FS" = ext4 ]; then
+  mkfs.ext4 -q -F -L cloudos "${P}2"
+  ROPTS=noatime,errors=remount-ro
+else
+  mkfs.btrfs -q -f -L cloudos "${P}2"
+  ROPTS=noatime,compress=zstd:1
+fi
+
+say "монтирование в $T"
+mkdir -p "$T"
+mount -o "$ROPTS" "${P}2" "$T"
+MOUNTED=1
+
+say "распаковка системы из iso (это основной шаг)"
+unsquashfs -f -d "$T" "$SQ"
+mkdir -p "$T/proc" "$T/sys" "$T/dev" "$T/run" "$T/tmp" "$T/var/tmp" "$T/mnt" "$T/media"
+chmod 1777 "$T/tmp" "$T/var/tmp"
+[ -x "$T/sbin/init" ] || [ -x "$T/usr/sbin/init" ] || die "после распаковки нет init, образ повреждён"
+
+say "загрузчик limine"
+mount -o umask=0077,noatime "${P}1" "$T/boot"
+install -m644 "$BS/vmlinuz" "$T/boot/vmlinuz"
+mkdir -p "$T/boot/limine"
+PU=$(blkid -s PARTUUID -o value "${P}2")
+RU=$(blkid -s UUID -o value "${P}2")
+BU=$(blkid -s UUID -o value "${P}1")
+[ -n "$PU" ] && [ -n "$RU" ] && [ -n "$BU" ] || die "не удалось получить uuid разделов"
+CMD="root=PARTUUID=$PU rootfstype=$FS rw quiet $HARDEN"
+VER=$(sed -n 's/^VERSION_ID=\(.*\)/\1/p' "$T/etc/os-release" | tr -d '"')
+cat > "$T/boot/limine/limine.conf" <<EOC
+timeout: 3
+
+/CloudOS ${VER}
+    protocol: linux
+    path: boot():/vmlinuz
+    cmdline: $CMD $EXTRA
+
+/CloudOS ${VER} (подробный вывод)
+    protocol: linux
+    path: boot():/vmlinuz
+    cmdline: root=PARTUUID=$PU rootfstype=$FS rw $HARDEN $EXTRA
+EOC
+if [ "$FW" = uefi ]; then
+  install -D -m644 "$LS/BOOTX64.EFI" "$T/boot/EFI/BOOT/BOOTX64.EFI"
+  install -D -m644 "$LS/BOOTIA32.EFI" "$T/boot/EFI/BOOT/BOOTIA32.EFI"
+else
+  install -m644 "$LS/limine-bios.sys" "$T/boot/limine/limine-bios.sys"
+  limine bios-install "$DISK" >/dev/null
+fi
+
+say "fstab и имя компьютера"
+cat > "$T/etc/fstab" <<EOF
+UUID=$RU / $FS $ROPTS 0 $([ "$FS" = ext4 ] && echo 1 || echo 0)
+UUID=$BU /boot vfat umask=0077,noatime 0 2
+tmpfs /tmp tmpfs nosuid,nodev,mode=1777 0 0
+EOF
+printf 'hostname="%s"\n' "$HOSTN" > "$T/etc/conf.d/hostname"
+printf '127.0.0.1 localhost %s\n::1 localhost\n' "$HOSTN" > "$T/etc/hosts"
+if grep -q '^#\?rc_parallel=' "$T/etc/rc.conf"; then
+  sed -i 's/^#\?rc_parallel=.*/rc_parallel="YES"/' "$T/etc/rc.conf"
+else
+  printf 'rc_parallel="YES"\n' >> "$T/etc/rc.conf"
+fi
+
+say "очистка следов live и создание пользователей"
+mount --rbind /dev "$T/dev"; mount --make-rslave "$T/dev"
+mount -t proc proc "$T/proc"
+mount --rbind /sys "$T/sys"; mount --make-rslave "$T/sys"
+mount -t tmpfs tmpfs "$T/run"
+cat /etc/resolv.conf > "$T/etc/resolv.conf" 2>/dev/null || echo 'nameserver 1.1.1.1' > "$T/etc/resolv.conf"
+inroot() { chroot "$T" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root TERM="${TERM:-linux}" LANG=C.UTF-8 "$@"; }
+
+rm -f "$T/etc/init.d/cloudos-smoke" "$T/etc/runlevels/default/cloudos-smoke" "$T/etc/conf.d/agetty.tty1" \
+  "$T/etc/ssh/sshd_config.d/05-cloudos-live.conf" "$T/etc/machine-id" "$T/var/lib/dbus/machine-id"
+rm -f "$T"/etc/ssh/ssh_host_*
+if inroot id cloudos >/dev/null 2>&1; then inroot userdel -r cloudos >/dev/null 2>&1 || inroot userdel cloudos; fi
+for g in wheel users video audio netdev; do inroot getent group "$g" >/dev/null || inroot groupadd "$g"; done
+inroot useradd -m -G wheel,users,video,audio,netdev -s /bin/bash "$USERN"
+printf '%s:%s\n' "$USERN" "$CLOUDOS_PASS" | inroot chpasswd
+printf 'root:%s\n' "$CLOUDOS_ROOTPASS" | inroot chpasswd
+printf 'permit persist :wheel\n' > "$T/etc/doas.conf"
+chmod 600 "$T/etc/doas.conf"
+cat > "$T/etc/motd" <<EOM
+
+CloudOS ${VER}. вход: ${USERN}, root-права: doas -s
+фаервол включён: cloudos-firewall status
+пакеты: cloudpkg search имя, cloudpkg install имя
+https://wh1laye.github.io/cloudos-repo/
+
+EOM
+inroot passwd -S root | grep -q ' P ' || die "пароль root не установился"
+inroot passwd -S "$USERN" | grep -q ' P ' || die "пароль $USERN не установился"
+grep -q "^$USERN:" "$T/etc/passwd" || die "пользователь $USERN не создан"
+! grep -q '^cloudos:' "$T/etc/passwd" || die "live пользователь не удалён"
+[ -s "$T/boot/limine/limine.conf" ] && [ -s "$T/boot/vmlinuz" ] || die "загрузчик не записан"
+
+say "готово: cloudos установлена на $DISK ($FW, $FS)"
+if [ "${CLOUDOS_YES:-0}" != 1 ]; then
+  echo "выполни reboot и вытащи носитель"
+fi
