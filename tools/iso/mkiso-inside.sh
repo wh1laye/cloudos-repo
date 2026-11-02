@@ -157,6 +157,10 @@ build_wifi() {
     echo 'sys-kernel/linux-firmware -initramfs' > /etc/portage/package.use/cloudos-wifi
   fi
   [ -e /etc/fstab ] || : > /etc/fstab
+  if [ ! -e /usr/bin/yacc.bison ] && command -v bison >/dev/null; then
+    printf '#!/bin/sh\nexec bison -y "$@"\n' > /usr/bin/yacc.bison
+    chmod 755 /usr/bin/yacc.bison
+  fi
   cloudpkg sync
   DONT_MOUNT_BOOT=1 cloudpkg install net-wireless/iwd net-wireless/wireless-regdb net-wireless/iw sys-kernel/linux-firmware || die "wifi пакеты не поставились, причина выше"
   command -v iwctl >/dev/null || die "после установки нет iwctl"
