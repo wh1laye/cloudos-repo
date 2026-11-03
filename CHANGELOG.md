@@ -1,5 +1,16 @@
 # changelog
 
+## 2.0.0, live iso 2.0: uki, tpm2, cis
+
+- `tools/iso/cloudos-uki`: новая команда, `build` собирает unified kernel image (efi stub, ядро, initramfs, параметры из limine.conf), подписывает ключом db, ставит пункт первым в limine.conf; `status`; повторный запуск не дублирует пункт
+- `tools/iso/cloudos-install`: `CLOUDOS_UKI=1` (нужен `CLOUDOS_SECUREBOOT=1`) собирает uki до подписи конфига, хеш uki попадает в limine.conf
+- `tools/iso/cloudos-tpm2`, `tools/iso/dracut-tpm2/`: `enroll` запечатывает случайный ключ в tpm2 по pcr 7, добавляет слот luks 7, пересобирает initramfs, uki и подпись; `remove`, `status`; модуль dracut `91cloudos-tpm2` открывает luks при загрузке, при неудаче остаётся запрос пароля
+- `tools/iso/mkiso-inside.sh`: ядро с `TCG_TPM`, `TCG_TIS`, `TCG_CRB`; в образ ставятся `tpm2-tools` и `systemd-utils` (efi stub, USE boot), новые скрипты и модуль dracut
+- `tools/stage3/cloudos-audit`: `--cis` добавляет проверки прав файлов, паролей, учётных записей, лишних файловых систем, core-дампов, сетевых sysctl, ssh, каталогов без sticky
+- `tools/mkiso.sh`, `.github/workflows/iso.yml`, `check.yml`: версия по умолчанию 2.0, новые файлы в проверках
+- `docs/handbook/`: раздел 5.6, убраны устаревшие фразы; `docs/news`, `README.md`: 2.0 готово
+- ограничения: uki, tpm2 и модуль dracut не проверены на железе; tpm2 привязан к pcr 7 (состояние secure boot), а не к хешу ядра
+
 ## 1.11.0, apparmor (live iso 2.0)
 
 - `tools/iso/mkiso-inside.sh`: ядро с `SECURITY_APPARMOR`, `SECURITY_YAMA`, `SECURITY_LANDLOCK`, `AUDIT`, `LSM=landlock,lockdown,yama,apparmor,bpf`, apparmor по умолчанию; в образ ставятся `sys-apps/apparmor` (сборка падает без него) и `sec-policy/apparmor-profiles`; служба `apparmor` в runlevel boot

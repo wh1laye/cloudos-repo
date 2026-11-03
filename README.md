@@ -5,7 +5,7 @@
 **Своя Linux система, собранная с нуля.**
 Простая, лёгкая и без ничего лишнего.
 
-[![Версия](https://img.shields.io/badge/версия-1.0-9cc8f2?style=for-the-badge)](https://github.com/wh1laye/cloudos-repo/releases)
+[![Версия](https://img.shields.io/badge/версия-2.0-9cc8f2?style=for-the-badge)](https://github.com/wh1laye/cloudos-repo/releases)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-3b5fa8?style=for-the-badge)](#-лицензия)
 [![Система](https://img.shields.io/badge/система-x86__64-cfe3f8?style=for-the-badge&labelColor=3b5fa8)](#-что-внутри)
 
@@ -24,7 +24,7 @@ CloudOS это Linux система, которую я собираю сам, ш
 После установки у тебя чистая консоль и обычный пользователь с `doas`.
 Всё остальное ты добавляешь сам, так как хочешь.
 
-> 🚧 Проект живёт в моём темпе. Сроков выхода версий нет. Готовится **live iso 1.0**: установка одной командой, без stage 3.
+> 🚧 Проект живёт в моём темпе. Сроков выхода версий нет. Готовится **live iso 2.0**: установка одной командой, без stage 3.
 
 ---
 
@@ -69,14 +69,14 @@ CloudOS это Linux система, которую я собираю сам, ш
 ### ✅ Проверка файла
 
 ```bash
-sha256sum -c cloudos-live-amd64-1.0.iso.sha256
+sha256sum -c cloudos-live-amd64-2.0.iso.sha256
 ```
 
 Подпись minisign (если в релизе есть `.minisig`):
 
 ```bash
 curl -LO https://wh1laye.github.io/cloudos-repo/cloudos.pub
-minisign -V -p cloudos.pub -m cloudos-live-amd64-1.0.iso
+minisign -V -p cloudos.pub -m cloudos-live-amd64-2.0.iso
 ```
 
 Шифрование диска luks2 есть в установщике (`CLOUDOS_LUKS=1`), iso можно собрать под x86-64-v3. Secure boot на своих ключах: `CLOUDOS_SECUREBOOT=1`, подробности в `cloudos-secureboot`. Профили установки: `CLOUDOS_PROFILE=balanced|secure|fast`. Проверка защиты: `doas cloudos-audit`.
@@ -110,15 +110,13 @@ curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/
 
 ---
 
-## 🔭 План live iso 2.0
+## 🛡️ Защита в live iso 2.0
 
-- 🧱 unified kernel image с подписью, tpm2 для luks
-- 🛡️ apparmor, профиль cis в `cloudos-audit`
-- 📦 подписанные бинарные пакеты `cloudpkg` (binhost)
-- 🔁 воспроизводимая сборка iso, проверка целостности файлов
-- 🧬 arm64 рядом с x86_64
-
-Сроков нет.
+- 🔏 `cloudpkg update` и `install.sh` проверяют подпись minisign
+- 🧱 `cloudos-uki`: подписанный unified kernel image, параметры ядра зашиты (`CLOUDOS_UKI=1`)
+- 🔑 `cloudos-tpm2`: разблокировка luks через tpm2 по pcr 7, пароль остаётся запасным
+- 🛡️ apparmor в ядре, профили в режиме complain, `aa-enforce` включает их
+- 📋 `cloudos-audit --cis`: проверки по мотивам cis benchmark
 
 ---
 
