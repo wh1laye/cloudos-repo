@@ -1,7 +1,7 @@
 (function(){
 var d=document,h=d.documentElement,sc=d.currentScript;
 var BASE=sc?sc.src.replace(/themes\.js.*$/,''):'';
-var V='7';
+var V='8';
 var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',cs:'space',fo:'forest',au:'autumn',oc:'ocean',ar:'aurora',cy:'cyber',sk:'sunset',rn:'rain'};
 var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['cs','космос'],['fo','лес'],['au','осень'],['oc','океан'],['ar','сияние'],['cy','киберпанк'],['sk','закат'],['rn','дождь']];
 var FXN=[['full','полные'],['low','лёгкие'],['off','выкл']];
@@ -200,7 +200,7 @@ dict();
 var lk=d.createElement('link');lk.rel='stylesheet';lk.href=BASE+'themes.css?v='+V;d.head.appendChild(lk);
 window.CloudSeason={reg:function(id,m){M[id]=m},get:season,set:function(s){ls('season',s);apply();mark()},apply:apply,stats:function(){return {q:q,cost:ema,gap:jank,frames:nf}}};
 function boot(){
-  var fj=d.createElement('script');fj.src=BASE+'fun.js?v='+V;d.head.appendChild(fj);
+  var fj=d.createElement('script');fj.src=BASE+'fun.js?v='+V;d.head.appendChild(fj);var mj=d.createElement('script');mj.src=BASE+'more.js?v='+V;d.head.appendChild(mj);
   applyCalm();
   new MutationObserver(function(){ui()}).observe(d.body,{childList:true,subtree:true});
   ui();apply();
