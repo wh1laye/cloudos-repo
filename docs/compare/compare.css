@@ -1,5 +1,5 @@
 .cp h2{margin:36px 0 12px}
-.cmp{margin:22px 0 8px;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surf)}
+.cmp{margin:22px 0 8px;overflow-x:auto;border:1px solid var(--line);border-radius:calc(12px*var(--rs,1));background:var(--surf)}
 .cmp table{width:100%;min-width:640px;border-collapse:collapse;font-size:14px}
 .cmp th,.cmp td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 .cmp tbody tr:last-child th,.cmp tbody tr:last-child td{border-bottom:0}
