@@ -419,11 +419,14 @@ const GP={
   light:[['облако','#dbeafe','#f4f8fd',160],['рассвет','#fde7d9','#e8e4fb',135],['мята','#d6f1e6','#e3f0fb',120],['лаванда','#e9e1fb','#fdf0f6',200]],
   gray:[['сумрак','#2b3350','#1b1e26',160],['лес','#1f3a33','#202226',150],['ночь','#2a2540','#16181d',210],['уголь','#34373d','#1a1c20',135]]
 };
+GP.night=GP.nord=GP.dracula=GP.matrix=GP.amber=GP.gray;GP.sepia=GP.light;
+const NMF={light:'светлая',gray:'серая',night:'ночь',nord:'nord',dracula:'dracula',sepia:'сепия',matrix:'матрица',amber:'янтарь'};
+const TL=()=>{const l=['light','gray','night','nord','dracula','sepia'];try{if(localStorage.getItem('sec')==='1')l.push('matrix','amber')}catch(e){}return l};
 function settings(){
   const T=window.CloudTheme,g=T.getGrad(),th=T.get();
   const grad=(c1,c2,a)=>'linear-gradient('+a+'deg,'+c1+','+c2+')';
   app.innerHTML='<p><a href="#/">форум</a> / настройки</p><h1>настройки</h1><div class="sg2">'+
-    '<section class="sc"><h3>тема</h3><div class="seg">'+['light','gray'].map(v=>'<button class="sgb'+(th===v?' on':'')+'" data-a="th" data-i="'+v+'"><span class="tp tp-'+v+'"><b>Aa</b></span>'+(v==='light'?'светлая':'серая')+'</button>').join('')+'</div></section>'+
+    '<section class="sc"><h3>тема</h3><div class="seg">'+TL().map(v=>'<button class="sgb'+(th===v?' on':'')+'" data-a="th" data-i="'+v+'"><span class="tp tp-'+v+'"><b>Aa</b></span>'+NMF[v]+'</button>').join('')+'</div></section>'+
     '<section class="sc"><h3>градиент сайта</h3>'+
     '<label class="sw"><input id="gon" type="checkbox"'+(g.on?' checked':'')+'><i></i><span>включить градиент</span></label>'+
     '<div id="gpv" class="gpv" style="background:'+grad(g.c1,g.c2,g.a)+'"><div class="mk"><b>предпросмотр</b><span>так будут выглядеть фон и шапка</span></div></div>'+
