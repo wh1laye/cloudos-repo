@@ -2,3 +2,15 @@ html[data-theme=gray]{color-scheme:dark;--bg:#1a1c20;--surf:#22252a;--side:#2a2d
 html[data-theme=gray] ::selection{background:#41506a}
 html[data-grad] body{background:linear-gradient(var(--ga),var(--g1),var(--g2)) fixed;min-height:100vh}
 html[data-grad] .top,html[data-grad] .bar{background:linear-gradient(var(--ga),var(--g1),var(--g2)) fixed}
+html[data-theme=night]{color-scheme:dark;--bg:#000;--surf:#0b0b0e;--side:#121216;--line:#202228;--ink:#e8e9ec;--mute:#8b9099;--ac:#7aa7ff;--soft:#0f1626;--code:#060608;--onac:#000;--warnbg:#241c0c;--warnbd:#7a5a1e;--warnfg:#e7c37a;--ok:#4bc08a;--bad:#f08a82}
+html[data-theme=night] ::selection{background:#1c2f55}
+html[data-theme=nord]{color-scheme:dark;--bg:#2e3440;--surf:#3b4252;--side:#434c5e;--line:#4c566a;--ink:#eceff4;--mute:#a7b1c2;--ac:#88c0d0;--soft:#394a5c;--code:#292e39;--onac:#1d2128;--warnbg:#4a4230;--warnbd:#8f7a3e;--warnfg:#ebcb8b;--ok:#a3be8c;--bad:#bf616a}
+html[data-theme=nord] ::selection{background:#4c6a7a}
+html[data-theme=dracula]{color-scheme:dark;--bg:#282a36;--surf:#303241;--side:#383a4c;--line:#44475a;--ink:#f8f8f2;--mute:#a4a8c4;--ac:#bd93f9;--soft:#3b3558;--code:#21222c;--onac:#1a1a22;--warnbg:#3d3a2a;--warnbd:#8f8a3e;--warnfg:#f1fa8c;--ok:#50fa7b;--bad:#ff5555}
+html[data-theme=dracula] ::selection{background:#4a3f73}
+html[data-theme=sepia]{color-scheme:light;--bg:#f4ecd8;--surf:#fbf5e6;--side:#ece2c8;--line:#dccfae;--ink:#3b2f1e;--mute:#7a6a4f;--ac:#a0521d;--soft:#efdcbf;--code:#efe5cc;--onac:#fff;--warnbg:#f6e7bf;--warnbd:#d3a64a;--warnfg:#7a4f08;--ok:#3f8a4f;--bad:#b3362b}
+html[data-theme=sepia] ::selection{background:#e6c9a0}
+html[data-theme=matrix]{color-scheme:dark;--bg:#020a04;--surf:#04140a;--side:#061c0e;--line:#0d3a1a;--ink:#b6ffc8;--mute:#4fa868;--ac:#00ff66;--soft:#052a14;--code:#030f06;--onac:#001a08;--warnbg:#1a2a08;--warnbd:#5a7a1e;--warnfg:#d0ff7a;--ok:#00ff66;--bad:#ff5a5a}
+html[data-theme=matrix] ::selection{background:#0d4a22}
+html[data-theme=amber]{color-scheme:dark;--bg:#140c02;--surf:#1c1204;--side:#261a06;--line:#3d2a0a;--ink:#ffd9a0;--mute:#b08642;--ac:#ffb000;--soft:#3a2808;--code:#100a02;--onac:#1a1000;--warnbg:#2a1c08;--warnbd:#8f6a28;--warnfg:#ffd27a;--ok:#9ccc3c;--bad:#ff6a4a}
+html[data-theme=amber] ::selection{background:#5a3c0c}

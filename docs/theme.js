@@ -1,15 +1,21 @@
 (function(){
   var d=document,h=d.documentElement,K='theme';
   var TK='uits';
+  var LT={light:1,sepia:1};
+  var BG={light:'#f6f8fc',gray:'#1a1c20',night:'#000000',nord:'#2e3440',dracula:'#282a36',sepia:'#f4ecd8',matrix:'#020a04',amber:'#140c02'};
+  var SEC={matrix:1,amber:1};
+  var NM={night:'ночь',nord:'nord',dracula:'dracula',sepia:'сепия',matrix:'матрица',amber:'янтарь'};
+  function secOn(){try{return localStorage.getItem('sec')==='1'}catch(e){return false}}
+  function valid(t){return typeof t==='string'&&BG.hasOwnProperty(t)&&(!SEC[t]||secOn())}
   function touch(){try{localStorage.setItem(TK,String(Date.now()))}catch(e){}}
   function ts(){try{return +localStorage.getItem(TK)||0}catch(e){return 0}}
   var MQ=window.matchMedia?window.matchMedia('(prefers-color-scheme: light)'):null;
   function auto(){try{return localStorage.getItem('tauto')==='1'}catch(e){return false}}
   function get(){
     if(auto())return MQ&&MQ.matches?'light':'gray';
-    try{return localStorage.getItem(K)==='light'?'light':'gray'}catch(e){return 'gray'}
+    try{var v=localStorage.getItem(K);return valid(v)?v:'gray'}catch(e){return 'gray'}
   }
-  function set(t){try{localStorage.removeItem('tauto')}catch(e){}h.setAttribute('data-theme',t);try{localStorage.setItem(K,t)}catch(e){}applyAcc(getAcc())}
+  function set(t){if(!valid(t))return;try{localStorage.removeItem('tauto')}catch(e){}h.setAttribute('data-theme',t);try{localStorage.setItem(K,t)}catch(e){}applyAcc(getAcc())}
   function setAuto(){try{localStorage.setItem('tauto','1')}catch(e){}h.setAttribute('data-theme',get());applyAcc(getAcc());var b=d.getElementById('tb');if(b)paint(b);touch();fire()}
   if(MQ&&MQ.addEventListener)MQ.addEventListener('change',function(){if(auto()){h.setAttribute('data-theme',get());applyAcc(getAcc());var b=d.getElementById('tb');if(b)paint(b)}});
   function fire(){if(window.CloudTheme&&typeof window.CloudTheme.onChange==='function')window.CloudTheme.onChange()}
@@ -26,7 +32,7 @@
     'фон сайта':'site background','включить градиент фона':'enable background gradient',
     'угол':'angle','пресеты':'presets','включить светлую тему':'switch to light theme',
     'включить серую тему':'switch to gray theme','светлая тема':'light theme','серая тема':'gray theme',
-    'авто':'auto','чтение':'reading','размер текста':'text size','обычный':'normal','крупнее':'larger','ещё крупнее':'largest','высокий контраст':'high contrast','только команды в справочнике':'commands only in the handbook','предпросмотр':'preview','кнопка':'button'
+    'авто':'auto','чтение':'reading','размер текста':'text size','обычный':'normal','крупнее':'larger','ещё крупнее':'largest','высокий контраст':'high contrast','только команды в справочнике':'commands only in the handbook','предпросмотр':'preview','кнопка':'button','ночь':'night','сепия':'sepia','матрица':'matrix','янтарь':'amber'
   };
   function lang(){
     try{var l=localStorage.getItem('lang');if(l==='ru'||l==='en')return l}catch(e){}
@@ -80,7 +86,7 @@
   function applyAcc(a){
     var i,s=h.style;
     if(!a.on){for(i=0;i<AVARS.length;i++)s.removeProperty(AVARS[i]);return}
-    var bg=h.getAttribute('data-theme')==='light'?'#f6f8fc':'#1a1c20';
+    var bg=BG[h.getAttribute('data-theme')]||'#1a1c20';
     var c2=a.g?a.c2:a.c1;
     var avg=mix(a.c1,c2,.5);
     s.setProperty('--ac',a.c1);
@@ -128,7 +134,7 @@
   var GEAR='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
   var XI='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   function paint(b){
-    var g=h.getAttribute('data-theme')==='gray';
+    var g=!LT[h.getAttribute('data-theme')];
     b.innerHTML=g?SUN:MOON;
     b.setAttribute('aria-label',T(g?'включить светлую тему':'включить серую тему'));
     b.title=T(g?'светлая тема':'серая тема');
@@ -145,6 +151,7 @@
     light:[['#dbeafe','#f4f8fd',160],['#e6f4ea','#f6faf7',160],['#fde8d8','#fbf6f1',160],['#ece4fb','#f7f4fd',160]],
     gray:[['#1f2a3d','#1a1c20',160],['#1e2f27','#1a1c20',160],['#33232b','#1a1c20',160],['#2b2540','#1a1c20',160]]
   };
+  BPRE.night=BPRE.nord=BPRE.dracula=BPRE.matrix=BPRE.amber=BPRE.gray;BPRE.sepia=BPRE.light;
   function rdGet(){var o={};try{o=JSON.parse(localStorage.getItem('rd'))||{}}catch(e){}return{fs:+o.fs>=0&&+o.fs<=2?+o.fs:0,hc:o.hc?1:0,cmd:o.cmd?1:0}}
   function rdApply(o){
     if(o.fs)h.setAttribute('data-fs',String(o.fs));else h.removeAttribute('data-fs');
@@ -175,11 +182,12 @@
     var n=e.target;
     if(n&&n.getAttribute&&n.getAttribute('data-rk'))rdSet(function(){var o={};o[n.getAttribute('data-rk')]=n.checked?1:0;return o}());
   });
+  function extra(){var o='',k,L=['night','nord','dracula','sepia'];if(secOn())L=L.concat(['matrix','amber']);for(k=0;k<L.length;k++)o+='<button type="button" data-th="'+L[k]+'">'+T(NM[L[k]])+'</button>';return o}
   function build(){
     var i,x='';
     x+='<div class="spb" role="dialog" aria-modal="true" aria-label="'+T('настройки')+'">';
     x+='<div class="sph"><b>'+T('настройки')+'</b><button type="button" class="spx" data-a="close" aria-label="'+T('закрыть')+'">'+XI+'</button></div>';
-    x+='<div class="sps"><h4>'+T('тема')+'</h4><div class="sgm"><button type="button" data-th="light">'+T('светлая')+'</button><button type="button" data-th="gray">'+T('серая')+'</button><button type="button" data-th="auto">'+T('авто')+'</button></div></div>';
+    x+='<div class="sps"><h4>'+T('тема')+'</h4><div class="sgm"><button type="button" data-th="light">'+T('светлая')+'</button><button type="button" data-th="gray">'+T('серая')+'</button><button type="button" data-th="auto">'+T('авто')+'</button></div><div class="sgm" style="margin-top:6px">'+extra()+'</div></div>';
     x+='<div class="sps"><h4>'+T('язык')+'</h4><div class="sgm"><button type="button" data-lg="ru">Русский</button><button type="button" data-lg="en">English</button></div></div>';
     x+='<div class="sps"><h4>'+T('чтение')+'</h4><p class="spm">'+T('размер текста')+'</p><div class="sgm"><button type="button" data-rfs="0">'+T('обычный')+'</button><button type="button" data-rfs="1">'+T('крупнее')+'</button><button type="button" data-rfs="2">'+T('ещё крупнее')+'</button></div>';
     x+='<label class="spc"><input type="checkbox" data-rk="hc"><span>'+T('высокий контраст')+'</span></label><label class="spc"><input type="checkbox" data-rk="cmd"><span>'+T('только команды в справочнике')+'</span></label></div>';
@@ -288,12 +296,14 @@
   function pack(){return {t:get(),g:getGrad(),a:getAcc(),l:lang(),ts:ts()}}
   window.CloudTheme={
     get:get,
+    unlock:function(){try{localStorage.setItem('sec','1')}catch(e){}if(sp){build();refresh()}},
+    names:function(){return NM},
     setAuto:setAuto,getRd:rdGet,setRd:rdSet,
     set:function(v){set(v);var b=d.getElementById('tb');if(b)paint(b);touch();fire()},
     apply:function(ui){
       if(!ui)return;
       try{localStorage.setItem(TK,String(+ui.ts||0))}catch(e){}
-      if(!auto()&&(ui.t==='gray'||ui.t==='light')){set(ui.t);var b=d.getElementById('tb');if(b)paint(b)}
+      if(!auto()&&valid(ui.t)){set(ui.t);var b=d.getElementById('tb');if(b)paint(b)}
       if(ui.g&&HEX.test(ui.g.c1)&&HEX.test(ui.g.c2)){
         var o={on:!!ui.g.on,c1:ui.g.c1,c2:ui.g.c2,a:Math.max(0,Math.min(360,+ui.g.a||0))};
         try{localStorage.setItem(GK,JSON.stringify(o))}catch(e){}

@@ -13,6 +13,10 @@ function acts(){
   return [
     {t:'тема: светлая',f:function(){T.set('light')}},
     {t:'тема: серая',f:function(){T.set('gray')}},
+    {t:'тема: ночь',f:function(){T.set('night')}},
+    {t:'тема: nord',f:function(){T.set('nord')}},
+    {t:'тема: dracula',f:function(){T.set('dracula')}},
+    {t:'тема: сепия',f:function(){T.set('sepia')}},
     {t:'тема: авто',f:function(){T.setAuto()}},
     {t:'язык: english',f:function(){T.setLang('en')}},
     {t:'язык: русский',f:function(){T.setLang('ru')}},
