@@ -311,7 +311,7 @@ async function thread(id){
     return '<div class="acts"><button class="lk'+(mine.has(p.id)?' on':'')+'" data-a="like" data-i="'+p.id+'" data-v="'+(mine.has(p.id)?1:0)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-8-4.7-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.9-8 10.6-8 10.6z"/></svg><span>'+p.likes[0].count+'</span></button>'+hbtn(p)+(!c&&!closed?'<button class="lk" data-a="cm" data-i="'+p.id+'">комментировать</button>':'')+(own||adm?'<button class="lk" data-a="editp" data-i="'+p.id+'">изменить</button>':'')+(own||can('delete_posts')?'<button class="lk" data-a="delp" data-i="'+p.id+'" data-o="'+(own?1:0)+'">удалить</button>':'')+(me?'<button class="lk'+(bm.has('post'+p.id)?' on':'')+'" data-a="bmp" data-i="'+p.id+'" data-v="'+(bm.has('post'+p.id)?1:0)+'">'+(bm.has('post'+p.id)?'убрать из закладок':'в закладки')+'</button>':'')+(own?'<button class="lk" data-a="ped" data-i="'+p.id+'">изменить</button>':'')+(me?'<button class="lk" data-a="qt" data-n="'+esc(p.profiles?p.profiles.name:'')+'">цитата</button>':'')+(me&&!own?'<button class="lk" data-a="rep" data-i="'+p.id+'">пожаловаться</button>':'')+'</div>';
   };
   const ctl=can('pin')||can('lock')||can('delete_threads')?'<div class="acts">'+(can('pin')?'<button class="lk" data-a="pin" data-i="'+t.id+'" data-v="'+(t.pinned?1:0)+'">'+(t.pinned?'открепить':'закрепить')+'</button>':'')+(can('lock')?'<button class="lk" data-a="lock" data-i="'+t.id+'" data-v="'+(t.locked?1:0)+'">'+(t.locked?'открыть':'закрыть')+'</button>':'')+(can('delete_threads')?'<button class="lk" data-a="delt" data-i="'+t.id+'" data-b="'+t.boards.id+'">удалить тему</button>':'')+'</div>':'';
-  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">'+tr('закреплено')+'</span>':'')+(t.locked?'<span class="tag">'+tr('закрыто')+'</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button>'+(me&&(tAuth(t)===me.id||can('delete_posts'))?'<button class="lk" data-a="sol" data-i="'+t.id+'" data-v="'+(t.solved?1:0)+'">'+(t.solved?'снять отметку «решено»':'отметить решённой')+'</button>':'')+'</div>':'')+ctl+pollHtml(poll)+
+  app.innerHTML='<p><a href="#/">форум</a> / <a href="#/b/'+t.boards.id+'">'+esc(t.boards.title)+'</a></p><h1>'+pfx(t)+(t.pinned?'<span class="tag">'+tr('закреплено')+'</span>':'')+(t.locked?'<span class="tag">'+tr('закрыто')+'</span>':'')+esc(t.title)+'</h1>'+(me?'<div class="acts"><button class="lk" data-a="sub" data-i="'+t.id+'" data-v="'+(sub?1:0)+'">'+(sub?'отписаться от темы':'подписаться на тему')+'</button><button class="lk" data-a="bmt" data-i="'+t.id+'" data-v="'+(bm.has('thread'+t.id)?1:0)+'">'+(bm.has('thread'+t.id)?'убрать тему из закладок':'в закладки')+'</button>'+(me&&can('delete_posts')?'<button class="lk" data-a="sol" data-i="'+t.id+'" data-v="'+(t.solved?1:0)+'">'+(t.solved?'снять отметку «решено»':'отметить решённой')+'</button>':'')+'</div>':'')+ctl+pollHtml(poll)+
     ps.filter(p=>!p.parent_id).map(p=>{
       const kids=ps.filter(c=>c.parent_id===p.id);
       return '<article class="post item"><div class="side">'+who(p.profiles)+lv(p.author)+'<span class="mu">'+fmt(p.created_at)+(p.edited_at?' · изменено':'')+'</span></div><div><div class="txt" data-raw="'+esc(p.body)+'">'+fmtBody(p.body)+'</div>'+acts(p)+kids.map(c=>'<div class="cm item"><div class="ch">'+who(c.profiles)+'<span class="mu">'+fmt(c.created_at)+(c.edited_at?' · изменено':'')+'</span></div><div class="txt" data-raw="'+esc(c.body)+'">'+fmtBody(c.body)+'</div>'+acts(c,true)+'</div>').join('')+'<div class="cwrap" data-w="'+p.id+'"></div></div></article>';
@@ -689,15 +689,16 @@ async function dmList(){
   const list=[...cv.values()],pp=list.map(x=>({author:x.o}));
   await withProf(pp);
   app.innerHTML=head+'<p class="mu">чтобы написать участнику, открой его профиль и нажми «сообщения».</p>'+
-    (list.map((x,n)=>'<a class="trow" href="#/messages/'+x.o+'"><div><strong>'+who(pp[n].profiles,false)+'</strong><span class="mu">'+(x.last.sender===me.id?'вы: ':'')+esc(x.last.body.slice(0,120))+'</span></div><div class="n">'+(x.un?'<span class="tag">новых: '+x.un+'</span><br>':'')+fmt(x.last.created_at)+'</div></a>').join('')||'<p class="mu">диалогов пока нет</p>');
+    (list.map((x,n)=>'<a class="trow" href="#/messages/'+x.o+'"><div><strong>'+(pp[n].profiles?who(pp[n].profiles,false):'<span class="mu">удалённый аккаунт</span>')+'</strong><span class="mu">'+(x.last.sender===me.id?'вы: ':'')+esc(x.last.body.slice(0,120))+'</span></div><div class="n">'+(x.un?'<span class="tag">новых: '+x.un+'</span><br>':'')+fmt(x.last.created_at)+'</div></a>').join('')||'<p class="mu">диалогов пока нет</p>');
 }
 async function dmChat(uid){
   if(!me){app.innerHTML='<h1>сообщения</h1><p class="mu">войди, чтобы писать сообщения.</p>';return}
   if(uid===me.id){location.hash='#/messages';return}
   let pr=await sb.from('profiles').select('id,name,status,avatar_url,nk_on,nk1,nk2,nkangle,roles(*)').eq('id',uid).maybeSingle();
   if(pr.error)pr=await sb.from('profiles').select('id,name,roles(*)').eq('id',uid).maybeSingle();
-  const u=pr.data;
-  if(!u){app.innerHTML='<div class="warn"><b>не найдено</b>такого участника нет.</div>';return}
+  let u=pr.data,gone=false;
+  if(!u&&pr.error){app.innerHTML='<div class="warn"><b>ошибка</b>'+esc(pr.error.message)+'</div>';return}
+  if(!u){u={id:uid,name:'удалённый аккаунт'};gone=true}
   app.innerHTML='<p><a href="#/messages">сообщения</a> / '+who(u)+'</p><div id="dmt" class="dmt"></div><div id="dmp"></div><div id="dml" class="dml"></div><form id="dmf"><textarea id="dmb" rows="3" maxlength="2000" placeholder="сообщение" required></textarea>'+tools('dmb')+'<button class="btn p">отправить</button></form>';
   const pvt=b=>b.replace(/\[img:[^\]\s]+\]/g,'['+tr('картинка')+']').replace(/:s_[a-z]+:/g,'['+tr('стикер')+']').replace(/\s+/g,' ').trim().slice(0,90);
   let pinSet=new Set(),pinOk=true,iBlock=false,clr=null;
@@ -710,6 +711,7 @@ async function dmChat(uid){
   const bar2=()=>{
     const t=$('#dmt'),f=$('#dmf');
     if(!t)return;
+    if(gone){t.innerHTML='<span class="mu">'+tr('аккаунт удалён')+'</span><button type="button" class="btn" data-a="dmgone">'+tr('удалить чат')+'</button>';if(f)f.hidden=true;return}
     t.innerHTML=(iBlock?'<span class=\"mu\">'+tr('вы заблокировали этого участника: он не может вам писать')+'</span><button type=\"button\" class=\"btn\" data-a=\"dmunblock\">'+tr('разблокировать')+'</button>':'<button type=\"button\" class=\"btn\" data-a=\"dmblock\">'+tr('заблокировать')+'</button>')+'<button type=\"button\" class=\"btn\" data-a=\"dmclear\">'+tr('удалить переписку')+'</button>';
     if(f)f.hidden=iBlock;
   };
@@ -725,7 +727,7 @@ async function dmChat(uid){
     l.innerHTML=rows.map(x=>{
       const on=pinSet.has(x.id);
       return '<div class="dmm'+(x.sender===me.id?' me':'')+'" data-id="'+x.id+'"'+(on?' style="box-shadow:inset 3px 0 0 var(--ac)"':'')+'><div class="txt">'+fmtBody(x.body)+'</div><span class="mu">'+fmt(x.created_at)+'</span>'+(pinOk?' <button type="button" class="lk" data-a="dmpin" data-i="'+x.id+'" data-v="'+(on?1:0)+'">'+tr(on?'открепить':'закрепить')+'</button>':'')+(x.sender===me.id?' <button type=\"button\" class=\"lk\" data-a=\"dmdel\" data-i=\"'+x.id+'\">'+tr('удалить')+'</button>':'')+'</div>';
-    }).join('')||'<p class="mu">сообщений пока нет</p>';
+    }).join('')||'<p class="mu">'+(gone?'пусто':'сообщений пока нет')+'</p>';
     const bar=$('#dmp');
     if(bar)bar.innerHTML=rows.filter(x=>pinSet.has(x.id)).slice(-3).reverse().map(x=>'<div data-go="'+x.id+'" style="display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px 10px;margin:0 0 6px;border:1px solid var(--line);border-left:3px solid var(--ac);border-radius:10px;background:var(--surf);font-size:13.5px;cursor:pointer"><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>'+tr('закреплено')+':</b> <span data-noi>'+esc(pvt(x.body))+'</span></span><button type="button" class="lk" data-a="dmpin" data-i="'+x.id+'" data-v="1" title="'+tr('открепить')+'">×</button></div>').join('');
     l.scrollTop=keep===true?top:l.scrollHeight;
@@ -735,10 +737,20 @@ async function dmChat(uid){
     }
   };
   const pc=async e=>{
-    const k=e.target.closest('[data-a="dmblock"],[data-a="dmunblock"],[data-a="dmclear"],[data-a="dmdel"]');
+    const k=e.target.closest('[data-a="dmblock"],[data-a="dmunblock"],[data-a="dmclear"],[data-a="dmdel"],[data-a="dmgone"]');
     if(k){
       if(k.disabled)return;
       const a=k.dataset.a;
+      if(a==='dmgone'){
+        if(!confirm(tr('удалить этот чат целиком?')))return;
+        k.disabled=true;
+        const gr=await sb.rpc('dm_delete_gone',{p_other:uid});
+        k.disabled=false;
+        if(gr.error)return alert(gr.error.message);
+        refreshMsgs();
+        location.hash='#/messages';
+        return;
+      }
       if(a==='dmblock'&&!confirm(tr('заблокировать этого участника? он больше не сможет вам писать')))return;
       if(a==='dmclear'&&!confirm(tr('удалить переписку у вас? у собеседника она останется')))return;
       if(a==='dmdel'&&!confirm(tr('удалить это сообщение у обоих?')))return;
@@ -1298,6 +1310,7 @@ document.addEventListener('click',async e=>{
   }
   else if(a==='sol'){
     if(!await need())return;
+    if(!can('delete_posts'))return alert(tr('отмечать темы решёнными может только персонал'));
     const r=await sb.rpc('set_solved',{tid:+i,v:v!=='1'});
     if(r.error)return alert(r.error.message);
     thread(+app.dataset.t);
