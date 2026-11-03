@@ -53,6 +53,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: проверка ключа подписи
+        if: ${{ inputs.publish }}
+        env:
+          HAS_KEY: ${{ secrets.MINISIGN_KEY != '' }}
+        run: |
+          [ "$HAS_KEY" = true ] || { echo "::error::MINISIGN_KEY не задан, публикация без подписи запрещена"; exit 1; }
+
       - name: проверка параметров
         env:
           VERSION: ${{ inputs.version }}

@@ -13,7 +13,7 @@ permissions:
 
 concurrency:
   group: cloudpkg-release
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   sign:
