@@ -60,4 +60,14 @@ CLOUDOS_PORTAGE="$T/proot" bash "$HERE/stage3/cloudos-fix.sh" --files >/dev/null
 [ ! -e "$T/proot/env/cloudos-noreconf" ] && [ ! -e "$T/proot/env/dev-libs/libuv" ] || fail "cloudos-fix оставил хуки"
 [ ! -s "$T/proot/package.env" ] || fail "cloudos-fix оставил строки package.env"
 ok "cloudos-fix --files"
+gcc -std=gnu17 -Wall -Wextra -Werror -O2 ${CFLAGS_EXTRA:-} -DCONF="\"$T/cp.conf\"" -DENVDIR="\"$T/env\"" -DPENV="\"$T/package.env\"" -DVDB="\"$T/vdb\"" -o "$T/cloudpkg3" "$SRC"/*.c
+for r in / /var/lib /var/db /var/db/repos /home/user /usr/local /etc/portage; do
+  printf 'repo=%s\n' "$r" > "$T/cp.conf"
+  "$T/cloudpkg3" list 2>&1 | grep -q 'небезопасный путь' || fail "safe_dir пропустил repo=$r"
+done
+for r in /var/db/repos/gentoo /var/db/repos/gentoo/ /opt/portage/tree; do
+  printf 'repo=%s\n' "$r" > "$T/cp.conf"
+  if "$T/cloudpkg3" list 2>&1 | grep -q 'небезопасный путь'; then fail "safe_dir отверг repo=$r"; fi
+done
+ok "safe_dir: опасные пути отвергаются, нормальные проходят"
 echo "все тесты пройдены"
