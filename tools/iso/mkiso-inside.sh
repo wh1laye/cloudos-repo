@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euE
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
-VERSION=${1:-1.4}
+VERSION=${1:-2.1}
 KVER=${2:-6.18.10}
 NAME=${3:-cloudos-live-amd64-$VERSION.iso}
 MARCH=${4:-x86-64}
@@ -331,10 +331,19 @@ live_tune() {
 CloudOS $VERSION live. вход выполнен как cloudos, пароль cloudos (root тоже cloudos, root-права: doas -s). только для live, ssh для них закрыт, фаервол включён: cloudos-firewall status
 wifi: iwctl, затем station wlan0 scan, station wlan0 get-networks, station wlan0 connect имя_сети
 install: doas cloudos-install, one command does it all (auto: whole disk, manual: your own partitions). by hand: handbook, section manual install
+editor: nvim with lazyvim. keyboard layout, language and time zone are chosen in cloudos-install
 https://wh1laye.github.io/cloudos-repo/
 
 EOM
   rc-update show -v || true
+}
+
+check_extras() {
+  local c
+  for c in nvim git rg fd tmux htop; do
+    command -v "$c" >/dev/null || echo "!! в stage 3 нет $c" >&2
+  done
+  [ -d /etc/skel/.config/nvim ] || echo "!! в stage 3 нет конфига lazyvim" >&2
 }
 
 apply_march() {
@@ -410,6 +419,7 @@ build_wifi
 build_kernel
 build_initramfs
 live_tune
+check_extras
 apply_march
 build_squashfs
 build_iso

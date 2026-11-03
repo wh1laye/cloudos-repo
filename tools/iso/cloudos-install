@@ -44,6 +44,10 @@ variables for unattended install:
   CLOUDOS_PROFILE=balanced|secure|fast  secure: no smt, lockdown, init_on_free; fast: no watchdog and audit
   CLOUDOS_SECUREBOOT=1           own secure boot keys, signed limine, kernel hashes (uefi only)
   CLOUDOS_UKI=1                  signed unified kernel image as first entry (needs CLOUDOS_SECUREBOOT=1)
+  CLOUDOS_KEYMAP=us|ru|name      keyboard: us (english only, default), ru (english + russian, english by default), or any kbd keymap
+  CLOUDOS_SWITCH=alt_shift|ctrl_shift|caps  ru only: key combination that switches the layout (default alt_shift)
+  CLOUDOS_LOCALE=en_US.UTF-8     system language (en_US.UTF-8, ru_RU.UTF-8, C.UTF-8)
+  CLOUDOS_TZ=UTC                 time zone, for example Europe/Moscow
   CLOUDOS_CMDLINE_EXTRA="..."    extra kernel parameters
 EOU
 }
@@ -92,6 +96,20 @@ askpass() {
     break
   done
   printf -v "$var" '%s' "$a"
+}
+
+askdef() {
+  local var=$1
+  if [ -z "${!var:-}" ] && [ "${CLOUDOS_YES:-0}" = 1 ]; then printf -v "$var" '%s' "$3"; return 0; fi
+  ask "$@"
+}
+
+findmap() {
+  find /usr/share/keymaps /usr/share/kbd/keymaps -name "$1.map*" -print -quit 2>/dev/null | grep -q .
+}
+
+findfont() {
+  find /usr/share/consolefonts /usr/share/kbd/consolefonts -name "$1.*" -print -quit 2>/dev/null | grep -q .
 }
 
 FW=${CLOUDOS_FW:-}
@@ -265,6 +283,56 @@ case $USERN in root|cloudos) die "this name is reserved, pick another" ;; esac
 askpass CLOUDOS_PASS "password for $USERN"
 askpass CLOUDOS_ROOTPASS "root password"
 
+if [ -z "${CLOUDOS_KEYMAP:-}" ] && [ "${CLOUDOS_YES:-0}" != 1 ]; then
+  echo "keyboard layout:"
+  echo "  us   english only (default)"
+  echo "  ru   english and russian, english is the default, a key combination switches"
+  echo "  or the name of any kbd keymap, for example de, fr, ua"
+fi
+askdef CLOUDOS_KEYMAP "layout" us
+KEYMAP=$CLOUDOS_KEYMAP
+case $KEYMAP in 1|en) KEYMAP=us ;; 2) KEYMAP=ru ;; esac
+printf '%s' "$KEYMAP" | grep -Eq '^[A-Za-z0-9_.+-]{1,40}$' || die "invalid keymap name"
+SWITCH=
+KMAP=$KEYMAP
+KFONT=
+if [ "$KEYMAP" = ru ]; then
+  if [ -z "${CLOUDOS_SWITCH:-}" ] && [ "${CLOUDOS_YES:-0}" != 1 ]; then
+    echo "layout switch key:"
+    echo "  alt_shift    left alt + shift (default)"
+    echo "  ctrl_shift   ctrl + shift"
+    echo "  caps         caps lock"
+  fi
+  askdef CLOUDOS_SWITCH "switch layout with" alt_shift
+  SWITCH=$CLOUDOS_SWITCH
+  case $SWITCH in 1|alt_shift|alt+shift) SWITCH=alt_shift ;; 2|ctrl_shift|ctrl+shift) SWITCH=ctrl_shift ;; 3|caps) SWITCH=caps ;; esac
+  case $SWITCH in
+    alt_shift) KMAP=ruwin_alt_sh-UTF-8 ;;
+    ctrl_shift) KMAP=ruwin_ct_sh-UTF-8 ;;
+    caps) KMAP=ruwin_cplk-UTF-8 ;;
+    *) die "CLOUDOS_SWITCH: alt_shift, ctrl_shift or caps" ;;
+  esac
+fi
+if [ "$KMAP" != us ]; then
+  findmap "$KMAP" || die "keymap $KMAP is not available on this iso"
+fi
+if [ "$KEYMAP" = ru ]; then
+  for f in cyr-sun16 LatArCyrHeb-16; do
+    if findfont "$f"; then KFONT=$f; break; fi
+  done
+  [ -n "$KFONT" ] || echo "warning: no cyrillic console font on this iso, russian letters will not be shown on the console"
+fi
+
+askdef CLOUDOS_LOCALE "system language (locale)" en_US.UTF-8
+LOC=$CLOUDOS_LOCALE
+printf '%s' "$LOC" | grep -Eq '^([a-z]{2,3}_[A-Z]{2}\.UTF-8|C\.UTF-8)$' || die "invalid locale, use for example en_US.UTF-8 or ru_RU.UTF-8"
+
+askdef CLOUDOS_TZ "time zone" UTC
+TZN=$CLOUDOS_TZ
+printf '%s' "$TZN" | grep -Eq '^[A-Za-z0-9_+/-]{1,64}$' || die "invalid time zone"
+case $TZN in *..*|/*) die "invalid time zone" ;; esac
+[ -f "/usr/share/zoneinfo/$TZN" ] || die "unknown time zone $TZN, see /usr/share/zoneinfo"
+
 if [ "${CLOUDOS_YES:-0}" != 1 ]; then
   echo
   if [ "$MODE" = auto ]; then
@@ -418,6 +486,24 @@ for g in wheel users video audio netdev; do inroot getent group "$g" >/dev/null 
 inroot useradd -m -G wheel,users,video,audio,netdev -s /bin/bash "$USERN"
 printf '%s:%s\n' "$USERN" "$CLOUDOS_PASS" | inroot chpasswd
 printf 'root:%s\n' "$CLOUDOS_ROOTPASS" | inroot chpasswd
+say "keyboard, language, time zone"
+install -d "$T/etc/conf.d" "$T/etc/runlevels/boot" "$T/etc/profile.d"
+printf 'keymap="%s"\n' "$KMAP" > "$T/etc/conf.d/keymaps"
+[ -e "$T/etc/init.d/keymaps" ] && ln -sf /etc/init.d/keymaps "$T/etc/runlevels/boot/keymaps" || echo "warning: no keymaps init script in the system, the console keymap will not be loaded at boot"
+if [ -n "$KFONT" ]; then
+  printf 'consolefont="%s"\n' "$KFONT" > "$T/etc/conf.d/consolefont"
+  [ -e "$T/etc/init.d/consolefont" ] && ln -sf /etc/init.d/consolefont "$T/etc/runlevels/boot/consolefont" || echo "warning: no consolefont init script in the system"
+fi
+if [ "$LOC" != C.UTF-8 ]; then
+  inroot localedef -i "${LOC%%.*}" -f UTF-8 "$LOC" >/dev/null 2>&1 || { echo "warning: locale $LOC is not available, using C.UTF-8"; LOC=C.UTF-8; }
+fi
+printf 'LANG=%s\n' "$LOC" > "$T/etc/locale.conf"
+printf 'export LANG=%s\n' "$LOC" > "$T/etc/profile.d/cloudos-locale.sh"
+chmod 644 "$T/etc/profile.d/cloudos-locale.sh"
+ln -sf "/usr/share/zoneinfo/$TZN" "$T/etc/localtime"
+printf '%s\n' "$TZN" > "$T/etc/timezone"
+[ "$(readlink "$T/etc/localtime")" = "/usr/share/zoneinfo/$TZN" ] && [ -f "$T/usr/share/zoneinfo/$TZN" ] || die "time zone $TZN was not set"
+grep -qx "keymap=\"$KMAP\"" "$T/etc/conf.d/keymaps" || die "keymap was not written"
 printf 'permit persist :wheel\n' > "$T/etc/doas.conf"
 chmod 600 "$T/etc/doas.conf"
 cat > "$T/etc/motd" <<EOM
@@ -435,6 +521,7 @@ grep -q "^$USERN:" "$T/etc/passwd" || die "user $USERN was not created"
 [ -s "$T/boot/limine/limine.conf" ] && [ -s "$T/boot/vmlinuz" ] || die "bootloader was not written"
 
 say "done: cloudos installed (root $ROOTPART, boot $BOOTDEV, $FW, $FS$([ "$LUKS" = 1 ] && echo ', luks2'))"
+say "keyboard: $KEYMAP${SWITCH:+ (switch: $SWITCH)}, language: $LOC, time zone: $TZN"
 if [ "$MODE" = manual ] && [ "$FW" = uefi ] && [ "$FB" = 0 ]; then
   echo "the previous fallback loader was saved as EFI/BOOT/BOOTX64.EFI.bak on $BOOTDEV, add other systems to the limine menu if needed"
 fi
