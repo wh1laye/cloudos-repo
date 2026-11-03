@@ -666,7 +666,13 @@ do_verify() {
     head -c4 "$f" 2>/dev/null | grep -q ELF || continue
     ldd "$f" 2>/dev/null | grep 'not found' | sed "s|^|$f: |"
   done | head -n 40)
-  [ -z "$miss" ] || { echo "!! у программ нет библиотек:"; printf '%s\n' "$miss"; bad=1; }
+  [ -z "$miss" ] || {
+    echo "!! у программ нет библиотек:"; printf '%s\n' "$miss"
+    printf '%s\n' "$miss" | grep -o 'lib[A-Za-z0-9_+-]*\.so[.0-9]*' | sort -u | while read -r l; do
+      echo "где лежит $l:"; find / -xdev -name "$l*" 2>/dev/null | head -n 3
+    done
+    bad=1
+  }
   for f in gpg man; do
     command -v "$f" >/dev/null || continue
     "$f" --version >/dev/null 2>&1 || { echo "!! $f не запускается"; bad=1; }
@@ -751,6 +757,15 @@ do_harden() {
 
 keep_logs() { [ -e "$ST/gentoo-stage3-set.partial" ] || [ -e "$ST/cloudos-extra.partial" ] || [ -e "$ST/lazyvim.partial" ]; }
 
+do_libpath() {
+  [ -d /lib64 ] || return 0
+  install -d -m755 /etc/env.d
+  printf 'LDPATH="/lib64"\n' > /etc/env.d/50cloudos-lib64
+  env-update >/dev/null 2>&1 || true
+  ldconfig
+  say "/lib64 добавлен в пути загрузчика"
+}
+
 do_cfgclean() {
   local n
   n=$(find /etc -name '._cfg[0-9][0-9][0-9][0-9]_*' | wc -l)
@@ -791,6 +806,7 @@ step cloudos-extra do_extra
 step lazyvim do_lazyvim
 step sshd-harden do_sshd
 step harden do_harden
+step libpath do_libpath
 do_cfgclean
 step verify do_verify
 
