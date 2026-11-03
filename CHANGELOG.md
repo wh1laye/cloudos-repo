@@ -1,5 +1,12 @@
 # changelog
 
+## 1.11.0, apparmor (live iso 2.0)
+
+- `tools/iso/mkiso-inside.sh`: ядро с `SECURITY_APPARMOR`, `SECURITY_YAMA`, `SECURITY_LANDLOCK`, `AUDIT`, `LSM=landlock,lockdown,yama,apparmor,bpf`, apparmor по умолчанию; в образ ставятся `sys-apps/apparmor` (сборка падает без него) и `sec-policy/apparmor-profiles`; служба `apparmor` в runlevel boot
+- `tools/iso/cloudos-install`: в параметры ядра добавлены `apparmor=1 security=apparmor`
+- `tools/stage3/cloudos-audit`: проверка, что apparmor включён и есть профили в enforce
+- профили из apparmor-profiles идут в режиме complain, в enforce их переводит владелец: `aa-enforce /etc/apparmor.d/имя`
+
 ## 1.10.0, cloudpkg 1.0: модули и подпись обновлений
 
 - `cloudpkg/`: `cloudpkg.c` разбит на `cloudpkg.c` (main, версия), `util.c`, `heal.c`, `emerge.c`, `snap.c`, `cmds.c`, `update.c` и `cloudpkg.h`; `Makefile` собирает все модули; версия 1.0
