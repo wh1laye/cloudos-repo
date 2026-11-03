@@ -1,5 +1,15 @@
 # changelog
 
+## 1.10.0, cloudpkg 1.0: модули и подпись обновлений
+
+- `cloudpkg/`: `cloudpkg.c` разбит на `cloudpkg.c` (main, версия), `util.c`, `heal.c`, `emerge.c`, `snap.c`, `cmds.c`, `update.c` и `cloudpkg.h`; `Makefile` собирает все модули; версия 1.0
+- `cloudpkg/update.c`: `update` качает `cloudpkg-src.tar.gz` и `.minisig` из релиза `cloudpkg-latest`, проверяет `minisign` ключом `/etc/cloudpkg/cloudos.pub` до распаковки и сборки; нет minisign, ключа или подпись не подошла, обновление отменяется; `--unsigned` берёт ветку без проверки с предупреждением
+- `cloudpkg/install.sh`: берёт тот же подписанный архив, проверяет подпись встроенным ключом; без minisign предупреждает, `CLOUDPKG_STRICT=1` делает проверку обязательной; если релиза нет, берёт ветку с предупреждением
+- `.github/workflows/cloudpkg-release.yml`: при изменении `cloudpkg/**` в main собирает воспроизводимый архив, подписывает `tools/sign.sh`, кладёт в релиз `cloudpkg-latest`
+- `cloudpkg/Makefile`: исправлено, `cloudpkg.conf` ставился в `/etc/cloudpkg.conf`, а читается из `/etc/cloudpkg/cloudpkg.conf`; ключ ставится в `/etc/cloudpkg/cloudos.pub` при каждом `make conf`
+- `tools/test-update-sign.sh`, `check.yml`: тест принимает верную подпись, отклоняет изменённый файл и чужой ключ; остальные тесты и `test-hardening.sh` переведены на модули
+- 0.9 обновляется до 1.0 без проверки подписи (старый код её не умеет), дальше проверка работает
+
 ## 1.9.1, план live iso 2.0, правка устаревших текстов
 
 - `docs/news/index.html`, `docs/rss.xml`, `README.md`: план live iso 2.0 из четырёх направлений: доверие к обновлениям (minisign для `cloudpkg update` и `install.sh`), защита системы (подписанный uki, apparmor, tpm2 для luks, профиль cis), пакеты (подписанный binhost, воспроизводимая сборка, проверка целостности), платформы (arm64)
