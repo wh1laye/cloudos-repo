@@ -1,5 +1,11 @@
 # changelog
 
+## 1.9.1, план live iso 2.0, правка устаревших текстов
+
+- `docs/news/index.html`, `docs/rss.xml`, `README.md`: план live iso 2.0 из четырёх направлений: доверие к обновлениям (minisign для `cloudpkg update` и `install.sh`), защита системы (подписанный uki, apparmor, tpm2 для luks, профиль cis), пакеты (подписанный binhost, воспроизводимая сборка, проверка целостности), платформы (arm64)
+- `docs/handbook/index.html`, `docs/handbook/en/index.html`, `docs/index.html`: убрано устаревшее «secure boot и luks в планах», они есть с 1.6 и 1.7; в «чего пока нет» теперь apparmor и подпись обновлений
+- `docs/sw.js`: сброс кэша, версия 11
+
 ## 1.9.0, cloudpkg 0.9: снимки и откат, тест iso, закрепление actions
 
 - `cloudpkg/cloudpkg.c`: `upgrade` на btrfs сначала делает снимок корня, без снимка обновление не начинается (`--no-snapshot` отключает); новые команды `snapshot`, `snapshots`, `snapshot-rm`, `rollback [-y] [имя]`, параметр `snapshots=N` в конфиге (по умолчанию 5, старые снимки удаляются); откат создаёт записываемую копию снимка и делает её корнем по умолчанию, `/boot` не откатывается; версия 0.9

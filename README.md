@@ -110,6 +110,19 @@ curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/
 
 ---
 
+## 🔭 План live iso 2.0
+
+- 🔏 подпись minisign для `cloudpkg update` и `install.sh`, закрепление по тегу
+- 🧱 unified kernel image с подписью, tpm2 для luks
+- 🛡️ apparmor, профиль cis в `cloudos-audit`
+- 📦 подписанные бинарные пакеты `cloudpkg` (binhost)
+- 🔁 воспроизводимая сборка iso, проверка целостности файлов
+- 🧬 arm64 рядом с x86_64
+
+Сроков нет.
+
+---
+
 ## 🗺️ Что в этом репозитории
 
 ```
