@@ -43,6 +43,9 @@ jobs:
           sudo apt-get install -y -qq minisign
           bash tools/test-update-sign.sh
 
+      - name: проверка файлов в браузере (sha256, blake2b, minisign)
+        run: node tools/test-verify.js
+
       - name: форум
         run: bash tools/test-forum.sh
 
