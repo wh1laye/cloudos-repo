@@ -245,11 +245,12 @@ start() {
 	rc-service -q iwd status >/dev/null 2>&1 || { out "FAIL iwd не запущен"; f=1; }
 	[ "$f" = 0 ] && out ok
 	if grep -qw cloudos.itest /proc/cmdline; then
-		local d= x
+		local d= x fs=ext4
 		for x in /dev/vda /dev/vdb /dev/sdb; do [ -b "$x" ] && { d=$x; break; }; done
+		if grep -qw cloudos.itest.fs=btrfs /proc/cmdline; then fs=btrfs; fi
 		if [ -z "$d" ]; then
 			out "itest FAIL нет диска для установки"
-		elif CLOUDOS_YES=1 CLOUDOS_DISK=$d CLOUDOS_FS=ext4 CLOUDOS_FW=bios CLOUDOS_HOST=itest CLOUDOS_USER=tester CLOUDOS_PASS=tester-pass CLOUDOS_ROOTPASS=root-pass CLOUDOS_CMDLINE_EXTRA="console=ttyS0,115200" /usr/sbin/cloudos-install > /dev/console 2>&1; then
+		elif CLOUDOS_YES=1 CLOUDOS_DISK=$d CLOUDOS_FS=$fs CLOUDOS_FW=bios CLOUDOS_HOST=itest CLOUDOS_USER=tester CLOUDOS_PASS=tester-pass CLOUDOS_ROOTPASS=root-pass CLOUDOS_CMDLINE_EXTRA="console=ttyS0,115200" /usr/sbin/cloudos-install > /dev/console 2>&1; then
 			out "itest ok"
 		else
 			out "itest FAIL установщик завершился с ошибкой"
