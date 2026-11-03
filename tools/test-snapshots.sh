@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
-SRC=$(dirname "$HERE")/cloudpkg/cloudpkg.c
+SRC=$(dirname "$HERE")/cloudpkg
 T=$(mktemp -d)
 trap 'rm -rf "$T"' EXIT
 fail() { echo "ошибка: $*" >&2; exit 1; }
@@ -26,7 +26,7 @@ for c in mount umount; do printf '#!/bin/sh\necho "%s $*" >> "$LOG"\n' "$c" > "$
 chmod +x "$T/bin/"*
 
 build() {
-	gcc -O1 -Wall -Wextra -Werror -DMOUNTINFO="\"$1\"" -DTOPMNT="\"$T/top\"" -DCONF="\"$T/conf\"" -o "$2" "$SRC"
+	gcc -O1 -Wall -Wextra -Werror -DMOUNTINFO="\"$1\"" -DTOPMNT="\"$T/top\"" -DCONF="\"$T/conf\"" -o "$2" "$SRC"/*.c
 }
 build "$T/mi.btrfs" "$T/cp"
 build "$T/mi.ext4" "$T/cp-ext4"
