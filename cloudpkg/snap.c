@@ -178,33 +178,27 @@ void sn_free(char **v, int n)
 
 void sn_prune(const char *dir)
 {
-	char **v;
-	char p[256], *av[4];
+	char **v = NULL;
+	char p[512], *dv[5];
 	int n, i;
 
 	if (sn_keep < 1)
 		return;
 	n = sn_names(dir, &v);
+	if (!v)
+		return;
 	for (i = 0; i < n - sn_keep; i++) {
-		snprintf(p, sizeof p, "%s/%s", dir, v[i]);
-		av[0] = "btrfs";
-		av[1] = "subvolume";
-		av[2] = "delete";
-		av[3] = NULL;
-		{
-			char *dv[5];
-
-			dv[0] = av[0];
-			dv[1] = av[1];
-			dv[2] = av[2];
-			dv[3] = p;
-			dv[4] = NULL;
-			if (!run(dv))
-				printf("cloudpkg: старый снимок %s удалён\n", v[i]);
-		}
+		if (snprintf(p, sizeof p, "%s/%s", dir, v[i]) >= (int)sizeof p)
+			continue;
+		dv[0] = "btrfs";
+		dv[1] = "subvolume";
+		dv[2] = "delete";
+		dv[3] = p;
+		dv[4] = NULL;
+		if (!run(dv))
+			printf("cloudpkg: старый снимок %s удалён\n", v[i]);
 	}
-	if (v)
-		sn_free(v, n);
+	sn_free(v, n);
 }
 
 void sn_stamp(char *out, size_t n, int full)

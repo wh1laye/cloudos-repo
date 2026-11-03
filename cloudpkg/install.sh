@@ -17,6 +17,9 @@ main() {
 
 	case ${LC_ALL:-${LC_MESSAGES:-${LANG:-}}} in ru*) RU=1 ;; *) RU=0 ;; esac
 
+	case $REPO in "" | *[!A-Za-z0-9._/-]* | *..*) die "плохое имя репозитория: $REPO" "bad repository name: $REPO" ;; esac
+	case $BRANCH in "" | *[!A-Za-z0-9._/-]* | *..*) die "плохое имя ветки: $BRANCH" "bad branch name: $BRANCH" ;; esac
+
 	need_root "$@"
 
 	for a in "$@"; do
@@ -104,7 +107,7 @@ need_root() {
 }
 
 fetch_out() {
-	if has curl; then curl -fsSL "$1"
+	if has curl; then curl -fsSL --proto-redir =https "$1"
 	elif has wget; then wget -qO- "$1"
 	else die "нужен curl или wget" "curl or wget is needed"
 	fi
@@ -113,7 +116,7 @@ fetch_out() {
 dl() {
 	if has curl; then
 		if [ -t 2 ]; then q=; else q=-sS; fi
-		curl -fL $q --retry 3 --connect-timeout 20 -C - -o "$2" "$1" </dev/null
+		curl -fL $q --proto-redir =https --retry 3 --connect-timeout 20 -C - -o "$2" "$1" </dev/null
 	elif has wget; then
 		wget -c -O "$2" "$1" </dev/null
 	else
@@ -176,6 +179,10 @@ get_src() {
 	TMP=$(mktemp -d /var/tmp/cloudpkg-install.XXXXXX)
 	say "загрузка исходников cloudpkg" "downloading cloudpkg sources"
 	REL=https://github.com/$REPO/releases/download/cloudpkg-latest
+	if ! has minisign && [ -n "$PM" ]; then
+		say "нет minisign, пробую поставить ($PM)" "minisign is missing, trying to install ($PM)"
+		pm_install minisign </dev/null >/dev/null 2>&1 || true
+	fi
 	if dl "$REL/cloudpkg-src.tar.gz" "$TMP/repo.tar.gz" && dl "$REL/cloudpkg-src.tar.gz.minisig" "$TMP/repo.tar.gz.minisig"; then
 		if has minisign; then
 			minisign -Vq -P "$PUBKEY" -x "$TMP/repo.tar.gz.minisig" -m "$TMP/repo.tar.gz" || die "подпись исходников не подошла, установка отменена" "source signature mismatch, install aborted"
@@ -190,7 +197,7 @@ get_src() {
 		say "внимание: подписанного релиза нет, беру ветку $BRANCH без проверки" "warning: no signed release, taking branch $BRANCH unverified"
 		dl "https://codeload.github.com/$REPO/tar.gz/refs/heads/$BRANCH" "$TMP/repo.tar.gz" || die "не удалось скачать исходники" "could not download the sources"
 	fi
-	tar -xzf "$TMP/repo.tar.gz" -C "$TMP"
+	tar -xzf "$TMP/repo.tar.gz" -C "$TMP" --no-same-owner
 	SRC=$(echo "$TMP"/*/cloudpkg)
 	[ -f "$SRC/cloudpkg.c" ] || die "в архиве нет cloudpkg/cloudpkg.c" "no cloudpkg/cloudpkg.c in the archive"
 }
@@ -210,14 +217,16 @@ get_stage3() {
 	mkdir -p "$DL"
 	F=$DL/stage3.tar.xz
 	SUM=
+	S3SIG=
 	case $S3 in
 		http://* | https://*)
 			say "загрузка stage 3 cloudos, около 260 МБ" "downloading cloudos stage 3, about 260 MB"
 			dl "$S3" "$DL/stage3.part" || { rm -f "$DL/stage3.part"; dl "$S3" "$DL/stage3.part"; } \
 				|| die "не удалось скачать $S3 (повтори или скачай файл сам и задай CLOUDPKG_STAGE3=/путь/к/файлу)" \
 				"could not download $S3 (retry, or download it yourself and set CLOUDPKG_STAGE3=/path/to/file)"
-			rm -f "$DL/stage3.sha256"
+			rm -f "$DL/stage3.sha256" "$DL/stage3.minisig"
 			dl "$S3.sha256" "$DL/stage3.sha256" || die "не удалось скачать $S3.sha256" "could not download $S3.sha256"
+			if dl "$S3.minisig" "$DL/stage3.minisig"; then S3SIG=$DL/stage3.minisig; else rm -f "$DL/stage3.minisig"; fi
 			mv "$DL/stage3.part" "$F"
 			SUM=$DL/stage3.sha256
 			;;
@@ -225,6 +234,7 @@ get_stage3() {
 			[ -f "$S3" ] || die "нет файла $S3" "no such file: $S3"
 			F=$S3
 			if [ -f "$S3.sha256" ]; then SUM=$S3.sha256; fi
+			if [ -f "$S3.minisig" ]; then S3SIG=$S3.minisig; fi
 			;;
 	esac
 	if [ -n "$SUM" ]; then
@@ -237,6 +247,17 @@ get_stage3() {
 		say "sha256 stage 3 совпал" "stage 3 sha256 matches"
 	else
 		say "контрольной суммы нет, проверка пропущена" "no checksum file, verification skipped"
+	fi
+	if [ -n "$S3SIG" ] && has minisign; then
+		if ! minisign -Vq -P "$PUBKEY" -x "$S3SIG" -m "$F"; then
+			case $S3 in http://* | https://*) rm -f "$F" ;; esac
+			die "подпись stage 3 не подошла, файл удалён, повтори установку" "stage 3 signature mismatch, the file was removed, run the installer again"
+		fi
+		say "подпись minisign stage 3 проверена" "stage 3 minisign signature verified"
+	elif [ "${CLOUDPKG_STRICT:-0}" = 1 ]; then
+		die "подпись stage 3 не проверена, а включён CLOUDPKG_STRICT=1" "stage 3 signature is not verified and CLOUDPKG_STRICT=1 is set"
+	else
+		say "внимание: подпись stage 3 не проверена (нет minisign или файла .minisig)" "warning: stage 3 signature is not verified (no minisign or .minisig file)"
 	fi
 	rm -rf "$BOX.new"
 	mkdir -p "$BOX.new"

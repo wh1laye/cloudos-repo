@@ -69,14 +69,21 @@ int safe_dir(const char *p)
 	static const char *bad[] = {
 		"/", "/usr", "/etc", "/bin", "/sbin", "/lib", "/lib64", "/boot",
 		"/root", "/home", "/dev", "/proc", "/sys", "/var", "/run", "/opt",
-		"/tmp", "/srv", "/mnt", NULL
+		"/tmp", "/srv", "/mnt", "/var/db", "/var/lib", "/var/cache", "/var/log",
+		"/var/tmp", "/var/db/pkg", "/var/db/repos", "/usr/local", "/usr/lib",
+		"/usr/share", "/usr/bin", "/usr/sbin", "/etc/portage", NULL
 	};
-	size_t n = strlen(p);
+	size_t n = strlen(p), j, depth = 0;
 	int i;
 
 	while (n > 1 && p[n - 1] == '/')
 		n--;
 	if (p[0] != '/' || strstr(p, ".."))
+		return 0;
+	for (j = 0; j < n; j++)
+		if (p[j] != '/' && (j == 0 || p[j - 1] == '/'))
+			depth++;
+	if (depth < 3)
 		return 0;
 	for (i = 0; bad[i]; i++)
 		if (strlen(bad[i]) == n && !strncmp(p, bad[i], n))
@@ -88,6 +95,7 @@ void loadconf(void)
 {
 	FILE *f = fopen(CONF, "r");
 	char line[BUF], *k, *v, *eq;
+	size_t sl;
 
 	if (f) {
 		while (fgets(line, sizeof line, f)) {
@@ -129,6 +137,10 @@ void loadconf(void)
 	}
 	if (!nfall)
 		falls[nfall++] = xstrdup("https://codeload.github.com/gentoo-mirror/gentoo/tar.gz/refs/heads/master");
+	for (sl = strlen(repo); sl > 1 && repo[sl - 1] == '/'; sl--)
+		repo[sl - 1] = 0;
+	for (sl = strlen(dist); sl > 1 && dist[sl - 1] == '/'; sl--)
+		dist[sl - 1] = 0;
 	if (!safe_dir(repo) || !safe_dir(dist)) {
 		fprintf(stderr, "cloudpkg: небезопасный путь в %s (repo=%s distdir=%s)\n", CONF, repo, dist);
 		exit(1);
@@ -232,13 +244,15 @@ void mkparent(const char *path)
 
 int fetch(const char *url, const char *out)
 {
-	char *a[20];
+	char *a[24];
 	int n = 0;
 
 	a[n++] = "curl";
 	a[n++] = "-fL";
 	if (!isatty(2))
 		a[n++] = "-sS";
+	a[n++] = "--proto"; a[n++] = "=http,https";
+	a[n++] = "--proto-redir"; a[n++] = "=https";
 	a[n++] = "--retry"; a[n++] = "2";
 	a[n++] = "--connect-timeout"; a[n++] = "15";
 	a[n++] = "--speed-limit"; a[n++] = "10000";

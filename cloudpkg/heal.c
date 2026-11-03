@@ -176,8 +176,15 @@ int probe_ver(const char *cmd, char *ver, size_t n)
 		z = open("/dev/null", O_WRONLY);
 		if (dup2(p[1], 1) < 0)
 			_exit(127);
-		if (z >= 0)
+		if (z >= 0) {
 			dup2(z, 2);
+			close(z);
+		}
+		z = open("/dev/null", O_RDONLY);
+		if (z >= 0) {
+			dup2(z, 0);
+			close(z);
+		}
 		close(p[0]);
 		close(p[1]);
 		execlp(cmd, cmd, "--version", (char *)NULL);

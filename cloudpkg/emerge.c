@@ -290,6 +290,8 @@ int cmd_sync(void)
 	}
 	if (rename(nw, repo) != 0) {
 		perror("cloudpkg: rename");
+		if (exists(old) && rename(old, repo) != 0)
+			perror("cloudpkg: не удалось вернуть старое дерево");
 		return 1;
 	}
 	a[0] = "rm"; a[1] = "-rf"; a[2] = old; a[3] = NULL;
