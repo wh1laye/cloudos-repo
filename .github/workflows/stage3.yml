@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: версия
-        default: "1.4"
+        default: "1.5"
       refresh_list:
         description: взять список пакетов из настоящего stage 3 gentoo
         type: boolean
@@ -20,7 +20,7 @@ on:
         default: true
       release_tag:
         description: тег внутреннего релиза базы для сборки iso
-        default: "1.4"
+        default: "1.5"
 
 concurrency:
   group: stage3-${{ inputs.version }}
