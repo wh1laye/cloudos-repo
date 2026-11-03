@@ -1,9 +1,9 @@
 .pg h2{margin:28px 0 10px;font-size:20px}
 .pfl{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 8px}
-.pfl input,.pfl select,.hwf input,.hwf select,.hwf textarea{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--ink);font:inherit;font-size:15px;outline:0}
+.pfl input,.pfl select,.hwf input,.hwf select,.hwf textarea{padding:10px 12px;border:1px solid var(--line);border-radius:calc(10px*var(--rs,1));background:var(--surf);color:var(--ink);font:inherit;font-size:15px;outline:0}
 .pfl input{flex:1 1 220px;min-width:0}
 .pfl input:focus,.pfl select:focus,.hwf input:focus,.hwf select:focus,.hwf textarea:focus{border-color:var(--ac)}
-.tw{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:12px;background:var(--surf)}
+.tw{overflow-x:auto;margin:10px 0;border:1px solid var(--line);border-radius:calc(12px*var(--rs,1));background:var(--surf)}
 .pt{width:100%;border-collapse:collapse;font-size:15px}
 .pt th,.pt td{padding:10px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
 .pt tr:last-child td{border-bottom:0}
