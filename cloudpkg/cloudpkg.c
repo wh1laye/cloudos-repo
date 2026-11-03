@@ -34,8 +34,10 @@ static char *xstrdup(const char *s)
 	return p;
 }
 
-#define VERSION "0.7"
+#define VERSION "0.8"
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
+#define UPD_REPO "wh1laye/cloudos-repo"
+#define UPD_BRANCH "main"
 #define INSTALL_URL "https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh"
 #define OVERLAY "/var/db/repos/cloudos"
 #define MAXM 16
@@ -60,6 +62,8 @@ static char snap[160] = "snapshots/portage-latest.tar.xz";
 static char dist[256] = "/var/cache/distfiles";
 static char prof[160] = "default/linux/amd64/23.0";
 static int allow_host;
+
+static int safe_mode;
 
 static int run(char *const av[])
 {
@@ -751,6 +755,8 @@ static void parse(int argc, char **argv, char **pre, int *npre, char **pk, int *
 			pre[(*npre)++] = "--ask";
 		else if (!strcmp(argv[i], "-o") || !strcmp(argv[i], "--oneshot"))
 			pre[(*npre)++] = "--oneshot";
+		else if (!strcmp(argv[i], "--safe"))
+			safe_mode = 1;
 		else if (!strcmp(argv[i], "-t") || !strcmp(argv[i], "--testing"))
 			setenv("ACCEPT_KEYWORDS", "~amd64", 1);
 		else if (argv[i][0] == '-')
@@ -883,6 +889,55 @@ static int cmd_sync(void)
 	return 0;
 }
 
+static int has_flag(char **pre, int npre, const char *f)
+{
+	int i;
+
+	for (i = 0; i < npre; i++)
+		if (!strcmp(pre[i], f))
+			return 1;
+	return 0;
+}
+
+static int emerge_smart(char **pre, int npre, char **pk, int npk)
+{
+	char **p2;
+	char *old = getenv("ACCEPT_KEYWORDS");
+	char *sv = old ? strdup(old) : NULL;
+	int i, n = 0, r;
+
+	r = emerge(pre, npre, pk, npk);
+	if (!r || safe_mode || geteuid() != 0 || has_flag(pre, npre, "--pretend") || has_flag(pre, npre, "--ask")) {
+		free(sv);
+		return r;
+	}
+	fprintf(stderr, "\ncloudpkg: не вышло, чиню окружение и пробую ещё раз\n");
+	heal();
+	ensure_profile();
+	if (!ensure_tree()) {
+		free(sv);
+		return r;
+	}
+	setenv("ACCEPT_KEYWORDS", "~amd64", 1);
+	fprintf(stderr, "cloudpkg: повтор с разрешением testing (~amd64) для этой установки\n");
+	r = emerge(pre, npre, pk, npk);
+	if (r && has_flag(pre, npre, "--autounmask-keep-masks")) {
+		p2 = xcalloc((size_t)(npre + 1), sizeof *p2);
+		for (i = 0; i < npre; i++)
+			if (strcmp(pre[i], "--autounmask-keep-masks"))
+				p2[n++] = pre[i];
+		fprintf(stderr, "cloudpkg: !! снимаю маски package.mask: причина маски написана в выводе emerge выше, прочти её. --safe отключает это\n");
+		r = emerge(p2, n, pk, npk);
+		free(p2);
+	}
+	if (sv)
+		setenv("ACCEPT_KEYWORDS", sv, 1);
+	else
+		unsetenv("ACCEPT_KEYWORDS");
+	free(sv);
+	return r;
+}
+
 static int cmd_install(int argc, char **argv)
 {
 	char **pre = xcalloc((size_t)(argc + 12), sizeof *pre);
@@ -904,7 +959,7 @@ static int cmd_install(int argc, char **argv)
 		r = 1;
 	else {
 		ensure_profile();
-		r = emerge(pre, npre, pk, npk);
+		r = emerge_smart(pre, npre, pk, npk);
 	}
 	free(pre);
 	free(pk);
@@ -955,7 +1010,7 @@ static int cmd_upgrade(int argc, char **argv)
 		r = 1;
 	else {
 		ensure_profile();
-		r = emerge(pre, npre, pk, npk);
+		r = emerge_smart(pre, npre, pk, npk);
 	}
 	free(pre);
 	free(pk);
@@ -1109,11 +1164,214 @@ static int cmd_doctor(void)
 	return bad ? 1 : 0;
 }
 
+static int safe_id(const char *s)
+{
+	if (!*s)
+		return 0;
+	for (; *s; s++)
+		if (!((*s >= 'a' && *s <= 'z') || (*s >= 'A' && *s <= 'Z') || (*s >= '0' && *s <= '9') || *s == '.' || *s == '_' || *s == '-' || *s == '/'))
+			return 0;
+	return 1;
+}
+
+static int ver_ok(const char *s)
+{
+	return *s >= '0' && *s <= '9' && strspn(s, "0123456789.") == strlen(s) && s[strlen(s) - 1] != '.';
+}
+
+static int vercmp(const char *a, const char *b)
+{
+	long x, y;
+	char *e;
+
+	while (*a || *b) {
+		x = strtol(a, &e, 10);
+		a = e;
+		y = strtol(b, &e, 10);
+		b = e;
+		if (x != y)
+			return x < y ? -1 : 1;
+		if (*a == '.')
+			a++;
+		if (*b == '.')
+			b++;
+	}
+	return 0;
+}
+
+static int remote_ver(const char *dir, char *out, size_t n)
+{
+	char p[BUF], line[BUF], *s, *e;
+	FILE *f;
+	int ok = 0;
+
+	snprintf(p, sizeof p, "%s/cloudpkg.c", dir);
+	f = fopen(p, "r");
+	if (!f)
+		return 0;
+	while (fgets(line, sizeof line, f)) {
+		if (strncmp(line, "#define VERSION \"", 17))
+			continue;
+		s = line + 17;
+		e = strchr(s, '"');
+		if (e && e > s && (size_t)(e - s) < n) {
+			*e = 0;
+			if (ver_ok(s)) {
+				memcpy(out, s, strlen(s) + 1);
+				ok = 1;
+			}
+		}
+		break;
+	}
+	fclose(f);
+	return ok;
+}
+
+static int cmd_update(int argc, char **argv)
+{
+	char tmp[] = "/var/tmp/cloudpkg-upd.XXXXXX";
+	char url[BUF], tgz[BUF], me[BUF], neu[BUF + 8], bak[BUF + 8], rv[32], bin[BUF];
+	const char *repo_id = getenv("CLOUDPKG_REPO"), *br = getenv("CLOUDPKG_BRANCH");
+	char *a[12];
+	ssize_t l;
+	int force = 0, i, r = 1, newer;
+
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "--force") || !strcmp(argv[i], "-f"))
+			force = 1;
+		else {
+			fprintf(stderr, "cloudpkg: update [--force]\n");
+			return 1;
+		}
+	}
+	if (!repo_id || !*repo_id)
+		repo_id = UPD_REPO;
+	if (!br || !*br)
+		br = UPD_BRANCH;
+	if (!safe_id(repo_id) || !safe_id(br) || strstr(repo_id, "..") || strstr(br, "..")) {
+		fprintf(stderr, "cloudpkg: плохое имя репозитория или ветки\n");
+		return 1;
+	}
+	if (!need_root())
+		return 1;
+	for (i = 0; i < 4; i++) {
+		static const char *need[] = {"curl", "tar", "make", "gcc"};
+		if (!have(need[i])) {
+			fprintf(stderr, "cloudpkg: для update нужен %s\n", need[i]);
+			return 1;
+		}
+	}
+	l = readlink("/proc/self/exe", me, sizeof me - 8);
+	if (l <= 0 || me[0] != '/') {
+		fprintf(stderr, "cloudpkg: не удалось определить путь к себе\n");
+		return 1;
+	}
+	me[l] = 0;
+	if (!mkdtemp(tmp)) {
+		perror("cloudpkg: mkdtemp");
+		return 1;
+	}
+	snprintf(tgz, sizeof tgz, "%s/src.tar.gz", tmp);
+	snprintf(url, sizeof url, "https://codeload.github.com/%s/tar.gz/refs/heads/%s", repo_id, br);
+	printf("cloudpkg: проверяю %s (%s)\n", repo_id, br);
+	if (fetch(url, tgz) != 0) {
+		fprintf(stderr, "cloudpkg: не удалось скачать репозиторий\n");
+		goto out;
+	}
+	a[0] = "tar"; a[1] = "xzf"; a[2] = tgz; a[3] = "--strip-components=2"; a[4] = "--no-same-owner";
+	a[5] = "-C"; a[6] = tmp; a[7] = "--wildcards"; a[8] = "*/cloudpkg/*"; a[9] = NULL;
+	if (run(a) != 0 || !remote_ver(tmp, rv, sizeof rv)) {
+		fprintf(stderr, "cloudpkg: в репозитории нет корректной папки cloudpkg\n");
+		goto out;
+	}
+	newer = vercmp(rv, VERSION) > 0;
+	if (vercmp(rv, VERSION) < 0 && !force) {
+		printf("cloudpkg: в репозитории %s, ниже установленной %s, пропускаю (--force заменит)\n", rv, VERSION);
+	} else if (!newer && !force) {
+		printf("cloudpkg: пакетник уже последний (%s)\n", VERSION);
+	} else {
+		printf("cloudpkg: обновляю %s -> %s\n", VERSION, rv);
+		a[0] = "make"; a[1] = "-C"; a[2] = tmp; a[3] = "cloudpkg"; a[4] = NULL;
+		if (run(a) != 0) {
+			fprintf(stderr, "cloudpkg: новая версия не собралась, оставляю текущую\n");
+			goto out;
+		}
+		snprintf(bin, sizeof bin, "%s/cloudpkg", tmp);
+		a[0] = bin; a[1] = "version"; a[2] = NULL;
+		if (run(a) != 0) {
+			fprintf(stderr, "cloudpkg: новая версия не запускается, оставляю текущую\n");
+			goto out;
+		}
+		snprintf(neu, sizeof neu, "%s.new", me);
+		snprintf(bak, sizeof bak, "%s.bak", me);
+		a[0] = "install"; a[1] = "-m755"; a[2] = bin; a[3] = neu; a[4] = NULL;
+		if (run(a) != 0) {
+			fprintf(stderr, "cloudpkg: не удалось записать %s\n", neu);
+			goto out;
+		}
+		a[0] = "cp"; a[1] = "-p"; a[2] = me; a[3] = bak; a[4] = NULL;
+		run(a);
+		if (rename(neu, me) != 0) {
+			perror("cloudpkg: rename");
+			unlink(neu);
+			goto out;
+		}
+		printf("cloudpkg: пакетник обновлён до %s, старый лежит в %s\n", rv, bak);
+	}
+	a[0] = "make"; a[1] = "-C"; a[2] = tmp; a[3] = "overlay"; a[4] = NULL;
+	if (exists("/var/db/repos")) {
+		if (run(a) == 0)
+			printf("cloudpkg: рецепты cloudos обновлены\n");
+		else
+			fprintf(stderr, "cloudpkg: рецепты cloudos не обновились\n");
+	}
+	a[3] = "conf";
+	run(a);
+	r = 0;
+out:
+	a[0] = "rm"; a[1] = "-rf"; a[2] = tmp; a[3] = NULL;
+	run(a);
+	return r;
+}
+
+static int cmd_fix(int argc, char **argv)
+{
+	char *a[8];
+	int r = 0;
+
+	if (!need_root())
+		return 1;
+	printf("cloudpkg: чиню окружение\n");
+	heal();
+	if (!getpwnam("portage")) {
+		printf("cloudpkg: создаю пользователя portage\n");
+		a[0] = "groupadd"; a[1] = "-r"; a[2] = "portage"; a[3] = NULL;
+		run(a);
+		char *u[10] = {"useradd", "-r", "-g", "portage", "-d", "/var/tmp/portage", "-s", "/sbin/nologin", "portage", NULL};
+		run(u);
+	}
+	if (!ensure_tree())
+		r = 1;
+	ensure_profile();
+	if (have("emaint")) {
+		a[0] = "emaint"; a[1] = "--fix"; a[2] = "cleanresume"; a[3] = NULL;
+		run(a);
+		a[2] = "world";
+		run(a);
+	}
+	if (argc > 0)
+		r |= cmd_install(argc, argv);
+	r |= cmd_doctor();
+	return r;
+}
+
 static void usage(void)
 {
 	puts("cloudpkg " VERSION " (обёртка над portage)\n"
 	     "использование: cloudpkg команда [параметры]\n\n"
 	     "  sync                  обновить дерево рецептов (снимок gentoo)\n"
+	     "  update [--force]      обновить сам cloudpkg и рецепты cloudos из репозитория\n"
+	     "  fix [пакеты]          починить окружение portage, при пакетах поставить их\n"
 	     "  install [-p] [-a] [-o] [-t] пакет...   установить из исходников\n"
 	     "  remove  [-p] [-a] пакет...  удалить\n"
 	     "  upgrade [-p] [-a]     обновить все пакеты\n"
@@ -1125,7 +1383,7 @@ static void usage(void)
 	     "  vdb                   записать autotools из lfs в базу установленных\n"
 	     "  version, help\n\n"
 	     "-p пробный запуск, -a спросить перед установкой, -o не добавлять в world,\n"
-	     "-t разрешить testing (~amd64). остальные параметры с дефисом уходят в emerge.");
+	     "-t разрешить testing (~amd64), --safe без авто-повторов и снятия масок. остальные параметры с дефисом уходят в emerge.");
 }
 
 int main(int argc, char **argv)
@@ -1138,6 +1396,10 @@ int main(int argc, char **argv)
 	}
 	c = argv[1];
 	loadconf();
+	if (!strcmp(c, "update"))
+		return host_ok() ? cmd_update(argc - 2, argv + 2) : 1;
+	if (!strcmp(c, "fix"))
+		return host_ok() ? cmd_fix(argc - 2, argv + 2) : 1;
 	if (!strcmp(c, "sync"))
 		return host_ok() ? cmd_sync() : 1;
 	if (!strcmp(c, "install"))
