@@ -98,6 +98,13 @@ if [ -z "$R" ]; then
     note "загрузка не через uefi, secure boot недоступен"
   fi
   grep -q '\[\(integrity\|confidentiality\)\]' /sys/kernel/security/lockdown 2>/dev/null && good "kernel lockdown включён" || note "kernel lockdown выключен"
+  if [ "$(cat /sys/module/apparmor/parameters/enabled 2>/dev/null)" = Y ]; then
+    good "apparmor включён"
+    n=$(aa-status --enforced 2>/dev/null || echo 0)
+    [ "${n:-0}" -gt 0 ] 2>/dev/null && good "apparmor: профилей в enforce: $n" || note "apparmor: нет профилей в enforce (aa-enforce /etc/apparmor.d/...)"
+  else
+    note "apparmor выключен в ядре"
+  fi
   [ "$(cat /sys/module/module/parameters/sig_enforce 2>/dev/null)" = Y ] && good "модули ядра только с подписью" || fail "подпись модулей не обязательна"
   rs=$(findmnt -no SOURCE / 2>/dev/null || true)
   if [ -n "$rs" ] && lsblk -srno TYPE "$rs" 2>/dev/null | grep -q crypt; then good "корень на luks"; else note "корень не зашифрован (luks)"; fi
