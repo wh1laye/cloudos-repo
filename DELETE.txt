@@ -1,2 +1,0 @@
-docs/kernel/
-docs/stage3/
