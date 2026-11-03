@@ -85,9 +85,9 @@ function toast(s){
   var e=d.createElement('div');e.className='ftoast';e.textContent=s;d.body.appendChild(e);
   setTimeout(function(){e.remove()},3200);
 }
-var KS=['arrowup','arrowup','arrowdown','arrowdown','arrowleft','arrowright','arrowleft','arrowright','b','a'],ki=0;
+var KS=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','KeyB','KeyA'],ki=0;
 d.addEventListener('keydown',function(e){
-  var k=(e.key||'').toLowerCase();
+  var k=e.code||'';
   if(k===KS[ki]){
     ki++;
     if(ki===KS.length){
