@@ -5,12 +5,14 @@ LDFLAGS += -pie -Wl,-z,relro,-z,now
 PREFIX ?= /usr
 DESTDIR ?=
 JOBS := $(shell nproc 2>/dev/null || echo 2)
-CONFS := cloudpkg.conf portage/make.conf portage/repos.conf/gentoo.conf portage/repos.conf/cloudos.conf portage/profile/package.provided
+CONFS := cloudpkg/cloudpkg.conf portage/make.conf portage/repos.conf/gentoo.conf portage/repos.conf/cloudos.conf portage/profile/package.provided
 
 all: cloudpkg
 
-cloudpkg: cloudpkg.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+SRCS := cloudpkg.c util.c heal.c emerge.c snap.c cmds.c update.c
+
+cloudpkg: $(SRCS) cloudpkg.h
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SRCS)
 
 install: cloudpkg
 	install -Dm755 cloudpkg $(DESTDIR)$(PREFIX)/bin/cloudpkg
@@ -25,6 +27,7 @@ overlay:
 
 conf:
 	install -d $(DESTDIR)/etc/cloudpkg $(DESTDIR)/etc/portage/repos.conf $(DESTDIR)/etc/portage/profile
+	install -m644 etc/cloudpkg/cloudos.pub $(DESTDIR)/etc/cloudpkg/cloudos.pub
 	@for f in $(CONFS); do \
 	  d=$(DESTDIR)/etc/$$f; \
 	  if [ ! -e $$d ]; then \

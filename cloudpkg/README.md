@@ -53,9 +53,10 @@ cloudpkg: пакетный менеджер cloudos. написан на c, со
 - `install.sh`: установка одной командой, работает в любом дистрибутиве (sh)
 - `cloudpkg-setup.sh`: настройка внутри cloudos или бокса: portage, cloudpkg, дерево рецептов
 - `cloudpkg-box.sh`: скрипт для хоста, входит в бокс (монтирует dev, proc, sys в отдельном пространстве имён и делает chroot)
-- `cloudpkg.c`, `Makefile`: сама программа
+- `cloudpkg.c` (main), `util.c`, `heal.c`, `emerge.c`, `snap.c`, `cmds.c`, `update.c`, `cloudpkg.h`, `Makefile`: сама программа
 - `overlay/`: рецепты cloudos, копируются в `/var/db/repos/cloudos` при каждой установке
-- `etc/cloudpkg.conf`: зеркала, запасной канал для дерева, пути, профиль
+- `etc/cloudpkg/cloudos.pub`: публичный ключ minisign, `cloudpkg update` принимает только архивы с этой подписью (`--unsigned` отключает, `install.sh` проверяет подпись, если есть minisign, `CLOUDPKG_STRICT=1` делает проверку обязательной)
+- `etc/cloudpkg/cloudpkg.conf`: зеркала, запасной канал для дерева, пути, профиль
 - `etc/portage/make.conf`, `repos.conf/gentoo.conf`: настройки portage
 - `etc/portage/profile/package.provided`: пакеты, собранные вручную в lfs (portage их не пересобирает)
 

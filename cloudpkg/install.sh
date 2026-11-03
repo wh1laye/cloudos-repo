@@ -162,6 +162,8 @@ safe_box() {
 	esac
 }
 
+PUBKEY=RWQsSt7/q68Gfvr6WBO5IvQXi7zx0jCdR1jWXm8/xXIB90PpHreDpajK
+
 get_src() {
 	if [ -n "$SRC" ]; then
 		[ -f "$SRC/cloudpkg.c" ] || die "нет $SRC/cloudpkg.c" "no $SRC/cloudpkg.c"
@@ -173,7 +175,21 @@ get_src() {
 	fi
 	TMP=$(mktemp -d /var/tmp/cloudpkg-install.XXXXXX)
 	say "загрузка исходников cloudpkg" "downloading cloudpkg sources"
-	dl "https://codeload.github.com/$REPO/tar.gz/refs/heads/$BRANCH" "$TMP/repo.tar.gz" || die "не удалось скачать исходники" "could not download the sources"
+	REL=https://github.com/$REPO/releases/download/cloudpkg-latest
+	if dl "$REL/cloudpkg-src.tar.gz" "$TMP/repo.tar.gz" && dl "$REL/cloudpkg-src.tar.gz.minisig" "$TMP/repo.tar.gz.minisig"; then
+		if has minisign; then
+			minisign -Vq -P "$PUBKEY" -x "$TMP/repo.tar.gz.minisig" -m "$TMP/repo.tar.gz" || die "подпись исходников не подошла, установка отменена" "source signature mismatch, install aborted"
+			say "подпись minisign проверена" "minisign signature verified"
+		elif [ "${CLOUDPKG_STRICT:-0}" = 1 ]; then
+			die "нет minisign, а включён CLOUDPKG_STRICT=1" "minisign is missing and CLOUDPKG_STRICT=1 is set"
+		else
+			say "внимание: нет minisign, подпись не проверена" "warning: minisign is missing, signature not verified"
+		fi
+	else
+		[ "${CLOUDPKG_STRICT:-0}" != 1 ] || die "нет подписанных исходников, а включён CLOUDPKG_STRICT=1" "no signed sources and CLOUDPKG_STRICT=1 is set"
+		say "внимание: подписанного релиза нет, беру ветку $BRANCH без проверки" "warning: no signed release, taking branch $BRANCH unverified"
+		dl "https://codeload.github.com/$REPO/tar.gz/refs/heads/$BRANCH" "$TMP/repo.tar.gz" || die "не удалось скачать исходники" "could not download the sources"
+	fi
 	tar -xzf "$TMP/repo.tar.gz" -C "$TMP"
 	SRC=$(echo "$TMP"/*/cloudpkg)
 	[ -f "$SRC/cloudpkg.c" ] || die "в архиве нет cloudpkg/cloudpkg.c" "no cloudpkg/cloudpkg.c in the archive"
