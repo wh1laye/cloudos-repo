@@ -1,5 +1,11 @@
 # changelog
 
+## 2.0.1, исправления: сборка iso и konami
+
+- `tools/iso/mkiso-inside.sh`: `sys-apps/apparmor` падал в `pkg_setup` (нет `.config`, ядро собирается позже wifi-шага); добавлен `kcfg_stub`: временная папка с `Makefile` и `.config`, `KERNEL_DIR` указывает на неё только на время установки apparmor
+- `docs/themes/fun.js`: konami-код читал `e.key`, на русской раскладке `b` и `a` приходят как `и` и `ф`; теперь `e.code` (KeyB, KeyA), работает на любой раскладке
+- `docs/themes/themes.js`, `docs/sw.js`: сброс кэша
+
 ## 2.0.0, live iso 2.0: uki, tpm2, cis
 
 - `tools/iso/cloudos-uki`: новая команда, `build` собирает unified kernel image (efi stub, ядро, initramfs, параметры из limine.conf), подписывает ключом db, ставит пункт первым в limine.conf; `status`; повторный запуск не дублирует пункт
