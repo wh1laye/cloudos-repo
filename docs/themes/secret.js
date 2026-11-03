@@ -44,7 +44,7 @@ function rain(){
     later(f,55);
   })();
 }
-CMD.help=function(){W(['help clear exit whoami uname uptime date echo ls cd cat theme matrix neofetch fortune cowsay hack history sudo rm','cd <section> opens a real page: '+SEC.join(' ')])};
+CMD.help=function(){W(['help clear exit whoami uname uptime date echo ls cd cat theme matrix neofetch fortune cowsay hack history sudo rm','cloudpkg pwd id hostname which man free df lsblk ps dmesg ping sl cloudos-audit','cloudpkg search|info|list|install -p works on the real package list. try: cloudpkg search nano','cd <section> opens a real page: '+SEC.join(' ')])};
 CMD.clear=function(){out.textContent=''};
 CMD.exit=CMD.quit=function(){close()};
 CMD.whoami=function(){P('root')};
@@ -93,6 +93,157 @@ CMD.rm=function(a){
   var L=['removing /usr ...','removing /etc ...','removing /home ...','removing /boot ...','just kidding. nothing was harmed.'],i;
   for(i=0;i<L.length;i++)(function(k){later(function(){P(L[k],k===4?'#00ff66':'#ff5a5a')},k*400)})(i);
 };
+var PK=null,PKP=null,gameOff=null;
+function pkgs(cb){
+  if(PK){cb(PK);return}
+  if(!PKP)PKP=fetch(ROOT+'packages/packages.json').then(function(r){if(!r.ok)throw 0;return r.json()}).catch(function(){return null});
+  PKP.then(function(j){if(j)PK=j;cb(j)});
+}
+function pd(p){return p.d&&(p.d.en||p.d.ru)||''}
+function pkrow(p){return p.n+(p.v?' '+p.v:'')+'  -  '+pd(p)+(p.s==='stage3'?'  [in system]':'  [source]')}
+var CPH=['cloudpkg 1.0 (portage wrapper), browser sandbox','usage: cloudpkg command [args]','','  search string     find a package','  info package      show what would be installed','  list              installed packages','  install [-p] pkg  simulated install','  remove pkg        simulated remove','  sync upgrade clean doctor  simulated','  version','','data comes from packages/packages.json. nothing is installed, this is a static site.'];
+CMD.cloudpkg=function(a){
+  var c=a[0],args=a.slice(1).filter(function(x){return x.charAt(0)!=='-'}),dry=a.indexOf('-p')>0||a.indexOf('--pretend')>0;
+  if(!c||c==='help'){W(CPH);return}
+  if(c==='version'){P('cloudpkg 1.0');return}
+  if(c==='sync'){P('syncing gentoo snapshot ...');later(function(){P('sandbox: nothing was changed','#00ff66')},700);return}
+  if(c==='upgrade'){P('calculating dependencies ...');later(function(){P('nothing to upgrade, you run a browser tab','#00ff66')},700);return}
+  if(c==='clean'){P('cloudpkg: nothing to clean');return}
+  if(c==='doctor'){W(['portage: ok','overlay cloudos: ok','signing key /etc/cloudpkg/cloudos.pub: ok','all fine (sandbox)'],'#00ff66');return}
+  if(['search','info','install','remove','list'].indexOf(c)<0){P('cloudpkg: unknown command '+c);return}
+  if((c==='search'||c==='info'||c==='install'||c==='remove')&&!args.length){P('cloudpkg: '+(c==='search'?'give a search string':'give a package'));return}
+  pkgs(function(j){
+    if(!j){P('cloudpkg: could not load packages.json');return}
+    var q=(args[0]||'').toLowerCase(),r,i;
+    if(c==='list'){
+      r=j.filter(function(p){return p.s==='stage3'});
+      for(i=0;i<r.length;i++)P(r[i].n+(r[i].v?'-'+r[i].v:''));
+      P(r.length+' packages');return;
+    }
+    if(c==='search'){
+      r=j.filter(function(p){return (p.n+' '+pd(p)).toLowerCase().indexOf(q)>-1});
+      if(!r.length){P('nothing found for '+args[0]);return}
+      for(i=0;i<r.length;i++)P(pkrow(r[i]));
+      P(r.length+' found');return;
+    }
+    r=j.filter(function(p){return p.n.toLowerCase()===q})[0];
+    if(!r){P('cloudpkg: '+args[0]+': no such package in the sandbox list');return}
+    if(c==='info'){
+      W(['name:     '+r.n,'version:  '+(r.v||'-'),'category: '+r.c,'about:    '+pd(r),'state:    '+(r.s==='stage3'?'already in the system':'built from source via cloudpkg')]);
+      return;
+    }
+    if(c==='remove'){
+      P(r.s==='stage3'?'cloudpkg: '+r.n+' belongs to the base system, removal refused':(dry?'would remove ':'removing ')+r.n);
+      if(r.s!=='stage3')later(function(){P('sandbox: nothing was changed','#00ff66')},500);
+      return;
+    }
+    if(r.s==='stage3'){P(r.n+' is already in the system, nothing to do');return}
+    var L2=['>>> calculating dependencies ... done','>>> emerge (1 of 1) '+r.n+(r.v?'-'+r.v:'')];
+    if(!dry)L2=L2.concat(['>>> unpacking source','>>> compiling [##########]','>>> installing','>>> '+r.n+' merged']);
+    L2.push('sandbox: nothing was installed');
+    L2.forEach(function(s,k){later(function(){P(s,k===L2.length-1?'#00ff66':'')},k*420)});
+  });
+};
+CMD.pwd=function(){P('/root')};
+CMD.id=function(){P('uid=0(root) gid=0(root) groups=0(root),10(wheel)')};
+CMD.hostname=function(){P('cloudos')};
+CMD.which=function(a){P(a[0]&&CMD[a[0]]?'/usr/bin/'+a[0]:(a[0]||'which')+': not found')};
+CMD.man=function(a){P(a[0]?'no manual entry for '+a[0]+' here, see '+ROOT+'handbook/':'what manual page do you want?')};
+CMD.free=function(){
+  var g=navigator.deviceMemory||4,t=g*1048576;
+  W(['               total        used        free','Mem:'+('          '+t).slice(-12)+('           '+Math.round(t*.31)).slice(-12)+('           '+Math.round(t*.69)).slice(-12),'Swap:           0           0           0']);
+};
+CMD.df=function(){W(['filesystem      size  used avail use% mounted on','/dev/sda2       120G   14G  100G  13% /','/dev/sda1       512M   86M  426M  17% /boot','tmpfs           2.0G     0  2.0G   0% /tmp'])};
+CMD.lsblk=function(){W(['NAME   SIZE TYPE MOUNTPOINT','sda    128G disk','|-sda1  512M part /boot','`-sda2  127G part /'])};
+CMD.ps=function(){W(['  pid tty      time cmd','    1 ?    00:00:00 openrc-init','  142 ?    00:00:00 syslog-ng','  188 ?    00:00:00 dhcpcd','  203 ?    00:00:00 nft-watch','  311 tty1 00:00:00 cloudsh'])};
+CMD.dmesg=function(){W(['[    0.000000] linux version (cloudos) x86_64','[    0.000000] command line: root=/dev/sda2 apparmor=1 security=apparmor','[    0.412211] lsm: landlock yama apparmor','[    0.791530] nft: policy drop, loaded','[    1.204118] openrc: boot runlevel reached','[    2.009877] cloudos: browser edition, no real kernel was harmed'])};
+CMD.ping=function(a){
+  var h=a[0]||'';
+  if(!h){P('ping: usage error: destination required');return}
+  if(h!=='localhost'&&h!=='127.0.0.1'){P('ping: '+h+': sandbox has no network');return}
+  P('PING localhost (127.0.0.1) 56(84) bytes of data.');
+  for(var i=1;i<=3;i++)(function(k){later(function(){P('64 bytes from localhost (127.0.0.1): icmp_seq='+k+' ttl=64 time=0.0'+(2+k)+' ms')},k*500)})(i);
+  later(function(){P('3 packets transmitted, 3 received, 0% packet loss')},2000);
+};
+CMD['cloudos-audit']=function(){
+  W(['== firewall','[ ok ] nftables loaded, input drop','== kernel','[ ok ] kernel.kptr_restrict = 2','[ ok ] kernel.yama.ptrace_scope = 2','[ ok ] apparmor enabled','== ssh','[ ok ] PermitRootLogin no','sample output, run doas cloudos-audit on a real system'],'#00ff66');
+};
+CMD.sl=function(){
+  var T=['      ====        ________','  _D _|  |_______/        \\__I_I_____===__|_________|','   |(_)---  |   H\\________/ |   |        =|___ ___|','   /     |  |   H  |  |     |   |         ||_| |_||','  |      |  |   H  |__--------------------| [___] |','  | ________|___H__/__|_____/[][]~\\_______|       |','  |/ |   |-----------I_____I [][] []  D   |=======|__'],e=d.createElement('div'),i=0,w=34;
+  e.style.whiteSpace='pre';e.style.color='#4fa868';out.appendChild(e);
+  (function f(){
+    if(!box||box.hidden)return;
+    var pad=new Array(Math.max(0,w-i)).join(' '),s=T.map(function(l){var t=pad+l;return t.slice(0,Math.max(10,Math.floor(innerWidth/9)))}).join('\n');
+    e.textContent=s;out.scrollTop=out.scrollHeight;
+    if(++i<=w)later(f,70);
+  })();
+};
+function snake(){
+  if(box.querySelector('.csg'))return;
+  var N=20,cell=Math.max(10,Math.floor(Math.min(innerWidth-28,innerHeight-190,520)/N)),W0=d.createElement('div'),cv=d.createElement('canvas'),st=d.createElement('div'),hn=d.createElement('div'),x=cv.getContext('2d'),best=0,sn,dir,nd,food,score,over,speed,paused,alive=true,tx=0,ty=0;
+  try{best=+localStorage.getItem('cs_snake')||0}catch(e){}
+  W0.className='csg';W0.style.cssText='position:absolute;inset:0;z-index:3;background:#020603;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;touch-action:none';
+  cv.width=cv.height=N*cell;cv.style.cssText='border:1px solid #1d5c32;background:#020603;max-width:100%';
+  st.style.cssText='color:#00ff66;font-size:14px';hn.style.cssText='color:#4fa868;font-size:12px;text-align:center';
+  hn.textContent='arrows / wasd / swipe, p pause, q quit';
+  W0.appendChild(st);W0.appendChild(cv);W0.appendChild(hn);box.appendChild(W0);
+  function put(){do{food={x:Math.floor(Math.random()*N),y:Math.floor(Math.random()*N)}}while(sn.some(function(s){return s.x===food.x&&s.y===food.y}))}
+  function reset(){sn=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];dir={x:1,y:0};nd=dir;score=0;over=false;paused=false;speed=130;put()}
+  function paint(){
+    x.fillStyle='#020603';x.fillRect(0,0,cv.width,cv.height);
+    x.fillStyle='#ff5a5a';x.fillRect(food.x*cell+1,food.y*cell+1,cell-2,cell-2);
+    sn.forEach(function(s,i){x.fillStyle=i?'#1fbf5a':'#00ff66';x.fillRect(s.x*cell+1,s.y*cell+1,cell-2,cell-2)});
+    st.textContent='snake  score '+score+'  best '+best+(paused?'  [paused]':'')+(over?'  [game over, enter to restart]':'');
+  }
+  function tick(){
+    if(!alive)return;
+    if(!paused&&!over){
+      dir=nd;
+      var h={x:sn[0].x+dir.x,y:sn[0].y+dir.y},eat=h.x===food.x&&h.y===food.y,body=eat?sn:sn.slice(0,-1);
+      if(h.x<0||h.y<0||h.x>=N||h.y>=N||body.some(function(s){return s.x===h.x&&s.y===h.y})){
+        over=true;
+        if(score>best){best=score;try{localStorage.setItem('cs_snake',String(best))}catch(e){}}
+      }else{
+        sn.unshift(h);
+        if(eat){score++;speed=Math.max(60,speed-3);put()}else sn.pop();
+      }
+    }
+    paint();
+    later(tick,speed);
+  }
+  function turn(a,b){if(!(a===-dir.x&&b===-dir.y)&&!(a===0&&b===0))nd={x:a,y:b}}
+  function key(e){
+    var k=e.key.toLowerCase(),used=true;
+    if(k==='arrowup'||k==='w'||k==='k')turn(0,-1);
+    else if(k==='arrowdown'||k==='s'||k==='j')turn(0,1);
+    else if(k==='arrowleft'||k==='a'||k==='h')turn(-1,0);
+    else if(k==='arrowright'||k==='d'||k==='l')turn(1,0);
+    else if(k==='p'||k===' ')paused=!paused;
+    else if(k==='enter'){if(over)reset()}
+    else if(k==='q'||k==='escape')off();
+    else used=false;
+    if(used||k.length===1){e.preventDefault();e.stopImmediatePropagation()}
+  }
+  function ts(e){tx=e.touches[0].clientX;ty=e.touches[0].clientY}
+  function te(e){
+    var t=e.changedTouches[0],dx=t.clientX-tx,dy=t.clientY-ty;
+    if(Math.abs(dx)<24&&Math.abs(dy)<24){if(over)reset();else paused=!paused;return}
+    if(Math.abs(dx)>Math.abs(dy))turn(dx>0?1:-1,0);else turn(0,dy>0?1:-1);
+  }
+  function off(){
+    if(!alive)return;
+    alive=false;gameOff=null;
+    d.removeEventListener('keydown',key,true);
+    W0.remove();
+    if(inp&&!box.hidden)inp.focus();
+  }
+  gameOff=off;
+  d.addEventListener('keydown',key,true);
+  W0.addEventListener('touchstart',ts,{passive:true});
+  W0.addEventListener('touchend',te,{passive:true});
+  reset();tick();
+}
+CMD.snake=function(){snake()};
 function run(line){
   var s=line.trim(),a,c;
   P(pr.textContent+' '+line,'#4fa868');
@@ -114,6 +265,7 @@ function build(){
   inp.addEventListener('keydown',function(e){
     if(e.key==='Enter'){var v=inp.value;inp.value='';run(v)}
     else if(e.key==='Escape'){close()}
+    else if(e.key==='Tab'){e.preventDefault();var v=inp.value;if(v&&v.indexOf(' ')<0){var m=Object.keys(CMD).filter(function(k){return k!=='snake'&&k.indexOf(v.toLowerCase())===0});if(m.length===1)inp.value=m[0]+' ';else if(m.length>1)P(m.join('  '),'#4fa868')}}
     else if(e.key==='ArrowUp'){e.preventDefault();if(hi>0)hi--;inp.value=hist[hi]||''}
     else if(e.key==='ArrowDown'){e.preventDefault();if(hi<hist.length)hi++;inp.value=hist[hi]||''}
     else if(e.ctrlKey&&(e.key==='l'||e.key==='L')){e.preventDefault();CMD.clear()}
@@ -131,6 +283,7 @@ function open(first){
 }
 function close(){
   if(!box)return;
+  if(gameOff)gameOff();
   box.hidden=true;h.style.overflow='';
   while(tm.length)clearTimeout(tm.pop());
   var c=box.querySelector('.csc');if(c)c.remove();

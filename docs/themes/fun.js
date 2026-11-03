@@ -96,7 +96,7 @@ function secret(){
   setTimeout(apply,6000);
   function go(){if(window.CloudSecret)window.CloudSecret.open(first)}
   if(window.CloudSecret){go();return}
-  var s=d.createElement('script');s.src=BASE+'secret.js?v=1';s.onload=go;d.head.appendChild(s);
+  var s=d.createElement('script');s.src=BASE+'secret.js?v=2';s.onload=go;d.head.appendChild(s);
 }
 d.addEventListener('keydown',function(e){
   var el=e.target,tg=el&&el.tagName,c,n;
