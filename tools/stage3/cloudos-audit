@@ -3,6 +3,8 @@ set -u
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 R=${CLOUDOS_ROOT:-}
 ok=0; bad=0; warn=0
+CIS=0
+case "${1:-}" in --cis) CIS=1 ;; "") ;; *) echo "cloudos-audit [--cis]" >&2; exit 2 ;; esac
 
 good() { printf '[ ok ] %s\n' "$*"; ok=$((ok + 1)); }
 fail() { printf '[ !! ] %s\n' "$*"; bad=$((bad + 1)); }
@@ -113,6 +115,52 @@ if [ -z "$R" ]; then
     [ -r "$v" ] || continue
     if grep -q '^Vulnerable' "$v"; then note "cpu $(basename "$v"): $(cat "$v")"; fi
   done
+fi
+
+if [ "$CIS" = 1 ]; then
+  echo "== профиль cis (по мотивам cis benchmark для linux, не сертификация)"
+  mode() { stat -c '%a' "$1" 2>/dev/null || echo -; }
+  perm() {
+    local m; m=$(mode "$R$1")
+    [ "$m" = - ] && { note "нет файла $1"; return; }
+    [ "$((8#$m & 8#$3))" = 0 ] && good "$1: права $m" || fail "$1: права $m, лишнее для $2"
+  }
+  perm /etc/passwd "группы и остальных на запись" 022
+  perm /etc/group "группы и остальных на запись" 022
+  perm /etc/shadow "группы на запись и остальных" 037
+  perm /etc/gshadow "группы на запись и остальных" 037
+  perm /etc/ssh/sshd_config "группы и остальных на запись" 022
+  if [ -r "$R/etc/shadow" ]; then
+    [ -z "$(awk -F: '$2 == "" { print $1 }' "$R/etc/shadow")" ] && good "нет учётных записей с пустым паролем" || fail "есть учётные записи с пустым паролем"
+  fi
+  [ "$(awk -F: '$3 == 0 { print $1 }' "$R/etc/passwd" | tr '\n' ' ')" = "root " ] && good "uid 0 только у root" || fail "uid 0 не только у root"
+  md=$(awk '$1 == "PASS_MAX_DAYS" { print $2 }' "$R/etc/login.defs" 2>/dev/null | tail -1)
+  { [ -n "${md:-}" ] && [ "$md" -le 365 ] 2>/dev/null; } && good "PASS_MAX_DAYS = $md" || note "PASS_MAX_DAYS не задан или больше 365"
+  um=$(awk '$1 == "UMASK" { print $2 }' "$R/etc/login.defs" 2>/dev/null | tail -1)
+  case "${um:-}" in 027|077) good "UMASK = $um" ;; *) note "UMASK ${um:-не задан}, нужно 027 или строже" ;; esac
+  for fsn in cramfs freevxfs jffs2 hfs hfsplus udf; do
+    grep -rqs "^install $fsn /bin/\(true\|false\)\|^blacklist $fsn" "$R/etc/modprobe.d" && good "файловая система $fsn отключена" || note "файловая система $fsn не отключена в modprobe.d"
+  done
+  grep -qsE '^\*[[:space:]]+hard[[:space:]]+core[[:space:]]+0' "$R/etc/security/limits.conf" "$R"/etc/security/limits.d/* && good "core-дампы запрещены" || note "core-дампы не запрещены в limits"
+  [ -s "$R/etc/issue" ] && good "есть /etc/issue" || note "пустой /etc/issue (баннер)"
+  if [ -z "$R" ]; then
+    chk net.ipv4.ip_forward 0
+    chk net.ipv4.conf.all.send_redirects 0
+    chk net.ipv4.conf.all.log_martians 1
+    chk net.ipv4.icmp_echo_ignore_broadcasts 1
+    chk net.ipv4.conf.all.secure_redirects 0
+    chk net.ipv6.conf.all.accept_ra 0
+    ww=$(find / -xdev -type d -perm -0002 ! -perm -1000 2>/dev/null | head -3)
+    [ -z "$ww" ] && good "нет каталогов с записью для всех без sticky" || fail "каталоги с записью для всех без sticky: $(echo "$ww" | tr '\n' ' ')"
+    nu=$(find / -xdev \( -nouser -o -nogroup \) 2>/dev/null | head -3)
+    [ -z "$nu" ] && good "нет файлов без владельца" || note "файлы без владельца: $(echo "$nu" | tr '\n' ' ')"
+    if command -v sshd >/dev/null; then
+      c=$(sshd -T 2>/dev/null)
+      printf '%s\n' "$c" | grep -qi '^x11forwarding no' && good "sshd: x11 выключен" || note "sshd: x11forwarding не no"
+      mt=$(printf '%s\n' "$c" | awk 'tolower($1) == "maxauthtries" { print $2 }')
+      [ -n "$mt" ] && [ "$mt" -le 4 ] && good "sshd: MaxAuthTries = $mt" || note "sshd: MaxAuthTries больше 4"
+    fi
+  fi
 fi
 
 echo
