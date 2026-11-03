@@ -1,5 +1,5 @@
 (function(){
-var d=document,h=d.documentElement,K='fun';
+var d=document,h=d.documentElement,K='fun',SC=d.currentScript,BASE=SC&&SC.src?SC.src.replace(/fun\.js.*$/,''):'';
 var DEF={trail:0,pop:0,crt:0,mono:0,bar:0,snd:0,rb:0,rad:1};
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 function get(){
@@ -12,7 +12,7 @@ function get(){
 var S=get();
 function save(){ls(K,JSON.stringify(S))}
 function en(){var l=ls('lang');if(l==='ru'||l==='en')return l==='en';return !/^(ru|uk|be|kk)/.test((navigator.language||'ru').toLowerCase())}
-var TX={'фишки':'extras','след за курсором':'cursor trail','конфетти по клику':'click confetti','crt-экран':'crt screen','моно-шрифт везде':'mono font everywhere','полоса прокрутки сверху':'top scroll bar','звук кликов':'click sounds','радужный режим':'rainbow mode','углы':'corners','острые':'sharp','обычные':'normal','круглые':'round','сбросить фишки':'reset extras','секрет: ↑ ↑ ↓ ↓ ← → ← → b a':'secret: ↑ ↑ ↓ ↓ ← → ← → b a','доступ root получен':'root access granted'};
+var TX={'фишки':'extras','след за курсором':'cursor trail','конфетти по клику':'click confetti','crt-экран':'crt screen','моно-шрифт везде':'mono font everywhere','полоса прокрутки сверху':'top scroll bar','звук кликов':'click sounds','радужный режим':'rainbow mode','углы':'corners','острые':'sharp','обычные':'normal','круглые':'round','сбросить фишки':'reset extras','доступ root получен':'root access granted'};
 function t(s){return en()&&TX[s]?TX[s]:s}
 var R='.btn,.feat,.card,.links a,.flow a,.term,pre,.sps,.sgm button,.zsg button,.spx,.ddm,.gh';
 var st=d.createElement('style');
@@ -85,18 +85,27 @@ function toast(s){
   var e=d.createElement('div');e.className='ftoast';e.textContent=s;d.body.appendChild(e);
   setTimeout(function(){e.remove()},3200);
 }
-var KS=['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','KeyB','KeyA'],ki=0;
+var WD='cloudos',wi=0,wt=0;
+function secret(){
+  var first=ls('sec')!=='1';
+  ls('sec','1');
+  if(window.CloudTheme&&window.CloudTheme.unlock)window.CloudTheme.unlock();
+  toast('root@cloudos:~# '+t('доступ root получен'));
+  h.setAttribute('data-rbw','1');
+  spawn(innerWidth/2,innerHeight/2,160,'c');
+  setTimeout(apply,6000);
+  function go(){if(window.CloudSecret)window.CloudSecret.open(first)}
+  if(window.CloudSecret){go();return}
+  var s=d.createElement('script');s.src=BASE+'secret.js?v=1';s.onload=go;d.head.appendChild(s);
+}
 d.addEventListener('keydown',function(e){
-  var k=e.code||'';
-  if(k===KS[ki]){
-    ki++;
-    if(ki===KS.length){
-      ki=0;toast('root@cloudos:~# '+t('доступ root получен'));
-      h.setAttribute('data-rbw','1');
-      spawn(innerWidth/2,innerHeight/2,160,'c');
-      setTimeout(apply,10000);
-    }
-  }else ki=k===KS[0]?1:0;
+  var el=e.target,tg=el&&el.tagName,c,n;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||(el&&el.isContentEditable))return;
+  c=(e.code||'').indexOf('Key')===0?e.code.slice(3).toLowerCase():(e.key&&e.key.length===1?e.key.toLowerCase():'');
+  if(!c)return;
+  n=performance.now();if(n-wt>2500)wi=0;wt=n;
+  if(c===WD.charAt(wi)){wi++;if(wi===WD.length){wi=0;secret()}}else wi=c===WD.charAt(0)?1:0;
 });
 function apply(){
   if(S.crt)h.setAttribute('data-crt','1');else h.removeAttribute('data-crt');
@@ -122,8 +131,7 @@ function ui(){
   s.innerHTML='<h4>'+t('фишки')+'</h4>'
     +ROWS.map(function(r){return '<label class="spc"><input type="checkbox" data-fn="'+r[0]+'"><span>'+t(r[1])+'</span></label>'}).join('')
     +'<p class="spm">'+t('углы')+'</p><div class="zsg">'+RAD.map(function(r){return '<button type="button" data-fr="'+r[0]+'">'+t(r[1])+'</button>'}).join('')+'</div>'
-    +'<button type="button" class="spq" data-fr="x">'+t('сбросить фишки')+'</button>'
-    +'<p class="zsn">'+t('секрет: ↑ ↑ ↓ ↓ ← → ← → b a')+'</p>';
+    +'<button type="button" class="spq" data-fr="x">'+t('сбросить фишки')+'</button>';
   spb.appendChild(s);
   mark();
 }
