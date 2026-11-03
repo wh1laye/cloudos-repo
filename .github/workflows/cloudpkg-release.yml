@@ -1,0 +1,49 @@
+name: cloudpkg-release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "cloudpkg/**"
+      - "tools/sign.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cloudpkg-release
+  cancel-in-progress: true
+
+jobs:
+  sign:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: архив исходников
+        run: |
+          mkdir -p out
+          tar --sort=name --owner=0 --group=0 --numeric-owner --mtime=@0 \
+            --transform 's,^,cloudpkg-src/,' -czf out/cloudpkg-src.tar.gz cloudpkg
+
+      - name: подпись minisign
+        env:
+          MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+        run: |
+          if [ -z "$MINISIGN_KEY" ]; then echo "::error::MINISIGN_KEY не задан"; exit 1; fi
+          sudo apt-get install -y -qq minisign
+          bash tools/sign.sh out/cloudpkg-src.tar.gz
+          sha256sum out/cloudpkg-src.tar.gz > out/cloudpkg-src.tar.gz.sha256
+
+      - name: выпуск cloudpkg-latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view cloudpkg-latest >/dev/null 2>&1 || gh release create cloudpkg-latest --title "cloudpkg latest" \
+            --notes "подписанные исходники cloudpkg для cloudpkg update и install.sh, обновляется автоматически" --prerelease
+          gh release upload cloudpkg-latest out/cloudpkg-src.tar.gz out/cloudpkg-src.tar.gz.minisig out/cloudpkg-src.tar.gz.sha256 --clobber

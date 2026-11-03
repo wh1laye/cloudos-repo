@@ -38,6 +38,11 @@ jobs:
       - name: cloudpkg под sanitizers
         run: sudo env CFLAGS_EXTRA="-fsanitize=address,undefined -fno-omit-frame-pointer -g" bash tools/test-cloudpkg.sh
 
+      - name: подпись update
+        run: |
+          sudo apt-get install -y -qq minisign
+          bash tools/test-update-sign.sh
+
       - name: форум
         run: bash tools/test-forum.sh
 
