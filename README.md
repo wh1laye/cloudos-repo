@@ -5,7 +5,7 @@
 **Своя Linux система, собранная с нуля.**
 Простая, лёгкая и без ничего лишнего.
 
-[![Версия](https://img.shields.io/badge/версия-1.4-9cc8f2?style=for-the-badge)](https://github.com/wh1laye/cloudos-repo/releases)
+[![Версия](https://img.shields.io/badge/версия-1.0-9cc8f2?style=for-the-badge)](https://github.com/wh1laye/cloudos-repo/releases)
 [![Лицензия](https://img.shields.io/badge/лицензия-MIT-3b5fa8?style=for-the-badge)](#-лицензия)
 [![Система](https://img.shields.io/badge/система-x86__64-cfe3f8?style=for-the-badge&labelColor=3b5fa8)](#-что-внутри)
 
