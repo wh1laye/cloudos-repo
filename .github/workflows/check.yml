@@ -41,6 +41,12 @@ jobs:
       - name: форум
         run: bash tools/test-forum.sh
 
+      - name: снимки btrfs и откат (на фейковых btrfs и mount)
+        run: sudo bash tools/test-snapshots.sh
+
+      - name: закрепление actions по sha
+        run: bash tools/pin-actions.sh --check
+
       - name: json и yaml
         run: |
           python3 -c "import json; json.load(open('docs/packages/packages.json'))"
