@@ -157,6 +157,15 @@ live_users() {
   say "live: пользователь cloudos и root, пароль cloudos, по ssh вход им закрыт"
 }
 
+kcfg_stub() {
+  local d=/var/tmp/cloudos-kcfg
+  rm -rf "$d"
+  mkdir -p "$d"
+  printf 'VERSION = %s\nPATCHLEVEL = %s\nSUBLEVEL = %s\nEXTRAVERSION =\n' "${KVER%%.*}" "$(echo "$KVER" | cut -d. -f2)" "$(echo "$KVER" | cut -d. -f3)" > "$d/Makefile"
+  printf 'CONFIG_NET=y\nCONFIG_SECURITY=y\nCONFIG_SECURITYFS=y\nCONFIG_SECURITY_NETWORK=y\nCONFIG_AUDIT=y\nCONFIG_SECURITY_APPARMOR=y\nCONFIG_SECURITY_APPARMOR_HASH=y\nCONFIG_DEFAULT_SECURITY_APPARMOR=y\nCONFIG_CRYPTO_SHA256=y\n' > "$d/.config"
+  export KERNEL_DIR=$d
+}
+
 build_wifi() {
   say "wifi: iwd, wireless-regdb, iw, linux-firmware"
   if [ -d /etc/portage/package.use ]; then
@@ -186,9 +195,12 @@ build_wifi() {
   command -v cert-to-efi-sig-list >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/efitools || echo "!! efitools не поставился, secure boot в установщике недоступен" >&2
   command -v minisign >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/minisign || die "minisign не поставился, cloudpkg update без него не проверит подпись"
   command -v minisign >/dev/null || die "после установки нет minisign"
+  kcfg_stub
   command -v apparmor_parser >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-apps/apparmor || die "apparmor не поставился"
   command -v apparmor_parser >/dev/null || die "после установки нет apparmor_parser"
   [ -d /etc/apparmor.d ] && ls /etc/apparmor.d/* >/dev/null 2>&1 || DONT_MOUNT_BOOT=1 cloudpkg install sec-policy/apparmor-profiles || echo "!! apparmor-profiles не поставился, профилей не будет" >&2
+  unset KERNEL_DIR
+  rm -rf /var/tmp/cloudos-kcfg
   command -v tpm2_unseal >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/tpm2-tools || echo "!! tpm2-tools не поставился, cloudos-tpm2 недоступен" >&2
   if [ -d /etc/portage/package.use ]; then echo "sys-apps/systemd-utils boot" > /etc/portage/package.use/cloudos-uki; else echo "sys-apps/systemd-utils boot" >> /etc/portage/package.use; fi
   [ -f /usr/lib/systemd/boot/efi/linuxx64.efi.stub ] || DONT_MOUNT_BOOT=1 cloudpkg install sys-apps/systemd-utils || echo "!! systemd-utils (efi stub) не поставился, cloudos-uki недоступен" >&2
