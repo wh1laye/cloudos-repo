@@ -330,7 +330,7 @@ live_tune() {
 
 CloudOS $VERSION live. вход выполнен как cloudos, пароль cloudos (root тоже cloudos, root-права: doas -s). только для live, ssh для них закрыт, фаервол включён: cloudos-firewall status
 wifi: iwctl, затем station wlan0 scan, station wlan0 get-networks, station wlan0 connect имя_сети
-установка: doas cloudos-install, всё делается одной командой. вручную: handbook, раздел «установка вручную»
+install: doas cloudos-install, one command does it all (auto: whole disk, manual: your own partitions). by hand: handbook, section manual install
 https://wh1laye.github.io/cloudos-repo/
 
 EOM
