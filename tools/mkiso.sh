@@ -2,7 +2,7 @@
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-VERSION=${VERSION:-1.0}
+VERSION=${VERSION:-2.0}
 KVER=${KVER:-6.18.10}
 MARCH=${MARCH:-x86-64}
 BASE_TAG=${BASE_TAG:-1.4}
@@ -20,7 +20,7 @@ case "$MARCH" in x86-64|x86-64-v3) ;; *) die "MARCH: x86-64 или x86-64-v3" ;;
 [ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
 for c in curl tar xz sha256sum unshare mount chroot awk; do command -v "$c" >/dev/null || die "нет команды $c"; done
 case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасная рабочая папка: $WORK" ;; esac
-for f in iso/init iso/mkiso-inside.sh iso/cloudos-install iso/cloudos-secureboot iso/sysctl-perf.conf stage3/cloudos-audit; do [ -f "$HERE/$f" ] || die "нет $HERE/$f"; done
+for f in iso/init iso/mkiso-inside.sh iso/cloudos-install iso/cloudos-secureboot iso/cloudos-uki iso/cloudos-tpm2 iso/dracut-tpm2/module-setup.sh iso/dracut-tpm2/cloudos-tpm2-unlock.sh iso/sysctl-perf.conf stage3/cloudos-audit; do [ -f "$HERE/$f" ] || die "нет $HERE/$f"; done
 
 mkdir -p "$WORK/src" "$OUT"
 
