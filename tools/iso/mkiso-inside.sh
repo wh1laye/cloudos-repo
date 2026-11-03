@@ -79,6 +79,7 @@ build_kernel() {
   scripts/config -e TRANSPARENT_HUGEPAGE -e TRANSPARENT_HUGEPAGE_MADVISE -e MQ_IOSCHED_DEADLINE -e MQ_IOSCHED_KYBER -e IOSCHED_BFQ
   scripts/config -e BLK_DEV_DM -e DM_CRYPT -e CRYPTO_XTS -e CRYPTO_AES_NI_INTEL -e BLK_DEV_INITRD -e RD_ZSTD -e RD_GZIP
   scripts/config -d HZ_250 -d HZ_300 -e HZ_1000 -d PREEMPT_VOLUNTARY -e PREEMPT -e SECURITY_LOCKDOWN_LSM -e SECURITY_LOCKDOWN_LSM_EARLY -e LOCK_DOWN_IN_EFI_SECURE_BOOT -e EFI_STUB
+  scripts/config -e SECURITY -e SECURITY_YAMA -e SECURITY_LANDLOCK -e AUDIT -e SECURITY_APPARMOR -e SECURITY_APPARMOR_HASH -e SECURITY_APPARMOR_HASH_DEFAULT -e DEFAULT_SECURITY_APPARMOR --set-str LSM "landlock,lockdown,yama,apparmor,bpf"
   scripts/config -e CPU_FREQ_DEFAULT_GOV_SCHEDUTIL -e X86_INTEL_PSTATE -e X86_AMD_PSTATE -e X86_ACPI_CPUFREQ
   make olddefconfig
   need="DM_CRYPT BLK_DEV_DM NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
@@ -184,6 +185,9 @@ build_wifi() {
   command -v cert-to-efi-sig-list >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/efitools || echo "!! efitools не поставился, secure boot в установщике недоступен" >&2
   command -v minisign >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/minisign || die "minisign не поставился, cloudpkg update без него не проверит подпись"
   command -v minisign >/dev/null || die "после установки нет minisign"
+  command -v apparmor_parser >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-apps/apparmor || die "apparmor не поставился"
+  command -v apparmor_parser >/dev/null || die "после установки нет apparmor_parser"
+  [ -d /etc/apparmor.d ] && ls /etc/apparmor.d/* >/dev/null 2>&1 || DONT_MOUNT_BOOT=1 cloudpkg install sec-policy/apparmor-profiles || echo "!! apparmor-profiles не поставился, профилей не будет" >&2
   command -v dracut >/dev/null || echo "!! нет dracut, luks в установщике не заработает" >&2
   rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/*
   say "wifi пакеты готовы, прошивки $(du -sh /lib/firmware | cut -f1)"
@@ -293,7 +297,7 @@ live_tune() {
   else
     echo "!! нет /etc/init.d/agetty, вход на tty1 не настроен" >&2
   fi
-  for s in udev:sysinit udev-trigger:sysinit sysctl:boot dbus:default iwd:default dhcpcd:default syslog-ng:default nftables:default; do
+  for s in udev:sysinit udev-trigger:sysinit sysctl:boot dbus:default iwd:default dhcpcd:default syslog-ng:default nftables:default apparmor:boot; do
     if [ -e "/etc/init.d/${s%%:*}" ]; then
       rc-update add "${s%%:*}" "${s##*:}" >/dev/null 2>&1 || true
     else

@@ -6,7 +6,7 @@ T=${CLOUDOS_TARGET:-/mnt/cloudos}
 SQ=${CLOUDOS_SQUASHFS:-/media/cdrom/cloudos/rootfs.squashfs}
 BS=${CLOUDOS_BOOTSRC:-/media/cdrom/boot}
 LS=/usr/share/limine
-HARDEN='slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1 efi=disable_early_pci_dma iommu.strict=1'
+HARDEN='apparmor=1 security=apparmor slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1 efi=disable_early_pci_dma iommu.strict=1'
 EXTRA=${CLOUDOS_CMDLINE_EXTRA:-}
 MOUNTED=0
 LUKSOPEN=0
