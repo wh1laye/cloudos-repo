@@ -1,5 +1,14 @@
 # changelog
 
+## 2.0.2, темы и секретка
+
+- `docs/theme.css`, `docs/theme.js`: новые темы `night` (oled), `nord`, `dracula`, `sepia`; скрытые `matrix` и `amber` (доступны только после секретки); значение темы проверяется по белому списку, неизвестное или закрытое сбрасывается в `gray`
+- `docs/themes/fun.js`: konami заменён на слово `cloudos` (работает на любой раскладке по физическим клавишам, не срабатывает в полях ввода); подсказка про секрет убрана из настроек
+- `docs/themes/secret.js`: новый файл, грузится только по секретке; терминал `cloudsh` (help, theme, matrix, neofetch, cd <раздел>, fortune, cowsay, hack и др.); `CloudSecret.add(name, fn)` добавляет команды
+- `docs/forum/app.js`, `docs/forum/forum.css`: список тем форума берётся из общего набора
+- `docs/cmdk.js`, `docs/404.html`: новые темы в палитре и в раннем скрипте
+- `docs/themes/themes.js`, `docs/sw.js`: сброс кэша
+
 ## 2.0.1, исправления: сборка iso и konami
 
 - `tools/iso/mkiso-inside.sh`: `sys-apps/apparmor` падал в `pkg_setup` (нет `.config`, ядро собирается позже wifi-шага); добавлен `kcfg_stub`: временная папка с `Makefile` и `.config`, `KERNEL_DIR` указывает на неё только на время установки apparmor
