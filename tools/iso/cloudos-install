@@ -34,6 +34,7 @@ cloudos-install: установка cloudos на диск за одну кома
   CLOUDOS_LUKSPASS=пароль        пароль шифрования диска
   CLOUDOS_PROFILE=balanced|secure|fast  secure: без smt, lockdown, init_on_free; fast: без watchdog и аудита
   CLOUDOS_SECUREBOOT=1           свои ключи secure boot, подпись limine, хеши ядра (только uefi)
+  CLOUDOS_UKI=1                  подписанный unified kernel image первым пунктом (нужен CLOUDOS_SECUREBOOT=1)
   CLOUDOS_CMDLINE_EXTRA="..."    дополнительные параметры ядра
 EOU
 }
@@ -134,6 +135,9 @@ esac
 EXTRA="$EXTRA $PA"
 SB=${CLOUDOS_SECUREBOOT:-0}
 case $SB in 0|1) ;; *) die "CLOUDOS_SECUREBOOT: 1 или 0" ;; esac
+UKI=${CLOUDOS_UKI:-0}
+case $UKI in 0|1) ;; *) die "CLOUDOS_UKI: 1 или 0" ;; esac
+[ "$UKI" = 0 ] || [ "$SB" = 1 ] || die "CLOUDOS_UKI требует CLOUDOS_SECUREBOOT=1"
 if [ "$SB" = 1 ]; then
   [ "$FW" = uefi ] || die "secure boot есть только в режиме uefi"
   for c in cloudos-secureboot sbsign sbverify cert-to-efi-sig-list sign-efi-sig-list b2sum openssl; do command -v "$c" >/dev/null || die "для secure boot нет команды $c"; done
@@ -272,6 +276,10 @@ if [ "$SB" = 1 ]; then
   say "secure boot: ключи, хеши ядра, подпись limine"
   export CLOUDOS_SBDIR="$T/etc/cloudos/secureboot" CLOUDOS_BOOT="$T/boot" CLOUDOS_LIMINE_EFI="$LS/BOOTX64.EFI"
   cloudos-secureboot init
+  if [ "$UKI" = 1 ]; then
+    say "unified kernel image"
+    CLOUDOS_OSREL="$T/etc/os-release" cloudos-uki build
+  fi
   cloudos-secureboot sign
 fi
 

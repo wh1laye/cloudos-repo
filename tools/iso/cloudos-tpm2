@@ -1,0 +1,103 @@
+#!/bin/bash
+set -euo pipefail
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+D=${CLOUDOS_TPMDIR:-/etc/cloudos/tpm2}
+PCR=${CLOUDOS_TPM_PCR:-7}
+
+say() { printf '==> %s\n' "$*"; }
+die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
+need() { for c in "$@"; do command -v "$c" >/dev/null || die "нет команды $c"; done; }
+
+usage() {
+  cat <<'EOU'
+cloudos-tpm2: разблокировка luks2 через tpm2 без пароля
+
+  enroll    запечатать ключ в tpm2 (pcr 7, состояние secure boot), добавить слот luks, пересобрать initramfs
+  remove    убрать слот и запечатанный ключ
+  status    есть ли tpm2, слот и файлы
+
+запускать после того, как secure boot включён и система загружена с ним:
+pcr 7 хранит состояние ключей и включения secure boot, при смене ключей или выключении secure boot
+tpm ключ не отдаст, и cloudos спросит обычный пароль luks. пароль остаётся рабочим всегда
+EOU
+}
+
+luksdev() {
+  local src dev
+  if [ -n "${CLOUDOS_LUKSDEV:-}" ]; then printf '%s' "$CLOUDOS_LUKSDEV"; return; fi
+  src=$(findmnt -no SOURCE / 2>/dev/null || true)
+  [ -n "$src" ] || die "не удалось определить корень"
+  dev=$(lsblk -srno NAME,TYPE "$src" 2>/dev/null | awk '$2 == "part" { print "/dev/" $1; exit }')
+  [ -n "$dev" ] || die "корень не на luks, укажи CLOUDOS_LUKSDEV=/dev/раздел"
+  printf '%s' "$dev"
+}
+
+kver() { ls /lib/modules | sort -V | tail -1; }
+
+rebuild() {
+  local kv
+  kv=${CLOUDOS_KVER:-$(kver)}
+  say "initramfs с модулем tpm2"
+  dracut --force --no-hostonly --kver "$kv" --add "crypt cloudos-tpm2" --compress zstd /boot/initramfs.img
+  if [ -f /boot/EFI/Linux/cloudos.efi ] && command -v cloudos-uki >/dev/null; then cloudos-uki build; fi
+  if [ -f /etc/cloudos/secureboot/db.key ] && command -v cloudos-secureboot >/dev/null; then cloudos-secureboot sign; fi
+}
+
+enroll() {
+  local dev w
+  need tpm2_createprimary tpm2_createpolicy tpm2_create cryptsetup dracut shred
+  [ -c /dev/tpmrm0 ] || die "нет /dev/tpmrm0, tpm2 не найден или выключен в прошивке"
+  [ -d /usr/lib/dracut/modules.d/91cloudos-tpm2 ] || die "нет модуля dracut cloudos-tpm2"
+  dev=$(luksdev)
+  cryptsetup isLuks "$dev" || die "$dev не luks"
+  if [ -f /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c ] &&
+     [ "$(od -An -t u1 /sys/firmware/efi/efivars/SecureBoot-8be4df61-93ca-11d2-aa0d-00e098032b8c | awk '{ print $NF }')" != 1 ]; then
+    echo "внимание: secure boot выключен, pcr 7 сейчас не защищает цепочку загрузки" >&2
+  fi
+  umask 077
+  install -d -m700 "$D"
+  w=$(mktemp -d)
+  trap 'rm -rf "$w"' EXIT
+  head -c 64 /dev/urandom > "$w/key.bin"
+  cryptsetup luksDump "$dev" | grep -q "^  7: luks2" && die "слот 7 занят, освободи его: cryptsetup luksKillSlot $dev 7"
+  say "новый слот luks 7 (потребуется текущий пароль)"
+  cryptsetup luksAddKey --new-key-slot 7 "$dev" "$w/key.bin"
+  say "запечатывание ключа в tpm2 (pcr $PCR)"
+  tpm2_createprimary -C o -g sha256 -G ecc -c "$w/prim.ctx" -Q
+  tpm2_createpolicy --policy-pcr -l "sha256:$PCR" -L "$w/pcr.policy" -Q
+  tpm2_create -C "$w/prim.ctx" -L "$w/pcr.policy" -i "$w/key.bin" -u "$D/seal.pub" -r "$D/seal.priv" -Q
+  printf '%s\n' "$PCR" > "$D/pcr"
+  printf '%s\n' "$dev" > "$D/device"
+  printf '7\n' > "$D/slot"
+  chmod 600 "$D"/*
+  shred -u "$w/key.bin"
+  rebuild
+  say "готово: при следующей загрузке пароль не спросят, если состояние secure boot не менялось"
+  say "ключ слота запечатан, пароль luks сохраните: он нужен при смене ключей и прошивки"
+}
+
+remove() {
+  local dev slot
+  need cryptsetup
+  dev=$(luksdev)
+  [ -f "$D/seal.pub" ] || die "tpm2 не настроен"
+  slot=$(cat "$D/slot" 2>/dev/null || echo 7)
+  say "удаление слота $slot (потребуется пароль luks)"
+  cryptsetup luksKillSlot "$dev" "$slot"
+  rm -f "$D/seal.pub" "$D/seal.priv" "$D/pcr" "$D/device" "$D/slot"
+  rebuild
+}
+
+status() {
+  [ -c /dev/tpmrm0 ] && echo "tpm2: найден" || echo "tpm2: не найден"
+  if [ -f "$D/seal.pub" ]; then echo "запечатанный ключ: есть (pcr $(cat "$D/pcr" 2>/dev/null || echo ?), диск $(cat "$D/device" 2>/dev/null || echo ?))"; else echo "запечатанный ключ: нет (cloudos-tpm2 enroll)"; fi
+  [ -d /usr/lib/dracut/modules.d/91cloudos-tpm2 ] && echo "модуль dracut: есть" || echo "модуль dracut: нет"
+}
+
+[ "$(id -u)" = 0 ] || die "нужен root"
+case "${1:-}" in
+  enroll) enroll ;;
+  remove) remove ;;
+  status) status ;;
+  *) usage ;;
+esac

@@ -80,6 +80,7 @@ build_kernel() {
   scripts/config -e BLK_DEV_DM -e DM_CRYPT -e CRYPTO_XTS -e CRYPTO_AES_NI_INTEL -e BLK_DEV_INITRD -e RD_ZSTD -e RD_GZIP
   scripts/config -d HZ_250 -d HZ_300 -e HZ_1000 -d PREEMPT_VOLUNTARY -e PREEMPT -e SECURITY_LOCKDOWN_LSM -e SECURITY_LOCKDOWN_LSM_EARLY -e LOCK_DOWN_IN_EFI_SECURE_BOOT -e EFI_STUB
   scripts/config -e SECURITY -e SECURITY_YAMA -e SECURITY_LANDLOCK -e AUDIT -e SECURITY_APPARMOR -e SECURITY_APPARMOR_HASH -e SECURITY_APPARMOR_HASH_DEFAULT -e DEFAULT_SECURITY_APPARMOR --set-str LSM "landlock,lockdown,yama,apparmor,bpf"
+  scripts/config -e TCG_TPM -e TCG_TIS_CORE -e TCG_TIS -e TCG_CRB
   scripts/config -e CPU_FREQ_DEFAULT_GOV_SCHEDUTIL -e X86_INTEL_PSTATE -e X86_AMD_PSTATE -e X86_ACPI_CPUFREQ
   make olddefconfig
   need="DM_CRYPT BLK_DEV_DM NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
@@ -188,6 +189,9 @@ build_wifi() {
   command -v apparmor_parser >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-apps/apparmor || die "apparmor не поставился"
   command -v apparmor_parser >/dev/null || die "после установки нет apparmor_parser"
   [ -d /etc/apparmor.d ] && ls /etc/apparmor.d/* >/dev/null 2>&1 || DONT_MOUNT_BOOT=1 cloudpkg install sec-policy/apparmor-profiles || echo "!! apparmor-profiles не поставился, профилей не будет" >&2
+  command -v tpm2_unseal >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/tpm2-tools || echo "!! tpm2-tools не поставился, cloudos-tpm2 недоступен" >&2
+  if [ -d /etc/portage/package.use ]; then echo "sys-apps/systemd-utils boot" > /etc/portage/package.use/cloudos-uki; else echo "sys-apps/systemd-utils boot" >> /etc/portage/package.use; fi
+  [ -f /usr/lib/systemd/boot/efi/linuxx64.efi.stub ] || DONT_MOUNT_BOOT=1 cloudpkg install sys-apps/systemd-utils || echo "!! systemd-utils (efi stub) не поставился, cloudos-uki недоступен" >&2
   command -v dracut >/dev/null || echo "!! нет dracut, luks в установщике не заработает" >&2
   rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/*
   say "wifi пакеты готовы, прошивки $(du -sh /lib/firmware | cut -f1)"
@@ -276,6 +280,12 @@ live_installer() {
   bash -n /usr/sbin/cloudos-install || die "cloudos-install с ошибкой синтаксиса"
   install -m755 "$F/cloudos-secureboot" /usr/sbin/cloudos-secureboot
   bash -n /usr/sbin/cloudos-secureboot || die "cloudos-secureboot с ошибкой синтаксиса"
+  install -m755 "$F/cloudos-uki" /usr/sbin/cloudos-uki
+  bash -n /usr/sbin/cloudos-uki || die "cloudos-uki с ошибкой синтаксиса"
+  install -m755 "$F/cloudos-tpm2" /usr/sbin/cloudos-tpm2
+  bash -n /usr/sbin/cloudos-tpm2 || die "cloudos-tpm2 с ошибкой синтаксиса"
+  install -d /usr/lib/dracut/modules.d/91cloudos-tpm2
+  install -m755 "$F/dracut-tpm2/module-setup.sh" "$F/dracut-tpm2/cloudos-tpm2-unlock.sh" /usr/lib/dracut/modules.d/91cloudos-tpm2/
   install -m755 "$F/cloudos-audit" /usr/sbin/cloudos-audit
   install -d /etc/sysctl.d
   install -m644 "$F/sysctl-perf.conf" /etc/sysctl.d/91-cloudos-perf.conf

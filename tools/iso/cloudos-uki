@@ -1,0 +1,109 @@
+#!/bin/bash
+set -euo pipefail
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+K=${CLOUDOS_SBDIR:-/etc/cloudos/secureboot}
+B=${CLOUDOS_BOOT:-/boot}
+KERNEL=${CLOUDOS_KERNEL:-$B/vmlinuz}
+INITRD=${CLOUDOS_INITRD:-$B/initramfs.img}
+CONF=$B/limine/limine.conf
+OUT=$B/EFI/Linux/cloudos.efi
+OSREL=${CLOUDOS_OSREL:-/etc/os-release}
+STUB=${CLOUDOS_STUB:-}
+MARK='/cloudos (uki)'
+
+say() { printf '==> %s\n' "$*"; }
+die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
+need() { for c in "$@"; do command -v "$c" >/dev/null || die "нет команды $c"; done; }
+
+usage() {
+  cat <<'EOU'
+cloudos-uki: подписанный unified kernel image (ядро, initramfs и параметры в одном файле)
+
+  build     собрать /boot/EFI/Linux/cloudos.efi, подписать ключом db, добавить пункт в limine.conf
+  status    проверить файл и подпись
+
+параметры ядра зашиты в образ и не меняются при загрузке.
+после каждого обновления ядра или initramfs: cloudos-uki build && cloudos-secureboot sign
+нужны ключи (cloudos-secureboot init), objcopy, sbsign и systemd efi stub
+(sys-apps/systemd-utils с USE boot, файл linuxx64.efi.stub или CLOUDOS_STUB=путь)
+EOU
+}
+
+find_stub() {
+  local s
+  [ -z "$STUB" ] || { [ -f "$STUB" ] || die "нет $STUB"; return 0; }
+  for s in /usr/lib/systemd/boot/efi/linuxx64.efi.stub /usr/lib64/systemd/boot/efi/linuxx64.efi.stub /usr/lib/gummiboot/linuxx64.efi.stub; do
+    if [ -f "$s" ]; then STUB=$s; return 0; fi
+  done
+  die "нет linuxx64.efi.stub (поставь sys-apps/systemd-utils с USE boot)"
+}
+
+cmdline() {
+  if [ -n "${CLOUDOS_CMDLINE:-}" ]; then printf '%s' "$CLOUDOS_CMDLINE"; return; fi
+  [ -f "$CONF" ] || die "нет $CONF"
+  awk '/^[[:space:]]+cmdline:/ { sub(/^[[:space:]]*cmdline:[[:space:]]*/, ""); print; exit }' "$CONF"
+}
+
+limine_entry() {
+  local t
+  t=$(mktemp)
+  awk -v m="$MARK" '
+    $0 == m { skip = 1; next }
+    skip && /^\// { skip = 0 }
+    !skip { print }
+  ' "$CONF" > "$t"
+  awk -v m="$MARK" '
+    !done && /^\// {
+      print m; print "    protocol: efi"; print "    path: boot():/EFI/Linux/cloudos.efi"; print ""
+      done = 1
+    }
+    { print }
+    END { if (!done) { print m; print "    protocol: efi"; print "    path: boot():/EFI/Linux/cloudos.efi" } }
+  ' "$t" > "$CONF.new"
+  rm -f "$t"
+  mv "$CONF.new" "$CONF"
+}
+
+build() {
+  local w cl
+  need objcopy sbsign sbverify
+  find_stub
+  [ -f "$K/db.key" ] || die "нет ключей, сначала: cloudos-secureboot init"
+  [ -f "$KERNEL" ] || die "нет $KERNEL"
+  [ -f "$OSREL" ] || die "нет $OSREL"
+  cl=$(cmdline)
+  [ -n "$cl" ] || die "пустые параметры ядра"
+  w=$(mktemp -d)
+  trap 'rm -rf "$w"' EXIT
+  printf '%s' "$cl" > "$w/cmdline"
+  say "сборка uki"
+  local args=(--add-section .osrel="$OSREL" --change-section-vma .osrel=0x20000
+    --add-section .cmdline="$w/cmdline" --change-section-vma .cmdline=0x30000
+    --add-section .linux="$KERNEL" --change-section-vma .linux=0x2000000)
+  if [ -f "$INITRD" ]; then args+=(--add-section .initrd="$INITRD" --change-section-vma .initrd=0x3000000); fi
+  objcopy "${args[@]}" "$STUB" "$w/uki.efi"
+  install -d -m755 "$B/EFI/Linux"
+  sbsign --key "$K/db.key" --cert "$K/db.crt" --output "$w/uki.signed" "$w/uki.efi" >/dev/null
+  sbverify --cert "$K/db.crt" "$w/uki.signed" >/dev/null || die "подпись uki не прошла проверку"
+  install -m755 "$w/uki.signed" "$OUT"
+  if [ -f "$CONF" ]; then limine_entry; fi
+  say "готово: $OUT подписан, пункт добавлен первым в limine.conf"
+  say "дальше: cloudos-secureboot sign (хеш uki попадёт в конфиг)"
+}
+
+status() {
+  [ -f "$OUT" ] || { echo "uki: не собран (cloudos-uki build)"; return 0; }
+  echo "uki: $OUT"
+  if [ -f "$K/db.crt" ] && command -v sbverify >/dev/null; then
+    sbverify --cert "$K/db.crt" "$OUT" >/dev/null 2>&1 && echo "подпись db верна" || echo "подпись не совпадает, запусти build"
+  fi
+  if [ -f "$KERNEL" ] && [ "$KERNEL" -nt "$OUT" ]; then echo "ядро новее uki, запусти build"; fi
+  if [ -f "$INITRD" ] && [ "$INITRD" -nt "$OUT" ]; then echo "initramfs новее uki, запусти build"; fi
+}
+
+[ "$(id -u)" = 0 ] || die "нужен root"
+case "${1:-}" in
+  build) build ;;
+  status) status ;;
+  *) usage ;;
+esac
