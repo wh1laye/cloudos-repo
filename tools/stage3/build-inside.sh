@@ -2,7 +2,7 @@
 set -euE
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 export CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe"
-VERSION=${1:-1.4}
+VERSION=${1:-1.5}
 STRICT=${2:-0}
 L=/var/tmp/s3log; S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
 say() { printf '==> %s\n' "$*"; }
@@ -551,6 +551,68 @@ do_gentoo_set() {
   return 0
 }
 
+do_extra() {
+  local rep=/var/tmp/cloudos-report.txt a lg n=0 ok=0 have=0 fail=0
+  local failed=()
+  keep_helpers
+  export EMERGE_DEFAULT_OPTS="--keep-going --backtrack=30"
+  while read -r a _; do
+    case $a in ''|'#'*) continue ;; esac
+    n=$((n + 1))
+    if have_pkg "$a"; then have=$((have + 1)); continue; fi
+    say "extra: $a ($n)"
+    restore_helpers " $a"
+    lg="$L/extra-${a//\//_}.log"
+    if install_one "$a" "$lg"; then
+      ok=$((ok + 1))
+    else
+      fail=$((fail + 1)); failed+=("$a")
+    fi
+    restore_helpers " $a"
+  done < "$F/cloudos-extra.list"
+  say "extra: всего $n, уже было $have, поставлено $ok, не собралось $fail"
+  if [ "$fail" -gt 0 ]; then
+    printf 'extra не собралось: %s\n' "${failed[*]}" >> "$rep"
+    touch "$ST/cloudos-extra.partial"
+  fi
+  return 0
+}
+
+do_lazyvim() {
+  local d=/etc/skel/.config/nvim
+  if ! command -v nvim >/dev/null; then
+    echo "lazyvim: nvim не установлен, конфиг не добавлен" >> /var/tmp/cloudos-report.txt
+    touch "$ST/lazyvim.partial"
+    return 0
+  fi
+  rm -rf "$d" /etc/skel/.local/share/nvim /etc/skel/.local/state/nvim /etc/skel/.cache/nvim
+  install -d -m755 /etc/skel/.config /etc/skel/.local/share /etc/skel/.local/state /etc/skel/.cache
+  export GIT_TERMINAL_PROMPT=0
+  if ! git clone --depth 1 https://github.com/LazyVim/starter "$d"; then
+    echo "lazyvim: не удалось скачать starter" >> /var/tmp/cloudos-report.txt
+    touch "$ST/lazyvim.partial"
+    return 0
+  fi
+  rm -rf "$d/.git"
+  if ! env -u XDG_CONFIG_HOME -u XDG_DATA_HOME -u XDG_STATE_HOME -u XDG_CACHE_HOME HOME=/etc/skel timeout 900 nvim --headless "+Lazy! sync" +qa; then
+    echo "lazyvim: Lazy sync завершился с ошибкой, плагины докачаются при первом запуске" >> /var/tmp/cloudos-report.txt
+    touch "$ST/lazyvim.partial"
+  fi
+  rm -rf /etc/skel/.cache/nvim
+  install -d -m700 /root/.config /root/.local/share
+  rm -rf /root/.config/nvim /root/.local/share/nvim
+  cp -a "$d" /root/.config/nvim
+  [ -d /etc/skel/.local/share/nvim ] && cp -a /etc/skel/.local/share/nvim /root/.local/share/nvim
+  chmod 700 /root
+  local t
+  for t in vi vim; do
+    [ -e "/usr/bin/$t" ] || [ -e "/usr/local/bin/$t" ] || ln -s "$(command -v nvim)" "/usr/local/bin/$t"
+  done
+  printf '%s\n' 'export EDITOR=nvim' 'export VISUAL=nvim' > /etc/profile.d/cloudos-editor.sh
+  chmod 644 /etc/profile.d/cloudos-editor.sh
+  nvim --headless +qa || { echo "lazyvim: nvim не запускается" >> /var/tmp/cloudos-report.txt; touch "$ST/lazyvim.partial"; }
+}
+
 # проверка готового корня: всё, что нужно, чтобы система загрузилась и работала
 do_verify() {
   local bad=0 f miss
@@ -687,6 +749,8 @@ do_harden() {
   grep -E '^\[ !! \]|^итог' /var/tmp/s3log/audit.txt || true
 }
 
+keep_logs() { [ -e "$ST/gentoo-stage3-set.partial" ] || [ -e "$ST/cloudos-extra.partial" ] || [ -e "$ST/lazyvim.partial" ]; }
+
 do_cfgclean() {
   local n
   n=$(find /etc -name '._cfg[0-9][0-9][0-9][0-9]_*' | wc -l)
@@ -723,6 +787,8 @@ step lzip do_lzip
 step maildir fix_maildir
 step elfutils do_elfutils
 step gentoo-stage3-set do_gentoo_set
+step cloudos-extra do_extra
+step lazyvim do_lazyvim
 step sshd-harden do_sshd
 step harden do_harden
 do_cfgclean
@@ -732,10 +798,10 @@ say "уборка"
 for d in /var/tmp/s3*; do
   case $d in
     /var/tmp/s3stamp) continue ;;
-    /var/tmp/s3log) if [ -e "$ST/gentoo-stage3-set.partial" ]; then continue; fi ;;
+    /var/tmp/s3log) if keep_logs; then continue; fi ;;
   esac
   rm -rf "$d"
 done
 rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/cloudpkg-src /var/tmp/cloudos-helpers.txt /root/.cache /tmp/* /etc/resolv.conf /.cloudpkg-box /var/log/portage /var/log/emerge*.log /usr/lib/cloudos-keep
-if [ ! -e "$ST/gentoo-stage3-set.partial" ]; then rm -rf /var/tmp/portage/*; fi
+if ! keep_logs; then rm -rf /var/tmp/portage/*; fi
 say "готово"
