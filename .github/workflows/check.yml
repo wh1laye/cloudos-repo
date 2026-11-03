@@ -20,12 +20,12 @@ jobs:
 
       - name: синтаксис скриптов
         run: |
-          for f in tools/*.sh tools/iso/mkiso-inside.sh tools/iso/init tools/iso/cloudos-install tools/iso/cloudos-secureboot tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/stage3/neofetch cloudpkg/*.sh; do bash -n "$f"; done
+          for f in tools/*.sh tools/iso/mkiso-inside.sh tools/iso/init tools/iso/cloudos-install tools/iso/cloudos-secureboot tools/iso/cloudos-uki tools/iso/cloudos-tpm2 tools/iso/dracut-tpm2/*.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/stage3/neofetch cloudpkg/*.sh; do bash -n "$f"; done
 
       - name: shellcheck
         run: |
           sudo apt-get install -y -qq shellcheck
-          shellcheck -S warning tools/*.sh tools/iso/mkiso-inside.sh tools/iso/init tools/iso/cloudos-install tools/iso/cloudos-secureboot tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/cloudos-firewall tools/stage3/cloudos-audit cloudpkg/*.sh
+          shellcheck -S warning tools/*.sh tools/iso/mkiso-inside.sh tools/iso/init tools/iso/cloudos-install tools/iso/cloudos-secureboot tools/iso/cloudos-uki tools/iso/cloudos-tpm2 tools/iso/dracut-tpm2/*.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/cloudos-firewall tools/stage3/cloudos-audit cloudpkg/*.sh
 
       - name: cloudpkg
         run: |

@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: версия live iso
-        default: "1.0"
+        default: "2.0"
       base_tag:
         description: тег релиза с внутренней базой
         default: "1.4"
@@ -62,7 +62,7 @@ jobs:
           case "$KVER" in ""|*[!0-9.]*) echo "::error::неверная версия ядра"; exit 1 ;; esac
       - name: проверка скриптов
         run: |
-          for f in tools/mkiso.sh tools/iso/mkiso-inside.sh tools/iso/init tools/iso/cloudos-install tools/iso/cloudos-secureboot tools/stage3/cloudos-firewall tools/stage3/cloudos-audit; do bash -n "$f"; done
+          for f in tools/mkiso.sh tools/iso/mkiso-inside.sh tools/iso/init tools/iso/cloudos-install tools/iso/cloudos-secureboot tools/iso/cloudos-uki tools/iso/cloudos-tpm2 tools/iso/dracut-tpm2/*.sh tools/stage3/cloudos-firewall tools/stage3/cloudos-audit; do bash -n "$f"; done
 
       - name: место на диске
         run: |
