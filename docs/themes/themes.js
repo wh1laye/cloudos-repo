@@ -1,7 +1,7 @@
 (function(){
 var d=document,h=d.documentElement,sc=d.currentScript;
 var BASE=sc?sc.src.replace(/themes\.js.*$/,''):'';
-var V='11';
+var V='12';
 var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',cs:'space',fo:'forest',au:'autumn',oc:'ocean',ar:'aurora',cy:'cyber',sk:'sunset',rn:'rain'};
 var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['cs','космос'],['fo','лес'],['au','осень'],['oc','океан'],['ar','сияние'],['cy','киберпанк'],['sk','закат'],['rn','дождь']];
 var FXN=[['full','полные'],['low','лёгкие'],['off','выкл']];

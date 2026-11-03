@@ -1,7 +1,7 @@
 (function(){
 var d=document,h=d.documentElement,K='mor';
-var DEF={ff:'',lh:0,ls:0,w:0,cs:0,ul:0,rm:0,sm:0,cw:0,se:0,fo:0,hh:0,tt:0};
-var AT=['ff','lh','ls','w','cs','ul','rm','sm','cw','se','fo'];
+var DEF={ff:'',lh:0,ls:0,w:0,cs:0,ul:0,rm:0,sm:0,cw:0,se:0,fo:0,hh:0,tt:0,rs:0};
+var AT=['ff','lh','ls','w','cs','ul','rm','sm','cw','se','fo','rs'];
 var KEYS=['theme','tauto','grad','acc','lang','rd','fun','mor','season','seasonfx','seasonq','seasondev'];
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
 function get(){
@@ -9,14 +9,14 @@ function get(){
   try{r=JSON.parse(ls(K))||{}}catch(e){}
   for(k in DEF){
     if(k==='ff')o[k]=/^(manrope|plex|sys)$/.test(r[k])?r[k]:'';
-    else o[k]=+r[k]>=0&&+r[k]<=2?+r[k]:0;
+    else o[k]=+r[k]>=0&&+r[k]<=(k==='rs'?4:2)&&+r[k]%1===0?+r[k]:0;
   }
   return o;
 }
 var S=get();
 function save(){ls(K,JSON.stringify(S))}
 function en(){var l=ls('lang');if(l==='ru'||l==='en')return l==='en';return !/^(ru|uk|be|kk)/.test((navigator.language||'ru').toLowerCase())}
-var TX={'вид и удобство':'look and comfort','шрифт':'font','система':'system','межстрочный':'line height','плотно':'tight','обычно':'normal','свободно':'loose','буквы':'letter spacing','плотнее':'tighter','обычные':'normal','шире':'wider','ширина текста':'text width','узкая':'narrow','обычная':'normal','широкая':'wide','размер кода':'code size','мельче':'smaller','обычный':'normal','крупнее':'larger','подчёркивать ссылки':'underline links','убрать анимации':'remove animations','отключить плавную прокрутку':'disable smooth scroll','переносить строки в коде':'wrap code lines','выделение цветом акцента':'accent text selection','крупная рамка фокуса':'large focus ring','прятать шапку при прокрутке вниз':'hide header when scrolling down','кнопка «наверх»':'back to top button','наверх':'back to top','экспорт':'export','импорт':'import','сбросить всё':'reset all','настройки скопированы':'settings copied','вставь экспортированные настройки':'paste exported settings','неверный формат':'invalid format','сбросить все настройки сайта?':'reset all site settings?'};
+var TX={'вид и удобство':'look and comfort','шрифт':'font','система':'system','межстрочный':'line height','плотно':'tight','обычно':'normal','свободно':'loose','буквы':'letter spacing','плотнее':'tighter','обычные':'normal','шире':'wider','ширина текста':'text width','узкая':'narrow','обычная':'normal','широкая':'wide','размер кода':'code size','мельче':'smaller','обычный':'normal','крупнее':'larger','подчёркивать ссылки':'underline links','убрать анимации':'remove animations','отключить плавную прокрутку':'disable smooth scroll','переносить строки в коде':'wrap code lines','выделение цветом акцента':'accent text selection','крупная рамка фокуса':'large focus ring','прятать шапку при прокрутке вниз':'hide header when scrolling down','кнопка «наверх»':'back to top button','наверх':'back to top','экспорт':'export','импорт':'import','сбросить всё':'reset all','настройки скопированы':'settings copied','вставь экспортированные настройки':'paste exported settings','неверный формат':'invalid format','сбросить все настройки сайта?':'reset all site settings?','скругление углов':'corner radius','ровные':'sharp','малое':'small','обычное':'default','большое':'large','макс':'max','кнопка':'button','метка':'tag'};
 function t(s){return en()&&TX[s]?TX[s]:s}
 var SEG=[
   ['ff','шрифт',[['','Inter'],['manrope','Manrope'],['plex','Plex'],['sys','система']]],
@@ -25,6 +25,7 @@ var SEG=[
   ['w','ширина текста',[[1,'узкая'],[0,'обычная'],[2,'широкая']]],
   ['cs','размер кода',[[1,'мельче'],[0,'обычный'],[2,'крупнее']]]
 ];
+var RAD=[[1,'ровные',0],[2,'малое',.5],[0,'обычное',1],[3,'большое',1.6],[4,'макс',2.4]];
 var CHK=[
   ['ul','подчёркивать ссылки'],
   ['rm','убрать анимации'],
@@ -111,7 +112,9 @@ function ui(){
   if(!spb||spb.querySelector('.mos'))return;
   s=d.createElement('div');
   s.className='sps mos';
-  x='<h4>'+t('вид и удобство')+'</h4>';
+  x='<h4>'+t('вид и удобство')+'</h4><p class="spm">'+t('скругление углов')+'</p><div class="mrg">'+RAD.map(function(o){
+    return '<button type="button" class="mrb" data-mk="rs" data-mv="'+o[0]+'" aria-label="'+t(o[1])+'"><i style="--q:'+o[2]+'"></i><span>'+t(o[1])+'</span></button>';
+  }).join('')+'</div><div class="mrv"><span class="b1">'+t('кнопка')+'</span><span class="b2">'+t('кнопка')+'</span><span class="b3">'+t('метка')+'</span></div>';
   SEG.forEach(function(r){
     x+='<p class="spm">'+t(r[1])+'</p><div class="sgm mgm">'+r[2].map(function(o){
       return '<button type="button" data-mk="'+r[0]+'" data-mv="'+o[0]+'">'+t(o[1])+'</button>';
