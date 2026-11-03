@@ -71,44 +71,81 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "iso=$ISO" >> "$GITHUB_OUTPUT"
 
+      - name: подготовка qemu и kvm
+        if: ${{ steps.dl.outputs.skip != '1' }}
+        run: |
+          set -eu
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils xorriso
+          if [ -e /dev/kvm ]; then
+            echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules >/dev/null
+            sudo udevadm control --reload-rules
+            sudo udevadm trigger --name-match=kvm || true
+            sudo chmod 666 /dev/kvm || true
+          fi
+          if [ -w /dev/kvm ]; then echo "kvm: есть"; else echo "::warning::kvm нет, qemu пойдёт на tcg, будет медленно"; fi
+
       - name: проверочная загрузка
         if: ${{ steps.dl.outputs.skip != '1' && matrix.fs == 'ext4' }}
         env:
           ISO: ${{ steps.dl.outputs.iso }}
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq qemu-system-x86 xorriso
+          set -eu
           mkdir -p smoke
-          xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz smoke/vmlinuz -extract /boot/initramfs.img smoke/initramfs.img 2>/dev/null
-          ACCEL=""
-          if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
-          timeout 420 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
-            -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0 cloudos.smoke" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || true
+          xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz smoke/vmlinuz -extract /boot/initramfs.img smoke/initramfs.img || { echo "xorriso не извлёк ядро и initramfs"; exit 1; }
+          [ -s smoke/vmlinuz ] && [ -s smoke/initramfs.img ] || { echo "ядро или initramfs пустые"; ls -l smoke; exit 1; }
+          ACCEL="-cpu max"
+          if [ -w /dev/kvm ]; then ACCEL="-enable-kvm -cpu host"; fi
+          : > smoke.log
+          rc=0
+          timeout 600 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -monitor none -serial file:"$PWD/smoke.log" -no-reboot \
+            -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0 cloudos.smoke" -cdrom "$ISO" </dev/null >smoke.qemu 2>&1 || rc=$?
+          echo "qemu завершился с кодом $rc, лог $(wc -c < smoke.log) байт"
+          [ -s smoke.qemu ] && { echo "::group::вывод qemu"; cat smoke.qemu; echo "::endgroup::"; }
+          echo "::group::хвост smoke.log"; tail -n 80 smoke.log | tr -d '\033'; echo "::endgroup::"
           if grep -aq 'cloudos-smoke: FAIL' smoke.log; then grep -a 'cloudos-smoke:' smoke.log; echo "живая проверка не прошла"; exit 1; fi
-          grep -aq 'cloudos-smoke: ok' smoke.log || { echo "нет cloudos-smoke: ok"; exit 1; }
           grep -aq 'cloudos-init: switch_root' smoke.log || { echo "initramfs не дошёл до switch_root"; exit 1; }
           grep -aq 'is starting up' smoke.log || { echo "openrc не стартовал"; exit 1; }
+          grep -aq 'cloudos-smoke: ok' smoke.log || { echo "нет cloudos-smoke: ok, в iso может не быть службы cloudos-smoke (старая сборка)"; exit 1; }
 
       - name: тестовая установка (${{ matrix.fs }}) и загрузка установленной системы
-        if: ${{ steps.dl.outputs.skip != '1' }}
+        if: ${{ !cancelled() && steps.dl.outputs.skip != '1' }}
         env:
           ISO: ${{ steps.dl.outputs.iso }}
           FS: ${{ matrix.fs }}
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq qemu-system-x86 qemu-utils xorriso
+          set -eu
           mkdir -p itest
-          xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz itest/vmlinuz -extract /boot/initramfs.img itest/initramfs.img 2>/dev/null
+          xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz itest/vmlinuz -extract /boot/initramfs.img itest/initramfs.img || { echo "xorriso не извлёк ядро и initramfs"; exit 1; }
+          [ -s itest/vmlinuz ] && [ -s itest/initramfs.img ] || { echo "ядро или initramfs пустые"; ls -l itest; exit 1; }
+          rm -f itest/disk.img
           qemu-img create -f raw itest/disk.img 6G
-          ACCEL=""
-          if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
-          timeout 1500 qemu-system-x86_64 $ACCEL -m 3072 -smp 2 -display none -serial stdio -no-reboot \
+          ACCEL="-cpu max"
+          if [ -w /dev/kvm ]; then ACCEL="-enable-kvm -cpu host"; fi
+          : > "itest-$FS-install.log"
+          rc=0
+          timeout 1500 qemu-system-x86_64 $ACCEL -m 3072 -smp 2 -display none -monitor none -serial file:"$PWD/itest-$FS-install.log" -no-reboot \
             -kernel itest/vmlinuz -initrd itest/initramfs.img -append "console=ttyS0 cloudos.smoke cloudos.itest cloudos.itest.fs=$FS" -cdrom "$ISO" \
-            -drive file=itest/disk.img,format=raw,if=virtio > "$PWD/itest-$FS-install.log" 2>&1 || true
-          grep -a 'cloudos-smoke:' "itest-$FS-install.log" | tail -n 5
+            -drive file=itest/disk.img,format=raw,if=virtio </dev/null >"itest-$FS-install.qemu" 2>&1 || rc=$?
+          echo "qemu установки завершился с кодом $rc, лог $(wc -c < "itest-$FS-install.log") байт"
+          [ -s "itest-$FS-install.qemu" ] && { echo "::group::вывод qemu"; cat "itest-$FS-install.qemu"; echo "::endgroup::"; }
+          echo "::group::хвост лога установки"; tail -n 120 "itest-$FS-install.log" | tr -d '\033'; echo "::endgroup::"
+          grep -a 'cloudos-smoke:' "itest-$FS-install.log" | tail -n 5 || true
           grep -aq 'cloudos-smoke: itest ok' "itest-$FS-install.log" || { echo "установка на диск ($FS) не прошла"; exit 1; }
-          timeout 600 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
-            -drive file=itest/disk.img,format=raw,if=virtio -boot c > "$PWD/itest-$FS-boot.log" 2>&1 || true
+          : > "itest-$FS-boot.log"
+          qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -monitor none -serial file:"$PWD/itest-$FS-boot.log" -no-reboot \
+            -drive file=itest/disk.img,format=raw,if=virtio -boot c </dev/null >"itest-$FS-boot.qemu" 2>&1 &
+          qpid=$!
+          i=0
+          while [ "$i" -lt 600 ] && kill -0 "$qpid" 2>/dev/null; do
+            grep -aqE 'is starting up|Kernel panic' "itest-$FS-boot.log" && break
+            sleep 2
+            i=$((i + 2))
+          done
+          sleep 3
+          kill "$qpid" 2>/dev/null || true
+          wait "$qpid" 2>/dev/null || true
+          echo "::group::хвост лога загрузки"; tail -n 80 "itest-$FS-boot.log" | tr -d '\033'; echo "::endgroup::"
           if grep -aq 'Kernel panic' "itest-$FS-boot.log"; then echo "паника ядра при загрузке ($FS)"; exit 1; fi
           grep -aq 'is starting up' "itest-$FS-boot.log" || { echo "установленная система ($FS) не дошла до openrc"; exit 1; }
           echo "установленная система ($FS) загрузилась до openrc"
@@ -121,7 +158,9 @@ jobs:
         run: |
           {
             echo "### iso-test $FS, релиз ${TAG:-нет}"
-            if [ -s "itest-$FS-boot.log" ]; then tail -n 30 "itest-$FS-boot.log" | tr -d '\033' | sed 's/^/    /'; fi
+            for f in smoke.log "itest-$FS-install.log" "itest-$FS-boot.log"; do
+              if [ -s "$f" ]; then echo "#### $f"; tail -n 30 "$f" | tr -d '\033' | sed 's/^/    /'; fi
+            done
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
@@ -130,5 +169,7 @@ jobs:
           name: iso-test-${{ matrix.fs }}
           path: |
             smoke.log
+            smoke.qemu
             itest-*.log
+            itest-*.qemu
           if-no-files-found: ignore
