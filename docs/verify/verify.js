@@ -69,6 +69,12 @@ function upd(){
     drop.querySelector('span').innerHTML=L('выбран: ','chosen: ')+'<b>'+esc(file.name)+'</b> · '+size(file.size)+'<br>'+L('размер не совпадает с файлом релиза','size does not match the release file')+' ('+size(c.a.size)+')';
   }
 }
+function setFiles(list){
+  var i,f,m=null;
+  side={};
+  for(i=0;i<list.length;i++){f=list[i];if(SUF.test(f.name))side[f.name]=f;else if(!m)m=f}
+  setFile(m||file);
+}
 function setFile(f){
   file=f||null;
   var c=cur();
@@ -77,8 +83,19 @@ function setFile(f){
   res.innerHTML='';
   upd();
 }
+var side={};
 function txt(a){
-  return fetch(a.browser_download_url).then(function(r){if(!r.ok)throw new Error(a.name+': '+r.status);return r.text()});
+  var sf=side[a.name];
+  if(sf){
+    if(sf.size!==a.size)return Promise.reject(new Error(L('файл '+a.name+' не совпадает по размеру с файлом в релизе','file '+a.name+' differs in size from the release file')));
+    return sf.text();
+  }
+  function ok(r){if(!r.ok)throw new Error(String(r.status));return r.text()}
+  return fetch(a.browser_download_url).then(ok).catch(function(){
+    return fetch(a.url,{headers:{Accept:'application/octet-stream'}}).then(ok);
+  }).catch(function(){
+    throw new Error(L('браузер не смог скачать '+a.name+' с github (нет cors). скачай этот файл из релиза и перетащи сюда вместе с iso.','the browser could not download '+a.name+' from github (no cors). download it from the release and drop it here together with the iso.'));
+  });
 }
 function progress(p){barw.style.width=Math.round(p*100)+'%'}
 function readAll(f,onChunk){
@@ -179,10 +196,11 @@ ast.addEventListener('change',function(){methods()});
 m1.addEventListener('change',upd);m2.addEventListener('change',upd);
 drop.addEventListener('click',function(){fin.click()});
 drop.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();fin.click()}});
-fin.addEventListener('change',function(){setFile(fin.files&&fin.files[0])});
+fin.multiple=true;
+fin.addEventListener('change',function(){if(fin.files&&fin.files.length)setFiles(fin.files)});
 ['dragenter','dragover'].forEach(function(n){drop.addEventListener(n,function(e){e.preventDefault();drop.classList.add('on')})});
 drop.addEventListener('dragleave',function(){if(!file)drop.classList.remove('on')});
-drop.addEventListener('drop',function(e){e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];if(f)setFile(f)});
+drop.addEventListener('drop',function(e){e.preventDefault();var f=e.dataTransfer&&e.dataTransfer.files;if(f&&f.length)setFiles(f)});
 go.addEventListener('click',run);
 stop.addEventListener('click',function(){abort=true});
 window.addEventListener('cloudlang',function(){if(rels.length){var a=rel.value,b=ast.value;fillRel();rel.value=a;fillAst();ast.value=b;methods()}});
