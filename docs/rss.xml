@@ -5,6 +5,6 @@
 <description>что нового в cloudos: готовое, в работе и планы.</description>
 <language>ru</language>
 <item><title>в работе: live iso 1.0</title><link>https://wh1laye.github.io/cloudos-repo/news/</link><guid isPermaLink="false">в работе: live iso 1.0</guid><pubDate>Tue, 03 Nov 2026 12:00:00 +0000</pubDate><description>установщик cloudos-install и установка вручную, stage 3 больше не выпускается</description></item>
-<item><title>в планах: live iso 2.0</title><link>https://wh1laye.github.io/cloudos-repo/news/</link><guid isPermaLink="false">в планах: live iso 2.0</guid><pubDate>Tue, 03 Nov 2026 12:00:00 +0000</pubDate><description>цепочка secure boot, шифрование диска luks, сборка под x86-64-v3</description></item>
+<item><title>в планах: live iso 2.0</title><link>https://wh1laye.github.io/cloudos-repo/news/</link><guid isPermaLink="false">в планах: live iso 2.0</guid><pubDate>Tue, 03 Nov 2026 12:00:00 +0000</pubDate><description>подпись обновлений cloudpkg, apparmor, unified kernel image, tpm2 для luks, сборка под x86-64-v3</description></item>
 
 </channel></rss>
