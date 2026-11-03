@@ -80,7 +80,7 @@
 </table></div>
 <div class="note"><b>note</b>the image is built without <code>-march=native</code>, so it runs on any x86_64. an x86-64-v3 build and extra userland optimizations are planned for later.</div>
 <h3 id="s1-4">1.4 what is not there yet</h3>
-<p>there is no signed secure boot chain, disk encryption, mandatory access control (apparmor, selinux) or graphics yet. a secure boot chain and luks are planned for live iso 2.0. honestly: no system is unhackable, cloudos gives a hardened baseline, not a guarantee.</p>
+<p>there is no signed secure boot chain, disk encryption, mandatory access control (apparmor, selinux) or graphics yet. secure boot with your own keys and luks2 are already in the installer, apparmor and signed updates are planned for live iso 2.0. honestly: no system is unhackable, cloudos gives a hardened baseline, not a guarantee.</p>
 <h2 id="prep">2. preparation</h2>
 <h3 id="s2-1">2.1 writing the iso to a stick</h3>
 <p>download the iso and checksum from the <a href="../../releases/">releases</a> page and verify:</p>
@@ -255,11 +255,11 @@ df -h</code></pre>
 </table></div>
 <h2 id="faq">11. questions</h2>
 <h3 id="s11-1">can it run on a server</h3>
-<p>yes, with honest limits in mind: no secure boot chain, disk encryption or mandatory access control, and updates are manual. for critical systems wait for live iso 2.0 and judge the risks yourself.</p>
+<p>yes, with honest limits in mind: no mandatory access control (apparmor), updates are manual and not signature-checked yet. secure boot and luks2 already exist, enable them in the installer. for critical systems wait for live iso 2.0 and judge the risks yourself.</p>
 <h3 id="s11-2">what happened to stage 3</h3>
 <p>a separate stage 3 is no longer published. the system installs straight from the live iso and the handbook covers only that way.</p>
 <h3 id="s11-3">why no secure boot</h3>
-<p>it needs a signed bootloader and kernel and your own key chain. it is planned for live iso 2.0.</p>
+<p>it already exists: CLOUDOS_SECUREBOOT=1 in the installer and the cloudos-secureboot command (own keys, signed limine, kernel hashes). live iso 2.0 adds a signed unified kernel image.</p>
 <footer>
 <p>© 2026 wh1laye. mit license. </p>
 <p>package recipes are based on gentoo (gpl-2).</p>
