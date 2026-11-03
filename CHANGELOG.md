@@ -1,5 +1,13 @@
 # changelog
 
+## stage 3 1.5, iso 2.1: утилиты, neovim с lazyvim, раскладка в установщике
+
+- `tools/stage3/cloudos-extra.list`: новый список пакетов (утилиты диагностики, диски и файловые системы, сеть, архиваторы, библиотеки для сборки, git, ripgrep, fd, fzf, tmux, htop, btop, mc, neovim); сборка идёт после основного набора gentoo и не валит stage 3, если отдельный пакет не собрался, такие пакеты попадают в `failed.txt`
+- `tools/stage3/build-inside.sh`: шаги `cloudos-extra` и `lazyvim`; lazyvim starter кладётся в `/etc/skel/.config/nvim` и `/root/.config/nvim`, плагины ставятся при сборке (`Lazy! sync`), `vi` и `vim` ведут на nvim, `EDITOR` и `VISUAL` равны nvim
+- `tools/iso/cloudos-install`: выбор раскладки (`us` по умолчанию, `ru` = английская и русская с переключением, либо любая раскладка kbd), выбор сочетания для переключения (`alt_shift`, `ctrl_shift`, `caps`), язык системы (locale), часовой пояс; переменные `CLOUDOS_KEYMAP`, `CLOUDOS_SWITCH`, `CLOUDOS_LOCALE`, `CLOUDOS_TZ`; при `CLOUDOS_YES=1` вопросов нет, берутся значения по умолчанию
+- `tools/iso/mkiso-inside.sh`: проверка, что в stage 3 есть nvim, git, rg, fd, tmux, htop и конфиг lazyvim; обновлён motd
+- версии: stage 3 `1.5`, iso `2.1`, iso по умолчанию собирается из stage 3 `1.5`
+
 ## 2.0.5, cloudpkg 1.0.1: проверка stage 3, защита sync, правки workflows
 
 - `cloudpkg/install.sh`: stage 3 проверяется подписью minisign (`stage3.tar.xz.minisig` из того же релиза, ключ тот же, что у исходников) вдобавок к sha256; неверная подпись останавливает установку и удаляет скачанный файл; нет minisign или `.minisig`, то предупреждение, при `CLOUDPKG_STRICT=1` отказ; без minisign скрипт пробует поставить его пакетным менеджером хоста до проверки исходников
