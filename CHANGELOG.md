@@ -1,5 +1,14 @@
 # changelog
 
+## 1.9.0, cloudpkg 0.9: снимки и откат, тест iso, закрепление actions
+
+- `cloudpkg/cloudpkg.c`: `upgrade` на btrfs сначала делает снимок корня, без снимка обновление не начинается (`--no-snapshot` отключает); новые команды `snapshot`, `snapshots`, `snapshot-rm`, `rollback [-y] [имя]`, параметр `snapshots=N` в конфиге (по умолчанию 5, старые снимки удаляются); откат создаёт записываемую копию снимка и делает её корнем по умолчанию, `/boot` не откатывается; версия 0.9
+- `tools/test-snapshots.sh`, `check.yml`: тест снимков, обрезки, отката и отказа на ext4 на фейковых `btrfs`, `mount`, `umount` (в `cloudpkg.c` добавлены переопределяемые `MOUNTINFO`, `TOPMNT`, `CONF`)
+- `.github/workflows/iso-test.yml`: раз в неделю, при публикации релиза и вручную скачивает iso из релиза, проверяет sha256 и подпись minisign, гоняет проверочную загрузку и тестовую установку с загрузкой на ext4 и btrfs в qemu
+- `tools/iso/mkiso-inside.sh`: тестовая установка принимает `cloudos.itest.fs=btrfs` в командной строке ядра
+- `tools/pin-actions.sh`: закрепляет все actions в workflows по sha коммита (`# тег` в комментарии, dependabot их обновляет); `--check` предупреждает о незакреплённых, `--strict` падает. `check.yml` запускает `--check`
+- `cloudpkg/README.md`, `cloudpkg/etc/cloudpkg.conf`: описание снимков и `snapshots=5`
+
 ## 1.8.2, форум: решено только персоналу, чат с удалённым аккаунтом
 
 - `docs/forum/app.js`: кнопка «отметить решённой» и вызов `set_solved` доступны только с правом `delete_posts` или админу, автор темы больше не может отмечать
