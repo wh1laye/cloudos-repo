@@ -1,5 +1,20 @@
 # changelog
 
+## 2.0.5, cloudpkg 1.0.1: проверка stage 3, защита sync, правки workflows
+
+- `cloudpkg/install.sh`: stage 3 проверяется подписью minisign (`stage3.tar.xz.minisig` из того же релиза, ключ тот же, что у исходников) вдобавок к sha256; неверная подпись останавливает установку и удаляет скачанный файл; нет minisign или `.minisig`, то предупреждение, при `CLOUDPKG_STRICT=1` отказ; без minisign скрипт пробует поставить его пакетным менеджером хоста до проверки исходников
+- `cloudpkg/install.sh`: `CLOUDPKG_REPO` и `CLOUDPKG_BRANCH` проверяются по белому списку символов до повышения прав (как уже сделано в `update.c`); curl не следует за редиректом на http; `tar` распаковывает исходники с `--no-same-owner`
+- `cloudpkg/util.c`: `fetch` разрешает только http и https и запрещает редирект на http; `safe_dir` требует глубину не меньше трёх компонентов и отвергает ещё `/var/db`, `/var/lib`, `/var/cache`, `/usr/local`, `/etc/portage` и им подобные (раньше `repo=/var/lib` проходил, а `sync` переименовывает `repo` в `repo.old`); завершающие `/` в `repo` и `distdir` убираются (с `repo=путь/` каталог `.new` создавался внутри самого дерева)
+- `cloudpkg/emerge.c`: `sync` возвращает старое дерево, если не удалось поставить новое (раньше после неудачного второго `rename` дерева не оставалось вообще)
+- `cloudpkg/heal.c`: `probe_ver` закрывает дескриптор `/dev/null` в потомке и отвязывает stdin
+- `cloudpkg/snap.c`: `sn_prune` без мёртвого кода, путь снимка проверяется на усечение перед `btrfs subvolume delete`
+- `cloudpkg/cloudpkg.c`: версия 1.0.1, иначе `cloudpkg update` не доставит исправления
+- `.github/workflows/iso.yml`, `stage3.yml`: при `publish` сборка сразу падает, если не задан `MINISIGN_KEY` (раньше выходил неподписанный релиз после многочасовой сборки, теперь проверка идёт первым шагом и секрет не раскрывается)
+- `.github/workflows/cloudpkg-release.yml`: `cancel-in-progress: false`, чтобы отмена не оставляла архив и подпись разных версий
+- `tools/test-cloudpkg.sh`: тест `safe_dir`
+- не проверено: ветка возврата дерева при сбое `rename` в `sync`, проверка подписи stage 3 с настоящим minisign (проверена на заглушке), shellcheck (в среде его нет, проверит `check.yml`)
+- не исправлено: actions закреплены тегами, а не sha; `tools/pin-actions.sh --check` только предупреждает; закрепление требует сети (`bash tools/pin-actions.sh`, затем `--strict` в `check.yml`); снимок portage в `sync` не проверяется подписью gentoo, защита только tls
+
 ## 2.0.4, установка по разделам, установщик на английском
 
 - `tools/iso/cloudos-install`: режим `manual`: можно разметить диск через cfdisk, fdisk или sfdisk (для sfdisk скрипт вводится построчно с подтверждением), затем выбрать раздел root и раздел boot; форматируются только они, остальные разделы диска не трогаются; проверяются: блочное устройство, тип partition, не смонтирован, не на носителе live iso, root от 4 gib, boot от 100 mib, boot и root разные
