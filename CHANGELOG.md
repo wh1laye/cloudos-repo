@@ -8,6 +8,7 @@
 - `.github/workflows/cloudpkg-release.yml`: при изменении `cloudpkg/**` в main собирает воспроизводимый архив, подписывает `tools/sign.sh`, кладёт в релиз `cloudpkg-latest`
 - `cloudpkg/Makefile`: исправлено, `cloudpkg.conf` ставился в `/etc/cloudpkg.conf`, а читается из `/etc/cloudpkg/cloudpkg.conf`; ключ ставится в `/etc/cloudpkg/cloudos.pub` при каждом `make conf`
 - `tools/test-update-sign.sh`, `check.yml`: тест принимает верную подпись, отклоняет изменённый файл и чужой ключ; остальные тесты и `test-hardening.sh` переведены на модули
+- `tools/iso/mkiso-inside.sh`: в iso ставится `app-crypt/minisign`, сборка падает, если он не встал
 - 0.9 обновляется до 1.0 без проверки подписи (старый код её не умеет), дальше проверка работает
 
 ## 1.9.1, план live iso 2.0, правка устаревших текстов
