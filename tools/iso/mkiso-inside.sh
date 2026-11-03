@@ -182,6 +182,8 @@ build_wifi() {
   command -v cryptsetup >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install sys-fs/cryptsetup || echo "!! cryptsetup не поставился, установщик будет без luks" >&2
   command -v sbsign >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/sbsigntools || echo "!! sbsigntools не поставился, secure boot в установщике недоступен" >&2
   command -v cert-to-efi-sig-list >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/efitools || echo "!! efitools не поставился, secure boot в установщике недоступен" >&2
+  command -v minisign >/dev/null || DONT_MOUNT_BOOT=1 cloudpkg install app-crypt/minisign || die "minisign не поставился, cloudpkg update без него не проверит подпись"
+  command -v minisign >/dev/null || die "после установки нет minisign"
   command -v dracut >/dev/null || echo "!! нет dracut, luks в установщике не заработает" >&2
   rm -rf /var/db/repos/gentoo /var/cache/distfiles/* /var/tmp/portage/*
   say "wifi пакеты готовы, прошивки $(du -sh /lib/firmware | cut -f1)"
