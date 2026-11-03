@@ -1,5 +1,15 @@
 # changelog
 
+## 2.0.4, установка по разделам, установщик на английском
+
+- `tools/iso/cloudos-install`: режим `manual`: можно разметить диск через cfdisk, fdisk или sfdisk (для sfdisk скрипт вводится построчно с подтверждением), затем выбрать раздел root и раздел boot; форматируются только они, остальные разделы диска не трогаются; проверяются: блочное устройство, тип partition, не смонтирован, не на носителе live iso, root от 4 gib, boot от 100 mib, boot и root разные
+- `tools/iso/cloudos-install`: существующий vfat раздел boot можно не форматировать (`CLOUDOS_FORMAT_BOOT=0`), старый `EFI/BOOT/BOOTX64.EFI` и `limine.conf` сохраняются как `.bak`; диск для `limine bios-install` определяется по разделу boot
+- `tools/iso/cloudos-install`: переменные `CLOUDOS_MODE`, `CLOUDOS_ROOT`, `CLOUDOS_BOOT`, `CLOUDOS_FORMAT_BOOT`; без `CLOUDOS_MODE` режим выбирается по `CLOUDOS_ROOT` (manual) или `CLOUDOS_DISK` (auto), старый запуск через `CLOUDOS_DISK` работает без изменений
+- `tools/iso/cloudos-install`: все сообщения, вопросы и справка переведены на английский
+- `tools/iso/mkiso-inside.sh`: подсказка в motd live iso про установку на английском
+- `docs/handbook/`, `README.md`: описание режимов auto и manual
+- ограничения: manual не проверен на реальном железе и в qemu; для bios с gpt нужен bios boot раздел
+
 ## 2.0.3, проверка файлов, статус сборок, безопасность, песочница
 
 - `.github/workflows/iso-test.yml`: qemu с `-cpu max` и `-cpu host` под kvm (раньше qemu64 мог молча падать на ядре v3), kvm включается через udev, вывод идёт в файл `-serial file:` вместо stdio, код выхода qemu и хвост лога печатаются в job, ядро и initramfs проверяются после извлечения, тестовая установка запускается даже если проверочная загрузка упала, загрузка установленной системы останавливается сразу после `is starting up`, в summary логи smoke, установки и загрузки
