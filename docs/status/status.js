@@ -1,6 +1,6 @@
 (function(){
 var d=document,REPO='wh1laye/cloudos-repo',API='https://api.github.com/repos/'+REPO+'/';
-var WF=[['iso.yml','сборка iso','iso build'],['iso-test.yml','тест iso','iso test'],['stage3.yml','сборка stage 3','stage 3 build'],['cloudpkg-release.yml','релиз cloudpkg','cloudpkg release']];
+var WF=[['iso.yml','сборка iso','iso build'],['stage3.yml','сборка stage 3','stage 3 build'],['cloudpkg-release.yml','релиз cloudpkg','cloudpkg release']];
 function $(i){return d.getElementById(i)}
 function en(){return window.CloudTheme&&window.CloudTheme.getLang()==='en'}
 function L(r,e){return en()?e:r}
