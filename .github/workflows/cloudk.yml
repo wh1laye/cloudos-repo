@@ -1,0 +1,142 @@
+name: cloudk
+
+on:
+  workflow_dispatch:
+    inputs:
+      cloudk_version:
+        description: версия ядра cloudk
+        default: "0.1"
+      kernel:
+        description: версия ванильного ядра, на котором собран cloudk
+        default: "6.18.10"
+      publish:
+        description: выложить ядро в релиз cloudk-<версия>
+        type: boolean
+        default: true
+
+concurrency:
+  group: cloudk-${{ inputs.cloudk_version }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    strategy:
+      fail-fast: true
+      matrix:
+        march: [x86-64, x86-64-v3]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: проверка параметров
+        env:
+          CVER: ${{ inputs.cloudk_version }}
+          KVER: ${{ inputs.kernel }}
+        run: |
+          case "$CVER" in ''|*[!0-9A-Za-z._]*) echo "::error::неверная версия cloudk"; exit 1 ;; esac
+          case "$KVER" in ''|*[!0-9.]*) echo "::error::неверная версия ядра"; exit 1 ;; esac
+          for f in tools/kernel/build-cloudk.sh tools/kernel/cloudk-config.sh; do bash -n "$f"; done
+
+      - name: зависимости
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils gnupg curl patch perl kmod wireless-regdb
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo mkdir -p /mnt/cloudk && sudo chown "$USER" /mnt/cloudk
+          df -h / /mnt
+
+      - name: сборка ядра
+        env:
+          CLOUDK_VER: ${{ inputs.cloudk_version }}
+          KVER: ${{ inputs.kernel }}
+          MARCH: ${{ matrix.march }}
+        run: |
+          set -o pipefail
+          mkdir -p out
+          WORK=/mnt/cloudk OUT="$PWD/out" bash tools/kernel/build-cloudk.sh 2>&1 | tee "$RUNNER_TEMP/build.log"
+          ls -lh out
+
+      - name: итог в summary
+        if: always()
+        env:
+          MARCH: ${{ matrix.march }}
+        run: |
+          {
+            echo "### cloudk $MARCH"
+            ls -lh out 2>/dev/null | sed 's/^/    /' || true
+            if [ -s "$RUNNER_TEMP/build.log" ]; then
+              grep -nE '::error::|!!|error:|Error [0-9]+' "$RUNNER_TEMP/build.log" | tail -n 25 | sed 's/^/    /' || true
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cloudk-${{ matrix.march }}
+          path: out/*
+          compression-level: 0
+          if-no-files-found: error
+
+  publish:
+    if: ${{ inputs.publish }}
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: проверка ключа подписи
+        env:
+          HAS_KEY: ${{ secrets.MINISIGN_KEY != '' }}
+        run: |
+          [ "$HAS_KEY" = true ] || { echo "::error::MINISIGN_KEY не задан, публикация без подписи запрещена"; exit 1; }
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: cloudk-*
+          path: out
+          merge-multiple: true
+
+      - name: проверка файлов
+        run: |
+          ls -lh out
+          for s in out/*.sha256; do ( cd out && sha256sum -c "$(basename "$s")" ); done
+          [ "$(ls out/*.sha256 | wc -l)" = 2 ] || { echo "::error::нужны сборки для x86-64 и x86-64-v3"; exit 1; }
+
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            out/*-vmlinuz
+            out/*-modules.tar.zst
+
+      - name: подпись minisign
+        env:
+          MINISIGN_KEY: ${{ secrets.MINISIGN_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.MINISIGN_PASSWORD }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq minisign
+          bash tools/sign.sh out/*-vmlinuz out/*-modules.tar.zst out/*.sha256
+          [ "$(ls out/*.minisig | wc -l)" = 6 ] || { echo "::error::подписи созданы не для всех файлов"; exit 1; }
+
+      - name: релиз
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CVER: ${{ inputs.cloudk_version }}
+          KVER: ${{ inputs.kernel }}
+        run: |
+          TAG="cloudk-$CVER"
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "cloudk $CVER" \
+            --notes "ядро cloudk $CVER на базе linux $KVER. собирается в actions скриптом tools/kernel/build-cloudk.sh, используется сборкой iso (tools/mkiso.sh). проверка: minisign -V -p cloudos.pub -m cloudk-$CVER-x86-64.sha256, затем sha256sum -c cloudk-$CVER-x86-64.sha256"
+          gh release upload "$TAG" out/* --clobber
