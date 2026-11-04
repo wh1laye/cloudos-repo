@@ -186,7 +186,7 @@ jobs:
           cp "$RUNNER_TEMP/build.log" "$PWD/build.log" 2>/dev/null || true
 
       - name: подпись происхождения (attestation)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: out/*.iso
 
