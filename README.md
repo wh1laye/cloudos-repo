@@ -10,7 +10,6 @@
 [![Система](https://img.shields.io/badge/система-x86__64-cfe3f8?style=for-the-badge&labelColor=3b5fa8)](#-что-внутри)
 
 [![iso](https://github.com/wh1laye/cloudos-repo/actions/workflows/iso.yml/badge.svg)](https://github.com/wh1laye/cloudos-repo/actions/workflows/iso.yml)
-[![check](https://github.com/wh1laye/cloudos-repo/actions/workflows/check.yml/badge.svg)](https://github.com/wh1laye/cloudos-repo/actions/workflows/check.yml)
 
 [🌐 Сайт и handbook](https://wh1laye.github.io/cloudos-repo/) · [📦 Скачать](https://wh1laye.github.io/cloudos-repo/releases/) · [💬 Форум](https://wh1laye.github.io/cloudos-repo/forum/) · [🔐 Проверка файлов](https://wh1laye.github.io/cloudos-repo/verify/) · [📊 Статус сборок](https://wh1laye.github.io/cloudos-repo/status/) · [🛡 Безопасность](https://wh1laye.github.io/cloudos-repo/security/)
 
