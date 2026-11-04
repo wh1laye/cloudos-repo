@@ -129,7 +129,7 @@ jobs:
           timeout 420 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
             -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0 cloudos.smoke" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || true
           grep -aq 'cloudos-smoke: FAIL' smoke.log && { grep -a 'cloudos-smoke:' smoke.log; echo "живая проверка не прошла"; exit 1; }
-          grep -aq 'cloudos-smoke: ok' smoke.log || { echo "нет cloudos-smoke: ok, система не дошла до проверки"; exit 1; }
+          grep -aq 'cloudos-smoke: ok' smoke.log || { echo "--- конец лога загрузки ---"; tail -n 80 smoke.log | tr -d '\033'; echo "--- ключевые строки ---"; grep -aiE 'panic|oops|bug:|unable to|cannot|failed|не смонт|rescue|cloudos-init|module|signature' smoke.log | tr -d '\033' | head -n 40; echo "нет cloudos-smoke: ok, система не дошла до проверки"; exit 1; }
           grep -aq 'cloudos-init: switch_root' smoke.log || { echo "initramfs не дошёл до switch_root"; exit 1; }
           grep -aq 'is starting up' smoke.log || { echo "openrc не стартовал"; exit 1; }
           grep -aqE 'nftables|нет службы nftables' smoke.log || { echo "в логе загрузки нет nftables"; exit 1; }
@@ -153,7 +153,7 @@ jobs:
             -kernel itest/vmlinuz -initrd itest/initramfs.img -append "console=ttyS0 cloudos.smoke cloudos.itest" -cdrom "$ISO" \
             -drive file=itest/disk.img,format=raw,if=virtio > "$PWD/itest-install.log" 2>&1 || true
           grep -a 'cloudos-smoke:' itest-install.log | tail -n 5
-          grep -aq 'cloudos-smoke: itest ok' itest-install.log || { echo "установка на диск не прошла"; exit 1; }
+          grep -aq 'cloudos-smoke: itest ok' itest-install.log || { tail -n 80 itest-install.log | tr -d '\033'; echo "установка на диск не прошла"; exit 1; }
           timeout 600 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
             -drive file=itest/disk.img,format=raw,if=virtio -boot c > "$PWD/itest-boot.log" 2>&1 || true
           grep -aq 'Kernel panic' itest-boot.log && { echo "паника ядра при загрузке установленной системы"; exit 1; }
