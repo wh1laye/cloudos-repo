@@ -1,7 +1,7 @@
 (function(){
 var d=document,h=d.documentElement,sc=d.currentScript;
 var BASE=sc?sc.src.replace(/themes\.js.*$/,''):'';
-var V='14';
+var V='15';
 var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',cs:'space',fo:'forest',au:'autumn',oc:'ocean',ar:'aurora',cy:'cyber',sk:'sunset',rn:'rain'};
 var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['cs','космос'],['fo','лес'],['au','осень'],['oc','океан'],['ar','сияние'],['cy','киберпанк'],['sk','закат'],['rn','дождь']];
 var FXN=[['full','полные'],['low','лёгкие'],['off','выкл']];
@@ -181,7 +181,7 @@ function ui(){
   s.innerHTML='<h4>сезонные темы</h4><div class="zsg">'+NAMES.map(function(n){return '<button type="button" data-zs="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="spm">анимации</p><div class="zsg">'+FXN.map(function(n){return '<button type="button" data-zsf="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="spm">устройство</p><div class="zsg">'+DEVN.map(function(n){return '<button type="button" data-zsd="'+n[0]+'">'+n[1]+'</button>'}).join('')+'</div><p class="zsn">компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам</p>';
   if(first&&first.nextSibling)spb.insertBefore(s,first.nextSibling);else spb.appendChild(s);
   var u=d.createElement('div');u.className='sps zss';
-  u.innerHTML='<h4>интерфейс</h4><p class="spm">плавные переходы</p><div class="zsg"><button type="button" data-calm="0">включены</button><button type="button" data-calm="1">отключены</button></div><p class="zsn">отключи, если сайт тормозит</p>';
+  u.innerHTML='<h4>интерфейс</h4><p class="spm">плавные переходы</p><div class="zsg zs2"><button type="button" data-calm="0">включены</button><button type="button" data-calm="1">отключены</button></div><p class="zsn">отключи, если сайт тормозит</p>';
   s.parentNode.insertBefore(u,s.nextSibling);
   mark();
 }
