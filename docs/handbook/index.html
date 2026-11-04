@@ -84,9 +84,9 @@
 <h2 id="prep">2. подготовка</h2>
 <h3 id="s2-1">2.1 запись iso на флешку</h3>
 <p>скачай iso и контрольную сумму со страницы <a href="../releases/">релизов</a> и проверь:</p>
-<pre><code>sha256sum -c cloudos-live-amd64-2.1.iso.sha256</code></pre>
+<pre><code>sha256sum -c cloudos-live-amd64-2.2.iso.sha256</code></pre>
 <p>запиши образ на флешку (внимание: выбери именно флешку, её данные сотрутся):</p>
-<pre><code>sudo dd if=cloudos-live-amd64-2.1.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
+<pre><code>sudo dd if=cloudos-live-amd64-2.2.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
 <h3 id="s2-2">2.2 вход в live</h3>
 <p>загрузись с флешки. вход автоматический: пользователь <code>cloudos</code>, пароль <code>cloudos</code>, root-права через <code>doas -s</code>. это только для live, ssh для этих учётных записей закрыт, фаервол включён.</p>
 <h3 id="s2-3">2.3 сеть</h3>
