@@ -121,3 +121,21 @@ html[data-season="oc"] .zs-wv{filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
 .zs-comet{animation:zscomet 10s linear infinite;will-change:transform}
 @keyframes zscomet{from{transform:translateX(-15vw) translateY(-10vh)}to{transform:translateX(110vw) translateY(20vh)}}
 .zs-leaf{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+
+:root[data-mbl="1"] .top{background:color-mix(in srgb,var(--surf) 70%,transparent);-webkit-backdrop-filter:blur(14px) saturate(1.5);backdrop-filter:blur(14px) saturate(1.5)}
+:root[data-msd="1"] :is(.feat,.flow a,.links a,.cloud,.sc,.vit,.tw,.drop,.cpb){box-shadow:0 8px 24px color-mix(in srgb,var(--ink) 10%,transparent)}
+:root[data-mlf="1"]:not([data-mrm="1"]):not([data-calm="1"]) :is(.feat,.flow a,.links a,.cloud,.sc,.vit,.tw,.drop){transition:transform .18s ease,box-shadow .18s ease}
+:root[data-mlf="1"]:not([data-mrm="1"]):not([data-calm="1"]) :is(.feat,.flow a,.links a,.cloud,.sc,.vit,.tw,.drop):hover{transform:translateY(-3px);box-shadow:0 12px 28px color-mix(in srgb,var(--ink) 14%,transparent)}
+:root[data-mgh="1"] h1{background:linear-gradient(90deg,var(--ac),color-mix(in srgb,var(--ac) 40%,#b06cf2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+:root[data-mhu="1"] h2{padding-bottom:.3em;border-bottom:1px solid var(--line);background:linear-gradient(var(--ac),var(--ac)) left bottom/3.2rem 2px no-repeat}
+:root[data-msc="1"],:root[data-msc="1"] *{scrollbar-width:thin;scrollbar-color:var(--ac) transparent}
+:root[data-mln="1"] :is(p,li,td) a:not(.btn){text-decoration:none;background:linear-gradient(currentColor,currentColor) left bottom/0 1.5px no-repeat;padding-bottom:1px}
+:root[data-mln="1"]:not([data-mrm="1"]):not([data-calm="1"]) :is(p,li,td) a:not(.btn){transition:background-size .25s ease}
+:root[data-mln="1"] :is(p,li,td) a:not(.btn):hover,:root[data-mln="1"] :is(p,li,td) a:not(.btn):focus-visible{background-size:100% 1.5px}
+:root[data-mdt="1"] body{background-image:radial-gradient(color-mix(in srgb,var(--ink) 14%,transparent) 1px,transparent 1.2px);background-size:22px 22px}
+:root[data-mgl="1"] .btn:hover,:root[data-mgl="1"] .btn:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 28%,transparent),0 0 22px color-mix(in srgb,var(--ac) 45%,transparent)}
+:root[data-mfd="1"]:not([data-mrm="1"]):not([data-calm="1"]) body{animation:mfd .4s ease both}
+@keyframes mfd{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+:root[data-mrg="1"] blockquote{border-left:3px solid var(--ac);background:var(--soft);border-radius:0 10px 10px 0;padding:.6em 1em}
+:root[data-mzb="1"] tbody tr:nth-child(even){background:color-mix(in srgb,var(--soft) 55%,transparent)}
+@media (prefers-reduced-motion:reduce){:root[data-mfd="1"] body{animation:none}}

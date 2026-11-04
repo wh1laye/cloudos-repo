@@ -1,7 +1,7 @@
 (function(){
 var d=document,h=d.documentElement,K='mor';
-var DEF={ff:'',lh:0,ls:0,w:0,cs:0,ul:0,rm:0,sm:0,cw:0,se:0,fo:0,hh:0,tt:0,rs:0};
-var AT=['ff','lh','ls','w','cs','ul','rm','sm','cw','se','fo','rs'];
+var DEF={ff:'',lh:0,ls:0,w:0,cs:0,ul:0,rm:0,sm:0,cw:0,se:0,fo:0,hh:0,tt:0,rs:0,bl:0,sd:0,lf:0,gh:0,hu:0,sc:0,ln:0,dt:0,gl:0,fd:0,rg:0,zb:0};
+var AT=['ff','lh','ls','w','cs','ul','rm','sm','cw','se','fo','rs','bl','sd','lf','gh','hu','sc','ln','dt','gl','fd','rg','zb'];
 var KEYS=['theme','tauto','grad','acc','lang','rd','fun','mor','season','seasonfx','seasonq','seasondev'];
 function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}}
 function get(){
@@ -16,7 +16,7 @@ function get(){
 var S=get();
 function save(){ls(K,JSON.stringify(S))}
 function en(){var l=ls('lang');if(l==='ru'||l==='en')return l==='en';return !/^(ru|uk|be|kk)/.test((navigator.language||'ru').toLowerCase())}
-var TX={'вид и удобство':'look and comfort','шрифт':'font','система':'system','межстрочный':'line height','плотно':'tight','обычно':'normal','свободно':'loose','буквы':'letter spacing','плотнее':'tighter','обычные':'normal','шире':'wider','ширина текста':'text width','узкая':'narrow','обычная':'normal','широкая':'wide','размер кода':'code size','мельче':'smaller','обычный':'normal','крупнее':'larger','подчёркивать ссылки':'underline links','убрать анимации':'remove animations','отключить плавную прокрутку':'disable smooth scroll','переносить строки в коде':'wrap code lines','выделение цветом акцента':'accent text selection','крупная рамка фокуса':'large focus ring','прятать шапку при прокрутке вниз':'hide header when scrolling down','кнопка «наверх»':'back to top button','наверх':'back to top','экспорт':'export','импорт':'import','сбросить всё':'reset all','настройки скопированы':'settings copied','вставь экспортированные настройки':'paste exported settings','неверный формат':'invalid format','сбросить все настройки сайта?':'reset all site settings?','скругление углов':'corner radius','ровные':'sharp','малое':'small','обычное':'default','большое':'large','макс':'max','кнопка':'button','метка':'tag'};
+var TX={'вид и удобство':'look and comfort','шрифт':'font','система':'system','межстрочный':'line height','плотно':'tight','обычно':'normal','свободно':'loose','буквы':'letter spacing','плотнее':'tighter','обычные':'normal','шире':'wider','ширина текста':'text width','узкая':'narrow','обычная':'normal','широкая':'wide','размер кода':'code size','мельче':'smaller','обычный':'normal','крупнее':'larger','подчёркивать ссылки':'underline links','убрать анимации':'remove animations','отключить плавную прокрутку':'disable smooth scroll','переносить строки в коде':'wrap code lines','выделение цветом акцента':'accent text selection','крупная рамка фокуса':'large focus ring','прятать шапку при прокрутке вниз':'hide header when scrolling down','кнопка «наверх»':'back to top button','наверх':'back to top','экспорт':'export','импорт':'import','сбросить всё':'reset all','настройки скопированы':'settings copied','вставь экспортированные настройки':'paste exported settings','неверный формат':'invalid format','сбросить все настройки сайта?':'reset all site settings?','скругление углов':'corner radius','ровные':'sharp','малое':'small','обычное':'default','большое':'large','макс':'max','кнопка':'button','метка':'tag',"оформление":"decoration","стеклянная шапка":"glass header","тени у карточек":"card shadows","подъём карточек при наведении":"lift cards on hover","градиент в заголовке":"gradient heading","акцентная линия под разделами":"accent line under sections","тонкие цветные полосы прокрутки":"thin accent scrollbars","анимированное подчёркивание ссылок":"animated link underline","точечная сетка на фоне":"dotted background grid","свечение кнопок":"button glow","плавное появление страницы":"smooth page fade-in","акцентная полоса у цитат":"accent bar on quotes","зебра в таблицах":"table zebra stripes"};
 function t(s){return en()&&TX[s]?TX[s]:s}
 var SEG=[
   ['ff','шрифт',[['','Inter'],['manrope','Manrope'],['plex','Plex'],['sys','система']]],
@@ -36,6 +36,7 @@ var CHK=[
   ['hh','прятать шапку при прокрутке вниз'],
   ['tt','кнопка «наверх»']
 ];
+var DEC=[['bl','стеклянная шапка'],['sd','тени у карточек'],['lf','подъём карточек при наведении'],['gh','градиент в заголовке'],['hu','акцентная линия под разделами'],['sc','тонкие цветные полосы прокрутки'],['ln','анимированное подчёркивание ссылок'],['dt','точечная сетка на фоне'],['gl','свечение кнопок'],['fd','плавное появление страницы'],['rg','акцентная полоса у цитат'],['zb','зебра в таблицах']];
 var top=null,tb=null,ly=0;
 function onScroll(){
   var y=window.pageYOffset||0;
@@ -121,6 +122,9 @@ function ui(){
     }).join('')+'</div>';
   });
   x+=CHK.map(function(r){
+    return '<label class="spc"><input type="checkbox" data-mc="'+r[0]+'"><span>'+t(r[1])+'</span></label>';
+  }).join('');
+  x+='<p class="spm">'+t('оформление')+'</p>'+DEC.map(function(r){
     return '<label class="spc"><input type="checkbox" data-mc="'+r[0]+'"><span>'+t(r[1])+'</span></label>';
   }).join('');
   x+='<div class="mtl"><button type="button" class="spq" data-ma="exp">'+t('экспорт')+'</button><button type="button" class="spq" data-ma="imp">'+t('импорт')+'</button><button type="button" class="spq" data-ma="rst">'+t('сбросить всё')+'</button></div>';
