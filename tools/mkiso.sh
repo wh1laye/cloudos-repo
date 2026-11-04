@@ -2,10 +2,15 @@
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-VERSION=${VERSION:-2.1}
+VERSION=${VERSION:-2.2}
 KVER=${KVER:-6.18.10}
 MARCH=${MARCH:-x86-64}
 BASE_TAG=${BASE_TAG:-1.5}
+CLOUDK_VER=${CLOUDK_VER:-0.1}
+CLOUDK_TAG=${CLOUDK_TAG:-cloudk-$CLOUDK_VER}
+CLOUDK=${CLOUDK:-https://github.com/wh1laye/cloudos-repo/releases/download/$CLOUDK_TAG}
+CLOUDK_VERIFY=${CLOUDK_VERIFY:-1}
+PUB=${PUB:-$(dirname "$HERE")/docs/cloudos.pub}
 BASE_VERSION=${BASE_VERSION:-1.5}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-iso-build}
@@ -42,39 +47,30 @@ case $BASE in
     BASEFILE=$BASE ;;
 esac
 
-KTAR=linux-$KVER.tar.xz
-KURL=https://cdn.kernel.org/pub/linux/kernel/v${KVER%%.*}.x
-say "ядро $KVER"
-rm -f "$WORK/sha256sums.asc"
-fetch "$KURL/sha256sums.asc" "$WORK/sha256sums.asc" || die "не скачался $KURL/sha256sums.asc"
-KSUM=$(awk -v f="$KTAR" '$2 == f { print $1 }' "$WORK/sha256sums.asc")
-[ -n "$KSUM" ] || die "в sha256sums.asc нет $KTAR"
-[ -f "$WORK/src/$KTAR" ] || fetch "$KURL/$KTAR" "$WORK/src/$KTAR" || die "не скачался $KURL/$KTAR"
-[ "$(sha256sum "$WORK/src/$KTAR" | cut -d' ' -f1)" = "$KSUM" ] || { rm -f "$WORK/src/$KTAR"; die "sha256 $KTAR не совпал"; }
-
-KGPG=${KERNEL_GPG:-1}
-kgpg_fail() { if [ "$KGPG" = 1 ]; then die "$*"; else printf '!! %s\n' "$*" >&2; fi; }
-if [ "$KGPG" != 0 ]; then
-  if command -v gpg >/dev/null; then
-    GH=$WORK/gnupg
-    rm -rf "$GH"; mkdir -p "$GH"; chmod 700 "$GH"
-    if fetch "$KURL/linux-$KVER.tar.sign" "$WORK/$KTAR.sign" \
-      && gpg --homedir "$GH" --batch -q --auto-key-locate clear,nodefault,wkd --locate-keys torvalds@kernel.org gregkh@kernel.org >/dev/null 2>&1; then
-      KOUT=$(xz -dc "$WORK/src/$KTAR" | gpg --homedir "$GH" --batch --trust-model always --status-fd 1 --verify "$WORK/$KTAR.sign" - 2>/dev/null) || true
-      if printf '%s\n' "$KOUT" | grep -q '^\[GNUPG:\] GOODSIG'; then
-        say "подпись ядра $KTAR проверена"
-      elif printf '%s\n' "$KOUT" | grep -q '^\[GNUPG:\] BADSIG'; then
-        rm -f "$WORK/src/$KTAR"; die "подпись ядра $KTAR неверна"
-      else
-        kgpg_fail "подпись ядра $KTAR не подтвердилась"
-      fi
-    else
-      kgpg_fail "не удалось получить подпись или ключи ядра (KERNEL_GPG=0 отключает проверку)"
-    fi
-  else
-    kgpg_fail "нет gpg, подпись ядра не проверена"
-  fi
-fi
+CK=cloudk-$CLOUDK_VER-$MARCH
+say "ядро cloudk $CLOUDK_VER ($MARCH) из $CLOUDK"
+mkdir -p "$WORK/cloudk"
+case $CLOUDK in
+  http*://*)
+    rm -f "$WORK/cloudk"/*
+    for f in "$CK-vmlinuz" "$CK-modules.tar.zst" "$CK-config" "$CK.sha256" "$CK.sha256.minisig"; do
+      fetch "$CLOUDK/$f" "$WORK/cloudk/$f" || die "не скачался $CLOUDK/$f"
+    done ;;
+  *)
+    for f in "$CK-vmlinuz" "$CK-modules.tar.zst" "$CK-config" "$CK.sha256" "$CK.sha256.minisig"; do
+      [ -f "$CLOUDK/$f" ] || die "нет файла $CLOUDK/$f"
+      cp "$CLOUDK/$f" "$WORK/cloudk/$f"
+    done ;;
+esac
+case $CLOUDK_VERIFY in
+  1)
+    command -v minisign >/dev/null || die "нет minisign, подпись ядра cloudk не проверить (CLOUDK_VERIFY=0 отключает проверку)"
+    [ -f "$PUB" ] || die "нет публичного ключа $PUB"
+    minisign -V -p "$PUB" -m "$WORK/cloudk/$CK.sha256" -x "$WORK/cloudk/$CK.sha256.minisig" >/dev/null || die "подпись ядра cloudk не сходится с $PUB" ;;
+  0) printf '!! подпись ядра cloudk не проверяется\n' >&2 ;;
+  *) die "CLOUDK_VERIFY: 1 или 0" ;;
+esac
+( cd "$WORK/cloudk" && sha256sum -c "$CK.sha256" >/dev/null ) || die "sha256 ядра cloudk не совпал"
 
 say "распаковка базы в $ROOT"
 rm -rf "$ROOT"
@@ -83,7 +79,7 @@ xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner --xattrs --xattrs-inc
 grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на базу cloudos"
 
 mkdir -p "$ROOT/var/tmp/isosrc" "$ROOT/var/tmp/isofiles"
-cp "$WORK/src/$KTAR" "$ROOT/var/tmp/isosrc/"
+cp "$WORK/cloudk/$CK-vmlinuz" "$WORK/cloudk/$CK-modules.tar.zst" "$ROOT/var/tmp/isosrc/"
 cp -R "$HERE"/iso/. "$ROOT/var/tmp/isofiles/"
 cp "$HERE/stage3/cloudos-audit" "$ROOT/var/tmp/isofiles/"
 
@@ -98,7 +94,7 @@ exec chroot "$R" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/
 }
 
 say "сборка iso внутри chroot (ядро, initramfs, squashfs, limine)"
-enter bash /var/tmp/isofiles/mkiso-inside.sh "$VERSION" "$KVER" "$NAME" "$MARCH" || die "сборка внутри chroot оборвалась, причина выше"
+enter bash /var/tmp/isofiles/mkiso-inside.sh "$VERSION" "$KVER" "$NAME" "$MARCH" "$CLOUDK_VER" || die "сборка внутри chroot оборвалась, причина выше"
 
 [ -s "$ROOT/var/tmp/isoout/$NAME" ] || die "iso не появился"
 mv "$ROOT/var/tmp/isoout/$NAME" "$OUT/$NAME"
