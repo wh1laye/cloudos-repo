@@ -199,7 +199,7 @@ jobs:
           sudo apt-get install -y -qq minisign
           bash tools/sign.sh out/*.iso out/*.iso.sha256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: isolog-${{ inputs.version }}
@@ -210,7 +210,7 @@ jobs:
             itest-boot.log
           if-no-files-found: ignore
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: ${{ !inputs.publish }}
         with:
           name: cloudos-iso-${{ inputs.version }}

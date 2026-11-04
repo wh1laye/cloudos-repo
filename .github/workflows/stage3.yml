@@ -128,7 +128,7 @@ jobs:
           sudo apt-get install -y -qq minisign
           bash tools/sign.sh out/*.tar.xz out/*.tar.xz.sha256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: cloudos-stage3-${{ inputs.version }}
           path: out/*
@@ -140,7 +140,7 @@ jobs:
           cp "$RUNNER_TEMP/build.log" "$PWD/build.log" 2>/dev/null || true
           sudo tar -C /mnt/stage3/root/var/tmp -czf "$PWD/s3log.tgz" s3log || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: s3log-${{ inputs.version }}
