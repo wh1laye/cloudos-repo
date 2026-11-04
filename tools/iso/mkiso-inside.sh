@@ -36,7 +36,7 @@ install_cloudk() {
   mkdir -p "$R/boot" /lib/modules
   install -m644 "$S/$ck-vmlinuz" "$R/boot/vmlinuz"
   rm -rf "/lib/modules/$krel"
-  zstd -dc "$S/$ck-modules.tar.zst" | tar -xf - -C /lib/modules
+  zstd -dc "$S/$ck-modules.tar.zst" | tar -xf - -C /lib
   [ -d "/lib/modules/$krel" ] || die "в архиве модулей нет $krel, версия ядра $KVER не совпала с релизом cloudk"
   depmod -a "$krel"
   [ -s "/lib/modules/$krel/modules.dep" ] || die "depmod не создал modules.dep"
