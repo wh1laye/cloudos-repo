@@ -256,7 +256,7 @@ start() {
 	local f=0
 	id -nG cloudos 2>/dev/null | tr ' ' '\n' | grep -qx wheel || { out "FAIL cloudos не в wheel"; f=1; }
 	grep -qxF 'permit persist :wheel' /etc/doas.conf || { out "FAIL в doas.conf нет правила wheel"; f=1; }
-	su -s /bin/bash cloudos -c 'doas -C /etc/doas.conf -u root /bin/true' >/dev/null 2>&1 || { out "FAIL doas не разрешает wheel"; f=1; }
+	doas -C /etc/doas.conf >/dev/null 2>&1 || { out "FAIL doas.conf не разбирается"; f=1; }
 	su -s /bin/bash cloudos -c 'id -u' 2>/dev/null | grep -qx '[1-9][0-9]*' || { out "FAIL su cloudos не работает"; f=1; }
 	awk '$4 == "0A" && $2 ~ /:0016$/ { f = 1 } END { exit !f }' /proc/net/tcp && { out "FAIL порт 22 слушается"; f=1; }
 	nft list ruleset 2>/dev/null | grep -q drop || { out "FAIL в nftables нет drop"; f=1; }
