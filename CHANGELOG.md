@@ -1,5 +1,15 @@
 # changelog
 
+## iso 2.2, cloudk 0.1: своё ядро в отдельном релизе, строгая сборка
+
+- `tools/kernel/build-cloudk.sh`, `tools/kernel/cloudk-config.sh`: ядро cloudk собирается отдельным скриптом (`linux-6.18.10`, sha256 и подпись gpg, хук для патчей `tools/kernel/patches`), обязательные опции ядра проверяются после `olddefconfig`, сборка останавливается, если хоть одна не встала
+- оптимизации ядра: mglru (`LRU_GEN`), `SCHED_AUTOGROUP`, `SCHED_MC_PRIO`, `CPU_IDLE_GOV_TEO`, `NO_HZ_IDLE`, `HZ_1000`, полное вытеснение, bbr и fq, `NET_SCH_CAKE`, zswap с zstd, bfq, `NTSYNC`; без `PROFILING`; флаги `-O2 -pipe`, для v3 ещё `-march=x86-64-v3`
+- `.github/workflows/cloudk.yml`: сборка для x86-64 и x86-64-v3, подпись minisign в отдельной задаче, релиз `cloudk-0.1`
+- `tools/mkiso.sh`, `tools/iso/mkiso-inside.sh`: iso больше не компилирует ядро, а скачивает cloudk из релиза, проверяет подпись minisign и sha256 и ставит ядро с модулями
+- `tools/iso/cloudos-install`: проверяет, что в образе есть ядро cloudk, и показывает его версию в конце установки
+- `.github/workflows/iso.yml`: `smoke` и `install_test` больше не `continue-on-error`, публикация без них запрещена, attestation обязательна
+- версии: iso `2.2`, cloudk `0.1`
+
 ## stage 3 1.5, iso 2.1: утилиты, neovim с lazyvim, раскладка в установщике
 
 - `tools/stage3/cloudos-extra.list`: новый список пакетов (утилиты диагностики, диски и файловые системы, сеть, архиваторы, библиотеки для сборки, git, ripgrep, fd, fzf, tmux, htop, btop, mc, neovim); сборка идёт после основного набора gentoo и не валит stage 3, если отдельный пакет не собрался, такие пакеты попадают в `failed.txt`
