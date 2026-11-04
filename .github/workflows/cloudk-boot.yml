@@ -1,0 +1,53 @@
+name: cloudk-boot
+
+on:
+  workflow_dispatch:
+    inputs:
+      cloudk_version:
+        description: версия ядра cloudk из релиза cloudk-<версия>
+        default: "0.1"
+      kernel:
+        description: версия ванильного ядра
+        default: "6.18.10"
+      march:
+        description: микроархитектура
+        default: x86-64
+        type: choice
+        options:
+          - x86-64
+          - x86-64-v3
+
+permissions:
+  contents: read
+
+jobs:
+  boot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: загрузка релиза
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CVER: ${{ inputs.cloudk_version }}
+          MARCH: ${{ inputs.march }}
+        run: |
+          case "$CVER" in ''|*[!0-9A-Za-z._]*) echo "::error::неверная версия cloudk"; exit 1 ;; esac
+          mkdir -p rel
+          gh release download "cloudk-$CVER" -p "cloudk-$CVER-$MARCH*" -D rel
+          ( cd rel && sha256sum -c "cloudk-$CVER-$MARCH.sha256" )
+          ls -lh rel
+          if [ -f "rel/cloudk-$CVER-$MARCH-missing.txt" ]; then echo "--- необязательные опции, которые не встали ---"; cat "rel/cloudk-$CVER-$MARCH-missing.txt"; fi
+
+      - name: загрузка ядра в qemu
+        env:
+          CVER: ${{ inputs.cloudk_version }}
+          KVER: ${{ inputs.kernel }}
+          MARCH: ${{ inputs.march }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86
+          bash tools/kernel/boot-check.sh "rel/cloudk-$CVER-$MARCH-vmlinuz" "$KVER-cloudk-$CVER"

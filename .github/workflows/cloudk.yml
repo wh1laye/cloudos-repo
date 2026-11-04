@@ -41,12 +41,12 @@ jobs:
         run: |
           case "$CVER" in ''|*[!0-9A-Za-z._]*) echo "::error::неверная версия cloudk"; exit 1 ;; esac
           case "$KVER" in ''|*[!0-9.]*) echo "::error::неверная версия ядра"; exit 1 ;; esac
-          for f in tools/kernel/build-cloudk.sh tools/kernel/cloudk-config.sh; do bash -n "$f"; done
+          for f in tools/kernel/build-cloudk.sh tools/kernel/cloudk-config.sh tools/kernel/boot-check.sh; do bash -n "$f"; done
 
       - name: зависимости
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils gnupg curl patch perl kmod wireless-regdb
+          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils gnupg curl patch perl kmod wireless-regdb qemu-system-x86
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo mkdir -p /mnt/cloudk && sudo chown "$USER" /mnt/cloudk
           df -h / /mnt
@@ -61,6 +61,13 @@ jobs:
           mkdir -p out
           WORK=/mnt/cloudk OUT="$PWD/out" bash tools/kernel/build-cloudk.sh 2>&1 | tee "$RUNNER_TEMP/build.log"
           ls -lh out
+
+      - name: проверочная загрузка ядра
+        env:
+          CLOUDK_VER: ${{ inputs.cloudk_version }}
+          KVER: ${{ inputs.kernel }}
+          MARCH: ${{ matrix.march }}
+        run: bash tools/kernel/boot-check.sh "out/cloudk-$CLOUDK_VER-$MARCH-vmlinuz" "$KVER-cloudk-$CLOUDK_VER"
 
       - name: итог в summary
         if: always()
