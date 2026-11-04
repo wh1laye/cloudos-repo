@@ -1,4 +1,4 @@
-const V = '18'
+const V = '19'
 const CACHE = 'cloudos-' + V
 const SCOPE = self.registration.scope
 const CORE_FILES = ['offline.html', 'manifest.webmanifest', 'icon.svg', 'apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png']

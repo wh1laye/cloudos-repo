@@ -4,7 +4,7 @@
   var LT={light:1,sepia:1};
   var BG={light:'#f6f8fc',gray:'#1a1c20',night:'#000000',nord:'#2e3440',dracula:'#282a36',sepia:'#f4ecd8',matrix:'#020a04',amber:'#140c02'};
   var SEC={matrix:1,amber:1};
-  var NM={night:'ночь',nord:'nord',dracula:'dracula',sepia:'сепия',matrix:'матрица',amber:'янтарь'};
+  var NM={night:'ночь',nord:'норд',dracula:'дракула',sepia:'сепия',matrix:'матрица',amber:'янтарь'};
   function secOn(){try{return localStorage.getItem('sec')==='1'}catch(e){return false}}
   function valid(t){return typeof t==='string'&&BG.hasOwnProperty(t)&&(!SEC[t]||secOn())}
   function touch(){try{localStorage.setItem(TK,String(Date.now()))}catch(e){}}
@@ -30,7 +30,7 @@
     'язык':'language','акцентный цвет':'accent color','кнопки и детали':'buttons and details',
     'цвет 1':'color 1','цвет 2':'color 2','градиент':'gradient','сбросить':'reset',
     'фон сайта':'site background','включить градиент фона':'enable background gradient',
-    'угол':'angle','пресеты':'presets','включить светлую тему':'switch to light theme',
+    'угол':'angle','норд':'nord','дракула':'dracula','пресеты':'presets','включить светлую тему':'switch to light theme',
     'включить серую тему':'switch to gray theme','светлая тема':'light theme','серая тема':'gray theme',
     'авто':'auto','чтение':'reading','размер текста':'text size','обычный':'normal','крупнее':'larger','ещё крупнее':'largest','высокий контраст':'high contrast','только команды в справочнике':'commands only in the handbook','предпросмотр':'preview','кнопка':'button','ночь':'night','сепия':'sepia','матрица':'matrix','янтарь':'amber'
   };
