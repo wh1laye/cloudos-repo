@@ -396,6 +396,7 @@ unsquashfs -f -d "$T" "$SQ"
 mkdir -p "$T/proc" "$T/sys" "$T/dev" "$T/run" "$T/tmp" "$T/var/tmp" "$T/mnt" "$T/media"
 chmod 1777 "$T/tmp" "$T/var/tmp"
 [ -x "$T/sbin/init" ] || [ -x "$T/usr/sbin/init" ] || die "no init after unpacking, the image is damaged"
+ls "$T/lib/modules" | grep -q cloudk || die "no cloudk kernel modules in the image, the image is damaged"
 
 say "limine bootloader"
 mount -o umask=0077,noatime "$BOOTDEV" "$T/boot"
@@ -521,6 +522,7 @@ grep -q "^$USERN:" "$T/etc/passwd" || die "user $USERN was not created"
 [ -s "$T/boot/limine/limine.conf" ] && [ -s "$T/boot/vmlinuz" ] || die "bootloader was not written"
 
 say "done: cloudos installed (root $ROOTPART, boot $BOOTDEV, $FW, $FS$([ "$LUKS" = 1 ] && echo ', luks2'))"
+say "kernel: $(ls "$T/lib/modules" | grep cloudk | head -n1)"
 say "keyboard: $KEYMAP${SWITCH:+ (switch: $SWITCH)}, language: $LOC, time zone: $TZN"
 if [ "$MODE" = manual ] && [ "$FW" = uefi ] && [ "$FB" = 0 ]; then
   echo "the previous fallback loader was saved as EFI/BOOT/BOOTX64.EFI.bak on $BOOTDEV, add other systems to the limine menu if needed"
