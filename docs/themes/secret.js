@@ -48,7 +48,7 @@ CMD.help=function(){W(['help clear exit whoami uname uptime date echo ls cd cat 
 CMD.clear=function(){out.textContent=''};
 CMD.exit=CMD.quit=function(){close()};
 CMD.whoami=function(){P('root')};
-CMD.uname=function(){P('cloudos 2.0 x86_64 gnu/linux (browser edition)')};
+CMD.uname=function(){P('cloudos 2.1 x86_64 gnu/linux (browser edition)')};
 CMD.uptime=function(){P('up '+Math.round((Date.now()-t0)/1000)+' s, 1 user, load average: 0.00, 0.00, 0.00')};
 CMD.date=function(){P(new Date().toString())};
 CMD.echo=function(a){P(a.join(' '))};
@@ -76,7 +76,7 @@ CMD.theme=function(a){
 CMD.matrix=function(){rain()};
 CMD.neofetch=function(){
   var T=th(),n=navigator,m=n.deviceMemory?n.deviceMemory+' gb+':'n/a';
-  W(['      .--.       root@cloudos','   .-(    ).      -------------','  (___.__)__)      os: cloudos 2.0','                   host: '+location.hostname,'                   shell: cloudsh','                   res: '+innerWidth+'x'+innerHeight,'                   theme: '+(T?T.get():'n/a'),'                   cpu: '+(n.hardwareConcurrency||'?')+' threads','                   mem: '+m,'                   lang: '+(n.language||'?')],'#00ff66');
+  W(['      .--.       root@cloudos','   .-(    ).      -------------','  (___.__)__)      os: cloudos 2.1','                   host: '+location.hostname,'                   shell: cloudsh','                   res: '+innerWidth+'x'+innerHeight,'                   theme: '+(T?T.get():'n/a'),'                   cpu: '+(n.hardwareConcurrency||'?')+' threads','                   mem: '+m,'                   lang: '+(n.language||'?')],'#00ff66');
 };
 CMD.fortune=function(){P(FORT[Math.floor(Math.random()*FORT.length)])};
 CMD.cowsay=function(a){
