@@ -82,14 +82,18 @@ build_kernel() {
   scripts/config -e SECURITY -e SECURITY_YAMA -e SECURITY_LANDLOCK -e AUDIT -e SECURITY_APPARMOR -e SECURITY_APPARMOR_HASH -e SECURITY_APPARMOR_HASH_DEFAULT -e DEFAULT_SECURITY_APPARMOR --set-str LSM "landlock,lockdown,yama,apparmor,bpf"
   scripts/config -e TCG_TPM -e TCG_TIS_CORE -e TCG_TIS -e TCG_CRB
   scripts/config -e CPU_FREQ_DEFAULT_GOV_SCHEDUTIL -e X86_INTEL_PSTATE -e X86_AMD_PSTATE -e X86_ACPI_CPUFREQ
+  scripts/config -e LRU_GEN -e LRU_GEN_ENABLED -e SCHED_AUTOGROUP -e SCHED_MC_PRIO -e CPU_IDLE_GOV_TEO -e NO_HZ_IDLE -m NTSYNC -m NET_SCH_CAKE -d PROFILING
   make olddefconfig
+  for s in LRU_GEN LRU_GEN_ENABLED SCHED_AUTOGROUP SCHED_MC_PRIO CPU_IDLE_GOV_TEO; do
+    grep -q "^CONFIG_$s=y" .config || echo "!! оптимизация CONFIG_$s не применилась" >&2
+  done
   need="DM_CRYPT BLK_DEV_DM NF_TABLES NFT_CT NFT_LIMIT NFT_LOG NFT_REJECT NF_CONNTRACK STACKPROTECTOR_STRONG STRICT_KERNEL_RWX RANDOMIZE_BASE HARDENED_USERCOPY SECURITY_YAMA MODULE_SIG_FORCE BPF_UNPRIV_DEFAULT_OFF CFG80211 MAC80211 RFKILL CRYPTO_USER_API_HASH CRYPTO_USER_API_SKCIPHER LEGACY_VSYSCALL_NONE INIT_ON_ALLOC_DEFAULT_ON MODULES BLK_DEV_INITRD RD_ZSTD DEVTMPFS BLK_DEV_LOOP BLK_DEV_SR SATA_AHCI BLK_DEV_NVME USB_STORAGE ISO9660_FS SQUASHFS SQUASHFS_XZ OVERLAY_FS EXT4_FS VFAT_FS EFI_STUB"
   for s in $need; do
     grep -q "^CONFIG_$s=y" .config || die "в .config нет CONFIG_$s=y"
   done
   say "ядро $KVER, сборка на $J ядрах"
-  KC="-O2"
-  [ "$MARCH" = x86-64 ] || KC="-O2 -march=$MARCH"
+  KC="-O2 -pipe"
+  [ "$MARCH" = x86-64 ] || KC="-O2 -pipe -march=$MARCH -mtune=generic"
   make -j"$J" KCFLAGS="$KC" bzImage modules || { echo "!! make -j$J упал, повтор -j1 V=1"; make -j1 V=1 KCFLAGS="$KC" bzImage modules; }
   KREL=$(make -s kernelrelease)
   mkdir -p "$R/boot"
