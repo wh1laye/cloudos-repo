@@ -111,7 +111,7 @@ function apply(){
   if(S.crt)h.setAttribute('data-crt','1');else h.removeAttribute('data-crt');
   if(S.mono)h.setAttribute('data-mono','1');else h.removeAttribute('data-mono');
   if(S.rb)h.setAttribute('data-rbw','1');else h.removeAttribute('data-rbw');
-  if(S.rad!==1)h.setAttribute('data-rad',String(S.rad));else h.removeAttribute('data-rad');
+  h.removeAttribute('data-rad');
   if(S.bar&&d.body){
     if(!bar){bar=d.createElement('div');bar.className='fbar';bar.setAttribute('aria-hidden','true');d.body.appendChild(bar)}
     prog();
@@ -130,7 +130,6 @@ function ui(){
   s.className='sps fns';
   s.innerHTML='<h4>'+t('фишки')+'</h4>'
     +ROWS.map(function(r){return '<label class="spc"><input type="checkbox" data-fn="'+r[0]+'"><span>'+t(r[1])+'</span></label>'}).join('')
-    +'<p class="spm">'+t('углы')+'</p><div class="zsg">'+RAD.map(function(r){return '<button type="button" data-fr="'+r[0]+'">'+t(r[1])+'</button>'}).join('')+'</div>'
     +'<button type="button" class="spq" data-fr="x">'+t('сбросить фишки')+'</button>';
   spb.appendChild(s);
   mark();

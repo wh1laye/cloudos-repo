@@ -1,7 +1,7 @@
 (function(){
 var d=document,h=d.documentElement,sc=d.currentScript;
 var BASE=sc?sc.src.replace(/themes\.js.*$/,''):'';
-var V='13';
+var V='14';
 var FILES={ny:'newyear',hw:'halloween',su:'summer',sp:'spring',cs:'space',fo:'forest',au:'autumn',oc:'ocean',ar:'aurora',cy:'cyber',sk:'sunset',rn:'rain'};
 var NAMES=[['off','выкл'],['auto','авто'],['ny','новый год'],['hw','хэллоуин'],['su','лето'],['sp','весна'],['cs','космос'],['fo','лес'],['au','осень'],['oc','океан'],['ar','сияние'],['cy','киберпанк'],['sk','закат'],['rn','дождь']];
 var FXN=[['full','полные'],['low','лёгкие'],['off','выкл']];
@@ -194,7 +194,7 @@ d.addEventListener('click',function(e){
   else{ls('seasonfx',b.getAttribute('data-zsf'));q=1;ls('seasonq','1')}
   apply();mark();
 });
-var T={'сезонные темы':'seasonal themes','выкл':'off','авто':'auto','новый год':'new year','хэллоуин':'halloween','лето':'summer','весна':'spring','анимации':'animations','лес':'forest','осень':'autumn','океан':'ocean','сияние':'aurora','киберпанк':'cyberpunk','закат':'sunset','дождь':'rain','интерфейс':'interface','плавные переходы':'smooth transitions','включены':'on','отключены':'off','отключи, если сайт тормозит':'turn off if the site lags','полные':'full','лёгкие':'light','устройство':'device','компьютер':'computer','телефон':'phone','компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам':'computer — complex effects, phone — light ones. auto picks by itself'};
+var T={'норд':'nord','дракула':'dracula','тема: норд':'theme: nord','тема: дракула':'theme: dracula','сезонные темы':'seasonal themes','выкл':'off','авто':'auto','новый год':'new year','хэллоуин':'halloween','лето':'summer','весна':'spring','анимации':'animations','лес':'forest','осень':'autumn','океан':'ocean','сияние':'aurora','киберпанк':'cyberpunk','закат':'sunset','дождь':'rain','интерфейс':'interface','плавные переходы':'smooth transitions','включены':'on','отключены':'off','отключи, если сайт тормозит':'turn off if the site lags','полные':'full','лёгкие':'light','устройство':'device','компьютер':'computer','телефон':'phone','компьютер — сложные эффекты, телефон — лёгкие. авто выбирает сам':'computer — complex effects, phone — light ones. auto picks by itself'};
 function dict(){if(window.I18N&&window.I18N.add)window.I18N.add(T);else{window.I18N_EXTRA=window.I18N_EXTRA||{};for(var k in T)window.I18N_EXTRA[k]=T[k]}}
 dict();
 var lk=d.createElement('link');lk.rel='stylesheet';lk.href=BASE+'themes.css?v='+V;d.head.appendChild(lk);
