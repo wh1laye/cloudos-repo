@@ -484,7 +484,14 @@ rm -f "$T/etc/init.d/cloudos-smoke" "$T/etc/runlevels/default/cloudos-smoke" "$T
 rm -f "$T"/etc/ssh/ssh_host_*
 if inroot id cloudos >/dev/null 2>&1; then inroot userdel -r cloudos >/dev/null 2>&1 || inroot userdel cloudos; fi
 for g in wheel users video audio netdev; do inroot getent group "$g" >/dev/null || inroot groupadd "$g"; done
-inroot useradd -m -G wheel,users,video,audio,netdev -s /bin/bash "$USERN"
+if inroot getent passwd "$USERN" >/dev/null 2>&1; then
+  say "user $USERN is already in the image: $(grep "^$USERN:" "$T/etc/passwd" | head -n1)"
+  inroot usermod -s /bin/bash -aG wheel,users,video,audio,netdev "$USERN"
+  UH=$(inroot getent passwd "$USERN" | cut -d: -f6)
+  [ -d "$T$UH" ] || { inroot install -d -m 0700 -o "$USERN" -g "$(inroot id -gn "$USERN")" "$UH"; cp -a "$T"/etc/skel/. "$T$UH"/ 2>/dev/null || true; inroot chown -R "$USERN:$(inroot id -gn "$USERN")" "$UH"; }
+else
+  inroot useradd -m -G wheel,users,video,audio,netdev -s /bin/bash "$USERN"
+fi
 printf '%s:%s\n' "$USERN" "$CLOUDOS_PASS" | inroot chpasswd
 printf 'root:%s\n' "$CLOUDOS_ROOTPASS" | inroot chpasswd
 say "keyboard, language, time zone"
