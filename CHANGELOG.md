@@ -1,5 +1,12 @@
 # changelog
 
+## cloudk 0.2: thinlto и динамическое вытеснение
+
+- `tools/kernel/build-cloudk.sh`: сборка через clang с thinlto (`LTO=thin`, по умолчанию в workflow), проверка clang, lld и llvm-утилит, остановка, если thinlto не включился
+- `tools/kernel/cloudk-config.sh`: добавлены `PREEMPT_DYNAMIC`, `RCU_LAZY`, `ZSWAP_SHRINKER_DEFAULT_ON`
+- `.github/workflows/cloudk.yml`: вход `lto`, пакеты clang, lld, llvm, таймаут 330 минут
+- версия по умолчанию cloudk `0.2` в cloudk, cloudk-boot, iso, mkiso
+
 ## iso 2.2, cloudk 0.1: своё ядро в отдельном релизе, строгая сборка
 
 - `tools/kernel/build-cloudk.sh`, `tools/kernel/cloudk-config.sh`: ядро cloudk собирается отдельным скриптом (`linux-6.18.10`, sha256 и подпись gpg, хук для патчей `tools/kernel/patches`), обязательные опции ядра проверяются после `olddefconfig`, сборка останавливается, если хоть одна не встала
