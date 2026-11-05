@@ -13,17 +13,21 @@ trap 'rm -rf "$T"' EXIT
 S=$T/serial.log
 Q=$T/qemu.log
 D=$T/debug.log
-modes="tcg"
-[ -w /dev/kvm ] && modes="tcg kvm"
+modes="tcg:max"
+[ -w /dev/kvm ] && modes="$modes kvm:host"
+case $(basename "$K") in *v3*) ;; *) modes="$modes tcg:qemu64" ;; esac
 fail=0
 
-for m in $modes; do
+for e in $modes; do
+  m=${e%%:*}
+  cpu=${e#*:}
   : > "$S"; : > "$Q"; : > "$D"
   dbg=""
   case $m in kvm) acc="-enable-kvm" ;; *) acc="-accel tcg"; dbg="-d int,cpu_reset,guest_errors -D $D" ;; esac
+  m="$m/$cpu"
   echo "==> загрузка ядра, режим $m"
   t0=$(date +%s)
-  timeout 90 qemu-system-x86_64 $acc $dbg -m 1024 -smp 2 -display none -monitor none -no-reboot \
+  timeout 90 qemu-system-x86_64 $acc -cpu "$cpu" $dbg -m 1024 -smp 2 -display none -monitor none -no-reboot \
     -serial "file:$S" -kernel "$K" \
     -append "console=ttyS0 earlyprintk=serial,ttyS0,115200 earlycon=uart8250,io,0x3f8,115200n8 ignore_loglevel panic=-1 rdinit=/none" \
     < /dev/null > "$Q" 2>&1
