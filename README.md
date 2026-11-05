@@ -155,6 +155,12 @@ cloudos-repo/
 
 <div align="center">
 
+<sub>обновлено 2026-11-05</sub>
+
+</div>
+
+<div align="center">
+
 Автор [wh1laye](https://github.com/wh1laye)
 
 </div>
