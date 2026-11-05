@@ -5,10 +5,14 @@ on:
     inputs:
       cloudk_version:
         description: версия ядра cloudk
-        default: "0.1"
+        default: "0.2"
       kernel:
         description: версия ванильного ядра, на котором собран cloudk
         default: "6.18.10"
+      lto:
+        description: thinlto через clang
+        type: boolean
+        default: true
       publish:
         description: выложить ядро в релиз cloudk-<версия>
         type: boolean
@@ -24,7 +28,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
+    timeout-minutes: 330
     strategy:
       fail-fast: true
       matrix:
@@ -46,7 +50,7 @@ jobs:
       - name: зависимости
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils gnupg curl patch perl kmod wireless-regdb qemu-system-x86
+          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils gnupg curl patch perl kmod wireless-regdb qemu-system-x86 clang lld llvm
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo mkdir -p /mnt/cloudk && sudo chown "$USER" /mnt/cloudk
           df -h / /mnt
@@ -56,6 +60,7 @@ jobs:
           CLOUDK_VER: ${{ inputs.cloudk_version }}
           KVER: ${{ inputs.kernel }}
           MARCH: ${{ matrix.march }}
+          LTO: ${{ inputs.lto && 'thin' || 'none' }}
         run: |
           set -o pipefail
           mkdir -p out
