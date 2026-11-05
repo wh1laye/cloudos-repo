@@ -3,8 +3,9 @@ set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 KVER=${KVER:-6.18.10}
-CLOUDK_VER=${CLOUDK_VER:-0.1}
+CLOUDK_VER=${CLOUDK_VER:-0.2}
 MARCH=${MARCH:-x86-64}
+LTO=${LTO:-none}
 WORK=${WORK:-/var/tmp/cloudk-build}
 OUT=${OUT:-$PWD/out}
 KGPG=${KERNEL_GPG:-1}
@@ -21,6 +22,11 @@ say() { printf '==> %s\n' "$*"; }
 die() { printf '::error::%s\n' "$*" >&2; exit 1; }
 trap 'printf "::error::упал шаг, строка %s, код %s\n" "$LINENO" "$?" >&2' ERR
 
+case "$LTO" in none|thin) ;; *) die "LTO: none или thin" ;; esac
+if [ "$LTO" = thin ]; then
+  for c in clang ld.lld llvm-ar llvm-nm llvm-objcopy llvm-strip; do command -v "$c" >/dev/null || die "нет команды $c для thinlto"; done
+  export LLVM=1
+fi
 case "$MARCH" in x86-64|x86-64-v3) ;; *) die "MARCH: x86-64 или x86-64-v3" ;; esac
 case "$KVER" in ''|*[!0-9.]*) die "неверная версия ядра" ;; esac
 case "$CLOUDK_VER" in ''|*[!0-9A-Za-z._]*) die "неверная версия cloudk" ;; esac
@@ -75,7 +81,9 @@ fi
 
 make defconfig
 cloudk_config
+if [ "$LTO" = thin ]; then scripts/config -d LTO_NONE -e LTO_CLANG_THIN; fi
 make olddefconfig
+[ "$LTO" != thin ] || grep -q "^CONFIG_LTO_CLANG_THIN=y$" .config || die "thinlto не включился"
 cloudk_verify
 
 KC="-O2 -pipe"
