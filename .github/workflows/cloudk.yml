@@ -121,7 +121,7 @@ jobs:
           for s in out/*.sha256; do ( cd out && sha256sum -c "$(basename "$s")" ); done
           [ "$(ls out/*.sha256 | wc -l)" = 2 ] || { echo "::error::нужны сборки для x86-64 и x86-64-v3"; exit 1; }
 
-      - uses: actions/attest-build-provenance@v2
+      - uses: actions/attest-build-provenance@v4
         with:
           subject-path: |
             out/*-vmlinuz
