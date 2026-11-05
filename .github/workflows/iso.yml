@@ -123,11 +123,14 @@ jobs:
           sudo apt-get install -y -qq qemu-system-x86 xorriso
           ISO="$PWD/out/cloudos-live-amd64-$VERSION.iso"
           mkdir -p smoke
-          xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz smoke/vmlinuz -extract /boot/initramfs.img smoke/initramfs.img 2>/dev/null
+          xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz smoke/vmlinuz -extract /boot/initramfs.img smoke/initramfs.img 2>&1 | tail -n 5 || true
+          [ -s smoke/vmlinuz ] && [ -s smoke/initramfs.img ] || { echo "в iso нет vmlinuz или initramfs"; xorriso -indev "$ISO" -find /boot 2>&1 | tail -n 20; exit 1; }
           ACCEL=""
           if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
-          timeout 420 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
-            -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0 earlycon=uart8250,io,0x3f8,115200n8 cloudos.smoke" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || true
+          QRC=0
+          timeout 420 qemu-system-x86_64 $ACCEL -cpu max -m 2048 -smp 2 -display none -serial stdio -no-reboot \
+            -kernel smoke/vmlinuz -initrd smoke/initramfs.img -append "console=ttyS0 earlycon=uart8250,io,0x3f8,115200n8 cloudos.smoke" -cdrom "$ISO" > "$PWD/smoke.log" 2>&1 || QRC=$?
+          echo "qemu код $QRC, лог $(wc -c < smoke.log) байт"
           grep -aq 'cloudos-smoke: FAIL' smoke.log && { grep -a 'cloudos-smoke:' smoke.log; echo "живая проверка не прошла"; exit 1; }
           grep -aq 'cloudos-smoke: ok' smoke.log || { echo "--- конец лога загрузки ---"; tail -n 80 smoke.log | tr -d '\033'; echo "--- ключевые строки ---"; grep -aiE 'panic|oops|bug:|unable to|cannot|failed|не смонт|rescue|cloudos-init|module|signature' smoke.log | tr -d '\033' | head -n 40; echo "нет cloudos-smoke: ok, система не дошла до проверки"; exit 1; }
           grep -aq 'cloudos-init: switch_root' smoke.log || { echo "initramfs не дошёл до switch_root"; exit 1; }
@@ -149,12 +152,12 @@ jobs:
           qemu-img create -f raw itest/disk.img 6G
           ACCEL=""
           if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
-          timeout 1500 qemu-system-x86_64 $ACCEL -m 3072 -smp 2 -display none -serial stdio -no-reboot \
+          timeout 1500 qemu-system-x86_64 $ACCEL -cpu max -m 3072 -smp 2 -display none -serial stdio -no-reboot \
             -kernel itest/vmlinuz -initrd itest/initramfs.img -append "console=ttyS0 cloudos.smoke cloudos.itest" -cdrom "$ISO" \
             -drive file=itest/disk.img,format=raw,if=virtio > "$PWD/itest-install.log" 2>&1 || true
           grep -a 'cloudos-smoke:' itest-install.log | tail -n 5
           grep -aq 'cloudos-smoke: itest ok' itest-install.log || { tail -n 80 itest-install.log | tr -d '\033'; echo "установка на диск не прошла"; exit 1; }
-          timeout 600 qemu-system-x86_64 $ACCEL -m 2048 -smp 2 -display none -serial stdio -no-reboot \
+          timeout 600 qemu-system-x86_64 $ACCEL -cpu max -m 2048 -smp 2 -display none -serial stdio -no-reboot \
             -drive file=itest/disk.img,format=raw,if=virtio -boot c > "$PWD/itest-boot.log" 2>&1 || true
           grep -aq 'Kernel panic' itest-boot.log && { echo "паника ядра при загрузке установленной системы"; exit 1; }
           grep -aq 'is starting up' itest-boot.log || { echo "установленная система не дошла до openrc"; exit 1; }
