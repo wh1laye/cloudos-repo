@@ -134,8 +134,8 @@ html[data-season="oc"] .zs-wv{filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
 :root[data-mln="1"] :is(p,li,td) a:not(.btn):hover,:root[data-mln="1"] :is(p,li,td) a:not(.btn):focus-visible{background-size:100% 1.5px}
 :root[data-mdt="1"] body{background-image:radial-gradient(color-mix(in srgb,var(--ink) 14%,transparent) 1px,transparent 1.2px);background-size:22px 22px}
 :root[data-mgl="1"] .btn:hover,:root[data-mgl="1"] .btn:focus-visible{box-shadow:0 0 0 3px color-mix(in srgb,var(--ac) 28%,transparent),0 0 22px color-mix(in srgb,var(--ac) 45%,transparent)}
-:root[data-mfd="1"]:not([data-mrm="1"]):not([data-calm="1"]) body{animation:mfd .4s ease both}
-@keyframes mfd{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+:root[data-mfd="1"]:not([data-mrm="1"]):not([data-calm="1"]) body{animation:mfd .4s ease backwards}
+@keyframes mfd{from{opacity:0}to{opacity:1}}
 :root[data-mrg="1"] blockquote{border-left:3px solid var(--ac);background:var(--soft);border-radius:0 10px 10px 0;padding:.6em 1em}
 :root[data-mzb="1"] tbody tr:nth-child(even){background:color-mix(in srgb,var(--soft) 55%,transparent)}
 @media (prefers-reduced-motion:reduce){:root[data-mfd="1"] body{animation:none}}
