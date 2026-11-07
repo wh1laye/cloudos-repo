@@ -161,7 +161,15 @@ do_sshd() {
   fi
 }
 
-do_limine() { cloudpkg sync; cloudpkg install limine; }
+do_limine() {
+  if command -v gpg >/dev/null; then
+    cloudpkg sync
+  else
+    echo "limine: в базе нет gpg, снимок дерева gentoo не проверен по подписи" >> /var/tmp/cloudos-report.txt
+    CLOUDPKG_UNVERIFIED_SYNC=1 cloudpkg sync
+  fi
+  cloudpkg install limine
+}
 
 do_logger() {
   rm -f /usr/sbin/syslogd /usr/sbin/klogd /usr/lib/libsyslog.* /usr/lib/pkgconfig/libsyslog.pc /etc/syslog.conf \
@@ -562,8 +570,8 @@ do_lazyvim() {
     return 0
   fi
   rm -rf "$d/.git"
-  if ! env -u XDG_CONFIG_HOME -u XDG_DATA_HOME -u XDG_STATE_HOME -u XDG_CACHE_HOME HOME=/etc/skel timeout 900 nvim --headless "+Lazy! sync" +qa; then
-    echo "lazyvim: Lazy sync завершился с ошибкой, плагины докачаются при первом запуске" >> /var/tmp/cloudos-report.txt
+  if ! env -u XDG_CONFIG_HOME -u XDG_DATA_HOME -u XDG_STATE_HOME -u XDG_CACHE_HOME HOME=/etc/skel timeout 900 nvim --headless "+Lazy! restore" +qa; then
+    echo "lazyvim: Lazy restore завершился с ошибкой, плагины докачаются при первом запуске" >> /var/tmp/cloudos-report.txt
     touch "$ST/lazyvim.partial"
   fi
   rm -rf /etc/skel/.cache/nvim
