@@ -80,6 +80,8 @@ for p in "$HERE"/patches/*.patch; do
 done
 CLOUDK_BORE=0
 case "$CLOUDK_PATCHES" in *bore*) CLOUDK_BORE=1 ;; esac
+CLOUDK_CACHY=0
+case "$CLOUDK_PATCHES" in *cachyos-base*) CLOUDK_CACHY=1 ;; esac
 for p in $CLOUDK_PATCHES; do
   if ! patch -p1 --dry-run -s < "$p" >/dev/null 2>&1; then
     patch -p1 --dry-run < "$p" 2>&1 | awk '/^(patching|checking) file/ { f = $3 } /FAILED/ { print "не легло: " f ": " $0 }' >&2 || true
@@ -92,6 +94,7 @@ done
 cloudk_source
 make defconfig
 cloudk_config
+if [ "$CLOUDK_CACHY" = 1 ]; then scripts/config -e CACHY; fi
 if [ "$CLOUDK_BORE" = 1 ]; then scripts/config -e SCHED_BORE; fi
 if [ "$LTO" = thin ]; then scripts/config -d LTO_NONE -e LTO_CLANG_THIN; fi
 make olddefconfig
