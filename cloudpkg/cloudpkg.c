@@ -1,6 +1,6 @@
 #include "cloudpkg.h"
 
-#define VERSION "1.0.1"
+#define VERSION "1.1.0"
 const char *cp_version = VERSION;
 
 int cmd_fix(int argc, char **argv)
