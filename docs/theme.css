@@ -1,3 +1,7 @@
+html{background:var(--bg);color-scheme:light}
+html[data-grad]{background:linear-gradient(var(--ga),var(--g1),var(--g2)) fixed}
+html[data-theme=glass]{background:#0a1424}
+body{min-height:100vh}
 html[data-theme=gray]{color-scheme:dark;--bg:#1a1c20;--surf:#22252a;--side:#2a2d33;--line:#33373e;--ink:#e6e8ec;--mute:#98a2ae;--ac:#8fb4f0;--soft:#2a3345;--code:#1d2024;--onac:#11151b;--warnbg:#352d20;--warnbd:#8f6a28;--warnfg:#e7c37a;--ok:#4bc08a;--bad:#f08a82}
 html[data-theme=gray] ::selection{background:#41506a}
 html[data-grad] body{background:linear-gradient(var(--ga),var(--g1),var(--g2)) fixed;min-height:100vh}

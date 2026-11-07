@@ -1,0 +1,79 @@
+(function(){
+var W=window,d=document;
+var RAW="я=i;ты=you;он=he;она=she;мы=we;вы=you;они=they;это=this;то=that;мне=me;тебе=you;вам=you;нам=us;мой=my;моя=my;мои=my;твой=your;твоя=your;твои=your;ваш=your;наш=our;его=his;её=her;их=their;кто=who;что=what;где=where;когда=when;почему=why;зачем=why;как=how;какой=which;какая=which;какие=which;сколько=how many;там=there;тут=here;здесь=here;сюда=hither;туда=thither;сейчас=now;потом=later;затем=then;тогда=then;всегда=always;никогда=never;иногда=sometimes;часто=often;редко=rarely;уже=already;ещё=still;еще=still;снова=again;опять=again;тоже=also;также=also;только=only;просто=simply;очень=very;совсем=quite;почти=almost;вообще=generally;можно=possible;нельзя=impossible;нужно=need;надо=must;должен=must;может=can;могу=can;хочу=want;хотел=wanted;хотеть=want;есть=is;нет=no;да=yes;не=not;ни=nor;и=and;а=but;но=but;или=or;если=if;чтобы=to;потому=because;поэтому=therefore;хотя=although;пока=while;после=after;перед=before;между=between;через=through;без=without;для=for;про=about;над=above;под=under;при=at;из=from;от=from;до=until;на=on;в=in;во=in;с=with;со=with;к=to;по=by;за=behind;о=about;об=about;у=at;все=all;всё=everything;всех=everyone;каждый=each;другой=other;другие=others;такой=such;такие=such;самый=most;больше=more;меньше=less;много=many;мало=few;несколько=several;один=one;два=two;три=three;четыре=four;пять=five;десять=ten;первый=first;второй=second;третий=third;последний=last;новый=new;новая=new;новые=new;старый=old;старая=old;старые=old;хороший=good;хорошо=well;плохо=badly;плохой=bad;лучше=better;хуже=worse;лучший=best;большой=big;маленький=small;быстро=quickly;медленно=slowly;быстрый=fast;медленный=slow;правильно=correctly;неправильно=incorrectly;верно=correct;неверно=wrong;простой=simple;сложный=complex;сложно=hard;легко=easy;трудно=difficult;возможно=possibly;конечно=of course;спасибо=thanks;пожалуйста=please;привет=hello;здравствуйте=hello;извините=sorry;прости=sorry;помогите=help;помощь=help;помочь=help;помогает=helps;вопрос=question;вопросы=questions;ответ=answer;ответы=answers;ответить=answer;отвечать=answer;тема=thread;темы=threads;пост=post;сообщение=message;сообщения=messages;комментарий=comment;комментарии=comments;форум=forum;раздел=board;разделы=boards;новости=news;новость=news;обновление=update;обновления=updates;обновить=update;релиз=release;релизы=releases;версия=version;версии=versions;баг=bug;ошибка=error;ошибки=errors;проблема=problem;проблемы=problems;решение=solution;решения=solutions;решить=solve;исправить=fix;исправление=fix;исправлено=fixed;сломалось=broke;сломан=broken;работает=works;работают=work;работать=work;работа=work;не работает=does not work;запустить=run;запуск=launch;запускается=starts;запустилось=started;остановить=stop;перезагрузить=reboot;перезагрузка=reboot;включить=enable;выключить=disable;включено=enabled;выключено=disabled;установить=install;установка=installation;установил=installed;удалить=delete;удаление=deletion;удалено=deleted;добавить=add;добавлено=added;создать=create;создание=creation;создан=created;изменить=change;изменение=change;изменения=changes;изменено=edited;открыть=open;открыто=open;закрыть=close;закрыто=closed;сохранить=save;сохранено=saved;загрузить=download;загрузка=loading;скачать=download;скачивание=download;отправить=send;отправлено=sent;получить=get;получено=received;найти=find;поиск=search;искать=search;нашёл=found;нашел=found;смотреть=look;посмотреть=look;смотри=look;видеть=see;вижу=see;показать=show;показывает=shows;читать=read;прочитать=read;писать=write;написать=write;написал=wrote;пишу=write;сказать=say;говорить=say;спросить=ask;просить=ask;думать=think;думаю=think;знать=know;знаю=know;понимать=understand;понимаю=understand;понял=understood;использовать=use;использую=use;пользоваться=use;попробовать=try;пробую=try;пробовал=tried;получилось=worked;получается=works;не получается=fails;делать=do;сделать=make;сделал=did;делаю=doing;нужен=needed;нужна=needed;нужны=needed;подскажите=advise;подскажи=advise;посоветуйте=recommend;совет=advice;советы=tips;идея=idea;идеи=ideas;предложение=suggestion;предложения=suggestions;предлагаю=suggest;хочется=wish;планируется=planned;планы=plans;план=plan;задача=task;задачи=tasks;цель=goal;результат=result;результаты=results;пример=example;примеры=examples;инструкция=guide;руководство=manual;документация=documentation;справочник=handbook;страница=page;страницы=pages;сайт=site;ссылка=link;ссылки=links;файл=file;файлы=files;папка=folder;каталог=directory;путь=path;имя=name;название=title;описание=description;текст=text;код=code;скрипт=script;команда=command;команды=commands;строка=line;строки=lines;вывод=output;ввод=input;значение=value;параметр=parameter;параметры=parameters;настройка=setting;настройки=settings;конфиг=config;конфигурация=configuration;пользователь=user;пользователи=users;участник=member;участники=members;аккаунт=account;профиль=profile;логин=login;пароль=password;вход=login;выход=logout;регистрация=registration;доступ=access;права=permissions;роль=role;админ=admin;модератор=moderator;разработчик=developer;автор=author;гость=guest;гости=guests;друг=friend;люди=people;человек=person;система=system;системы=systems;дистрибутив=distribution;ядро=kernel;модуль=module;модули=modules;драйвер=driver;драйверы=drivers;прошивка=firmware;загрузчик=bootloader;загрузка системы=boot;образ=image;диск=disk;диски=disks;раздел диска=partition;флешка=usb stick;память=memory;процессор=processor;видеокарта=gpu;ноутбук=laptop;компьютер=computer;железо=hardware;устройство=device;устройства=devices;сеть=network;интернет=internet;соединение=connection;подключение=connection;подключить=connect;wifi=wifi;роутер=router;сервер=server;клиент=client;служба=service;службы=services;сервис=service;процесс=process;процессы=processes;задержка=delay;скорость=speed;производительность=performance;нагрузка=load;температура=temperature;батарея=battery;звук=sound;экран=screen;монитор=monitor;клавиатура=keyboard;мышь=mouse;раскладка=layout;язык=language;языки=languages;русский=russian;английский=english;перевод=translation;перевести=translate;тема оформления=theme;цвет=color;цвета=colors;шрифт=font;иконка=icon;картинка=image;скриншот=screenshot;фото=photo;видео=video;графика=graphics;окружение=environment;рабочий стол=desktop;оболочка=shell;терминал=terminal;консоль=console;программа=program;программы=programs;приложение=application;приложения=applications;пакет=package;пакеты=packages;пакетный=package;репозиторий=repository;зависимость=dependency;зависимости=dependencies;библиотека=library;библиотеки=libraries;компилятор=compiler;сборка=build;собрать=build;собрал=built;собирается=builds;собралось=built;компиляция=compilation;исходники=sources;исходный=source;исходный код=source code;патч=patch;коммит=commit;ветка=branch;слияние=merge;вопрос по=question about;лог=log;логи=logs;журнал=journal;отладка=debugging;тест=test;тесты=tests;проверка=check;проверить=check;проверил=checked;проверено=verified;безопасность=security;уязвимость=vulnerability;защита=protection;шифрование=encryption;ключ=key;ключи=keys;подпись=signature;сертификат=certificate;брандмауэр=firewall;аудит=audit;резервная копия=backup;бэкап=backup;восстановление=recovery;восстановить=restore;откат=rollback;миграция=migration;совместимость=compatibility;совместим=compatible;поддержка=support;поддерживается=supported;не поддерживается=unsupported;стабильный=stable;стабильность=stability;стабильно=stably;тестовый=test;бета=beta;альфа=alpha;минимальный=minimal;полный=full;полностью=fully;частично=partially;готово=done;готов=ready;готова=ready;в работе=in progress;в процессе=in progress;скоро=soon;планируется позже=planned later;недавно=recently;вчера=yesterday;сегодня=today;завтра=tomorrow;утром=in the morning;вечером=in the evening;ночью=at night;день=day;дни=days;неделя=week;месяц=month;год=year;час=hour;минута=minute;секунда=second;время=time;дата=date;раз=time;снова и снова=again and again;навсегда=forever;временно=temporarily;автоматически=automatically;вручную=manually;автоматический=automatic;ручной=manual;обычный=regular;обычно=usually;особенно=especially;например=for example;то есть=that is;итого=total;вместо=instead of;кроме=except;вместе=together;отдельно=separately;внутри=inside;снаружи=outside;вверх=up;вниз=down;слева=left;справа=right;начало=start;конец=end;начать=start;закончить=finish;продолжить=continue;продолжение=continuation;дальше=next;назад=back;вперёд=forward;вернуться=return;вернуть=return;пропал=disappeared;исчез=vanished;появился=appeared;появилась=appeared;висит=hangs;завис=froze;зависает=freezes;тормозит=lags;падает=crashes;упал=crashed;вылетает=crashes;не запускается=does not start;не загружается=does not load;не открывается=does not open;не видит=does not see;не находит=does not find;не могу=cannot;не знаю=do not know;не понимаю=do not understand;не помогло=did not help;помогло=helped;решено=solved;решилось=solved;закрыта=closed;тема закрыта=thread closed;закреплено=pinned;удалил=deleted;редактировать=edit;цитата=quote;ответ на=reply to;подписаться=subscribe;подписка=subscription;уведомление=notification;уведомления=notifications;пожаловаться=report;жалоба=report;бан=ban;блокировка=block;правила=rules;правило=rule;запрещено=forbidden;разрешено=allowed;нарушение=violation;спам=spam;реклама=advertising;оффтоп=off-topic;флуд=flood;общение=chat;обсуждение=discussion;обсудить=discuss;мнение=opinion;отзыв=review;отзывы=reviews;оценка=rating;лайк=like;нравится=like;не нравится=dislike;круто=cool;отлично=excellent;замечательно=wonderful;класс=great;супер=super;ужас=awful;странно=strange;странный=strange;интересно=interesting;интересный=interesting;полезно=useful;полезный=useful;важно=important;важный=important;срочно=urgent;внимание=attention;предупреждение=warning;осторожно=careful;опасно=dangerous;безопасно=safe;риск=risk;совет по=advice on;вывод команды=command output;ошибка при=error during;после обновления=after update;после перезагрузки=after reboot;при запуске=at startup;при установке=during installation;при сборке=during build;у меня=i have;у вас=you have;у тебя=you have;есть ли=is there;как сделать=how to;как установить=how to install;как исправить=how to fix;как настроить=how to configure;как удалить=how to remove;настроить=configure;настройка системы=system setup;оптимизация=optimization;оптимизировать=optimize;ускорить=speed up;улучшить=improve;улучшение=improvement;добавьте=add;сделайте=make;поддержите=support;планируете=plan;будет ли=will there be;будет=will be;был=was;была=was;были=were;буду=will;будем=will;могут=can;можете=can;можешь=can;можем=can;стоит=worth;лучше всего=best;подойдёт=suits;подходит=fits;работал=worked;работала=worked;работало=worked;пробовали=tried;пробовала=tried;спасибо большое=thank you very much;благодарю=thank you;пожалуйста помогите=please help";
+var R={},E={};
+RAW.split(";").forEach(function(p){
+  var i=p.indexOf("=");if(i<1)return;
+  var k=p.slice(0,i),v=p.slice(i+1);
+  if(!(k in R))R[k]=v;
+  if(/^[a-z]+$/.test(v)&&!(v in E))E[v]=k;
+});
+function esc(x){return x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}
+function build(M,cls){
+  var ks=Object.keys(M).sort(function(a,b){return b.length-a.length});
+  return new RegExp("(?<![а-яёa-z0-9_-])("+ks.map(esc).join("|")+")(?![а-яёa-z0-9_-])","giu");
+}
+var RR=build(R),RE=build(E);
+function keep(src,out){
+  if(src===src.toUpperCase()&&src.length>1)return out.toUpperCase();
+  if(src.charAt(0)!==src.charAt(0).toLowerCase())return out.charAt(0).toUpperCase()+out.slice(1);
+  return out;
+}
+function tr(s,to){
+  var M=to==="en"?R:E,re=to==="en"?RR:RE;
+  return s.replace(re,function(x){
+    var v=M[x.toLowerCase()];
+    return v===undefined?x:keep(x,v);
+  });
+}
+var SEL=".txt,.bio,.trow strong,.trow .tt";
+var SKIP="pre,code,kbd,a,textarea,script,style,.un,[data-nw]";
+var orig=new WeakMap(),obs=null,busy=false;
+function lang(){try{return W.CloudTheme?W.CloudTheme.getLang():"ru"}catch(e){return"ru"}}
+function node(n,to){
+  var p=n.parentNode;
+  if(!p||p.nodeType!==1||(p.closest&&p.closest(SKIP)))return;
+  var src=orig.has(n)?orig.get(n):n.data;
+  if(!orig.has(n))orig.set(n,src);
+  var out=tr(src,to);
+  if(out!==n.data)n.data=out;
+}
+function scan(root,to){
+  if(!root||root.nodeType!==1)return;
+  var list=[];
+  if(root.matches&&root.matches(SEL))list.push(root);
+  [].forEach.call(root.querySelectorAll(SEL),function(e){list.push(e)});
+  list.forEach(function(e){
+    if(e.closest&&e.closest(".txt")&&e!==e.closest(".txt")&&!e.matches(".trow strong"))return;
+    var w=d.createTreeWalker(e,NodeFilter.SHOW_TEXT,null),n,ns=[];
+    while((n=w.nextNode()))ns.push(n);
+    ns.forEach(function(x){node(x,to)});
+  });
+}
+function restore(){
+  [].forEach.call(d.querySelectorAll(SEL),function(e){
+    var w=d.createTreeWalker(e,NodeFilter.SHOW_TEXT,null),n;
+    while((n=w.nextNode())){if(orig.has(n)&&n.data!==orig.get(n))n.data=orig.get(n)}
+  });
+}
+function apply(){
+  var to=lang()==="en"?"en":"ru";
+  scan(d.body,to);
+  if(!obs&&W.MutationObserver){
+    obs=new MutationObserver(function(ms){
+      if(busy)return;
+      busy=true;
+      var t=lang()==="en"?"en":"ru";
+      ms.forEach(function(m){[].forEach.call(m.addedNodes,function(a){
+        if(a.nodeType===1)scan(a,t);
+        else if(a.nodeType===3&&a.parentNode)scan(a.parentNode,t);
+      })});
+      busy=false;
+    });
+    obs.observe(d.body,{childList:true,subtree:true});
+  }
+}
+W.CloudWords={tr:tr,count:Object.keys(R).length,apply:apply};
+W.addEventListener("cloudlang",apply);
+if(d.readyState==="loading")d.addEventListener("DOMContentLoaded",apply);else apply();
+})();
