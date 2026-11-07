@@ -1,5 +1,15 @@
 # changelog
 
+## cloudk 0.3: слой форка поверх linux 6.18.10
+
+- `tools/kernel/cloudk-source.sh`: слой форка, накладывается на исходники ядра до сборки: каталог `security/cloudk` (собственный код ядра, `/proc/cloudk`, строка `cloudk: fork` в dmesg) подключается к `security/Kconfig` и `security/Makefile`; правки значений по умолчанию в самих исходниках: `kptr_restrict=2`, `vm_dirty_ratio=15`, `dirty_background_ratio=5`, `vm_swappiness=100`; правка, которая не нашла свою строку в исходниках, не валит сборку, а попадает в `cloudk-<версия>-<march>-missing.txt`
+- `tools/kernel/overlay/security/cloudk`: исходники модуля форка (`cloudk.c`, `Kconfig`, `Makefile`)
+- `tools/kernel/cloudk-config.sh`: обязательная опция `SECURITY_CLOUDK`; необязательные `X86_KERNEL_IBT`, `X86_USER_SHADOW_STACK`, `X86_UMIP`, `KFENCE`, `SCHED_CORE`; выключены `LDISC_AUTOLOAD`, `DEVPORT`; `ARCH_MMAP_RND_BITS=32`, `ARCH_MMAP_RND_COMPAT_BITS=16`, `DEFAULT_MMAP_MIN_ADDR=65536`
+- `tools/kernel/boot-check.sh`: проверочная загрузка требует `cloudk: fork` в логе ядра
+- `tools/kernel/build-cloudk.sh`: версия по умолчанию `0.3`, патчи из `tools/kernel/patches/*.patch` по-прежнему накладываются первыми
+- версия по умолчанию cloudk `0.3` в cloudk, cloudk-boot, iso, mkiso, mkiso-inside; iso остаётся `2.3`
+- из `build-inside.sh`, `refresh-list.sh`, `build-stage3.sh`, `make-logo.py` убраны комментарии
+
 ## iso 2.3, stage3 1.6, cloudpkg 1.1.0: обязательная подпись, ci
 
 - `cloudpkg/install.sh`: проверка подписи minisign обязательна по умолчанию, `--insecure` отключает, `CLOUDPKG_STRICT`, `CLOUDPKG_FORCE`, `CLOUDPKG_KEEP` и `CLOUDPKG_INSTALL_URL` доезжают через sudo и doas
