@@ -17,6 +17,9 @@ on:
         description: первый запуск с патчами cachyos, закрепить их хэши (без публикации)
         type: boolean
         default: false
+      patches_until:
+        description: "pin_patches: взять патч cachyos, актуальный на эту дату (гггг-мм-дд), пусто = самый свежий"
+        default: ""
       publish:
         description: выложить ядро в релиз cloudk-<версия>
         type: boolean
@@ -66,6 +69,7 @@ jobs:
           MARCH: ${{ matrix.march }}
           LTO: ${{ inputs.lto && 'thin' || 'none' }}
           CLOUDK_PIN: ${{ inputs.pin_patches && '1' || '0' }}
+          CLOUDK_PATCH_UNTIL: ${{ inputs.patches_until }}
         run: |
           set -o pipefail
           mkdir -p out
@@ -80,8 +84,9 @@ jobs:
         run: bash tools/kernel/boot-check.sh "out/cloudk-$CLOUDK_VER-$MARCH-vmlinuz" "$KVER-cloudk-$CLOUDK_VER"
 
       - name: закреплённые патчи
-        if: ${{ inputs.pin_patches && matrix.march == 'x86-64' }}
+        if: ${{ always() && inputs.pin_patches && matrix.march == 'x86-64' }}
         run: |
+          [ -f out/patches.lock ] || exit 0
           {
             echo "### patches.lock (положи в tools/kernel/patches.lock)"
             echo '```'
