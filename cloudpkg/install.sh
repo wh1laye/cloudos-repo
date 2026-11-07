@@ -5,12 +5,13 @@ main() {
 	REPO=${CLOUDPKG_REPO:-wh1laye/cloudos-repo}
 	BRANCH=${CLOUDPKG_BRANCH:-main}
 	INSTALL_URL=${CLOUDPKG_INSTALL_URL:-https://raw.githubusercontent.com/$REPO/$BRANCH/cloudpkg/install.sh}
-	S3_VER=1.4
+	S3_VER=1.5
 	S3_NAME=cloudos-stage3-amd64-$S3_VER.tar.xz
 	S3=${CLOUDPKG_STAGE3:-https://github.com/$REPO/releases/download/$S3_VER/$S3_NAME}
 	BOX=${CLOUDPKG_BOX:-/var/lib/cloudpkg/box}
 	MODE=${CLOUDPKG_MODE:-auto}
 	SRC=${CLOUDPKG_SRC:-}
+	STRICT=${CLOUDPKG_STRICT:-1}
 	UPDATE=0
 	TMP=
 	PM=
@@ -20,6 +21,8 @@ main() {
 	case $REPO in "" | *[!A-Za-z0-9._/-]* | *..*) die "плохое имя репозитория: $REPO" "bad repository name: $REPO" ;; esac
 	case $BRANCH in "" | *[!A-Za-z0-9._/-]* | *..*) die "плохое имя ветки: $BRANCH" "bad branch name: $BRANCH" ;; esac
 
+	case $STRICT in 0 | 1) ;; *) die "CLOUDPKG_STRICT: 1 или 0" "CLOUDPKG_STRICT: 1 or 0" ;; esac
+
 	need_root "$@"
 
 	for a in "$@"; do
@@ -27,6 +30,7 @@ main() {
 			--box) MODE=box ;;
 			--native) MODE=native ;;
 			--update) UPDATE=1 ;;
+			--insecure) STRICT=0 ;;
 			-h | --help) usage; exit 0 ;;
 			*) die "неизвестный параметр: $a" "unknown option: $a" ;;
 		esac
@@ -70,12 +74,14 @@ usage() {
 
   --box       изолированный режим (по умолчанию на любом дистрибутиве, кроме cloudos)
   --native    поставить прямо в систему (по умолчанию в cloudos)
+  --insecure  не требовать подпись minisign (по умолчанию она обязательна)
   --update    обновить cloudpkg, бокс и пакеты не трогать
   -h          эта справка" "install cloudpkg with one command
   curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh
 
   --box       isolated mode (default on every distro except cloudos)
   --native    install straight into the system (default on cloudos)
+  --insecure  do not require the minisign signature (required by default)
   --update    update cloudpkg, keep the box and packages
   -h          this help"
 }
@@ -95,11 +101,10 @@ need_root() {
 	for s in sudo doas; do
 		has "$s" || continue
 		say "нужен root, перезапускаю через $s" "root is needed, re-running with $s"
-		ENVV="CLOUDPKG_REPO=$REPO CLOUDPKG_BRANCH=$BRANCH CLOUDPKG_BOX=$BOX CLOUDPKG_MODE=$MODE CLOUDPKG_SRC=$SRC CLOUDPKG_STAGE3=${CLOUDPKG_STAGE3:-}"
 		if [ -f "$0" ]; then
-			exec "$s" env $ENVV sh "$0" "$@"
+			exec "$s" env "CLOUDPKG_REPO=$REPO" "CLOUDPKG_BRANCH=$BRANCH" "CLOUDPKG_BOX=$BOX" "CLOUDPKG_MODE=$MODE" "CLOUDPKG_SRC=$SRC" "CLOUDPKG_STAGE3=${CLOUDPKG_STAGE3:-}" "CLOUDPKG_STRICT=$STRICT" "CLOUDPKG_FORCE=${CLOUDPKG_FORCE:-}" "CLOUDPKG_KEEP=${CLOUDPKG_KEEP:-}" "CLOUDPKG_INSTALL_URL=$INSTALL_URL" sh "$0" "$@"
 		fi
-		fetch_out "$INSTALL_URL" | "$s" env $ENVV sh -s -- "$@"
+		fetch_out "$INSTALL_URL" | "$s" env "CLOUDPKG_REPO=$REPO" "CLOUDPKG_BRANCH=$BRANCH" "CLOUDPKG_BOX=$BOX" "CLOUDPKG_MODE=$MODE" "CLOUDPKG_SRC=$SRC" "CLOUDPKG_STAGE3=${CLOUDPKG_STAGE3:-}" "CLOUDPKG_STRICT=$STRICT" "CLOUDPKG_FORCE=${CLOUDPKG_FORCE:-}" "CLOUDPKG_KEEP=${CLOUDPKG_KEEP:-}" "CLOUDPKG_INSTALL_URL=$INSTALL_URL" sh -s -- "$@"
 		exit $?
 	done
 	die "нужен root (sudo или doas). запусти от root: su -c 'curl -fsSL $INSTALL_URL | sh'" \
@@ -167,6 +172,13 @@ safe_box() {
 
 PUBKEY=RWQsSt7/q68Gfvr6WBO5IvQXi7zx0jCdR1jWXm8/xXIB90PpHreDpajK
 
+try_minisign() {
+	has minisign && return 0
+	[ -n "$PM" ] || return 0
+	say "нет minisign, пробую поставить ($PM)" "minisign is missing, trying to install ($PM)"
+	pm_install minisign </dev/null >/dev/null 2>&1 || true
+}
+
 get_src() {
 	if [ -n "$SRC" ]; then
 		[ -f "$SRC/cloudpkg.c" ] || die "нет $SRC/cloudpkg.c" "no $SRC/cloudpkg.c"
@@ -179,21 +191,18 @@ get_src() {
 	TMP=$(mktemp -d /var/tmp/cloudpkg-install.XXXXXX)
 	say "загрузка исходников cloudpkg" "downloading cloudpkg sources"
 	REL=https://github.com/$REPO/releases/download/cloudpkg-latest
-	if ! has minisign && [ -n "$PM" ]; then
-		say "нет minisign, пробую поставить ($PM)" "minisign is missing, trying to install ($PM)"
-		pm_install minisign </dev/null >/dev/null 2>&1 || true
-	fi
+	try_minisign
 	if dl "$REL/cloudpkg-src.tar.gz" "$TMP/repo.tar.gz" && dl "$REL/cloudpkg-src.tar.gz.minisig" "$TMP/repo.tar.gz.minisig"; then
 		if has minisign; then
 			minisign -Vq -P "$PUBKEY" -x "$TMP/repo.tar.gz.minisig" -m "$TMP/repo.tar.gz" || die "подпись исходников не подошла, установка отменена" "source signature mismatch, install aborted"
 			say "подпись minisign проверена" "minisign signature verified"
-		elif [ "${CLOUDPKG_STRICT:-0}" = 1 ]; then
-			die "нет minisign, а включён CLOUDPKG_STRICT=1" "minisign is missing and CLOUDPKG_STRICT=1 is set"
+		elif [ "$STRICT" = 1 ]; then
+			die "нет minisign, а проверка подписи обязательна (--insecure отключает)" "minisign is missing and signature checking is required (--insecure disables it)"
 		else
 			say "внимание: нет minisign, подпись не проверена" "warning: minisign is missing, signature not verified"
 		fi
 	else
-		[ "${CLOUDPKG_STRICT:-0}" != 1 ] || die "нет подписанных исходников, а включён CLOUDPKG_STRICT=1" "no signed sources and CLOUDPKG_STRICT=1 is set"
+		[ "$STRICT" != 1 ] || die "нет подписанных исходников, а проверка подписи обязательна (--insecure отключает)" "no signed sources and signature checking is required (--insecure disables it)"
 		say "внимание: подписанного релиза нет, беру ветку $BRANCH без проверки" "warning: no signed release, taking branch $BRANCH unverified"
 		dl "https://codeload.github.com/$REPO/tar.gz/refs/heads/$BRANCH" "$TMP/repo.tar.gz" || die "не удалось скачать исходники" "could not download the sources"
 	fi
@@ -216,6 +225,7 @@ get_stage3() {
 	DL=$(dirname "$BOX")/dl
 	mkdir -p "$DL"
 	F=$DL/stage3.tar.xz
+	try_minisign
 	SUM=
 	S3SIG=
 	case $S3 in
@@ -254,8 +264,8 @@ get_stage3() {
 			die "подпись stage 3 не подошла, файл удалён, повтори установку" "stage 3 signature mismatch, the file was removed, run the installer again"
 		fi
 		say "подпись minisign stage 3 проверена" "stage 3 minisign signature verified"
-	elif [ "${CLOUDPKG_STRICT:-0}" = 1 ]; then
-		die "подпись stage 3 не проверена, а включён CLOUDPKG_STRICT=1" "stage 3 signature is not verified and CLOUDPKG_STRICT=1 is set"
+	elif [ "$STRICT" = 1 ]; then
+		die "подпись stage 3 не проверена, а проверка подписи обязательна (--insecure отключает)" "stage 3 signature is not verified and signature checking is required (--insecure disables it)"
 	else
 		say "внимание: подпись stage 3 не проверена (нет minisign или файла .minisig)" "warning: stage 3 signature is not verified (no minisign or .minisig file)"
 	fi
