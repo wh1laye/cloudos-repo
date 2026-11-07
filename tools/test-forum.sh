@@ -23,7 +23,7 @@ pass "ссылки только http и https"
 grep -q 'zz_dm_block_guard' "$HERE/forum-dm-block.sql" && grep -q "dm_blocks" "$F/app.js" || die "блокировка в сообщениях не связана с sql"
 pass "блокировка: клиент и sql на месте"
 RL=$HERE/forum-ratelimit.sql
-for t in posts threads dms reactions reports profile_comments likes helpful board_subs dm_pins; do
+for t in posts threads dms reactions reports profile_comments likes helpful board_subs dm_pins polls poll_votes post_edits; do
   grep -q "create trigger zz_rl_$t before insert on public.$t " "$RL" || die "нет лимита частоты для $t"
   grep -q "zz_rl_" "$HERE/forum-audit.sql" || die "аудит не проверяет лимиты"
 done
@@ -38,4 +38,7 @@ grep -q "revoke all on all tables in schema public from anon" "$LK" || die "в l
 grep -E "^grant .* to anon;" "$LK" | grep -qiE "insert|update|delete|truncate" && die "lockdown выдаёт anon запись"
 grep -q "grant select on" "$LK" || die "lockdown не оставляет anon чтение"
 pass "lockdown: anon только читает"
+ST=$HERE/forum-storage.sql
+[ "$(grep -c '^alter policy .* to authenticated;$' "$ST")" = 3 ] && ! grep -qi anon "$ST" || die "forum-storage.sql: политики должны читать только authenticated"
+pass "storage: листинг файлов закрыт для anon"
 echo "всё прошло: $n проверок"

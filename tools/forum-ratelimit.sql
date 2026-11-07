@@ -73,4 +73,13 @@ create trigger zz_rl_board_subs before insert on public.board_subs for each row 
 drop trigger if exists zz_rl_dm_pins on public.dm_pins;
 create trigger zz_rl_dm_pins before insert on public.dm_pins for each row execute function public.rl_guard('dm_pins', '60', '10', '5', '3600', '60', '20');
 
+drop trigger if exists zz_rl_polls on public.polls;
+create trigger zz_rl_polls before insert on public.polls for each row execute function public.rl_guard('polls', '300', '2', '1', '3600', '10', '3');
+
+drop trigger if exists zz_rl_poll_votes on public.poll_votes;
+create trigger zz_rl_poll_votes before insert on public.poll_votes for each row execute function public.rl_guard('poll_votes', '60', '30', '15', '3600', '300', '100');
+
+drop trigger if exists zz_rl_post_edits on public.post_edits;
+create trigger zz_rl_post_edits before insert on public.post_edits for each row execute function public.rl_guard('post_edits', '60', '10', '5', '3600', '100', '40');
+
 commit;
