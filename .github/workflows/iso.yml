@@ -17,7 +17,7 @@ on:
         default: "6.18.10"
       cloudk_version:
         description: версия ядра cloudk из релиза cloudk-<версия>
-        default: "0.2"
+        default: "0.3"
       march:
         description: микроархитектура (v3 только для процессоров с avx2, 2013 и новее)
         type: choice

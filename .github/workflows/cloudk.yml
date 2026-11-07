@@ -5,7 +5,7 @@ on:
     inputs:
       cloudk_version:
         description: версия ядра cloudk
-        default: "0.2"
+        default: "0.3"
       kernel:
         description: версия ванильного ядра, на котором собран cloudk
         default: "6.18.10"
@@ -45,7 +45,7 @@ jobs:
         run: |
           case "$CVER" in ''|*[!0-9A-Za-z._]*) echo "::error::неверная версия cloudk"; exit 1 ;; esac
           case "$KVER" in ''|*[!0-9.]*) echo "::error::неверная версия ядра"; exit 1 ;; esac
-          for f in tools/kernel/build-cloudk.sh tools/kernel/cloudk-config.sh tools/kernel/boot-check.sh; do bash -n "$f"; done
+          for f in tools/kernel/build-cloudk.sh tools/kernel/cloudk-config.sh tools/kernel/cloudk-source.sh tools/kernel/boot-check.sh; do bash -n "$f"; done
 
       - name: зависимости
         run: |
