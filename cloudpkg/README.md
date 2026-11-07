@@ -56,7 +56,7 @@ cloudpkg: пакетный менеджер cloudos. написан на c, со
 - `cloudpkg.c` (main), `util.c`, `heal.c`, `emerge.c`, `snap.c`, `cmds.c`, `update.c`, `cloudpkg.h`, `Makefile`: сама программа
 - `overlay/`: рецепты cloudos, копируются в `/var/db/repos/cloudos` при каждой установке
 - `etc/cloudpkg/cloudos.pub`: публичный ключ minisign, `cloudpkg update` принимает только архивы с этой подписью (`--unsigned` отключает, `install.sh` проверяет подпись, если есть minisign, `CLOUDPKG_STRICT=1` делает проверку обязательной)
-- `etc/cloudpkg/cloudpkg.conf`: зеркала, запасной канал для дерева, пути, профиль
+- `etc/cloudpkg/cloudpkg.conf`: зеркала, пути, профиль, при желании `unsigned_fallback=yes` и `fallback=` (канал без подписи, по умолчанию выключен)
 - `etc/portage/make.conf`, `repos.conf/gentoo.conf`: настройки portage
 - `etc/portage/profile/package.provided`: пакеты, собранные вручную в lfs (portage их не пересобирает)
 
@@ -72,7 +72,7 @@ cloudpkg: пакетный менеджер cloudos. написан на c, со
 ## как это устроено
 
 - portage берётся не из pip-колеса (оно собрано как «модуль»: ищет настройки в `/usr/etc` и ставило бы пакеты в `/usr/usr`), а собирается из исходников с `-Dsystem-wide=true`, как в gentoo.
-- дерево рецептов качается снимком с зеркал из `cloudpkg.conf`. если ни одно не ответило, берётся запасной канал: зеркало gentoo на github.
+- дерево рецептов качается снимком с зеркал из `cloudpkg.conf` вместе с подписью `.gpgsig`. снимок принимается, только если подпись сделана ключом gentoo с отпечатком `DCD05B71EAB94199527F44ACDB6B8C1F96D8BF6D` (проверка через gpg, ключ берётся из `/usr/share/openpgp-keys/gentoo-release.asc` или с `keys.gentoo.org` по этому отпечатку). зеркало с неверной подписью пропускается. если ни одно не отдало проверенный снимок, берётся только ранее проверенный локальный (с предупреждением, если он старше 14 дней), иначе sync завершается ошибкой и дерево не трогается.
 - ссылка `/etc/portage/make.profile` ставится сама после `cloudpkg sync`.
 - `make conf` не затирает твои настройки: если файл уже есть и отличается, новый вариант кладётся рядом с суффиксом `.dist`.
 - cloudpkg отказывается ставить пакеты в `/`, если система не cloudos (защита от случайной поломки хоста). обойти можно через `CLOUDPKG_FORCE=1`.

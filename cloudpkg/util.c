@@ -31,6 +31,7 @@ char snap[160] = "snapshots/portage-latest.tar.xz";
 char dist[256] = "/var/cache/distfiles";
 char prof[160] = "default/linux/amd64/23.0";
 int allow_host;
+int unsigned_fb;
 
 int safe_mode;
 int sn_keep = 5;
@@ -126,6 +127,8 @@ void loadconf(void)
 				sn_keep = sv < 0 ? 0 : sv > 50 ? 50 : (int)sv;
 			} else if (!strcmp(k, "allow_host"))
 				allow_host = !strcmp(v, "yes") || !strcmp(v, "1");
+			else if (!strcmp(k, "unsigned_fallback"))
+				unsigned_fb = !strcmp(v, "yes") || !strcmp(v, "1");
 		}
 		fclose(f);
 	}
@@ -135,8 +138,6 @@ void loadconf(void)
 		mirrors[nmir++] = xstrdup("https://mirrors.ustc.edu.cn/gentoo");
 		mirrors[nmir++] = xstrdup("https://mirrors.aliyun.com/gentoo");
 	}
-	if (!nfall)
-		falls[nfall++] = xstrdup("https://codeload.github.com/gentoo-mirror/gentoo/tar.gz/refs/heads/master");
 	for (sl = strlen(repo); sl > 1 && repo[sl - 1] == '/'; sl--)
 		repo[sl - 1] = 0;
 	for (sl = strlen(dist); sl > 1 && dist[sl - 1] == '/'; sl--)

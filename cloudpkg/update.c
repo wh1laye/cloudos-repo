@@ -80,6 +80,131 @@ int verify_sig(const char *file, const char *sig)
 	return run(a) == 0;
 }
 
+static int fpr_allowed(const char *fprs, const char *f)
+{
+	size_t n = strlen(f), l;
+	const char *p = fprs;
+
+	if (n != 40)
+		return 0;
+	while (*p) {
+		while (*p == ' ')
+			p++;
+		l = strcspn(p, " ");
+		if (l == n && !strncasecmp(p, f, n))
+			return 1;
+		p += l;
+	}
+	return 0;
+}
+
+static int sig_status_ok(const char *path, const char *fprs)
+{
+	char line[BUF], *e, *last;
+	FILE *f = fopen(path, "r");
+	int good = 0, bad = 0;
+
+	if (!f)
+		return 0;
+	while (fgets(line, sizeof line, f)) {
+		if (strncmp(line, "[GNUPG:] ", 9))
+			continue;
+		e = line + 9;
+		if (!strncmp(e, "BADSIG ", 7) || !strncmp(e, "ERRSIG ", 7) || !strncmp(e, "EXPKEYSIG ", 10) ||
+		    !strncmp(e, "REVKEYSIG ", 10) || !strncmp(e, "EXPSIG ", 7))
+			bad = 1;
+		else if (!strncmp(e, "VALIDSIG ", 9)) {
+			e = trim(e);
+			last = strrchr(e, ' ');
+			if (last && fpr_allowed(fprs, last + 1))
+				good = 1;
+		}
+	}
+	fclose(f);
+	return good && !bad;
+}
+
+static int gpg_check(const char *home, const char *file, const char *sig, const char *fprs)
+{
+	char st[BUF], *a[14];
+	int n = 0;
+
+	snprintf(st, sizeof st, "%s/status", home);
+	unlink(st);
+	a[n++] = "gpg"; a[n++] = "--homedir"; a[n++] = (char *)home;
+	a[n++] = "--batch"; a[n++] = "--no-tty"; a[n++] = "-q";
+	a[n++] = "--status-file"; a[n++] = st;
+	a[n++] = "--verify"; a[n++] = (char *)sig; a[n++] = (char *)file; a[n] = NULL;
+	if (run(a) != 0)
+		return 0;
+	return sig_status_ok(st, fprs);
+}
+
+static void gpg_import(const char *home)
+{
+	char *a[12];
+	int n = 0;
+
+	if (access(GENTOO_KEYS, R_OK) != 0)
+		return;
+	a[n++] = "gpg"; a[n++] = "--homedir"; a[n++] = (char *)home;
+	a[n++] = "--batch"; a[n++] = "--no-tty"; a[n++] = "-q";
+	a[n++] = "--import"; a[n++] = GENTOO_KEYS; a[n] = NULL;
+	run(a);
+}
+
+static void gpg_recv(const char *home, const char *fprs)
+{
+	char buf[BUF], *a[20], *tok, *save = NULL;
+	int n;
+
+	if (!*KEYSERVER)
+		return;
+	snprintf(buf, sizeof buf, "%s", fprs);
+	for (tok = strtok_r(buf, " ", &save); tok; tok = strtok_r(NULL, " ", &save)) {
+		if (strlen(tok) != 40 || strspn(tok, "0123456789abcdefABCDEF") != 40)
+			continue;
+		n = 0;
+		if (have("timeout")) {
+			a[n++] = "timeout"; a[n++] = "60";
+		}
+		a[n++] = "gpg"; a[n++] = "--homedir"; a[n++] = (char *)home;
+		a[n++] = "--batch"; a[n++] = "--no-tty"; a[n++] = "-q";
+		a[n++] = "--keyserver"; a[n++] = KEYSERVER;
+		a[n++] = "--recv-keys"; a[n++] = tok; a[n] = NULL;
+		run(a);
+	}
+}
+
+int gpg_verify(const char *file, const char *sig, const char *fprs)
+{
+	char home[] = "/var/tmp/cloudpkg-gpg.XXXXXX";
+	char *a[8];
+	int ok;
+
+	if (!have("gpg")) {
+		fprintf(stderr, "cloudpkg: для проверки подписи нужен gpg: cloudpkg install app-crypt/gnupg\n");
+		return 0;
+	}
+	if (!mkdtemp(home)) {
+		perror("cloudpkg: mkdtemp");
+		return 0;
+	}
+	gpg_import(home);
+	ok = gpg_check(home, file, sig, fprs);
+	if (!ok) {
+		gpg_recv(home, fprs);
+		ok = gpg_check(home, file, sig, fprs);
+	}
+	if (have("gpgconf")) {
+		a[0] = "gpgconf"; a[1] = "--homedir"; a[2] = home; a[3] = "--kill"; a[4] = "all"; a[5] = NULL;
+		run(a);
+	}
+	a[0] = "rm"; a[1] = "-rf"; a[2] = home; a[3] = NULL;
+	run(a);
+	return ok;
+}
+
 int cmd_update(int argc, char **argv)
 {
 	char tmp[] = "/var/tmp/cloudpkg-upd.XXXXXX";

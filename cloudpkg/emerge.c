@@ -221,48 +221,82 @@ void ensure_profile(void)
 int cmd_sync(void)
 {
 	char part[BUF], fin[BUF], url[BUF + 32], nw[BUF], old[BUF];
+	char spart[BUF + 16], sfin[BUF + 16], surl[BUF + 48];
 	char *a[16];
-	int i, ok = 0;
+	const char *uv = getenv("CLOUDPKG_UNVERIFIED_SYNC");
+	int i, ok = 0, verify = 1;
+	struct stat st;
 
 	if (!need_root())
 		return 1;
+	if (!have("gpg")) {
+		if (uv && *uv && strcmp(uv, "0")) {
+			fprintf(stderr, "cloudpkg: внимание, gpg нет, подпись снимка не проверяется (CLOUDPKG_UNVERIFIED_SYNC)\n");
+			verify = 0;
+		} else {
+			fprintf(stderr, "cloudpkg: для проверки подписи снимка нужен gpg: cloudpkg install app-crypt/gnupg\n");
+			return 1;
+		}
+	}
 	heal();
 	snprintf(part, sizeof part, "%s/portage-latest.part", dist);
 	snprintf(fin, sizeof fin, "%s/portage-latest.tar.xz", dist);
+	snprintf(spart, sizeof spart, "%s.gpgsig", part);
+	snprintf(sfin, sizeof sfin, "%s.gpgsig", fin);
 	snprintf(nw, sizeof nw, "%s.new", repo);
 	snprintf(old, sizeof old, "%s.old", repo);
 	a[0] = "mkdir"; a[1] = "-p"; a[2] = dist; a[3] = NULL;
 	run(a);
 	unlink(part);
+	unlink(spart);
 	for (i = 0; i < nmir && !ok; i++) {
 		snprintf(url, sizeof url, "%s/%s", mirrors[i], snap);
+		snprintf(surl, sizeof surl, "%s.gpgsig", url);
 		printf("cloudpkg: загрузка %s\n", url);
 		fflush(stdout);
-		if (fetch(url, part) == 0)
-			ok = 1;
-		else
+		if (fetch(url, part) != 0 || (verify && fetch(surl, spart) != 0)) {
+			fprintf(stderr, "cloudpkg: зеркало не отдало снимок или подпись, пробую следующее\n");
 			unlink(part);
+			unlink(spart);
+			continue;
+		}
+		if (verify && !gpg_verify(part, spart, SNAP_FPRS)) {
+			fprintf(stderr, "cloudpkg: подпись снимка с %s не подошла, зеркало пропущено\n", mirrors[i]);
+			unlink(part);
+			unlink(spart);
+			continue;
+		}
+		if (verify)
+			printf("cloudpkg: подпись снимка gentoo проверена\n");
+		ok = 1;
 	}
-	for (i = 0; i < nfall && !ok; i++) {
-		printf("cloudpkg: зеркала не ответили, запасной канал: %s\n", falls[i]);
-		fflush(stdout);
+	for (i = 0; i < nfall && !ok && unsigned_fb; i++) {
+		fprintf(stderr, "cloudpkg: внимание, запасной канал без подписи: %s\n", falls[i]);
+		fflush(stderr);
 		if (fetch(falls[i], part) == 0)
 			ok = 1;
 		else
 			unlink(part);
 	}
 	if (!ok) {
-		fprintf(stderr, "cloudpkg: ни одно зеркало не ответило\n");
-		fprintf(stderr, "cloudpkg: положи снимок в %s и запусти sync снова\n", fin);
-		if (!exists(fin))
+		fprintf(stderr, "cloudpkg: ни одно зеркало не отдало снимок с верной подписью\n");
+		if (!exists(fin) || (verify && (!exists(sfin) || !gpg_verify(fin, sfin, SNAP_FPRS)))) {
+			fprintf(stderr, "cloudpkg: проверенного снимка нет, дерево не тронуто\n");
+			fprintf(stderr, "cloudpkg: положи в %s файлы portage-latest.tar.xz и portage-latest.tar.xz.gpgsig и запусти sync снова\n", dist);
 			return 1;
-		fprintf(stderr, "cloudpkg: беру старый снимок %s\n", fin);
+		}
+		if (stat(fin, &st) == 0 && time(NULL) - st.st_mtime > 14 * 86400)
+			fprintf(stderr, "cloudpkg: внимание, снимок старше 14 дней, обновления безопасности могли выйти\n");
+		fprintf(stderr, "cloudpkg: беру проверенный снимок %s\n", fin);
 	} else {
 		unlink(fin);
+		unlink(sfin);
 		if (rename(part, fin) != 0) {
 			perror("cloudpkg: rename");
 			return 1;
 		}
+		if (exists(spart) && rename(spart, sfin) != 0)
+			perror("cloudpkg: rename подписи");
 	}
 	a[0] = "rm"; a[1] = "-rf"; a[2] = nw; a[3] = NULL;
 	run(a);

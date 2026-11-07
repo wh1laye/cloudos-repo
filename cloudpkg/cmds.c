@@ -165,6 +165,7 @@ int cmd_doctor(void)
 	bad += !check("хуки и синтаксис /etc/portage/env", env_scan(ENVDIR, 0, 0) == 0);
 	bad += !check("package.env без cloudos-noreconf", penv_clean(0) == 0);
 	bad += !check("autotools в базе установленных", vdb_ok());
+	bad += !check("gpg (подпись снимка дерева)", have("gpg"));
 	bad += !check("curl", have("curl"));
 	bad += !check("tar", have("tar"));
 	bad += !check("xz", have("xz"));

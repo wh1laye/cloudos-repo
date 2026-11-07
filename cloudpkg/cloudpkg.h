@@ -38,6 +38,15 @@
 #define VDB "/var/db/pkg"
 #endif
 #define NOHOOK "cloudos-noreconf"
+#ifndef SNAP_FPRS
+#define SNAP_FPRS "DCD05B71EAB94199527F44ACDB6B8C1F96D8BF6D"
+#endif
+#ifndef GENTOO_KEYS
+#define GENTOO_KEYS "/usr/share/openpgp-keys/gentoo-release.asc"
+#endif
+#ifndef KEYSERVER
+#define KEYSERVER "hkps://keys.gentoo.org"
+#endif
 
 
 extern const char *cp_version;
@@ -50,6 +59,7 @@ extern char snap[160];
 extern char dist[256];
 extern char prof[160];
 extern int allow_host;
+extern int unsigned_fb;
 extern int safe_mode;
 extern int sn_keep;
 
@@ -127,6 +137,7 @@ int vercmp(const char *a, const char *b);
 int remote_ver(const char *dir, char *out, size_t n);
 int cmd_update(int argc, char **argv);
 int verify_sig(const char *file, const char *sig);
+int gpg_verify(const char *file, const char *sig, const char *fprs);
 int cmd_fix(int argc, char **argv);
 void usage(void);
 
