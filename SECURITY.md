@@ -6,4 +6,6 @@
 
 что проверяется в сборке: sha256 всех исходников, sha256 stage 3 и iso, подпись minisign архива stage 3 и iso (публичный ключ `docs/cloudos.pub`), attestation происхождения в github actions.
 
+cloudpkg sync принимает снимок дерева gentoo только с gpg-подписью ключа gentoo (отпечаток закреплён в `cloudpkg/cloudpkg.h`), база для сборки stage 3 и iso проверяется подписью minisign, stage 3 gentoo для списка пакетов проверяется gpg-подписью. сборки пакетов portage идут от root без песочницы (`FEATURES=-sandbox`), потому что в stage 3 нет sys-apps/sandbox: рецепты gentoo считаются доверенными после проверки подписи дерева.
+
 live-образ cloudos содержит известный пароль (пользователь cloudos, пароль cloudos). это сделано намеренно, только для live, ssh для него закрыт. в stage 3 и в установленной системе такого пароля нет.

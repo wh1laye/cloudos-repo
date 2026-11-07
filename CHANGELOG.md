@@ -1,5 +1,18 @@
 # changelog
 
+## cloudpkg 1.2.0, stage 3: проверка подписей
+
+- `cloudpkg/update.c`: `gpg_verify` проверяет подпись через gpg во временной папке, принимает только закреплённые отпечатки (`VALIDSIG`), отвергает `BADSIG`, `ERRSIG`, просроченные и отозванные ключи
+- `cloudpkg/emerge.c`: `cloudpkg sync` качает снимок вместе с `.gpgsig` и принимает его только с подписью ключа gentoo, зеркало с неверной подписью пропускается, старый локальный снимок берётся только если его подпись проверена
+- `cloudpkg/util.c`, `etc/cloudpkg/cloudpkg.conf`: запасной канал без подписи (github-зеркало) убран по умолчанию, включается `unsigned_fallback=yes`
+- `cloudpkg/cmds.c`: `doctor` проверяет наличие gpg
+- `cloudpkg/cloudpkg.c`: версия 1.2.0
+- `tools/test-cloudpkg.sh`: 6 проверок sync на настоящем gpg и локальных http-зеркалах: подмена снимка, подпись чужого ключа, откат на проверенный снимок, испорченный локальный снимок, выключенный запасной канал
+- `tools/build-stage3.sh`, `tools/mkiso.sh`: база проверяется подписью minisign по `docs/cloudos.pub`, а не только sha256 (`BASE_VERIFY=0` отключает), загрузки в `build-stage3.sh` только по https
+- `tools/stage3/refresh-list.sh`: stage 3 gentoo, из которого берётся список пакетов, проверяется gpg-подписью ключа `13EBBDBEDE7A12775DFDB1BABB572E0E2D182910`
+- `tools/stage3/build-inside.sh`: шаг limine при отсутствии gpg в базе явно пишет об этом в отчёт и ставит `CLOUDPKG_UNVERIFIED_SYNC=1`, lazyvim ставит плагины по lock-файлу (`Lazy! restore`), а не последние версии (`Lazy! sync`)
+- `.github/workflows/stage3.yml`: перед проверками ставятся minisign и gnupg
+
 ## форум: лимиты частоты, аудит admin-функций; cloudpkg 1.1.1
 
 - `tools/forum-ratelimit.sql`: триггеры `zz_rl_*` на `posts`, `threads`, `dms`, `reactions`, `reports`, лимит на пользователя за минуту и за час, для аккаунтов младше суток строже, админы без лимита; ответ 429 через `PT429`; журнал в закрытой таблице `rl_log`
