@@ -51,7 +51,7 @@ details.err .cw,details.err>div>pre{margin-bottom:14px}
 .sxf{display:flex;gap:14px;padding:9px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--mute)}
 @media(max-width:860px){.sx{padding-top:5vh}.sxf{display:none}}
 @media print{
-  .top,.toc,.hbs,.hbq,.cpb,.anc,.sx{display:none!important}
+  .top,.toc,.hbs,.hbq,.cpb,.anc,.sx,.hbd{display:none!important}
   .layout{display:block}
   .m-uefi,.m-bios{display:block!important}
   tr.m-uefi,tr.m-bios{display:table-row!important}
@@ -113,3 +113,8 @@ h3.opt{color:var(--mute)}
 main h2{scroll-margin-top:120px}
 main h3{scroll-margin-top:120px}
 @media(max-width:860px){.hbq{grid-template-columns:1fr}.hbs{top:54px}}
+.hbd{display:inline-block;vertical-align:middle;margin-left:12px;padding:3px 11px;border:1px solid var(--line);border-radius:var(--rp,99px);background:var(--soft);color:var(--mute);font:inherit;font-size:12px;font-weight:500;line-height:1.5;letter-spacing:0;cursor:pointer;transition:color .12s,border-color .12s,background .12s}
+.hbd::before{content:attr(data-t)}
+.hbd:hover{color:var(--ink)}
+.hbd.on{color:var(--ok);border-color:var(--ok)}
+.hbd.on::before{content:"\2713  "attr(data-t)}

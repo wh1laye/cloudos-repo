@@ -239,11 +239,18 @@ if(!Array.isArray(DONE))DONE=[];
 function saveDone(){try{localStorage.setItem('hbdone',JSON.stringify(DONE))}catch(e){}}
 var chs=h2s.slice(0,13);
 var progBox=null;
+var UN=[];
+try{UN=JSON.parse(localStorage.getItem('hbundone')||'[]')}catch(e){}
+if(!Array.isArray(UN))UN=[];
+function saveUn(){try{localStorage.setItem('hbundone',JSON.stringify(UN))}catch(e){}}
+var dbtn={};
 function paintDone(){
   var n=0;
   chs.forEach(function(c){
     var on=DONE.indexOf(c.id)>-1;
     if(on)n++;
+    var b=dbtn[c.id];
+    if(b){b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false');b.setAttribute('data-t',T(on?'убрать пройден':'пройден'))}
     var a=tocLinks[c.id];
     if(a&&a.parentElement)a.parentElement.classList.toggle('done',on);
   });
@@ -252,6 +259,19 @@ function paintDone(){
     progBox.querySelector('b').style.width=(chs.length?Math.round(n*100/chs.length):0)+'%';
   }
 }
+chs.forEach(function(c){
+  var b=d.createElement('button');
+  b.type='button';b.className='hbd';
+  b.onclick=function(e){
+    e.preventDefault();e.stopPropagation();
+    var i=DONE.indexOf(c.id),u=UN.indexOf(c.id);
+    if(i>-1){DONE.splice(i,1);if(u<0)UN.push(c.id)}
+    else{DONE.push(c.id);if(u>-1)UN.splice(u,1)}
+    saveDone();saveUn();paintDone();
+  };
+  dbtn[c.id]=b;
+  c.appendChild(b);
+});
 var tocOl=d.querySelector('.toc ol,.toc ul');
 if(tocOl&&chs.length){
   progBox=d.createElement('div');
@@ -279,7 +299,7 @@ function stepUI(id,prevI){
   ribbon.querySelector('.hbs-n').textContent=n;
   ribbon.querySelector('.hbs-t').textContent=t;
   ribbon.querySelector('u').style.width=pct+'%';
-  if(prevI===i-1&&prevI>=0&&prevI<chs.length&&DONE.indexOf(chs[prevI].id)<0){
+  if(prevI===i-1&&prevI>=0&&prevI<chs.length&&DONE.indexOf(chs[prevI].id)<0&&UN.indexOf(chs[prevI].id)<0){
     DONE.push(chs[prevI].id);saveDone();paintDone();
   }
 }
