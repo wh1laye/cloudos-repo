@@ -184,7 +184,11 @@ int cmd_update(int argc, char **argv)
 			goto out;
 		}
 		a[0] = "cp"; a[1] = "-p"; a[2] = me; a[3] = bak; a[4] = NULL;
-		run(a);
+		if (run(a) != 0) {
+			fprintf(stderr, "cloudpkg: не удалось сохранить копию в %s, обновление отменено\n", bak);
+			unlink(neu);
+			goto out;
+		}
 		if (rename(neu, me) != 0) {
 			perror("cloudpkg: rename");
 			unlink(neu);
@@ -200,7 +204,8 @@ int cmd_update(int argc, char **argv)
 			fprintf(stderr, "cloudpkg: рецепты cloudos не обновились\n");
 	}
 	a[3] = "conf";
-	run(a);
+	if (run(a) != 0)
+		fprintf(stderr, "cloudpkg: конфиги не обновились\n");
 	r = 0;
 out:
 	a[0] = "rm"; a[1] = "-rf"; a[2] = tmp; a[3] = NULL;
