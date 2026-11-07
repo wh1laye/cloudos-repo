@@ -3,7 +3,7 @@ set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 KVER=${KVER:-6.18.10}
-CLOUDK_VER=${CLOUDK_VER:-0.2}
+CLOUDK_VER=${CLOUDK_VER:-0.3}
 MARCH=${MARCH:-x86-64}
 LTO=${LTO:-none}
 WORK=${WORK:-/var/tmp/cloudk-build}
@@ -38,8 +38,10 @@ done
 [ -e /usr/include/openssl/bio.h ] || die "нет заголовков openssl"
 [ -e /usr/include/gelf.h ] || die "нет заголовков libelf"
 [ -f "$HERE/cloudk-config.sh" ] || die "нет $HERE/cloudk-config.sh"
+[ -f "$HERE/cloudk-source.sh" ] || die "нет $HERE/cloudk-source.sh"
 
 . "$HERE/cloudk-config.sh"
+. "$HERE/cloudk-source.sh"
 CLOUDK_MISSING=$WORK/$CK-missing.txt
 
 fetch() { curl -fL --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
@@ -79,12 +81,15 @@ if [ -d "$HERE/patches" ]; then
   done
 fi
 
+cloudk_source
 make defconfig
 cloudk_config
 if [ "$LTO" = thin ]; then scripts/config -d LTO_NONE -e LTO_CLANG_THIN; fi
 make olddefconfig
 [ "$LTO" != thin ] || grep -q "^CONFIG_LTO_CLANG_THIN=y$" .config || die "thinlto не включился"
 cloudk_verify
+for s in $CLOUDK_SRC_MISS; do printf 'source:%s\n' "$s" >> "$CLOUDK_MISSING"; done
+[ -z "$CLOUDK_SRC_MISS" ] || echo "!! правки исходников не применились:$CLOUDK_SRC_MISS" >&2
 
 KC="-O2 -pipe"
 [ "$MARCH" = x86-64 ] || KC="-O2 -pipe -march=$MARCH -mtune=generic"

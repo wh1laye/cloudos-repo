@@ -58,6 +58,9 @@ for e in $modes; do
   if [ -n "$KREL" ] && ! grep -aq "Linux version $KREL" "$S"; then
     echo "::error::режим $m: версия в логе не $KREL"; fail=1; continue
   fi
+  if [ -n "$KREL" ] && ! grep -aq 'cloudk: fork' "$S"; then
+    echo "::error::режим $m: в логе нет cloudk: fork, слой форка не собрался в ядро"; fail=1; continue
+  fi
   if ! grep -aqE 'Unable to mount root fs|Cannot open root device|No working init|Run /' "$S"; then
     echo "::error::режим $m: ядро не дошло до запуска init"; fail=1; continue
   fi
