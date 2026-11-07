@@ -100,3 +100,5 @@ footer p{margin:0 0 6px}
   .hl .gh{padding:6px}
   .brand svg{width:28px}
 }
+.sc:has(>table){padding:0;margin:14px 0 20px;border:1px solid var(--line);border-radius:calc(12px*var(--rs,1));background:var(--surf);overflow-x:auto}
+.sc:has(>table)>table,.tw>table{margin:0;border:0;border-radius:0;background:none}
