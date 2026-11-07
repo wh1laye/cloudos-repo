@@ -2,9 +2,9 @@
   var d=document,h=d.documentElement,K='theme';
   var TK='uits';
   var LT={light:1,sepia:1};
-  var BG={light:'#f6f8fc',gray:'#1a1c20',night:'#000000',nord:'#2e3440',dracula:'#282a36',sepia:'#f4ecd8',matrix:'#020a04',amber:'#140c02',glass:'#0a1424'};
+  var BG={light:'#f6f8fc',gray:'#1a1c20',night:'#000000',nord:'#2e3440',dracula:'#282a36',sepia:'#f4ecd8',matrix:'#020a04',amber:'#140c02'};
   var SEC={matrix:1,amber:1};
-  var NM={night:'ночь',nord:'норд',dracula:'дракула',sepia:'сепия',matrix:'матрица',amber:'янтарь',glass:'стекло'};
+  var NM={night:'ночь',nord:'норд',dracula:'дракула',sepia:'сепия',matrix:'матрица',amber:'янтарь'};
   function secOn(){try{return localStorage.getItem('sec')==='1'}catch(e){return false}}
   function valid(t){return typeof t==='string'&&BG.hasOwnProperty(t)&&(!SEC[t]||secOn())}
   function touch(){try{localStorage.setItem(TK,String(Date.now()))}catch(e){}}
@@ -13,12 +13,15 @@
   function auto(){try{return localStorage.getItem('tauto')==='1'}catch(e){return false}}
   function get(){
     if(auto())return MQ&&MQ.matches?'light':'gray';
-    try{var v=localStorage.getItem(K);return valid(v)?v:'gray'}catch(e){return 'gray'}
+    try{var v=localStorage.getItem(K);if(v==='glass'){localStorage.setItem(K,'light');localStorage.setItem('glass','1');return 'light'}return valid(v)?v:'gray'}catch(e){return 'gray'}
   }
   function set(t){if(!valid(t))return;try{localStorage.removeItem('tauto')}catch(e){}h.setAttribute('data-theme',t);try{localStorage.setItem(K,t)}catch(e){}applyAcc(getAcc())}
   function setAuto(){try{localStorage.setItem('tauto','1')}catch(e){}h.setAttribute('data-theme',get());applyAcc(getAcc());var b=d.getElementById('tb');if(b)paint(b);touch();fire()}
   if(MQ&&MQ.addEventListener)MQ.addEventListener('change',function(){if(auto()){h.setAttribute('data-theme',get());applyAcc(getAcc());var b=d.getElementById('tb');if(b)paint(b)}});
   function fire(){if(window.CloudTheme&&typeof window.CloudTheme.onChange==='function')window.CloudTheme.onChange()}
+  function glassOn(){try{return localStorage.getItem('glass')==='1'}catch(e){return false}}
+  function applyGlass(){if(glassOn())h.setAttribute('data-glass','1');else h.removeAttribute('data-glass')}
+  function setGlass(v){try{if(v)localStorage.setItem('glass','1');else localStorage.removeItem('glass')}catch(e){}applyGlass();touch();fire()}
   var HEX=/^#[0-9a-fA-F]{6}$/;
   function rgb(x){return [parseInt(x.slice(1,3),16),parseInt(x.slice(3,5),16),parseInt(x.slice(5,7),16)]}
   function hx(a){return '#'+a.map(function(v){v=Math.max(0,Math.min(255,Math.round(v)));return (v<16?'0':'')+v.toString(16)}).join('')}
@@ -126,6 +129,7 @@
   }
 
   h.setAttribute('data-theme',get());
+  applyGlass();
   applyGrad(getGrad());
   applyAcc(getAcc());
 
@@ -151,7 +155,7 @@
     light:[['#dbeafe','#f4f8fd',160],['#e6f4ea','#f6faf7',160],['#fde8d8','#fbf6f1',160],['#ece4fb','#f7f4fd',160]],
     gray:[['#1f2a3d','#1a1c20',160],['#1e2f27','#1a1c20',160],['#33232b','#1a1c20',160],['#2b2540','#1a1c20',160]]
   };
-  BPRE.night=BPRE.nord=BPRE.dracula=BPRE.matrix=BPRE.amber=BPRE.glass=BPRE.gray;BPRE.sepia=BPRE.light;
+  BPRE.night=BPRE.nord=BPRE.dracula=BPRE.matrix=BPRE.amber=BPRE.gray;BPRE.sepia=BPRE.light;
   function rdGet(){var o={};try{o=JSON.parse(localStorage.getItem('rd'))||{}}catch(e){}return{fs:+o.fs>=0&&+o.fs<=2?+o.fs:0,hc:o.hc?1:0,cmd:o.cmd?1:0}}
   function rdApply(o){
     if(o.fs)h.setAttribute('data-fs',String(o.fs));else h.removeAttribute('data-fs');
@@ -182,12 +186,12 @@
     var n=e.target;
     if(n&&n.getAttribute&&n.getAttribute('data-rk'))rdSet(function(){var o={};o[n.getAttribute('data-rk')]=n.checked?1:0;return o}());
   });
-  function extra(){var o='',k,L=['night','nord','dracula','sepia','glass'];if(secOn())L=L.concat(['matrix','amber']);for(k=0;k<L.length;k++)o+='<button type="button" data-th="'+L[k]+'">'+T(NM[L[k]])+'</button>';return o}
+  function extra(){var o='',k,L=['night','nord','dracula','sepia'];if(secOn())L=L.concat(['matrix','amber']);for(k=0;k<L.length;k++)o+='<button type="button" data-th="'+L[k]+'">'+T(NM[L[k]])+'</button>';return o}
   function build(){
     var i,x='';
     x+='<div class="spb" role="dialog" aria-modal="true" aria-label="'+T('настройки')+'">';
     x+='<div class="sph"><b>'+T('настройки')+'</b><button type="button" class="spx" data-a="close" aria-label="'+T('закрыть')+'">'+XI+'</button></div>';
-    x+='<div class="sps"><h4>'+T('тема')+'</h4><div class="sgm"><button type="button" data-th="light">'+T('светлая')+'</button><button type="button" data-th="gray">'+T('серая')+'</button><button type="button" data-th="auto">'+T('авто')+'</button></div><div class="sgm" style="margin-top:6px">'+extra()+'</div></div>';
+    x+='<div class="sps"><h4>'+T('тема')+'</h4><div class="sgm"><button type="button" data-th="light">'+T('светлая')+'</button><button type="button" data-th="gray">'+T('серая')+'</button><button type="button" data-th="auto">'+T('авто')+'</button></div><div class="sgm" style="margin-top:6px">'+extra()+'</div><label class="spc"><input type="checkbox" data-k="gl"><span>'+T('стекло')+'</span></label></div>';
     x+='<div class="sps"><h4>'+T('язык')+'</h4><div class="sgm"><button type="button" data-lg="ru">Русский</button><button type="button" data-lg="en">English</button></div></div>';
     x+='<div class="sps"><h4>'+T('чтение')+'</h4><p class="spm">'+T('размер текста')+'</p><div class="sgm"><button type="button" data-rfs="0">'+T('обычный')+'</button><button type="button" data-rfs="1">'+T('крупнее')+'</button><button type="button" data-rfs="2">'+T('ещё крупнее')+'</button></div>';
     x+='<label class="spc"><input type="checkbox" data-rk="hc"><span>'+T('высокий контраст')+'</span></label><label class="spc"><input type="checkbox" data-rk="cmd"><span>'+T('только команды в справочнике')+'</span></label></div>';
@@ -211,7 +215,7 @@
     var t=get(),l=lang(),a=getAcc(),g=getGrad(),i,e,box;
     [].forEach.call(sp.querySelectorAll('[data-th]'),function(b){var v=b.getAttribute('data-th');b.classList.toggle('on',v==='auto'?auto():(!auto()&&v===t))});
     [].forEach.call(sp.querySelectorAll('[data-lg]'),function(b){b.classList.toggle('on',b.getAttribute('data-lg')===l)});
-    q('c1').value=a.c1;q('c2').value=a.c2;q('ag').checked=!!a.g;
+    q('gl').checked=glassOn();q('c1').value=a.c1;q('c2').value=a.c2;q('ag').checked=!!a.g;
     q('c2').parentNode.style.opacity=a.g?'1':'.45';
     e=sp.querySelector('.pv2');
     e.style.background=a.g?'linear-gradient(135deg,'+a.c1+','+a.c2+')':a.c1;
@@ -252,6 +256,7 @@
         if(!k)return;
         var v=e.target.value;
         if(k==='c1'||k==='c2'){var o={};o[k]=v;if(k==='c2')o.g=true;setAcc(o);refresh()}
+        else if(k==='gl'){setGlass(e.target.checked);refresh()}
         else if(k==='ag'){setAcc({g:e.target.checked});refresh()}
         else if(k==='bon'){setGrad({on:e.target.checked});refresh()}
         else if(k==='b1'||k==='b2'){var p={on:true};p[k==='b1'?'c1':'c2']=v;setGrad(p);refresh()}
@@ -284,6 +289,7 @@
     }
   }
   window.addEventListener('storage',function(e){
+    if(e.key==='glass'){applyGlass();if(sp&&!sp.hidden)refresh();return}
     if(e.key===GK){applyGrad(getGrad());if(sp&&!sp.hidden)refresh();return}
     if(e.key===AK){applyAcc(getAcc());if(sp&&!sp.hidden)refresh();return}
     if(e.key==='lang'){afterLang();return}
@@ -293,7 +299,7 @@
     var b=d.getElementById('tb');if(b)paint(b);
     if(sp&&!sp.hidden)refresh();
   });
-  function pack(){return {t:get(),g:getGrad(),a:getAcc(),l:lang(),ts:ts()}}
+  function pack(){return {t:get(),gl:glassOn()?1:0,g:getGrad(),a:getAcc(),l:lang(),ts:ts()}}
   window.CloudTheme={
     get:get,
     unlock:function(){try{localStorage.setItem('sec','1')}catch(e){}if(sp){build();refresh()}},
@@ -304,6 +310,7 @@
       if(!ui)return;
       try{localStorage.setItem(TK,String(+ui.ts||0))}catch(e){}
       if(!auto()&&valid(ui.t)){set(ui.t);var b=d.getElementById('tb');if(b)paint(b)}
+      if(ui.gl!==undefined){try{if(+ui.gl)localStorage.setItem('glass','1');else localStorage.removeItem('glass')}catch(e){}applyGlass()}
       if(ui.g&&HEX.test(ui.g.c1)&&HEX.test(ui.g.c2)){
         var o={on:!!ui.g.on,c1:ui.g.c1,c2:ui.g.c2,a:Math.max(0,Math.min(360,+ui.g.a||0))};
         try{localStorage.setItem(GK,JSON.stringify(o))}catch(e){}
