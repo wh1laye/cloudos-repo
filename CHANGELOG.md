@@ -1,5 +1,15 @@
 # changelog
 
+## iso 2.3, stage3 1.6, cloudpkg 1.1.0: обязательная подпись, ci
+
+- `cloudpkg/install.sh`: проверка подписи minisign обязательна по умолчанию, `--insecure` отключает, `CLOUDPKG_STRICT`, `CLOUDPKG_FORCE`, `CLOUDPKG_KEEP` и `CLOUDPKG_INSTALL_URL` доезжают через sudo и doas
+- `cloudpkg/update.c`: обновление отменяется, если не удалось сохранить копию старого бинарника, сбой обновления конфигов выводится
+- `.github/workflows/ci.yml`: shellcheck, сборка cloudpkg с `-Werror`, тесты
+- `.github/workflows/iso.yml`: вход `overwrite`, перезапись релиза запрещена по умолчанию, информационная проверка загрузки iso через загрузчик, actions закреплены по sha
+- `tools/test-hardening.sh`: проверка под `CLOUDK_VERIFY`
+- `.github/workflows/autofix.yml`: удалён
+- версии по умолчанию: iso 2.3, база stage 3 1.6, cloudpkg 1.1.0. в `install.sh` остаётся stage 3 1.5 до выхода релиза 1.6
+
 ## cloudk 0.2: thinlto и динамическое вытеснение
 
 - `tools/kernel/build-cloudk.sh`: сборка через clang с thinlto (`LTO=thin`, по умолчанию в workflow), проверка clang, lld и llvm-утилит, остановка, если thinlto не включился
