@@ -58,4 +58,19 @@ create trigger zz_rl_reactions before insert on public.reactions for each row ex
 drop trigger if exists zz_rl_reports on public.reports;
 create trigger zz_rl_reports before insert on public.reports for each row execute function public.rl_guard('reports', '300', '3', '2', '3600', '10', '5');
 
+drop trigger if exists zz_rl_profile_comments on public.profile_comments;
+create trigger zz_rl_profile_comments before insert on public.profile_comments for each row execute function public.rl_guard('profile_comments', '60', '5', '2', '3600', '60', '20');
+
+drop trigger if exists zz_rl_likes on public.likes;
+create trigger zz_rl_likes before insert on public.likes for each row execute function public.rl_guard('likes', '60', '30', '10', '3600', '400', '100');
+
+drop trigger if exists zz_rl_helpful on public.helpful;
+create trigger zz_rl_helpful before insert on public.helpful for each row execute function public.rl_guard('helpful', '60', '20', '10', '3600', '200', '60');
+
+drop trigger if exists zz_rl_board_subs on public.board_subs;
+create trigger zz_rl_board_subs before insert on public.board_subs for each row execute function public.rl_guard('board_subs', '60', '10', '5', '3600', '60', '20');
+
+drop trigger if exists zz_rl_dm_pins on public.dm_pins;
+create trigger zz_rl_dm_pins before insert on public.dm_pins for each row execute function public.rl_guard('dm_pins', '60', '10', '5', '3600', '60', '20');
+
 commit;
