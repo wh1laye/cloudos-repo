@@ -22,4 +22,15 @@ grep -q "(https?:" "$F/app.js" || die "ссылки в сообщениях не
 pass "ссылки только http и https"
 grep -q 'zz_dm_block_guard' "$HERE/forum-dm-block.sql" && grep -q "dm_blocks" "$F/app.js" || die "блокировка в сообщениях не связана с sql"
 pass "блокировка: клиент и sql на месте"
+RL=$HERE/forum-ratelimit.sql
+for t in posts threads dms reactions reports; do
+  grep -q "create trigger zz_rl_$t before insert on public.$t " "$RL" || die "нет лимита частоты для $t"
+  grep -q "zz_rl_" "$HERE/forum-audit.sql" || die "аудит не проверяет лимиты"
+done
+pass "лимиты частоты: триггеры на всех таблицах записи"
+grep -q "security definer set search_path = public, pg_temp" "$RL" && grep -q "revoke all on function public.rl_guard()" "$RL" || die "rl_guard без search_path или с открытым execute"
+grep -q "alter table public.rl_log enable row level security" "$RL" && grep -q "revoke all on public.rl_log from anon, authenticated, public" "$RL" || die "rl_log не закрыта"
+pass "rl_guard и rl_log закрыты"
+grep -q "p.proname like 'admin" "$HERE/forum-audit.sql" || die "аудит не проверяет admin-функции"
+pass "аудит проверяет admin-функции"
 echo "всё прошло: $n проверок"
