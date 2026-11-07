@@ -1,0 +1,37 @@
+name: fetch-pack
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_tag:
+        description: тег релиза со stage 3
+        default: "1.6"
+      base_version:
+        description: версия stage 3
+        default: "1.6"
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: упаковка
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_TAG: ${{ inputs.base_tag }}
+          BASE_VERSION: ${{ inputs.base_version }}
+        run: |
+          case "$BASE_TAG$BASE_VERSION" in *[!0-9A-Za-z._-]*) echo "::error::неверная версия"; exit 1 ;; esac
+          bash -n tools/pack-fetch.sh
+          mkdir -p dl out
+          gh release download "$BASE_TAG" -p "cloudos-stage3-amd64-$BASE_VERSION.tar.xz*" -D dl
+          ( cd dl && sha256sum -c "cloudos-stage3-amd64-$BASE_VERSION.tar.xz.sha256" )
+          OUT="$PWD/out" bash tools/pack-fetch.sh "dl/cloudos-stage3-amd64-$BASE_VERSION.tar.xz" "$BASE_VERSION"
+          gh release upload "$BASE_TAG" out/* --clobber
