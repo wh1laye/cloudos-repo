@@ -7,6 +7,9 @@
 - `tools/forum-dump.sh`: выгрузка схемы `public` с политиками и триггерами через `pg_dump` в `tools/forum-schema.sql`, подключение через переменные `PG*`, пароль не попадает в аргументы
 - `tools/test-forum.sh`: проверки лимитов, закрытости `rl_guard` и `rl_log`, аудита admin-функций
 - `cloudpkg/update.c`: `update --unsigned` работает только в терминале и требует ввести `unsigned`, без терминала отказ
+- `tools/forum-lockdown.sql`: у `anon` отозваны все права на таблицы `public` кроме чтения нужных, `truncate`, `references`, `trigger` отозваны у `authenticated`, права по умолчанию для новых таблиц закрыты; у `anon` отозван `execute` на триггерные функции и на `admin_reset_profile`, `award_all`, `award_me`, `award_user`, `create_poll`, `edit_post`
+- `tools/forum-ratelimit.sql`: лимиты также на `profile_comments`, `likes`, `helpful`, `board_subs`, `dm_pins`
+- `tools/forum-audit.sql`: проверка admin-функций учитывает `is_admin()` и `has_perm()`, проверка прав `anon` и `truncate`
 - `cloudpkg/cloudpkg.c`: версия 1.1.1
 
 ## сайт: новая главная
