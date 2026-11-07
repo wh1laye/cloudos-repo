@@ -15,11 +15,13 @@ declare
   r record;
 begin
   for r in
-    select p.oid::regprocedure as sig, p.prorettype = 'trigger'::regtype as is_trg
+    select p.oid::regprocedure as sig, p.prorettype in ('trigger'::regtype, 'event_trigger'::regtype) as is_trg
     from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public'
-      and (p.prorettype = 'trigger'::regtype
-           or p.proname in ('admin_reset_profile', 'award_all', 'award_me', 'award_user', 'create_poll', 'edit_post'))
+      and (p.prorettype in ('trigger'::regtype, 'event_trigger'::regtype)
+           or p.proname in ('admin_reset_profile', 'award_all', 'award_me', 'award_user', 'create_poll', 'edit_post',
+                            'poll_vote', 'rp_mod', 'set_badge_rule', 'set_board_access', 'set_name', 'set_role',
+                            'set_tags', 'set_ui', 'update_my_profile'))
   loop
     execute format('revoke execute on function %s from public, anon', r.sig);
     if not r.is_trg then
