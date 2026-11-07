@@ -42,5 +42,5 @@ jobs:
       - name: тесты
         run: |
           for t in cloudpkg snapshots forum update-sign hardening; do
-            bash "tools/test-$t.sh"
+            sudo env "PATH=$PATH" bash "tools/test-$t.sh"
           done
