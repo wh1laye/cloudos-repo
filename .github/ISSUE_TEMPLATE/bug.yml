@@ -1,1 +1,26 @@
-
+name: ошибка
+description: что-то работает не так
+labels: [bug]
+body:
+  - type: input
+    id: ver
+    attributes:
+      label: версия iso или stage 3
+    validations:
+      required: true
+  - type: input
+    id: hw
+    attributes:
+      label: железо и режим загрузки (uefi или bios)
+  - type: textarea
+    id: steps
+    attributes:
+      label: шаги воспроизведения
+    validations:
+      required: true
+  - type: textarea
+    id: out
+    attributes:
+      label: что ожидал и что получил, вывод команд
+    validations:
+      required: true
