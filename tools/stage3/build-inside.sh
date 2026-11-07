@@ -35,8 +35,6 @@ PP=/etc/portage/profile/package.provided; VDB=/var/db/pkg; PTMP=/var/tmp/portage
 mkdir -p "$L"
 
 
-# профиль gentoo 23.0 кладёт библиотеки в /usr/lib64, а у lfs они лежат в /usr/lib и загрузчик /usr/lib64 не знает.
-# делаем /usr/lib64 ссылкой на lib: пакеты portage попадают туда, где их видят ld.so, gcc и pkgconf
 do_libdir() {
   if [ -L /usr/lib64 ]; then say "/usr/lib64 уже ссылка на $(readlink /usr/lib64)"; return 0; fi
   if [ -d /usr/lib64 ]; then
@@ -48,15 +46,12 @@ do_libdir() {
   say "/usr/lib64 -> lib"
 }
 
-# настоящий gnuconfig вместо записи в package.provided (у lfs нет /usr/share/gnuconfig, а ebuild-ы берут оттуда
-# config.guess и config.sub), свежий make.conf без parallel-fetch и multilib-strict
 do_tune() {
   sed -i '/^sys-devel\/gnuconfig-/d' "$PP"
   install -m644 /var/tmp/cloudpkg-src/etc/portage/make.conf /etc/portage/make.conf
   grep -q -- '-multilib-strict' /etc/portage/make.conf || { echo "!! в make.conf нет -multilib-strict" >&2; return 1; }
 }
 
-# cloudpkg из текущих исходников репозитория (нужно при RESUME=1, когда старый уже стоит). раст, если есть cargo
 do_cloudpkg() {
   cd /var/tmp/cloudpkg-src
   make clean
@@ -213,7 +208,6 @@ have_pkg() {
   awk -v a="$1-" 'index($0, a) == 1 { f = 1 } END { exit !f }' /etc/portage/profile/package.provided
 }
 
-# в gentoo этот скрипт ставит их пакет meson, а у нас meson собран вручную. без него падают все meson-пакеты
 do_meson_helper() {
   command -v meson-format-array >/dev/null && return 0
   cat > /usr/bin/meson-format-array <<'EOH'
@@ -226,9 +220,6 @@ EOH
   [ "$(meson-format-array "-O2 -pipe")" = "['-O2', '-pipe']" ] || { echo "meson-format-array работает неверно" >&2; return 1; }
 }
 
-# фишки gentoo, которые portage подтягивает зависимостями, а у нас им не место: записываем как уже стоящие.
-# gentoo-functions не собирается (meson не видит ninja), а обёртки autoconf и automake затёрли бы
-# настоящие autoconf и automake из lfs
 do_machinery() {
   local n PP=/etc/portage/profile/package.provided
   {
@@ -236,14 +227,11 @@ do_machinery() {
     echo dev-build/autoconf-wrapper-99999999
     echo dev-build/automake-wrapper-99999999
     echo dev-build/meson-format-array-99
-    # app-alternatives кладут ссылки поверх настоящих файлов (ninja, awk, sh...) и ломают систему
     for n in awk bc bzip2 cpio gpg gzip lex ninja sh tar yacc zstd; do echo "app-alternatives/$n-99"; done
   } | while read -r n; do grep -qxF "$n" "$PP" || echo "$n" >> "$PP"; done
-  # скрипты gentoo иногда подключают /lib/gentoo/functions.sh: даём лёгкую замену
   if [ ! -e /lib/gentoo/functions.sh ]; then
     install -d /lib/gentoo
     cat > /lib/gentoo/functions.sh <<'EOS'
-# замена gentoo-functions для cloudos
 einfo()  { printf ' * %s\n' "$*"; }
 einfon() { printf ' * %s' "$*"; }
 ewarn()  { printf ' * %s\n' "$*" >&2; }
@@ -256,7 +244,6 @@ eoutdent() { :; }
 yesno() { case ${1:-} in [Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|[Oo][Nn]|1) return 0 ;; *) return 1 ;; esac; }
 EOS
   fi
-  # libxml2: meson не находит readline через pkg-config, а он нужен только для xmllint --shell
   if [ -d /etc/portage/package.use ]; then
     echo 'dev-libs/libxml2 -readline' >> /etc/portage/package.use/cloudos
   else
@@ -264,8 +251,6 @@ EOS
   fi
 }
 
-# portage умеет затирать ninja и meson-format-array (ссылки app-alternatives и т.п.).
-# держим запасные копии и возвращаем файлы на место, записывая, после какого пакета это случилось
 KEEP=/usr/lib/cloudos-keep
 keep_helpers() {
   local f
@@ -286,7 +271,6 @@ restore_helpers() {
   done
 }
 
-# проверка, что инструменты сборки живы. при поломке показываем, что именно сказала команда
 tools_ok() {
   local bad="" t out
   hash -r
@@ -304,9 +288,6 @@ tools_ok() {
 
 STRIPV='s/-[0-9]+(\.[0-9]+)*[a-z]?(_(alpha|beta|pre|rc|p)[0-9]*)*(-r[0-9]+)?$//'
 
-# portage иногда хочет пересобрать то, что уже стоит из lfs (из-за новых версий и флагов abi).
-# смотрим план: если в нём пакет, который у нас уже есть (package.provided) или фишка gentoo,
-# записываем его как установленный и не пересобираем
 provide_planned() {
   local a=$1 PP=/etc/portage/profile/package.provided p name ok changed
   for _ in 1 2 3 4; do
@@ -328,15 +309,12 @@ provide_planned() {
   return 0
 }
 
-# убирает цветовые коды из лога portage
 clean_log() { sed 's/\x1b\[[0-9;]*[A-Za-z]//g' "$1"; }
 
-# пакеты, которые упали в логе: "категория/пакет-версия фаза"
 failed_in_log() {
   clean_log "$1" | sed -nE 's/.*ERROR: ([^ ]+)::[^ ]+ failed \(([a-z-]+) phase\).*/\1 \2/p' | awk '!s[$0]++' || true
 }
 
-# настоящая причина падения: кусок build.log самого упавшего пакета вокруг строки ERROR
 show_failure() {
   local pf=$1 phase=$2 bl n
   bl="$PTMP/$pf/temp/build.log"
@@ -366,7 +344,6 @@ report_failure() {
   echo "   (полный лог: $lg)"
 }
 
-# одна строка причины на каждый упавший пакет, для итога в github actions
 cause_of() {
   local pf=$1 bl="$PTMP/$1/temp/build.log"
   [ -s "$bl" ] || return 0
@@ -385,7 +362,6 @@ show_plan() {
   fi
 }
 
-# build-docbook-catalog в postinst зовёт getopt-long, которого в lfs нет: пакет вставал, но postinst падал и portage выкидывал всё, что от него зависит (pam, pambase...)
 ensure_getopt_long() {
   command -v getopt-long >/dev/null && return 0
   command -v getopt >/dev/null || { echo "!! нет getopt из util-linux" >&2; return 1; }
@@ -413,7 +389,6 @@ apply_fix() {
   return "$did"
 }
 
-# один пакет через cloudpkg: до трёх попыток, между ними apply_fix
 install_one() {
   local a=$1 lg=$2 try=1
   while :; do
@@ -426,7 +401,6 @@ install_one() {
   done
 }
 
-# scanelf из pax-utils нужен самому portage (без него estrip и проверки ругаются)
 do_paxutils() {
   keep_helpers
   command -v scanelf >/dev/null && return 0
@@ -452,8 +426,6 @@ preflight() {
   grep -E '^(Portage |System uname|ABI=|LIBDIR_amd64|CHOST=|ACCEPT_KEYWORDS=|FEATURES=|MAKEOPTS=)' "$L/emerge-info.txt" | cut -c1-200 || true
 }
 
-# в package.provided был записан sys-libs/pam, но в lfs его нет (shadow собран без pam): нет pam_appl.h, падают passwdqc, pambase, openssh.
-# убираем запись и ставим настоящий pam через cloudpkg
 do_pam() {
   ensure_getopt_long || return 1
   sed -i '/^sys-libs\/pam-/d' "$PP"
@@ -464,7 +436,6 @@ do_pam() {
   ls /usr/lib/libpam.so* >/dev/null 2>&1 || { echo "!! нет libpam.so" >&2; return 1; }
 }
 
-# ebuild-ы с архивами .tar.lz (timezone-data) зовут lzip, а его в lfs нет: unpacker падает с "-dc: command not found"
 do_lzip() {
   ensure_getopt_long || return 1
   restore_helpers "перед lzip"
@@ -499,9 +470,6 @@ do_elfutils() {
   pkg-config --exists libdw || { echo "!! нет libdw.pc после elfutils" >&2; return 1; }
 }
 
-# весь набор пакетов из gentoo stage 3 (кроме пакетного менеджера и фишек gentoo, см. gentoo-exclude.txt).
-# один пакет не собрался: показываем настоящую причину, идём дальше, в конце вторая попытка для упавших.
-# итог в конце (с STRICT=1 это ошибка сборки, без неё шаг остаётся "не до конца" и при RESUME=1 повторится)
 do_gentoo_set() {
   local rep=/var/tmp/cloudos-report.txt a bad lg n=0 ok=0 have=0 skip=0 fail=0
   local failed=() again=()
@@ -613,7 +581,6 @@ do_lazyvim() {
   nvim --headless +qa || { echo "lazyvim: nvim не запускается" >> /var/tmp/cloudos-report.txt; touch "$ST/lazyvim.partial"; }
 }
 
-# проверка готового корня: всё, что нужно, чтобы система загрузилась и работала
 do_verify() {
   local bad=0 f miss
   for f in /sbin/init /sbin/openrc-init /sbin/openrc /etc/init.d/syslog-ng /etc/runlevels/default/syslog-ng \
@@ -660,7 +627,6 @@ do_verify() {
   syslog-ng -s -f /etc/syslog-ng/syslog-ng.conf || { echo "!! конфиг syslog-ng не проходит проверку"; bad=1; }
   fastfetch --version || bad=1
   tools_ok || { echo "!! сломаны инструменты сборки"; bad=1; }
-  # у программ не должно быть потерянных библиотек (так ловится беда с /usr/lib64)
   miss=$(for f in /usr/bin/* /usr/sbin/*; do
     [ -f "$f" ] && [ ! -L "$f" ] || continue
     head -c4 "$f" 2>/dev/null | grep -q ELF || continue

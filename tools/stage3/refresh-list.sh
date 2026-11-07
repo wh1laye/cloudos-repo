@@ -1,8 +1,4 @@
 #!/bin/bash
-# собирает gentoo-stage3.list из настоящего stage 3 gentoo (amd64 openrc): читает список
-# установленных пакетов (var/db/pkg) прямо из архива, убирает версии и то, что в gentoo-exclude.txt.
-# нужна сеть, скачивается около 250 мб (в файл не сохраняется). запуск:
-#   tools/stage3/refresh-list.sh [файл-результат]
 set -eu -o pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 MIRROR=${GENTOO_MIRROR:-https://distfiles.gentoo.org}
