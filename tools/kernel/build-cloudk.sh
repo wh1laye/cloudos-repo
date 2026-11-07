@@ -82,7 +82,7 @@ CLOUDK_BORE=0
 case "$CLOUDK_PATCHES" in *bore*) CLOUDK_BORE=1 ;; esac
 for p in $CLOUDK_PATCHES; do
   if ! patch -p1 --dry-run -s < "$p" >/dev/null 2>&1; then
-    patch -p1 --dry-run < "$p" 2>&1 | grep -E '^(patching file|Hunk|[0-9]+ out of)' | grep -B1 -E 'FAILED|out of' >&2 || true
+    patch -p1 --dry-run < "$p" 2>&1 | awk '/^(patching|checking) file/ { f = $3 } /FAILED/ { print "не легло: " f ": " $0 }' >&2 || true
     die "патч $(basename "$p") не накладывается на $KVER, возьми версию ядра, под которую сделан патч"
   fi
   patch -p1 -s < "$p"

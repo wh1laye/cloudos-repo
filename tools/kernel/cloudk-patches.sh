@@ -1,12 +1,35 @@
 CLOUDK_PATCH_URL=${CLOUDK_PATCH_URL:-https://raw.githubusercontent.com/CachyOS/kernel-patches}
-CLOUDK_PATCH_API=${CLOUDK_PATCH_API:-https://api.github.com/repos/CachyOS/kernel-patches/commits/master}
-CLOUDK_PATCH_PROTO=${CLOUDK_PATCH_PROTO:-=https}
 CLOUDK_PATCH_LIST=${CLOUDK_PATCH_LIST:-https://api.github.com/repos/CachyOS/kernel-patches/commits}
+CLOUDK_PATCH_PROTO=${CLOUDK_PATCH_PROTO:-=https}
 CLOUDK_PATCH_UNTIL=${CLOUDK_PATCH_UNTIL:-}
+CLOUDK_PATCH_DEPTH=${CLOUDK_PATCH_DEPTH:-30}
 CLOUDK_PIN=${CLOUDK_PIN:-0}
 CLOUDK_PATCHES=""
 
 cloudk_pcurl() { curl -fL --proto "$CLOUDK_PATCH_PROTO" --retry 3 --connect-timeout 20 -sS "$@"; }
+
+cloudk_pick_ref() {
+  local first=$1 url c n=0 tried=0
+  url="$CLOUDK_PATCH_LIST?path=$first&per_page=$CLOUDK_PATCH_DEPTH"
+  if [ -n "$CLOUDK_PATCH_UNTIL" ]; then
+    case $CLOUDK_PATCH_UNTIL in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) die "patches_until: гггг-мм-дд" ;; esac
+    url="$url&until=${CLOUDK_PATCH_UNTIL}T23:59:59Z"
+  fi
+  mkdir -p "$WORK"
+  cloudk_pcurl -o "$WORK/commits.json" "$url" || die "не получен список коммитов патча"
+  grep -Eo '^ {4}"sha": *"[0-9a-f]{40}"' "$WORK/commits.json" | sed 's/.*"\([0-9a-f]\{40\}\)".*/\1/' > "$WORK/commits.sha" || die "нет коммитов патча"
+  [ -s "$WORK/commits.sha" ] || die "нет коммитов патча"
+  while read -r c; do
+    tried=$((tried + 1))
+    cloudk_pcurl -o "$WORK/probe.patch" "$CLOUDK_PATCH_URL/$c/$first" || continue
+    if patch -p1 --dry-run -s < "$WORK/probe.patch" >/dev/null 2>&1; then
+      say "патч из коммита $c ложится на $KVER (проверено коммитов: $tried)"
+      CLOUDK_PICKED=$c
+      return 0
+    fi
+  done < "$WORK/commits.sha"
+  die "ни один из $tried последних коммитов патча $first не ложится на $KVER, возьми другую версию ядра"
+}
 
 cloudk_fetch_patches() {
   local lock=$HERE/patches.lock dir=$WORK/patches-fetched newlock=$WORK/patches.lock.new
@@ -17,19 +40,11 @@ cloudk_fetch_patches() {
   ref=$(awk '$1 == "ref" { print $2 }' "$lock")
   if [ -z "$ref" ]; then
     [ "$CLOUDK_PIN" = 1 ] || die "в $lock не закреплён коммит патчей, запусти сборку с pin_patches"
-    if [ -n "$CLOUDK_PATCH_UNTIL" ]; then
-      case $CLOUDK_PATCH_UNTIL in [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ;; *) die "patches_until: гггг-мм-дд" ;; esac
-      first=$(awk '$1 != "ref" && $1 != "" { print $2; exit }' "$lock")
-      first=${first//@KMM@/$kmm}
-      case $first in ''|/*|*..*|*[!0-9A-Za-z._/-]*) die "в $lock нет пути патча" ;; esac
-      mkdir -p "$WORK"
-      cloudk_pcurl -o "$WORK/commits.json" "$CLOUDK_PATCH_LIST?path=$first&until=${CLOUDK_PATCH_UNTIL}T23:59:59Z&per_page=1" || die "не получен список коммитов патча"
-      grep -o '"sha": *"[0-9a-f]\{40\}"' "$WORK/commits.json" > "$WORK/commits.sha" || die "нет коммитов патча до $CLOUDK_PATCH_UNTIL"
-      ref=$(sed -n 's/.*"\([0-9a-f]\{40\}\)".*/\1/;1p' "$WORK/commits.sha")
-      say "коммит патча на $CLOUDK_PATCH_UNTIL: $ref"
-    else
-      ref=$(cloudk_pcurl -H 'Accept: application/vnd.github.sha' "$CLOUDK_PATCH_API") || die "не получен коммит патчей"
-    fi
+    first=$(awk '$1 != "ref" && $1 != "" { print $2; exit }' "$lock")
+    first=${first//@KMM@/$kmm}
+    case $first in ''|/*|*..*|*[!0-9A-Za-z._/-]*) die "в $lock нет пути патча" ;; esac
+    cloudk_pick_ref "$first"
+    ref=$CLOUDK_PICKED
   fi
   case $ref in *[!0-9a-f]*) die "неверный коммит патчей" ;; esac
   [ "${#ref}" = 40 ] || die "неверный коммит патчей"
