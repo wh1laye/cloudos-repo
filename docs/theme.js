@@ -2,9 +2,9 @@
   var d=document,h=d.documentElement,K='theme';
   var TK='uits';
   var LT={light:1,sepia:1};
-  var BG={light:'#f6f8fc',gray:'#1a1c20',night:'#000000',nord:'#2e3440',dracula:'#282a36',sepia:'#f4ecd8',matrix:'#020a04',amber:'#140c02'};
+  var BG={light:'#f6f8fc',gray:'#1a1c20',night:'#000000',nord:'#2e3440',dracula:'#282a36',sepia:'#f4ecd8',matrix:'#020a04',amber:'#140c02',glass:'#0a1424'};
   var SEC={matrix:1,amber:1};
-  var NM={night:'ночь',nord:'норд',dracula:'дракула',sepia:'сепия',matrix:'матрица',amber:'янтарь'};
+  var NM={night:'ночь',nord:'норд',dracula:'дракула',sepia:'сепия',matrix:'матрица',amber:'янтарь',glass:'стекло'};
   function secOn(){try{return localStorage.getItem('sec')==='1'}catch(e){return false}}
   function valid(t){return typeof t==='string'&&BG.hasOwnProperty(t)&&(!SEC[t]||secOn())}
   function touch(){try{localStorage.setItem(TK,String(Date.now()))}catch(e){}}
@@ -32,7 +32,7 @@
     'фон сайта':'site background','включить градиент фона':'enable background gradient',
     'угол':'angle','норд':'nord','дракула':'dracula','пресеты':'presets','включить светлую тему':'switch to light theme',
     'включить серую тему':'switch to gray theme','светлая тема':'light theme','серая тема':'gray theme',
-    'авто':'auto','чтение':'reading','размер текста':'text size','обычный':'normal','крупнее':'larger','ещё крупнее':'largest','высокий контраст':'high contrast','только команды в справочнике':'commands only in the handbook','предпросмотр':'preview','кнопка':'button','ночь':'night','сепия':'sepia','матрица':'matrix','янтарь':'amber'
+    'авто':'auto','чтение':'reading','размер текста':'text size','обычный':'normal','крупнее':'larger','ещё крупнее':'largest','высокий контраст':'high contrast','только команды в справочнике':'commands only in the handbook','предпросмотр':'preview','кнопка':'button','ночь':'night','сепия':'sepia','матрица':'matrix','янтарь':'amber','стекло':'glass'
   };
   function lang(){
     try{var l=localStorage.getItem('lang');if(l==='ru'||l==='en')return l}catch(e){}
@@ -151,7 +151,7 @@
     light:[['#dbeafe','#f4f8fd',160],['#e6f4ea','#f6faf7',160],['#fde8d8','#fbf6f1',160],['#ece4fb','#f7f4fd',160]],
     gray:[['#1f2a3d','#1a1c20',160],['#1e2f27','#1a1c20',160],['#33232b','#1a1c20',160],['#2b2540','#1a1c20',160]]
   };
-  BPRE.night=BPRE.nord=BPRE.dracula=BPRE.matrix=BPRE.amber=BPRE.gray;BPRE.sepia=BPRE.light;
+  BPRE.night=BPRE.nord=BPRE.dracula=BPRE.matrix=BPRE.amber=BPRE.glass=BPRE.gray;BPRE.sepia=BPRE.light;
   function rdGet(){var o={};try{o=JSON.parse(localStorage.getItem('rd'))||{}}catch(e){}return{fs:+o.fs>=0&&+o.fs<=2?+o.fs:0,hc:o.hc?1:0,cmd:o.cmd?1:0}}
   function rdApply(o){
     if(o.fs)h.setAttribute('data-fs',String(o.fs));else h.removeAttribute('data-fs');
@@ -182,7 +182,7 @@
     var n=e.target;
     if(n&&n.getAttribute&&n.getAttribute('data-rk'))rdSet(function(){var o={};o[n.getAttribute('data-rk')]=n.checked?1:0;return o}());
   });
-  function extra(){var o='',k,L=['night','nord','dracula','sepia'];if(secOn())L=L.concat(['matrix','amber']);for(k=0;k<L.length;k++)o+='<button type="button" data-th="'+L[k]+'">'+T(NM[L[k]])+'</button>';return o}
+  function extra(){var o='',k,L=['night','nord','dracula','sepia','glass'];if(secOn())L=L.concat(['matrix','amber']);for(k=0;k<L.length;k++)o+='<button type="button" data-th="'+L[k]+'">'+T(NM[L[k]])+'</button>';return o}
   function build(){
     var i,x='';
     x+='<div class="spb" role="dialog" aria-modal="true" aria-label="'+T('настройки')+'">';

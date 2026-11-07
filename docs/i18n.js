@@ -1,7 +1,7 @@
 (function(){
 var d=document,h=d.documentElement;
 var D={
-"главная":"home","справочник":"handbook","новое":"news","форум":"forum","релизы":"releases","пакеты":"packages","железо":"hardware","поиск":"search","сообщения":"messages","уведомления":"notifications","поиск по справочнику":"search the handbook","мои значения":"my values","настройки":"settings",
+"пройден":"done","убрать пройден":"unmark done","стекло":"glass","главная":"home","справочник":"handbook","новое":"news","форум":"forum","релизы":"releases","пакеты":"packages","железо":"hardware","поиск":"search","сообщения":"messages","уведомления":"notifications","поиск по справочнику":"search the handbook","мои значения":"my values","настройки":"settings",
 "© 2026 wh1laye. лицензия mit.":"© 2026 wh1laye. mit license.","лицензия mit":"mit license","рецепты пакетов основаны на gentoo (gpl-2).":"package recipes are based on gentoo (gpl-2).",
 "что уже готово, что в работе и что планируется. сроков нет, проект делается по мере готовности.":"what is done, what is in progress and what is planned. there are no deadlines, the project is made as it gets ready.",
 "готово":"done","в работе":"in progress","в планах":"planned","возможно":"maybe",
