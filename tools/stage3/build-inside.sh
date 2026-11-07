@@ -2,7 +2,7 @@
 set -euE
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 export CFLAGS="-O2 -pipe" CXXFLAGS="-O2 -pipe"
-VERSION=${1:-1.5}
+VERSION=${1:-1.6}
 STRICT=${2:-0}
 L=/var/tmp/s3log; S=/var/tmp/s3src; F=/var/tmp/s3files; B=/var/tmp/s3build; J=$(nproc)
 say() { printf '==> %s\n' "$*"; }
