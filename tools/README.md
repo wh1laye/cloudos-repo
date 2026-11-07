@@ -45,7 +45,7 @@
 - `BASE`: ссылка или путь к stage 3 (по умолчанию релиз `$VERSION` этого репозитория)
 - `VERSION`: версия (по умолчанию 2.3)
 - `KVER`: версия ванильного ядра, на котором собран cloudk (по умолчанию 6.18.10)
-- `CLOUDK_VER`: версия ядра cloudk (по умолчанию 0.1)
+- `CLOUDK_VER`: версия ядра cloudk (по умолчанию 0.3)
 - `CLOUDK_TAG`: тег релиза с ядром (по умолчанию `cloudk-$CLOUDK_VER`)
 - `CLOUDK`: ссылка или папка с файлами ядра cloudk (по умолчанию релиз `$CLOUDK_TAG` этого репозитория)
 - `CLOUDK_VERIFY`: 1 проверяет подпись minisign и sha256 ядра (по умолчанию), 0 отключает подпись
@@ -115,7 +115,7 @@ minisign -G -p docs/cloudos.pub -s cloudos.key
 
 ## ядро cloudk
 
-`tools/kernel/build-cloudk.sh` собирает ядро cloudk отдельно от iso: берёт `linux-$KVER` с kernel.org (sha256 по `sha256sums.asc` и подпись gpg), накладывает патчи из `tools/kernel/patches/*.patch` (если папка есть), применяет конфиг из `tools/kernel/cloudk-config.sh` и собирает. любая обязательная опция, которая не встала, и любая ошибка останавливают сборку. необязательные опции, которые не встали, попадают в `cloudk-<версия>-<march>-missing.txt`.
+`tools/kernel/build-cloudk.sh` собирает ядро cloudk отдельно от iso: берёт `linux-$KVER` с kernel.org (sha256 по `sha256sums.asc` и подпись gpg), накладывает патчи из `tools/kernel/patches/*.patch` (если папка есть), подключает слой форка `tools/kernel/cloudk-source.sh` (свой код `security/cloudk` и значения по умолчанию в исходниках), применяет конфиг из `tools/kernel/cloudk-config.sh` и собирает. любая обязательная опция, которая не встала, и любая ошибка останавливают сборку. необязательные опции, которые не встали, попадают в `cloudk-<версия>-<march>-missing.txt`.
 
 результат в `OUT`: `cloudk-<версия>-<march>-vmlinuz`, `-modules.tar.zst`, `-config`, `.sha256`. в github actions это workflow `cloudk` (релиз `cloudk-<версия>`, файлы подписываются minisign), затем `iso` берёт ядро из этого релиза.
 

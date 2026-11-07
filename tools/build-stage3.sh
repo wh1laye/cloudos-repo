@@ -42,8 +42,6 @@ else
 fi
 grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на stage 3 cloudos"
 
-# REFRESH_LIST: 1 (по умолчанию) берёт список из настоящего stage 3 gentoo и запоминает его в $WORK,
-# force скачивает заново, 0 берёт список из репозитория. при ошибке сети остаётся список из репозитория
 REFRESH_LIST=${REFRESH_LIST:-1}
 if [ "$REFRESH_LIST" != 0 ]; then
   if [ "$REFRESH_LIST" != force ] && [ -s "$WORK/gentoo-stage3.list" ]; then
