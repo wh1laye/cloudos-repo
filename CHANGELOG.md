@@ -1,5 +1,13 @@
 # changelog
 
+## cloudk: патчи cachyos (bore), закрепление хэшей
+
+- `tools/kernel/cloudk-patches.sh`: скачивает патчи по `tools/kernel/patches.lock` с закреплённого коммита cachyos/kernel-patches, проверяет sha256, путь `@KMM@` заменяется на мажор.минор ядра, без закреплённого коммита или хэша сборка останавливается
+- `tools/kernel/patches.lock`: ref пустой, один патч `sched/0001-bore-cachy.patch`; хэши закрепляются первым запуском cloudk с `pin_patches`
+- `tools/kernel/build-cloudk.sh`: скачанные патчи накладываются перед локальными из `tools/kernel/patches/`, при патче bore включается и проверяется `SCHED_BORE`
+- `.github/workflows/cloudk.yml`: вход `pin_patches` (без публикации, итоговый `patches.lock` выводится в summary)
+- `.github/workflows/ci.yml`, `tools/test-kernel-patches.sh`: тест закрепления, проверки хэша, пути и применения патча на локальном http-сервере
+
 ## cloudpkg 1.2.0, stage 3: проверка подписей
 
 - `cloudpkg/update.c`: `gpg_verify` проверяет подпись через gpg во временной папке, принимает только закреплённые отпечатки (`VALIDSIG`), отвергает `BADSIG`, `ERRSIG`, просроченные и отозванные ключи
