@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1a1c20">
-<link rel="alternate" type="application/rss+xml" title="cloudos: новое" href="../../rss.xml">
-<link rel="alternate" type="application/atom+xml" title="cloudos: релизы" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
+<link rel="alternate" type="application/rss+xml" title="cloudos: news" href="../../rss.xml">
+<link rel="alternate" type="application/atom+xml" title="cloudos: releases" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
 <meta name="description" content="installing cloudos from the live iso: one command or by hand, first steps, packages and fixes">
 <link rel="icon" href="../../icon.svg" type="image/svg+xml">
 <link rel="icon" href="../../favicon.ico" sizes="48x48">
@@ -51,12 +51,12 @@
 <h2 id="about">1. about cloudos</h2>
 <p>cloudos is a fast hardened x86_64 linux: openrc, vanilla kernel, limine, packages built from source with cloudpkg. it installs from the live iso with one command and boots to a plain console.</p>
 <div class="sc"><table><tr><th>parameter</th><th>value</th></tr>
-<tr><td>архитектура</td><td>x86_64</td></tr>
+<tr><td>architecture</td><td>x86_64</td></tr>
 <tr><td>libc</td><td>glibc</td></tr>
 <tr><td>init</td><td>openrc</td></tr>
 <tr><td>vanilla kernel from kernel.org, disk drivers built in, no initramfs needed</td></tr>
-<tr><td>загрузчик</td><td>limine</td></tr>
-<tr><td>файловые системы</td><td>ext4 and btrfs (zstd)</td></tr>
+<tr><td>bootloader</td><td>limine</td></tr>
+<tr><td>filesystems</td><td>ext4 and btrfs (zstd)</td></tr>
 <tr><td>packages</td><td>from source only, the <code>cloudpkg</code> command</td></tr>
 </table></div>
 <h3 id="s1-1">1.1 requirements</h3>
@@ -93,7 +93,7 @@
 <p>the install itself needs no network. wired comes up by itself. wifi:</p>
 <pre><code>doas iwctl station wlan0 scan
 doas iwctl station wlan0 get-networks
-doas iwctl station wlan0 connect имя_сети</code></pre>
+doas iwctl station wlan0 connect network_name</code></pre>
 <pre><code>ip addr
 ping -c1 github.com</code></pre>
 <h2 id="quick">3. one-command install</h2>
@@ -138,7 +138,7 @@ cp /media/cdrom/boot/vmlinuz /mnt/cloudos/boot/vmlinuz</code></pre>
 <h3 id="s4-4">4.4 fstab</h3>
 <pre><code>blkid /dev/sda1 /dev/sda2</code></pre>
 <p>take the UUID and PARTUUID values from the output. file <code>/mnt/cloudos/etc/fstab</code>:</p>
-<pre><code>UUID=UUID_КОРНЯ / ext4 noatime,errors=remount-ro 0 1
+<pre><code>UUID=ROOT_UUID / ext4 noatime,errors=remount-ro 0 1
 UUID=UUID_BOOT /boot vfat umask=0077,noatime 0 2
 tmpfs /tmp tmpfs nosuid,nodev,mode=1777 0 0</code></pre>
 <h3 id="s4-5">4.5 limine bootloader</h3>
@@ -150,7 +150,7 @@ nano /mnt/cloudos/boot/limine/limine.conf</code></pre>
 /CloudOS
     protocol: linux
     path: boot():/vmlinuz
-    cmdline: root=PARTUUID=PARTUUID_КОРНЯ rootfstype=ext4 rw quiet slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1</code></pre>
+    cmdline: root=PARTUUID=PARTROOT_UUID rootfstype=ext4 rw quiet slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1</code></pre>
 <div class="m-uefi"><pre><code>mkdir -p /mnt/cloudos/boot/EFI/BOOT
 cp /usr/share/limine/BOOTX64.EFI /usr/share/limine/BOOTIA32.EFI /mnt/cloudos/boot/EFI/BOOT/</code></pre>
 </div>
@@ -166,8 +166,8 @@ chroot /mnt/cloudos /bin/bash</code></pre>
 <p>inside the chroot remove live leftovers, create the user and passwords:</p>
 <pre><code>rm -f /etc/init.d/cloudos-smoke /etc/runlevels/default/cloudos-smoke /etc/conf.d/agetty.tty1 /etc/ssh/sshd_config.d/05-cloudos-live.conf
 userdel -r cloudos
-useradd -m -G wheel,users,video,audio,netdev -s /bin/bash имя
-passwd имя
+useradd -m -G wheel,users,video,audio,netdev -s /bin/bash name
+passwd name
 passwd
 echo "permit persist :wheel" &gt; /etc/doas.conf
 chmod 600 /etc/doas.conf
@@ -186,7 +186,7 @@ doas ln -sfv /usr/share/zoneinfo/Europe/Moscow /etc/localtime
 date</code></pre>
 <h3 id="s5-3">5.3 network</h3>
 <p>dhcpcd gets an address by itself. for wifi:</p>
-<pre><code>doas iwctl station wlan0 connect имя_сети
+<pre><code>doas iwctl station wlan0 connect network_name
 ip addr</code></pre>
 <p>a static address goes into <code>/etc/dhcpcd.conf</code>.</p>
 <h3 id="s5-4">5.4 services and firewall</h3>
@@ -211,10 +211,10 @@ doas swapon /swapfile</code></pre>
 <h2 id="cpkg">6. packages and cloudpkg</h2>
 <p>cloudpkg builds packages from source using gentoo based recipes.</p>
 <pre><code>doas cloudpkg sync
-cloudpkg search имя
-cloudpkg info имя
-doas cloudpkg install имя
-doas cloudpkg remove имя
+cloudpkg search name
+cloudpkg info name
+doas cloudpkg install name
+doas cloudpkg remove name
 doas cloudpkg upgrade
 doas cloudpkg clean</code></pre>
 <p>if a package fails, read the last log lines and look in <a href="#errors">errors and fixes</a>. builds need free space in <code>/var/tmp</code> and enough ram.</p>
@@ -251,9 +251,9 @@ df -h</code></pre>
 <div class="sc"><table><tr><th>command</th><th>what it does</th></tr>
 <tr><td><code>doas cloudos-install</code></td><td>install to disk</td></tr>
 <tr><td><code>doas -s</code></td><td>root shell</td></tr>
-<tr><td><code>cloudpkg install имя</code></td><td>install a package</td></tr>
+<tr><td><code>cloudpkg install name</code></td><td>install a package</td></tr>
 <tr><td><code>rc-update show</code></td><td>services by runlevel</td></tr>
-<tr><td><code>rc-service имя restart</code></td><td>restart a service</td></tr>
+<tr><td><code>rc-service name restart</code></td><td>restart a service</td></tr>
 <tr><td><code>cloudos-firewall status</code></td><td>firewall state</td></tr>
 <tr><td><code>cloudos-audit</code></td><td>security settings check</td></tr>
 <tr><td><code>iwctl</code></td><td>wifi</td></tr>
