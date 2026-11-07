@@ -2,16 +2,16 @@
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-VERSION=${VERSION:-2.2}
+VERSION=${VERSION:-2.3}
 KVER=${KVER:-6.18.10}
 MARCH=${MARCH:-x86-64}
-BASE_TAG=${BASE_TAG:-1.5}
+BASE_TAG=${BASE_TAG:-1.6}
 CLOUDK_VER=${CLOUDK_VER:-0.2}
 CLOUDK_TAG=${CLOUDK_TAG:-cloudk-$CLOUDK_VER}
 CLOUDK=${CLOUDK:-https://github.com/wh1laye/cloudos-repo/releases/download/$CLOUDK_TAG}
 CLOUDK_VERIFY=${CLOUDK_VERIFY:-1}
 PUB=${PUB:-$(dirname "$HERE")/docs/cloudos.pub}
-BASE_VERSION=${BASE_VERSION:-1.5}
+BASE_VERSION=${BASE_VERSION:-1.6}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-iso-build}
 OUT=${OUT:-$PWD}
