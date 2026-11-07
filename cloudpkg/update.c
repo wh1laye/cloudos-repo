@@ -110,6 +110,19 @@ int cmd_update(int argc, char **argv)
 	}
 	if (!need_root())
 		return 1;
+	if (unsigned_ok) {
+		char ans[16];
+
+		if (!isatty(0)) {
+			fprintf(stderr, "cloudpkg: --unsigned работает только в интерактивном терминале\n");
+			return 1;
+		}
+		fprintf(stderr, "cloudpkg: --unsigned скачает %s (%s) без проверки подписи, соберёт и запустит код от root\nвведи unsigned, чтобы продолжить: ", repo_id, br);
+		if (!fgets(ans, sizeof ans, stdin) || strcmp(ans, "unsigned\n")) {
+			fprintf(stderr, "cloudpkg: отменено\n");
+			return 1;
+		}
+	}
 	for (i = 0; i < 4; i++) {
 		static const char *need[] = {"curl", "tar", "make", "gcc"};
 		if (!have(need[i])) {
