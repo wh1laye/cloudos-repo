@@ -1,0 +1,3 @@
+config SECURITY_CLOUDK
+	bool "cloudk fork identity and /proc/cloudk"
+	default y
