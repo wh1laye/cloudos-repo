@@ -53,6 +53,11 @@ jobs:
         run: |
           case "$VERSION" in ''|*[!0-9A-Za-z._-]*) echo "::error::неверная версия"; exit 1 ;; esac
 
+      - name: зависимости проверок и сборки
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq minisign gnupg
+
       - name: проверка скриптов и cloudpkg
         run: |
           for f in tools/build-stage3.sh tools/test-cloudpkg.sh tools/stage3/*.sh tools/stage3/cloudos-adduser tools/stage3/neofetch tools/stage3/cloudos-firewall tools/stage3/cloudos-audit tools/test-firewall.sh tools/test-forum.sh cloudpkg/*.sh; do bash -n "$f"; done
