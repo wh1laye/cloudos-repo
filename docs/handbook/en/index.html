@@ -47,7 +47,7 @@
 </nav>
 <main id="cloud">
 <h1>cloudos handbook</h1>
-<p class="lead">installing cloudos live iso 2.2 on x86_64.</p>
+<p class="lead">installing cloudos live iso 2.3 on x86_64.</p>
 <h2 id="about">1. about cloudos</h2>
 <p>cloudos is a fast hardened x86_64 linux: openrc, vanilla kernel, limine, packages built from source with cloudpkg. it installs from the live iso with one command and boots to a plain console.</p>
 <div class="sc"><table><tr><th>parameter</th><th>value</th></tr>
@@ -84,9 +84,9 @@
 <h2 id="prep">2. preparation</h2>
 <h3 id="s2-1">2.1 writing the iso to a stick</h3>
 <p>download the iso and checksum from the <a href="../../releases/">releases</a> page and verify:</p>
-<pre><code>sha256sum -c cloudos-live-amd64-2.2.iso.sha256</code></pre>
+<pre><code>sha256sum -c cloudos-live-amd64-2.3.iso.sha256</code></pre>
 <p>write the image to the stick (careful: pick the stick, its data will be erased):</p>
-<pre><code>sudo dd if=cloudos-live-amd64-2.2.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
+<pre><code>sudo dd if=cloudos-live-amd64-2.3.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
 <h3 id="s2-2">2.2 logging in to the live system</h3>
 <p>boot from the stick. login is automatic: user <code>cloudos</code>, password <code>cloudos</code>, root through <code>doas -s</code>. this is for the live system only, ssh is closed for these accounts and the firewall is on.</p>
 <h3 id="s2-3">2.3 network</h3>
