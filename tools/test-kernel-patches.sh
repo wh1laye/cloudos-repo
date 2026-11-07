@@ -13,6 +13,7 @@ PORT=18751
 P=$T/srv/p/$REF/6.18/sched
 mkdir -p "$P" "$T/srv/api" "$T/a" "$T/b" "$T/tree" "$T/h"
 printf '%s' "$REF" > "$T/srv/api/sha"
+printf '[\n  {\n    "sha": "%s",\n    "commit": {\n      "tree": {\n        "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"\n      }\n    }\n  }\n]\n' "$REF" > "$T/srv/api/commits"
 printf 'line1\nline2\n' > "$T/a/f.txt"
 printf 'line1\nline2\nline3\n' > "$T/b/f.txt"
 cp "$T/a/f.txt" "$T/tree/f.txt"
@@ -32,7 +33,7 @@ EOD
 
 drive() {
   rm -rf "$T/w" "$T/o"
-  env CP="$CP" HERE="$T/h" WORK="$T/w" OUT="$T/o" KVER=6.18.10 CLOUDK_PIN="$1" \
+  env CP="$CP" HERE="$T/h" WORK="$T/w" OUT="$T/o" KVER=6.18.10 CLOUDK_PIN="$1" CLOUDK_PATCH_UNTIL="${2:-}" CLOUDK_PATCH_LIST="http://127.0.0.1:$PORT/api/commits" \
     CLOUDK_PATCH_URL="http://127.0.0.1:$PORT/p" CLOUDK_PATCH_API="http://127.0.0.1:$PORT/api/sha" \
     CLOUDK_PATCH_PROTO='=http' bash "$T/drv.sh"
 }
@@ -44,9 +45,17 @@ ok "без закрепления сборка останавливается"
 drive 1 > "$T/out.txt" 2>&1 || { cat "$T/out.txt" >&2; fail "закрепление не прошло"; }
 SUM=$(sha256sum "$P/0001-bore-cachy.patch" | cut -d' ' -f1)
 [ "$(cat "$T/o/patches.lock")" = "$(printf 'ref %s\n%s @KMM@/sched/0001-bore-cachy.patch' "$REF" "$SUM")" ] || fail "patches.lock собран неверно"
-ok "закрепление записывает коммит и sha256"
+grep -q "^ref $REF$" "$T/out.txt" || fail "patches.lock не выведен в лог"
+ok "закрепление записывает коммит и sha256 и выводит их в лог"
 
-cp "$T/o/patches.lock" "$T/h/patches.lock"
+printf 'ref\n- @KMM@/sched/0001-bore-cachy.patch\n' > "$T/h/patches.lock"
+drive 1 2026-02-13 > "$T/out.txt" 2>&1 || { cat "$T/out.txt" >&2; fail "закрепление по дате не прошло"; }
+grep -q "^ref $REF$" "$T/o/patches.lock" || fail "коммит по дате выбран неверно"
+cp "$T/o/patches.lock" "$T/pinned.lock"
+if drive 1 "2026-02-13;rm" > "$T/out.txt" 2>&1; then fail "принята неверная дата"; fi
+ok "закрепление по дате берёт первый коммит патча, неверная дата отвергнута"
+
+cp "$T/pinned.lock" "$T/h/patches.lock"
 FILES=$(drive 0 2>"$T/err.txt" | tail -n 1) || { cat "$T/err.txt" >&2; fail "строгая сборка не прошла"; }
 patch -p1 --dry-run -s -d "$T/tree" < $FILES || fail "скачанный патч не накладывается"
 patch -p1 -s -d "$T/tree" < $FILES
