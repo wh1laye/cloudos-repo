@@ -37,6 +37,10 @@ on:
         description: выложить iso в релиз
         type: boolean
         default: true
+      overwrite:
+        description: разрешить перезапись уже опубликованных файлов релиза
+        type: boolean
+        default: false
 
 concurrency:
   group: iso-${{ inputs.version }}
@@ -52,7 +56,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
@@ -62,6 +66,16 @@ jobs:
           HAS_KEY: ${{ secrets.MINISIGN_KEY != '' }}
         run: |
           [ "$HAS_KEY" = true ] || { echo "::error::MINISIGN_KEY не задан, публикация без подписи запрещена"; exit 1; }
+
+      - name: проверка релиза
+        if: ${{ inputs.publish && !inputs.overwrite }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if gh release view "$VERSION" --json assets --jq '.assets[].name' 2>/dev/null | grep -qxF "cloudos-live-amd64-$VERSION.iso"; then
+            echo "::error::iso $VERSION уже опубликован, перезапись запрещена (overwrite=true разрешает)"; exit 1
+          fi
 
       - name: проверка параметров
         env:
@@ -138,6 +152,26 @@ jobs:
           grep -aqE 'nftables|нет службы nftables' smoke.log || { echo "в логе загрузки нет nftables"; exit 1; }
           if grep -aqE 'правила в .* не проходят проверку' smoke.log; then echo "nftables не принял правила"; exit 1; fi
 
+      - name: загрузка iso через загрузчик (информационно)
+        id: bootpath
+        if: ${{ inputs.smoke }}
+        continue-on-error: true
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          sudo apt-get install -y -qq qemu-system-x86 ovmf
+          ISO="$PWD/out/cloudos-live-amd64-$VERSION.iso"
+          ACCEL=""
+          if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
+          RC=0
+          for mode in bios uefi; do
+            FW=""
+            if [ "$mode" = uefi ]; then FW="-bios /usr/share/ovmf/OVMF.fd"; fi
+            timeout 300 qemu-system-x86_64 $ACCEL -cpu max -m 2048 -smp 2 -display none -serial stdio -no-reboot $FW -cdrom "$ISO" -boot d > "$PWD/bootpath-$mode.log" 2>&1 || true
+            if grep -aq 'is starting up' "bootpath-$mode.log"; then echo "$mode: загрузка через загрузчик дошла до openrc"; else echo "$mode: не дошла до openrc"; RC=1; fi
+          done
+          exit $RC
+
       - name: тестовая установка и загрузка установленной системы
         id: itest
         if: ${{ inputs.install_test }}
@@ -179,6 +213,7 @@ jobs:
             fi
             echo "### тестовая установка: ${{ steps.itest.outcome }}"
             if [ -s itest-boot.log ]; then tail -n 30 itest-boot.log | tr -d '\033' | sed 's/^/    /'; fi
+            echo "### загрузка iso через загрузчик: ${{ steps.bootpath.outcome }}"
             echo "### проверочная загрузка: ${{ steps.smoke.outcome }}"
             if [ -s smoke.log ]; then tail -n 40 smoke.log | tr -d '\033' | sed 's/^/    /'; fi
           } >> "$GITHUB_STEP_SUMMARY"
@@ -189,7 +224,7 @@ jobs:
           cp "$RUNNER_TEMP/build.log" "$PWD/build.log" 2>/dev/null || true
 
       - name: подпись происхождения (attestation)
-        uses: actions/attest-build-provenance@v4
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4
         with:
           subject-path: out/*.iso
 
@@ -202,7 +237,7 @@ jobs:
           sudo apt-get install -y -qq minisign
           bash tools/sign.sh out/*.iso out/*.iso.sha256
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: always()
         with:
           name: isolog-${{ inputs.version }}
@@ -211,9 +246,11 @@ jobs:
             smoke.log
             itest-install.log
             itest-boot.log
+            bootpath-bios.log
+            bootpath-uefi.log
           if-no-files-found: ignore
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         if: ${{ !inputs.publish }}
         with:
           name: cloudos-iso-${{ inputs.version }}
@@ -225,6 +262,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ inputs.version }}
+          OVERWRITE: ${{ inputs.overwrite }}
         run: |
           SIZE=$(stat -c %s "out/cloudos-live-amd64-$VERSION.iso")
           [ "$SIZE" -lt 2147483648 ] || { echo "iso $SIZE байт, лимит github releases 2 гб"; exit 1; }
@@ -232,4 +270,6 @@ jobs:
             --notes "cloudos live iso $VERSION. установка: загрузись с iso и выполни doas cloudos-install. проверка: sha256sum -c cloudos-live-amd64-$VERSION.iso.sha256"
           FILES=("out/cloudos-live-amd64-$VERSION.iso" "out/cloudos-live-amd64-$VERSION.iso.sha256")
           for s in out/*.minisig; do [ -e "$s" ] && FILES+=("$s"); done
-          gh release upload "$VERSION" "${FILES[@]}" --clobber
+          CLOBBER=()
+          if [ "$OVERWRITE" = true ]; then CLOBBER=(--clobber); fi
+          gh release upload "$VERSION" "${FILES[@]}" "${CLOBBER[@]}"
