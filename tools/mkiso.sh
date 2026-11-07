@@ -12,6 +12,7 @@ CLOUDK=${CLOUDK:-https://github.com/wh1laye/cloudos-repo/releases/download/$CLOU
 CLOUDK_VERIFY=${CLOUDK_VERIFY:-1}
 PUB=${PUB:-$(dirname "$HERE")/docs/cloudos.pub}
 BASE_VERSION=${BASE_VERSION:-1.6}
+BASE_VERIFY=${BASE_VERIFY:-1}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-iso-build}
 OUT=${OUT:-$PWD}
@@ -31,6 +32,19 @@ mkdir -p "$WORK/src" "$OUT"
 
 fetch() { curl -fL --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
 
+base_sig() {
+  case $BASE_VERIFY in
+    1)
+      command -v minisign >/dev/null || die "нет minisign, подпись базы не проверить (BASE_VERIFY=0 отключает проверку)"
+      [ -f "$PUB" ] || die "нет публичного ключа $PUB"
+      [ -f "$2" ] || die "нет подписи $2 (BASE_VERIFY=0 отключает проверку)"
+      minisign -V -p "$PUB" -m "$1" -x "$2" >/dev/null || die "подпись базы не сходится с $PUB"
+      say "подпись базы minisign проверена" ;;
+    0) printf '!! подпись базы не проверяется\n' >&2 ;;
+    *) die "BASE_VERIFY: 1 или 0" ;;
+  esac
+}
+
 say "база: $BASE"
 case $BASE in
   http*://*)
@@ -38,12 +52,16 @@ case $BASE in
     fetch "$BASE" "$WORK/base.tar.xz" || die "не скачался $BASE"
     fetch "$BASE.sha256" "$WORK/base.sha256" || die "не скачался $BASE.sha256"
     [ "$(cut -d' ' -f1 "$WORK/base.sha256")" = "$(sha256sum "$WORK/base.tar.xz" | cut -d' ' -f1)" ] || die "sha256 базы не совпал"
+    rm -f "$WORK/base.minisig"
+    if [ "$BASE_VERIFY" = 1 ]; then fetch "$BASE.minisig" "$WORK/base.minisig" || die "не скачалась подпись $BASE.minisig (BASE_VERIFY=0 отключает проверку)"; fi
+    base_sig "$WORK/base.tar.xz" "$WORK/base.minisig"
     BASEFILE=$WORK/base.tar.xz ;;
   *)
     [ -f "$BASE" ] || die "нет файла $BASE"
     if [ -f "$BASE.sha256" ]; then
       [ "$(cut -d' ' -f1 "$BASE.sha256")" = "$(sha256sum "$BASE" | cut -d' ' -f1)" ] || die "sha256 базы не совпал"
     fi
+    base_sig "$BASE" "$BASE.minisig"
     BASEFILE=$BASE ;;
 esac
 

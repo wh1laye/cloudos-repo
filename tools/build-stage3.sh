@@ -6,6 +6,8 @@ REPO=$(dirname "$HERE")
 VERSION=${VERSION:-1.6}
 BASE_TAG=${BASE_TAG:-1.4}
 BASE_VERSION=${BASE_VERSION:-1.4}
+BASE_VERIFY=${BASE_VERIFY:-1}
+PUB=${PUB:-$REPO/docs/cloudos.pub}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
 WORK=${WORK:-/var/tmp/cloudos-stage3-build}
 OUT=${OUT:-$PWD}
@@ -20,7 +22,20 @@ case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасна�
 
 mkdir -p "$WORK/src" "$OUT"
 
-fetch() { curl -fL --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
+fetch() { curl -fL --proto =https --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
+
+base_sig() {
+  case $BASE_VERIFY in
+    1)
+      command -v minisign >/dev/null || die "нет minisign, подпись базы не проверить (BASE_VERIFY=0 отключает проверку)"
+      [ -f "$PUB" ] || die "нет публичного ключа $PUB"
+      [ -f "$2" ] || die "нет подписи $2 (BASE_VERIFY=0 отключает проверку)"
+      minisign -V -p "$PUB" -m "$1" -x "$2" >/dev/null || die "подпись базы не сходится с $PUB"
+      say "подпись базы minisign проверена" ;;
+    0) printf '!! подпись базы не проверяется\n' >&2 ;;
+    *) die "BASE_VERIFY: 1 или 0" ;;
+  esac
+}
 
 say "база: $BASE"
 case $BASE in
@@ -28,8 +43,14 @@ case $BASE in
     fetch "$BASE" "$WORK/base.tar.xz" || die "не скачался $BASE"
     fetch "$BASE.sha256" "$WORK/base.sha256" || die "не скачался $BASE.sha256"
     [ "$(cut -d' ' -f1 "$WORK/base.sha256")" = "$(sha256sum "$WORK/base.tar.xz" | cut -d' ' -f1)" ] || die "sha256 базы не совпал"
+    rm -f "$WORK/base.minisig"
+    if [ "$BASE_VERIFY" = 1 ]; then fetch "$BASE.minisig" "$WORK/base.minisig" || die "не скачалась подпись $BASE.minisig (BASE_VERIFY=0 отключает проверку)"; fi
+    base_sig "$WORK/base.tar.xz" "$WORK/base.minisig"
     BASEFILE=$WORK/base.tar.xz ;;
-  *) BASEFILE=$BASE ;;
+  *)
+    [ -f "$BASE" ] || die "нет файла $BASE"
+    base_sig "$BASE" "$BASE.minisig"
+    BASEFILE=$BASE ;;
 esac
 
 if [ "${RESUME:-0}" = 1 ] && [ -d "$ROOT/var/tmp/s3stamp" ]; then

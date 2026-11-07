@@ -4,7 +4,7 @@ HERE=$(cd "$(dirname "$0")" && pwd)
 SRC=$(dirname "$HERE")/cloudpkg
 [ "$(id -u)" = 0 ] || { echo "нужен root" >&2; exit 1; }
 T=$(mktemp -d)
-trap 'rm -rf "$T"' EXIT
+trap 'kill $(jobs -p) 2>/dev/null; gpgconf --homedir "$T/gh" --kill all 2>/dev/null; rm -rf "$T"' EXIT
 fail() { printf 'тест не пройден: %s\n' "$*" >&2; exit 1; }
 ok() { printf 'ok: %s\n' "$*"; }
 
@@ -70,4 +70,73 @@ for r in /var/db/repos/gentoo /var/db/repos/gentoo/ /opt/portage/tree; do
   if "$T/cloudpkg3" list 2>&1 | grep -q 'небезопасный путь'; then fail "safe_dir отверг repo=$r"; fi
 done
 ok "safe_dir: опасные пути отвергаются, нормальные проходят"
+
+for c in gpg curl xz python3; do command -v "$c" >/dev/null || fail "для теста подписи снимка нужен $c"; done
+GH=$T/gh
+mkdir -p "$GH" "$T/src/gentoo-20260101/profiles" "$T/m1/snapshots" "$T/m2/snapshots" "$T/m3/snapshots"
+chmod 700 "$GH"
+gk() { gpg --homedir "$GH" --batch --pinentry-mode loopback --passphrase '' --quick-generate-key "$1" rsa2048 sign never >/dev/null 2>&1; }
+gk 'snap test <snap@test.invalid>'
+gk 'evil test <evil@test.invalid>'
+fpr() { gpg --homedir "$GH" --list-keys --with-colons "$1" | awk -F: '/^fpr:/{print $10; exit}'; }
+FPR=$(fpr 'snap test')
+EFPR=$(fpr 'evil test')
+[ -n "$FPR" ] && [ -n "$EFPR" ] && [ "$FPR" != "$EFPR" ] || fail "не создались тестовые ключи"
+gpg --homedir "$GH" --batch --armor --export "$FPR" "$EFPR" > "$T/keys.asc"
+echo good > "$T/src/gentoo-20260101/profiles/repo_name"
+tar -C "$T/src" -cJf "$T/good.tar.xz" gentoo-20260101
+echo evil > "$T/src/gentoo-20260101/profiles/repo_name"
+tar -C "$T/src" -cJf "$T/bad.tar.xz" gentoo-20260101
+sign() { gpg --homedir "$GH" --batch --pinentry-mode loopback --passphrase '' -u "$1" --detach-sign -o "$3" "$2" >/dev/null 2>&1; }
+sign "$FPR" "$T/good.tar.xz" "$T/good.sig"
+sign "$EFPR" "$T/bad.tar.xz" "$T/evil.sig"
+cp "$T/bad.tar.xz" "$T/m1/snapshots/portage-latest.tar.xz"; cp "$T/good.sig" "$T/m1/snapshots/portage-latest.tar.xz.gpgsig"
+cp "$T/good.tar.xz" "$T/m2/snapshots/portage-latest.tar.xz"; cp "$T/good.sig" "$T/m2/snapshots/portage-latest.tar.xz.gpgsig"
+cp "$T/bad.tar.xz" "$T/m3/snapshots/portage-latest.tar.xz"; cp "$T/evil.sig" "$T/m3/snapshots/portage-latest.tar.xz.gpgsig"
+P1=18741; P2=18742; P3=18743
+for pair in "m1 $P1" "m2 $P2" "m3 $P3"; do
+  set -- $pair
+  python3 -m http.server "$2" --bind 127.0.0.1 --directory "$T/$1" >/dev/null 2>&1 &
+done
+for p in $P1 $P2 $P3; do
+  for _ in 1 2 3 4 5 6 7 8 9 10; do curl -fsS -o /dev/null "http://127.0.0.1:$p/snapshots/portage-latest.tar.xz" 2>/dev/null && break; sleep 0.5; done
+done
+gcc -std=gnu17 -Wall -Wextra -Werror -O2 ${CFLAGS_EXTRA:-} -DCONF="\"$T/sync.conf\"" -DENVDIR="\"$T/env\"" -DPENV="\"$T/package.env\"" -DVDB="\"$T/vdb\"" -DSNAP_FPRS="\"$FPR\"" -DGENTOO_KEYS="\"$T/keys.asc\"" -DKEYSERVER='""' -o "$T/cps" "$SRC"/*.c
+conf() { printf '%s\n' "$@" > "$T/sync.conf"; printf 'repo=%s/tree/gentoo\ndistdir=%s/dist/cache\n' "$T" "$T" >> "$T/sync.conf"; }
+tree=$T/tree/gentoo
+
+conf "mirror=http://127.0.0.1:$P1" "mirror=http://127.0.0.1:$P2"
+"$T/cps" sync > "$T/out.txt" 2>&1 || { cat "$T/out.txt" >&2; fail "sync не прошёл через второе зеркало"; }
+[ "$(cat "$tree/profiles/repo_name")" = good ] || fail "в дерево попал неподписанный снимок"
+grep -q 'подпись снимка с' "$T/out.txt" || fail "подменённый снимок первого зеркала не отвергнут"
+ok "sync: снимок с неверным содержимым отвергнут, подписанный со второго зеркала принят"
+
+rm -rf "$T/tree" "$T/dist"
+conf "mirror=http://127.0.0.1:$P1"
+if "$T/cps" sync > "$T/out.txt" 2>&1; then fail "sync принял снимок, не совпавший с подписью"; fi
+[ ! -e "$tree/profiles" ] || fail "дерево заменено после неудачной проверки"
+ok "sync: единственное зеркало с подменой, дерево не тронуто"
+
+conf "mirror=http://127.0.0.1:$P3"
+if "$T/cps" sync > "$T/out.txt" 2>&1; then fail "sync принял подпись чужого ключа"; fi
+[ ! -e "$tree/profiles" ] || fail "дерево заменено снимком с подписью не того ключа"
+ok "sync: валидная подпись ключа, которого нет в списке, отвергнута"
+
+conf "mirror=http://127.0.0.1:$P2"
+"$T/cps" sync >/dev/null 2>&1 || fail "sync не прошёл с хорошим зеркалом"
+conf "mirror=http://127.0.0.1:1"
+"$T/cps" sync > "$T/out.txt" 2>&1 || { cat "$T/out.txt" >&2; fail "без сети не взят проверенный снимок"; }
+grep -q 'проверенный снимок' "$T/out.txt" || fail "нет сообщения о старом проверенном снимке"
+ok "sync: без сети берётся только ранее проверенный снимок"
+
+cp "$T/bad.tar.xz" "$T/dist/cache/portage-latest.tar.xz"
+rm -rf "$T/tree"
+if "$T/cps" sync > "$T/out.txt" 2>&1; then fail "без сети принят испорченный локальный снимок"; fi
+[ ! -e "$tree/profiles" ] || fail "дерево собрано из испорченного локального снимка"
+ok "sync: испорченный локальный снимок не принимается"
+
+conf "mirror=http://127.0.0.1:$P3" "fallback=http://127.0.0.1:$P3/snapshots/portage-latest.tar.xz"
+rm -rf "$T/tree" "$T/dist"
+if "$T/cps" sync > "$T/out.txt" 2>&1; then fail "запасной канал без подписи сработал без unsigned_fallback"; fi
+ok "sync: запасной канал без подписи выключен по умолчанию"
 echo "все тесты пройдены"
