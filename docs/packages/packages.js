@@ -15,11 +15,11 @@ function draw(){
   var list=data.filter(function(p){
     if(k&&p.c!==k)return false;
     if(!t)return true;
-    return (p.n+' '+p.d.ru+' '+p.d.en).toLowerCase().indexOf(t)>-1;
+    return (p.n+' '+(p.k||'')+' '+p.d.ru+' '+p.d.en).toLowerCase().indexOf(t)>-1;
   });
   cnt.textContent=(e?'found: ':'найдено: ')+list.length;
   rows.innerHTML=list.length?list.map(function(p){
-    return '<tr><td><code>'+esc(p.n)+'</code></td><td>'+(p.v?esc(p.v):'-')+'</td><td>'+esc(CAT[p.c]?CAT[p.c][e]:p.c)+'</td><td>'+esc(p.d[e?'en':'ru'])+'</td><td><span class="st '+(p.s==='stage3'?'ok':'wip')+'">'+ST[p.s][e]+'</span></td></tr>';
+    return '<tr><td><code title="'+esc(p.k?p.k+'/'+p.n:p.n)+'">'+esc(p.n)+'</code></td><td>'+(p.v?esc(p.v):'-')+'</td><td>'+esc(CAT[p.c]?CAT[p.c][e]:p.c)+'</td><td>'+esc(p.d[e?'en':'ru']||'-')+'</td><td><span class="st '+(p.s==='stage3'?'ok':'wip')+'">'+ST[p.s][e]+'</span></td></tr>';
   }).join(''):'<tr><td colspan="5" class="mu">'+(e?'nothing found':'ничего не найдено')+'</td></tr>';
 }
 fetch('packages.json').then(function(r){return r.json()}).then(function(j){data=j;fillCats();draw()}).catch(function(){cnt.textContent='packages.json'});
