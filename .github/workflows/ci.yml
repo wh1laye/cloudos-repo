@@ -27,6 +27,15 @@ jobs:
       - name: сборка cloudpkg
         run: make -C cloudpkg CC="gcc -Werror"
 
+      - name: тест safe_dir с sanitizers
+        run: |
+          cd cloudpkg
+          gcc -std=gnu17 -Wall -Wextra -Werror -fsanitize=address,undefined -o /tmp/test-util test-util.c util.c
+          /tmp/test-util
+
+      - name: проверка сайта
+        run: node tools/test-site.js
+
       - name: зависимости тестов
         run: sudo apt-get update -qq && sudo apt-get install -y -qq minisign
 
