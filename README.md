@@ -114,7 +114,7 @@ curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/
 
 ## 🛡️ Защита в live iso 2.2
 
-- 🔏 `cloudpkg update` и `install.sh` проверяют подпись minisign
+- 🔏 `cloudpkg update` и `install.sh` проверяют подпись minisign, без неё установка не идёт (`install.sh --insecure` отключает проверку)
 - 🧱 `cloudos-uki`: подписанный unified kernel image, параметры ядра зашиты (`CLOUDOS_UKI=1`)
 - 🔑 `cloudos-tpm2`: разблокировка luks через tpm2 по pcr 7, пароль остаётся запасным
 - 🛡️ apparmor в ядре, профили в режиме complain, `aa-enforce` включает их
@@ -126,10 +126,12 @@ curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/
 
 ```
 cloudos-repo/
+├── .github/           🤖 github actions: iso, stage 3, ядро cloudk, релиз cloudpkg, ci
+├── cloudpkg/          🛠️ пакетный менеджер (язык C)
 ├── docs/              🌐 сайт и handbook
 │   ├── forum/         💬 форум
 │   └── releases/      📦 страница загрузок
-└── cloudpkg/          🛠️ пакетный менеджер (язык C)
+└── tools/             🔧 сборка iso, stage 3 и ядра, тесты
 ```
 
 - 🌐 **Сайт** работает на GitHub Pages.
