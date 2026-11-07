@@ -39,9 +39,11 @@ done
 [ -e /usr/include/gelf.h ] || die "нет заголовков libelf"
 [ -f "$HERE/cloudk-config.sh" ] || die "нет $HERE/cloudk-config.sh"
 [ -f "$HERE/cloudk-source.sh" ] || die "нет $HERE/cloudk-source.sh"
+[ -f "$HERE/cloudk-patches.sh" ] || die "нет $HERE/cloudk-patches.sh"
 
 . "$HERE/cloudk-config.sh"
 . "$HERE/cloudk-source.sh"
+. "$HERE/cloudk-patches.sh"
 CLOUDK_MISSING=$WORK/$CK-missing.txt
 
 fetch() { curl -fL --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
@@ -72,21 +74,26 @@ fi
 tar xf "$WORK/$KTAR" -C "$SRC" --strip-components=1
 cd "$SRC"
 
-if [ -d "$HERE/patches" ]; then
-  for p in "$HERE"/patches/*.patch; do
-    [ -f "$p" ] || continue
-    patch -p1 --dry-run -s < "$p" || die "патч $(basename "$p") не накладывается на $KVER"
-    patch -p1 -s < "$p"
-    say "патч $(basename "$p")"
-  done
-fi
+cloudk_fetch_patches
+for p in "$HERE"/patches/*.patch; do
+  if [ -f "$p" ]; then CLOUDK_PATCHES="$CLOUDK_PATCHES $p"; fi
+done
+CLOUDK_BORE=0
+case "$CLOUDK_PATCHES" in *bore*) CLOUDK_BORE=1 ;; esac
+for p in $CLOUDK_PATCHES; do
+  patch -p1 --dry-run -s < "$p" || die "патч $(basename "$p") не накладывается на $KVER"
+  patch -p1 -s < "$p"
+  say "патч $(basename "$p")"
+done
 
 cloudk_source
 make defconfig
 cloudk_config
+if [ "$CLOUDK_BORE" = 1 ]; then scripts/config -e SCHED_BORE; fi
 if [ "$LTO" = thin ]; then scripts/config -d LTO_NONE -e LTO_CLANG_THIN; fi
 make olddefconfig
 [ "$LTO" != thin ] || grep -q "^CONFIG_LTO_CLANG_THIN=y$" .config || die "thinlto не включился"
+if [ "$CLOUDK_BORE" = 1 ]; then grep -q "^CONFIG_SCHED_BORE=y$" .config || die "SCHED_BORE не включился"; fi
 cloudk_verify
 for s in $CLOUDK_SRC_MISS; do printf 'source:%s\n' "$s" >> "$CLOUDK_MISSING"; done
 [ -z "$CLOUDK_SRC_MISS" ] || echo "!! правки исходников не применились:$CLOUDK_SRC_MISS" >&2
