@@ -20,7 +20,7 @@ begin
     where n.nspname = 'public'
       and (p.prorettype in ('trigger'::regtype, 'event_trigger'::regtype)
            or p.proname in ('admin_reset_profile', 'award_all', 'award_me', 'award_user', 'create_poll', 'edit_post',
-                            'poll_vote', 'rp_mod', 'set_badge_rule', 'set_board_access', 'set_name', 'set_role',
+                            'poll_vote', 'set_badge_rule', 'set_board_access', 'set_name', 'set_role',
                             'set_tags', 'set_ui', 'update_my_profile'))
   loop
     execute format('revoke execute on function %s from public, anon', r.sig);
@@ -29,5 +29,7 @@ begin
     end if;
   end loop;
 end $$;
+
+grant execute on function public.rp_mod() to anon, authenticated;
 
 commit;
