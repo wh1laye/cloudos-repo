@@ -5,13 +5,13 @@ on:
     inputs:
       version:
         description: версия live iso
-        default: "2.2"
+        default: "2.3"
       base_tag:
         description: тег релиза с внутренней базой
-        default: "1.5"
+        default: "1.6"
       base_version:
         description: версия внутренней базы
-        default: "1.5"
+        default: "1.6"
       kernel:
         description: версия ядра
         default: "6.18.10"
