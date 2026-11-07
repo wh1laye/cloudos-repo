@@ -38,6 +38,8 @@
 <main class="np">
 <h1>новое</h1>
 <p class="lead">что в работе и что в планах. сроков нет, проект делается по мере готовности.</p>
+<div id="nwn"></div>
+<h2 id="nwp" hidden>в работе и планы</h2>
 <ul class="log">
 <li><span class="st ok">готово</span><div><h3>шифрование диска</h3><p>установщик умеет luks2 (aes-xts, argon2id) с загрузкой через initramfs: <code>CLOUDOS_LUKS=1</code> или вопрос при интерактивной установке.</p></div></li>
 <li><span class="st ok">готово</span><div><h3>сборка под x86-64-v3</h3><p>iso можно собрать с ядром и make.conf под x86-64-v3 (процессоры с avx2). установщик сам откажется ставить такой образ на старый процессор.</p></div></li>
@@ -55,6 +57,8 @@
 </footer>
 </main>
 
+<link rel="stylesheet" href="news.css?v=1">
+<script src="news.js?v=1" defer></script>
 <script src="../cmdk.js?v=4" defer></script>
 </body>
 </html>

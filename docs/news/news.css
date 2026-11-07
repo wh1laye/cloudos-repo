@@ -1,0 +1,7 @@
+#nwn h2{margin:26px 0 12px}
+#nwn .nl{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:10px}
+#nwn .nl li{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:calc(12px*var(--rs,1));background:var(--surf)}
+#nwn .nl li.o{opacity:.72}
+#nwn .nl h3{margin:0 0 4px;font-size:1.02em}
+#nwn .nl p{margin:0}
+#nwn .nd{flex:0 0 auto;padding:2px 10px;border:1px solid var(--line);border-radius:var(--rp,999px);background:var(--soft);color:var(--ac);font-size:12px;white-space:nowrap}

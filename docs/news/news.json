@@ -1,0 +1,30 @@
+[
+ {
+  "d": "2026-11-07",
+  "t": "карта состава stage 3",
+  "te": "stage 3 contents map",
+  "p": "страница /stage3/ показывает, из каких каталогов состоит stage 3 версии 1.6 и сколько места они занимают.",
+  "pe": "the /stage3/ page shows which directories stage 3 version 1.6 consists of and how much space they take."
+ },
+ {
+  "d": "2026-11-07",
+  "t": "список пакетов stage 3 1.6",
+  "te": "stage 3 1.6 package list",
+  "p": "страница пакетов обновлена по реальному составу сборки: 436 пакетов.",
+  "pe": "the packages page now follows the real build contents: 436 packages."
+ },
+ {
+  "d": "2026-11-07",
+  "t": "перевод слов на форуме",
+  "te": "word translation on the forum",
+  "p": "около 700 слов и фраз из базы переводятся в постах при смене языка. слов не из базы перевод не трогает.",
+  "pe": "about 700 words and phrases from the dictionary are translated in posts when the language changes. words outside the dictionary are left as they are."
+ },
+ {
+  "d": "2026-11-07",
+  "t": "новое стекло",
+  "te": "new glass theme",
+  "p": "тема стекло переделана: светлая, с матовыми панелями и бликами, без лишнего размытия во вложенных блоках.",
+  "pe": "the glass theme was redone: light, with frosted panels and highlights, without extra blur in nested blocks."
+ }
+]
