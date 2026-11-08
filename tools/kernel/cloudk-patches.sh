@@ -31,7 +31,7 @@ cloudk_pick_ref() {
       if ! cloudk_pcurl -o "$WORK/probe/$i.patch" "$CLOUDK_PATCH_URL/$c/$p"; then okc=0; break; fi
     done
     [ "$okc" = 1 ] || continue
-    sed -n 's#^+++ b/\([^[:space:]]*\).*#\1#p' "$WORK"/probe/*.patch | sort -u > "$WORK/probe/files"
+    sed -n -e 's#^\(---\|+++\) [^/[:space:]]*/\([^[:space:]]*\).*#\2#p' -e 's#^\(rename\|copy\) from \([^[:space:]]*\).*#\2#p' "$WORK"/probe/*.patch | sort -u > "$WORK/probe/files"
     while read -r f; do
       if [ -f "$f" ]; then cp --parents "$f" "$sc"/; fi
     done < "$WORK/probe/files"

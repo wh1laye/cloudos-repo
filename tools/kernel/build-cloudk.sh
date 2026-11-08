@@ -74,7 +74,7 @@ fi
 tar xf "$WORK/$KTAR" -C "$SRC" --strip-components=1
 cd "$SRC"
 
-cloudk_fetch_patches
+if [ "${CLOUDK_CACHY_PATCHES:-0}" = 1 ]; then cloudk_fetch_patches; fi
 for p in "$HERE"/patches/*.patch; do
   if [ -f "$p" ]; then CLOUDK_PATCHES="$CLOUDK_PATCHES $p"; fi
 done
