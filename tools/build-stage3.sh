@@ -4,8 +4,8 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$HERE")
 VERSION=${VERSION:-1.6}
-BASE_TAG=${BASE_TAG:-1.4}
-BASE_VERSION=${BASE_VERSION:-1.4}
+BASE_TAG=${BASE_TAG:-1.5}
+BASE_VERSION=${BASE_VERSION:-1.5}
 BASE_VERIFY=${BASE_VERIFY:-1}
 PUB=${PUB:-$REPO/docs/cloudos.pub}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
@@ -22,7 +22,7 @@ case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасна�
 
 mkdir -p "$WORK/src" "$OUT"
 
-fetch() { curl -fL --proto =https --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
+fetch() { curl -fL --proto =https --retry 8 --retry-delay 15 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
 
 base_sig() {
   case $BASE_VERIFY in
