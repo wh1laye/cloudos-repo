@@ -119,6 +119,7 @@ if [ -s "$ROOT/var/tmp/cloudos-report.txt" ]; then
   cp "$ROOT/var/tmp/cloudos-report.txt" "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt"
   printf 'внимание: не собрались пакеты (список в %s):\n' "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt" >&2
   cat "$ROOT/var/tmp/cloudos-report.txt" >&2
+  if [ "${STRICT:-0}" = 1 ]; then die "STRICT=1: в отчёте есть проблемы, база не выпускается"; fi
 fi
 rm -f "$ROOT/var/tmp/cloudos-report.txt"
 
