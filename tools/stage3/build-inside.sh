@@ -729,6 +729,20 @@ do_harden() {
   grep -E '^\[ !! \]|^итог' /var/tmp/s3log/audit.txt || true
 }
 
+partial_gate() {
+  local f n bad=""
+  for f in "$ST"/*.partial; do
+    if [ -e "$f" ]; then n=$(basename "$f" .partial); bad="$bad $n"; fi
+  done
+  [ -n "$bad" ] || return 0
+  say "шаги выполнены не до конца:$bad"
+  if [ -s /var/tmp/cloudos-report.txt ]; then cat /var/tmp/cloudos-report.txt >&2; fi
+  if [ "$STRICT" = 1 ]; then
+    echo "STRICT=1: сборка остановлена, неполные шаги:$bad" >&2
+    exit 1
+  fi
+}
+
 keep_logs() { [ -e "$ST/gentoo-stage3-set.partial" ] || [ -e "$ST/cloudos-extra.partial" ] || [ -e "$ST/lazyvim.partial" ]; }
 
 do_libpath() {
@@ -783,6 +797,7 @@ step harden do_harden
 step libpath do_libpath
 do_cfgclean
 step verify do_verify
+partial_gate
 
 say "уборка"
 for d in /var/tmp/s3*; do
