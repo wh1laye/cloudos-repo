@@ -13,6 +13,10 @@ on:
         description: thinlto через clang
         type: boolean
         default: true
+      cachyos_patches:
+        description: наложить патчи cachyos (база и bore), могут не лечь на выбранное ядро, без галочки собирается проверенный cloudk без патчей
+        type: boolean
+        default: false
       pin_patches:
         description: первый запуск с патчами cachyos, закрепить их хэши (без публикации)
         type: boolean
@@ -69,6 +73,7 @@ jobs:
           MARCH: ${{ matrix.march }}
           LTO: ${{ inputs.lto && 'thin' || 'none' }}
           CLOUDK_PIN: ${{ inputs.pin_patches && '1' || '0' }}
+          CLOUDK_CACHY_PATCHES: ${{ (inputs.cachyos_patches || inputs.pin_patches) && '1' || '0' }}
           CLOUDK_PATCH_UNTIL: ${{ inputs.patches_until }}
         run: |
           set -o pipefail
