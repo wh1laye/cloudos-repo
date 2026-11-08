@@ -18,12 +18,15 @@ printf 'line1\nline2b\nline3\nline4\nline5\n' > "$T/m/f.txt"
 printf 'line1\nline2c\nline3\nline4\nline5\n' > "$T/z/f.txt"
 cp "$T/a/f.txt" "$T/tree/f.txt"
 cp "$T/a/f.txt" "$T/kt/f.txt"
+printf 'd1\nd2\n' > "$T/tree/del.txt"
+printf 'd1\nd2\n' > "$T/kt/del.txt"
 BASE=$T/srv/p/$REF/6.18/all/0001-cachyos-base-all.patch
 BORE=$T/srv/p/$REF/6.18/sched/0001-bore-cachy.patch
 ( cd "$T" && diff -u a/f.txt m/f.txt > "$BASE" ) || true
 ( cd "$T" && diff -u m/f.txt z/f.txt | sed 's#^--- m/#--- a/#;s#^+++ z/#+++ b/#' > "$BORE" ) || true
 sed -i 's#^--- a/f.txt#--- a/f.txt#;s#^+++ b/f.txt#+++ b/f.txt#' "$BASE"
 sed -i 's#^--- a/f.txt\t.*#--- a/f.txt#;s#^+++ b/f.txt\t.*#+++ b/f.txt#' "$BORE"
+printf -- '--- a/del.txt\n+++ /dev/null\n@@ -1,2 +0,0 @@\n-d1\n-d2\n' >> "$BASE"
 cp "$BASE" "$T/srv/p/$BAD/6.18/all/0001-cachyos-base-all.patch"
 cat > "$T/bad.py" <<'EOP'
 import sys
@@ -93,6 +96,7 @@ for p in $FILES; do
   patch -p1 -s -d "$T/tree" < "$p"
 done
 grep -qx line2c "$T/tree/f.txt" || fail "патчи не изменили файл"
+[ ! -e "$T/tree/del.txt" ] || fail "удаление файла не применилось"
 ok "строгая сборка: оба патча скачаны, проверены и наложены по порядку"
 
 sed -i '2s/^./g/' "$T/h/patches.lock"
