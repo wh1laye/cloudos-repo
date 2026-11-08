@@ -24,6 +24,10 @@ on:
       patches_until:
         description: "pin_patches: взять патч cachyos, актуальный на эту дату (гггг-мм-дд), пусто = самый свежий"
         default: ""
+      userspace_check:
+        description: загрузить ядро с init из busybox и проверить uname, /proc/cloudk и lockdown
+        type: boolean
+        default: true
       publish:
         description: выложить ядро в релиз cloudk-<версия>
         type: boolean
@@ -56,12 +60,12 @@ jobs:
         run: |
           case "$CVER" in ''|*[!0-9A-Za-z._]*) echo "::error::неверная версия cloudk"; exit 1 ;; esac
           case "$KVER" in ''|*[!0-9.]*) echo "::error::неверная версия ядра"; exit 1 ;; esac
-          for f in tools/kernel/build-cloudk.sh tools/kernel/cloudk-config.sh tools/kernel/cloudk-source.sh tools/kernel/cloudk-patches.sh tools/kernel/boot-check.sh; do bash -n "$f"; done
+          for f in tools/kernel/build-cloudk.sh tools/kernel/cloudk-config.sh tools/kernel/cloudk-source.sh tools/kernel/cloudk-patches.sh tools/kernel/boot-check.sh tools/kernel/userspace-check.sh tools/kernel/userspace-verdict.sh; do bash -n "$f"; done
 
       - name: зависимости
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils gnupg curl patch perl kmod wireless-regdb qemu-system-x86 clang lld llvm
+          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils gnupg curl patch perl kmod wireless-regdb qemu-system-x86 clang lld llvm busybox-static
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo mkdir -p /mnt/cloudk && sudo chown "$USER" /mnt/cloudk
           df -h / /mnt
@@ -87,6 +91,14 @@ jobs:
           KVER: ${{ inputs.kernel }}
           MARCH: ${{ matrix.march }}
         run: bash tools/kernel/boot-check.sh "out/cloudk-$CLOUDK_VER-$MARCH-vmlinuz" "$KVER-cloudk-$CLOUDK_VER"
+
+      - name: загрузка ядра с userspace
+        if: ${{ inputs.userspace_check }}
+        env:
+          CLOUDK_VER: ${{ inputs.cloudk_version }}
+          KVER: ${{ inputs.kernel }}
+          MARCH: ${{ matrix.march }}
+        run: bash tools/kernel/userspace-check.sh "out/cloudk-$CLOUDK_VER-$MARCH-vmlinuz" "$KVER-cloudk-$CLOUDK_VER" "$CLOUDK_VER"
 
       - name: закреплённые патчи
         if: ${{ always() && inputs.pin_patches && matrix.march == 'x86-64' }}

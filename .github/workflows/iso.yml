@@ -33,6 +33,10 @@ on:
         description: тестовая установка на диск в qemu и загрузка установленной системы
         type: boolean
         default: true
+      install_test_btrfs:
+        description: вторая тестовая установка с btrfs
+        type: boolean
+        default: true
       publish:
         description: выложить iso в релиз
         type: boolean
@@ -177,25 +181,31 @@ jobs:
         if: ${{ inputs.install_test }}
         env:
           VERSION: ${{ inputs.version }}
+          ITEST_BTRFS: ${{ inputs.install_test_btrfs && '1' || '0' }}
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq qemu-system-x86 qemu-utils xorriso
           ISO="$PWD/out/cloudos-live-amd64-$VERSION.iso"
           mkdir -p itest
           xorriso -osirrox on -indev "$ISO" -extract /boot/vmlinuz itest/vmlinuz -extract /boot/initramfs.img itest/initramfs.img 2>/dev/null
-          qemu-img create -f raw itest/disk.img 6G
           ACCEL=""
           if [ -w /dev/kvm ]; then ACCEL="-enable-kvm"; fi
-          timeout 1500 qemu-system-x86_64 $ACCEL -cpu max -m 3072 -smp 2 -display none -serial stdio -no-reboot \
-            -kernel itest/vmlinuz -initrd itest/initramfs.img -append "console=ttyS0 cloudos.smoke cloudos.itest" -cdrom "$ISO" \
-            -drive file=itest/disk.img,format=raw,if=virtio > "$PWD/itest-install.log" 2>&1 || true
-          grep -a 'cloudos-smoke:' itest-install.log | tail -n 5
-          grep -aq 'cloudos-smoke: itest ok' itest-install.log || { tail -n 80 itest-install.log | tr -d '\033'; echo "установка на диск не прошла"; exit 1; }
-          timeout 600 qemu-system-x86_64 $ACCEL -cpu max -m 2048 -smp 2 -display none -serial stdio -no-reboot \
-            -drive file=itest/disk.img,format=raw,if=virtio -boot c > "$PWD/itest-boot.log" 2>&1 || true
-          grep -aq 'Kernel panic' itest-boot.log && { echo "паника ядра при загрузке установленной системы"; exit 1; }
-          grep -aq 'is starting up' itest-boot.log || { echo "установленная система не дошла до openrc"; exit 1; }
-          echo "установленная система загрузилась до openrc"
+          itest_run() {
+            local fs=$1 sfx=$2 extra=$3
+            qemu-img create -f raw itest/disk.img 6G
+            timeout 1500 qemu-system-x86_64 $ACCEL -cpu max -m 3072 -smp 2 -display none -serial stdio -no-reboot \
+              -kernel itest/vmlinuz -initrd itest/initramfs.img -append "console=ttyS0 cloudos.smoke cloudos.itest$extra" -cdrom "$ISO" \
+              -drive file=itest/disk.img,format=raw,if=virtio > "$PWD/itest-install$sfx.log" 2>&1 || true
+            grep -a 'cloudos-smoke:' "itest-install$sfx.log" | tail -n 5
+            grep -aq 'cloudos-smoke: itest ok' "itest-install$sfx.log" || { tail -n 80 "itest-install$sfx.log" | tr -d '\033'; echo "установка на диск ($fs) не прошла"; exit 1; }
+            timeout 600 qemu-system-x86_64 $ACCEL -cpu max -m 2048 -smp 2 -display none -serial stdio -no-reboot \
+              -drive file=itest/disk.img,format=raw,if=virtio -boot c > "$PWD/itest-boot$sfx.log" 2>&1 || true
+            grep -aq 'Kernel panic' "itest-boot$sfx.log" && { echo "паника ядра при загрузке установленной системы ($fs)"; exit 1; }
+            grep -aq 'is starting up' "itest-boot$sfx.log" || { echo "установленная система ($fs) не дошла до openrc"; exit 1; }
+            echo "установленная система ($fs) загрузилась до openrc"
+          }
+          itest_run ext4 "" ""
+          if [ "$ITEST_BTRFS" = 1 ]; then itest_run btrfs -btrfs " cloudos.itest.fs=btrfs"; fi
 
       - name: итог в summary
         if: always()
