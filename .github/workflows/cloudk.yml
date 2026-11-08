@@ -5,7 +5,7 @@ on:
     inputs:
       cloudk_version:
         description: версия ядра cloudk
-        default: "0.3"
+        default: "0.4"
       kernel:
         description: версия ванильного ядра, на котором собран cloudk
         default: "6.18.10"
