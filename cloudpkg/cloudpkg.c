@@ -62,6 +62,7 @@ void usage(void)
 int main(int argc, char **argv)
 {
 	const char *c;
+	int r = 1;
 
 	if (argc < 2) {
 		usage();
@@ -69,47 +70,50 @@ int main(int argc, char **argv)
 	}
 	c = argv[1];
 	loadconf();
-	if (!strcmp(c, "update"))
-		return host_ok() ? cmd_update(argc - 2, argv + 2) : 1;
-	if (!strcmp(c, "fix"))
-		return host_ok() ? cmd_fix(argc - 2, argv + 2) : 1;
-	if (!strcmp(c, "sync"))
-		return host_ok() ? cmd_sync() : 1;
-	if (!strcmp(c, "install"))
-		return host_ok() ? cmd_install(argc - 2, argv + 2) : 1;
-	if (!strcmp(c, "remove"))
-		return host_ok() ? cmd_remove(argc - 2, argv + 2) : 1;
-	if (!strcmp(c, "upgrade"))
-		return host_ok() ? cmd_upgrade(argc - 2, argv + 2) : 1;
-	if (!strcmp(c, "snapshot"))
-		return cmd_snapshot(argc - 2, argv + 2);
-	if (!strcmp(c, "snapshots"))
-		return cmd_snapshots();
-	if (!strcmp(c, "snapshot-rm"))
-		return cmd_snapshot_rm(argc - 2, argv + 2);
-	if (!strcmp(c, "rollback"))
-		return cmd_rollback(argc - 2, argv + 2);
-	if (!strcmp(c, "clean"))
-		return host_ok() ? cmd_clean(argc - 2, argv + 2) : 1;
-	if (!strcmp(c, "search"))
-		return cmd_search(argc - 2, argv + 2);
-	if (!strcmp(c, "info"))
-		return cmd_info(argc - 2, argv + 2);
-	if (!strcmp(c, "list"))
-		return cmd_list();
-	if (!strcmp(c, "doctor"))
-		return cmd_doctor();
-	if (!strcmp(c, "vdb"))
-		return host_ok() ? cmd_vdb() : 1;
+	if (!acquire_lock())
+		return 1;
 	if (!strcmp(c, "version") || !strcmp(c, "--version")) {
 		puts("cloudpkg " VERSION);
-		return 0;
-	}
-	if (!strcmp(c, "help") || !strcmp(c, "--help") || !strcmp(c, "-h")) {
+		r = 0;
+	} else if (!strcmp(c, "help") || !strcmp(c, "--help") || !strcmp(c, "-h")) {
 		usage();
-		return 0;
+		r = 0;
+	} else if (!strcmp(c, "update")) {
+		r = host_ok() ? cmd_update(argc - 2, argv + 2) : 1;
+	} else if (!strcmp(c, "fix")) {
+		r = host_ok() ? cmd_fix(argc - 2, argv + 2) : 1;
+	} else if (!strcmp(c, "sync")) {
+		r = host_ok() ? cmd_sync() : 1;
+	} else if (!strcmp(c, "install")) {
+		r = host_ok() ? cmd_install(argc - 2, argv + 2) : 1;
+	} else if (!strcmp(c, "remove")) {
+		r = host_ok() ? cmd_remove(argc - 2, argv + 2) : 1;
+	} else if (!strcmp(c, "upgrade")) {
+		r = host_ok() ? cmd_upgrade(argc - 2, argv + 2) : 1;
+	} else if (!strcmp(c, "snapshot")) {
+		r = cmd_snapshot(argc - 2, argv + 2);
+	} else if (!strcmp(c, "snapshots")) {
+		r = cmd_snapshots();
+	} else if (!strcmp(c, "snapshot-rm")) {
+		r = cmd_snapshot_rm(argc - 2, argv + 2);
+	} else if (!strcmp(c, "rollback")) {
+		r = cmd_rollback(argc - 2, argv + 2);
+	} else if (!strcmp(c, "clean")) {
+		r = host_ok() ? cmd_clean(argc - 2, argv + 2) : 1;
+	} else if (!strcmp(c, "search")) {
+		r = cmd_search(argc - 2, argv + 2);
+	} else if (!strcmp(c, "info")) {
+		r = cmd_info(argc - 2, argv + 2);
+	} else if (!strcmp(c, "list")) {
+		r = cmd_list();
+	} else if (!strcmp(c, "doctor")) {
+		r = cmd_doctor();
+	} else if (!strcmp(c, "vdb")) {
+		r = host_ok() ? cmd_vdb() : 1;
+	} else {
+		fprintf(stderr, "cloudpkg: неизвестная команда %s\n", c);
+		usage();
 	}
-	fprintf(stderr, "cloudpkg: неизвестная команда %s\n", c);
-	usage();
-	return 1;
+	release_lock();
+	return r;
 }

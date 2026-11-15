@@ -12,11 +12,13 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <sys/wait.h>
 
 #ifndef CONF
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
 #endif
+#define LOCKFILE "/tmp/cloudpkg.lock"
 #define UPD_REPO "wh1laye/cloudos-repo"
 #define UPD_BRANCH "main"
 #define UPD_TAG "cloudpkg-latest"
@@ -62,6 +64,9 @@ extern int allow_host;
 extern int unsigned_fb;
 extern int safe_mode;
 extern int sn_keep;
+extern int lock_fd;
+int acquire_lock(void);
+void release_lock(void);
 
 void *xcalloc(size_t n, size_t m);
 char *xstrdup(const char *s);

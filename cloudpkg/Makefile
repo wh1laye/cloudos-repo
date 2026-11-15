@@ -9,7 +9,7 @@ CONFS := cloudpkg/cloudpkg.conf portage/make.conf portage/repos.conf/gentoo.conf
 
 all: cloudpkg
 
-SRCS := cloudpkg.c util.c heal.c emerge.c snap.c cmds.c update.c
+SRCS := cloudpkg.c util.c heal.c emerge.c snap.c cmds.c update.c lock.c
 
 cloudpkg: $(SRCS) cloudpkg.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SRCS)
