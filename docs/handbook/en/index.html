@@ -149,7 +149,7 @@ nano /mnt/cloudos/boot/limine/limine.conf</code></pre>
 <p>content (root partition PARTUUID from <code>blkid</code>, your filesystem type):</p>
 <pre><code>timeout: 3
 
-/CloudOS
+/CloudOs
     protocol: linux
     path: boot():/vmlinuz
     cmdline: root=PARTUUID=PARTROOT_UUID rootfstype=ext4 rw quiet slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1</code></pre>
