@@ -4,7 +4,7 @@
 
 - `tools/kernel/build-cloudk.sh`: версия cloudk поднята до 0.5, KVER по умолчанию 6.18.10
 - `tools/kernel/cloudk-config.sh`: добавлены `CC_OPTIMIZE_FOR_SIZE` (ядро компилируется с -Os, меньше cache pressure) и `ARCH_TUNE_OPTIMIZATIONS` (подбор флагов под конкретный x86-64 cpu: znver4, alderlake, raptorlake и т.д.), добавлен `X86_KERNEL_IBT` в обязательные
-- `tools/kernel/patches.lock`: ref обновлён до актуального коммита cachyos/kernel-patches (21d7214), добавлены четыре патча для ядра 6.18 с закреплёнными sha256: `sched/0001-bore-cachy.patch` (планировщик bore), `misc/0001-hardened.patch` (удержание памяти в RAM, защита от cold boot), `misc/0001-clang-polly.patch` (loop vectorizer для clang), `misc/reflex-governor.governor.patch` (управление частотой, снижение задержек); старый пустой ref и патч для 6.6 удалены
+- `tools/kernel/patches.lock`: ref обновлён до актуального коммита cachyos/kernel-patches (21d7214), добавлены четыре патча для ядра 6.18 с закреплёнными sha256: `sched/0001-bore.patch` (планировщик bore, plain-версия без зависимостей от cachyos-модификаций), `misc/0001-hardened.patch` (удержание памяти в RAM, защита от cold boot), `misc/0001-clang-polly.patch` (loop vectorizer для clang), `misc/reflex-governor.patch` (управление частотой, снижение задержек); `bore-cachy` заменён на plain `bore` потому что первый зависит от модификаций fair.c, которых нет в ванильном 6.18.10
 - `tools/kernel/cloudk-patches.sh`: пути патчей теперь из `6.18/` (bore-cachy, hardened, clang-polly, reflex-governor); dry-run перед наложением падает с понятным сообщением если патч не лезет на текущий KVER
 
 ## cloudpkg: блокировка параллельных запусков через flock
