@@ -54,7 +54,7 @@ jobs:
       - name: зависимости
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils curl patch perl kmod wireless-regdb qemu-system-x86 clang lld llvm busybox-static
+          sudo apt-get install -y -qq build-essential bc flex bison libssl-dev libelf-dev cpio zstd xz-utils curl patch perl kmod wireless-regdb qemu-system-x86 clang lld llvm busybox-static gnupg
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo mkdir -p /mnt/cloudk && sudo chown "$USER" /mnt/cloudk
           df -h / /mnt

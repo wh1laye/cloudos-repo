@@ -32,7 +32,7 @@ case "$KVER" in ''|*[!0-9.]*) die "неверная версия ядра" ;; es
 case "$CLOUDK_VER" in ''|*[!0-9A-Za-z._]*) die "неверная версия cloudk" ;; esac
 case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасная рабочая папка: $WORK" ;; esac
 [ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
-for c in gcc make bc flex bison perl cpio zstd xz tar curl sha256sum awk openssl patch; do
+for c in gcc make bc flex bison perl cpio zstd xz tar curl sha256sum awk openssl patch gpg; do
   command -v "$c" >/dev/null || die "нет команды $c"
 done
 [ -e /usr/include/openssl/bio.h ] || die "нет заголовков openssl"
@@ -53,13 +53,20 @@ mkdir -p "$SRC" "$STAGE"
 say "ядро cachyos $KVER"
 CACHY_TAG=$(curl -sL "https://api.github.com/repos/CachyOS/linux/releases/latest" | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'])")
 [ -n "$CACHY_TAG" ] || die "не получен тег cachyos"
-CACHY_TAR="cachyos-${CACHY_TAG}.tar.gz"
+CACHY_TAR="${CACHY_TAG}.tar.gz"
 say "версия cachyos: $CACHY_TAG"
 
 fetch "https://github.com/CachyOS/linux/releases/download/$CACHY_TAG/$CACHY_TAR" "$WORK/$CACHY_TAR" || die "не скачался $CACHY_TAR"
-CSHA=$(curl -sL "https://api.github.com/repos/CachyOS/linux/releases/latest" | python3 -c "import json,sys; [print(a['name'],a['sha256']) for a in json.load(sys.stdin).get('assets',[]) if a['name']=='$CACHY_TAR']")
-[ -n "$CSHA" ] || die "нет sha256 для $CACHY_TAR в релизе"
-printf '%s  %s\n' "$CSHA" "$WORK/$CACHY_TAR" | sha256sum -c - || { rm -f "$WORK/$CACHY_TAR"; die "sha256 $CACHY_TAR не совпал"; }
+ASC="${CACHY_TAR}.asc"
+fetch "https://github.com/CachyOS/linux/releases/download/$CACHY_TAG/$ASC" "$WORK/$ASC" || die "не скачалась $ASC"
+gpg --import "$HERE/cachyos.pubkey.asc" 2>/dev/null
+GNUPGHOME=$(mktemp -d)
+export GNUPGHOME
+gpg --import "$HERE/cachyos.pubkey.asc" >/dev/null 2>&1
+gpg --verify "$WORK/$ASC" "$WORK/$CACHY_TAR" >/dev/null 2>&1 || { rm -rf "$GNUPGHOME"; die "gpg подпись $CACHY_TAR не совпала"; }
+rm -rf "$GNUPGHOME"
+gpg --verify "$WORK/$ASC" "$WORK/$CACHY_TAR" 2>/dev/null || die "gpg подпись $CACHY_TAR не совпала"
+say "проверена подпись cachyos ключом 5CC324DC31D9D568"
 
 tar xf "$WORK/$CACHY_TAR" -C "$SRC" --strip-components=1
 cd "$SRC"
