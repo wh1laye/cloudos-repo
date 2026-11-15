@@ -95,7 +95,7 @@ if(window.I18N_EXTRA)for(var k in window.I18N_EXTRA)D[k]=window.I18N_EXTRA[k];
 var RE=null;
 function rebuild(){
   var ks=Object.keys(D).filter(function(x){return x.length>1}).sort(function(a,b){return b.length-a.length});
-  RE=ks.length?new RegExp('(?<![а-яёa-z0-9])('+ks.map(function(x){return x.replace(/[.*+?^${}()|[\]\\\/]/g,'\\$&')}).join('|')+')(?![а-яё])','g'):null;
+  RE=ks.length?new RegExp('(?<![а-яёa-z0-9])('+ks.map(function(x){return x.replace(/[.*+?^${}()|[\]\\\/]/g,'\\$&')}).join('|')+')(?![а-яё])','gi'):null;
 }
 rebuild();
 var CY=/[а-яё]/i;
@@ -108,7 +108,11 @@ function conv(s){
   if(!core)return null;
   var r=D[core];
   if(r===undefined){
-    r=RE?core.replace(RE,function(x){var v=D[x];return v===undefined?x:v}):core;
+    var l=core.charAt(0).toLowerCase()+core.slice(1);
+    if(l!==core)r=D[l];
+  }
+  if(r===undefined){
+    r=RE?core.replace(RE,function(x){var v=D[x];if(v===undefined)v=D[x.toLowerCase()];return v===undefined?x:v}):core;
     if(CY.test(r))return null;
   }
   return m[1]+r+m[3];

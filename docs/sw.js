@@ -1,7 +1,7 @@
-const V = '31'
+const V = '32'
 const CACHE = 'cloudos-' + V
 const SCOPE = self.registration.scope
-const CORE_FILES = ['offline.html', 'manifest.webmanifest', 'icon.svg', 'apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png']
+const CORE_FILES = ['offline.html', 'typo.js', 'manifest.webmanifest', 'icon.svg', 'apple-touch-icon.png', 'icons/icon-192.png', 'icons/icon-512.png']
 const CORE_PAGES = ['./', 'handbook/', 'handbook/en/']
 const ASSET = /\.(css|js|png|svg|webp|jpg|jpeg|ico|woff2?|json|webmanifest)$/i
 const MAX = 300
