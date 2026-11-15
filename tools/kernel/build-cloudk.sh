@@ -3,7 +3,7 @@ set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 KVER=${KVER:-6.18.10}
-CLOUDK_VER=${CLOUDK_VER:-0.3}
+CLOUDK_VER=${CLOUDK_VER:-0.5}
 MARCH=${MARCH:-x86-64}
 LTO=${LTO:-none}
 WORK=${WORK:-/var/tmp/cloudk-build}

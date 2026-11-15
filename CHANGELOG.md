@@ -1,6 +1,13 @@
 # changelog
 
-## cloudk: патчи cachyos (bore), закрепление хэшей
+## cloudk 0.5: cachyos-патчи (bore, hardened, polly, reflex), оптимизации конфига
+
+- `tools/kernel/build-cloudk.sh`: версия cloudk поднята до 0.5, KVER по умолчанию 6.18.10
+- `tools/kernel/cloudk-config.sh`: добавлены `CC_OPTIMIZE_FOR_SIZE` (ядро компилируется с -Os, меньше cache pressure) и `ARCH_TUNE_OPTIMIZATIONS` (подбор флагов под конкретный x86-64 cpu: znver4, alderlake, raptorlake и т.д.), добавлен `X86_KERNEL_IBT` в обязательные
+- `tools/kernel/patches.lock`: ref обновлён до актуального коммита cachyos/kernel-patches (21d7214), добавлены четыре патча для ядра 6.18 с закреплёнными sha256: `sched/0001-bore-cachy.patch` (планировщик bore), `misc/0001-hardened.patch` (удержание памяти в RAM, защита от cold boot), `misc/0001-clang-polly.patch` (loop vectorizer для clang), `misc/reflex-governor.governor.patch` (управление частотой, снижение задержек); старый пустой ref и патч для 6.6 удалены
+- `tools/kernel/cloudk-patches.sh`: пути патчей теперь из `6.18/` (bore-cachy, hardened, clang-polly, reflex-governor); dry-run перед наложением падает с понятным сообщением если патч не лезет на текущий KVER
+
+## cloudpkg: блокировка параллельных запусков через flock
 
 - `tools/kernel/cloudk-patches.sh`: скачивает патчи по `tools/kernel/patches.lock` с закреплённого коммита cachyos/kernel-patches, проверяет sha256, путь `@KMM@` заменяется на мажор.минор ядра, без закреплённого коммита или хэша сборка останавливается
 - `tools/kernel/patches.lock`: ref пустой, один патч `sched/0001-bore-cachy.patch`; хэши закрепляются первым запуском cloudk с `pin_patches`
