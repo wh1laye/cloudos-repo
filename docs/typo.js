@@ -10,7 +10,7 @@ var ABBR={
   'проч':1,'ред':1,'изд':1,'пер':1,'ст':1,'пп':1
 };
 var CANON={
-  'cloudos':'CloudOS','cloudpkg':'Cloudpkg','cloudos-install':'cloudos-install',
+  'cloudos':'CloudOs','cloudpkg':'Cloudpkg','cloudos-install':'cloudos-install',
   'cloudos-firewall':'cloudos-firewall','cloudos-audit':'cloudos-audit',
   'cloudos-uki':'cloudos-uki','cloudos-tpm2':'cloudos-tpm2',
   'cloudos-secureboot':'cloudos-secureboot','cloudos-users':'cloudos-users',
