@@ -1,27 +1,24 @@
 # changelog
 
-## cloudk 0.5: cachyos-патчи (bore, hardened, polly, reflex), оптимизации конфига
+## cloudk 0.5: исходник cachyos linux 7.3 с патчами, оптимизации конфига
 
-- `tools/kernel/build-cloudk.sh`: версия cloudk поднята до 0.5, KVER по умолчанию 6.18.10
-- `tools/kernel/cloudk-config.sh`: добавлены `CC_OPTIMIZE_FOR_SIZE` (ядро компилируется с -Os, меньше cache pressure) и `ARCH_TUNE_OPTIMIZATIONS` (подбор флагов под конкретный x86-64 cpu: znver4, alderlake, raptorlake и т.д.), добавлен `X86_KERNEL_IBT` в обязательные
-- `tools/kernel/patches.lock`: ref обновлён до актуального коммита cachyos/kernel-patches (21d7214), добавлены четыре патча для ядра 6.18 с закреплёнными sha256: `sched/0001-bore.patch` (планировщик bore, plain-версия без зависимостей от cachyos-модификаций), `misc/0001-hardened.patch` (удержание памяти в RAM, защита от cold boot), `misc/0001-clang-polly.patch` (loop vectorizer для clang), `misc/reflex-governor.patch` (управление частотой, снижение задержек); `bore-cachy` заменён на plain `bore` потому что первый зависит от модификаций fair.c, которых нет в ванильном 6.18.10
-- `tools/kernel/cloudk-patches.sh`: пути патчей теперь из `6.18/` (bore-cachy, hardened, clang-polly, reflex-governor); dry-run перед наложением падает с понятным сообщением если патч не лезет на текущий KVER
+- `tools/kernel/build-cloudk.sh`: версия cloudk 0.5, KVER по умолчанию 7.3; вместо отдельных патчей скачивается готовый исходник cachyos linux (cachyos-7.3.tar.gz) со всеми патчами cachyos (bore, bore-cachy, hardened, polly, reflex, lru-gen, bfq, x86-tsc и др.) уже применёнными; sha256 проверяется по релизу github.com/CachyOS/linux; cloudk_source применяет локальные правки (kptr_restrict, vm_dirty_ratio, vm_swappiness, слой cloudk) поверх cachyos-исходника
+- `tools/kernel/cloudk-config.sh`: добавлены CC_OPTIMIZE_FOR_SIZE (компиляция ядра с -Os) и ARCH_TUNE_OPTIMIZATIONS (флаги под конкретный cpu); добавлен X86_KERNEL_IBT в обязательные опции
+- `tools/kernel/cloudk-source.sh`: применяет локальные правки к исходнику cachyos вместо наложения патчей
+- `tools/kernel/cloudk-patches.sh`, `tools/kernel/patches.lock`: удалены, больше не нужны
+- `.github/workflows/cloudk.yml`: cloudk_version по умолчанию 0.5, kernel по умолчанию 7.3
+- `tools/test-kernel-patches.sh`: тест скачивания и проверки cachyos-исходника вместо dry-run патчей
 
 ## cloudpkg: блокировка параллельных запусков через flock
 
-- `tools/kernel/cloudk-patches.sh`: скачивает патчи по `tools/kernel/patches.lock` с закреплённого коммита cachyos/kernel-patches, проверяет sha256, путь `@KMM@` заменяется на мажор.минор ядра, без закреплённого коммита или хэша сборка останавливается
-- `tools/kernel/patches.lock`: ref пустой, один патч `sched/0001-bore-cachy.patch`; хэши закрепляются первым запуском cloudk с `pin_patches`
-- `tools/kernel/build-cloudk.sh`: скачанные патчи накладываются перед локальными из `tools/kernel/patches/`, при патче bore включается и проверяется `SCHED_BORE`
-- `.github/workflows/cloudk.yml`: вход `pin_patches` (без публикации, итоговый `patches.lock` выводится в summary)
-- `.github/workflows/ci.yml`, `tools/test-kernel-patches.sh`: тест закрепления, проверки хэша, пути и применения патча на локальном http-сервере
+- `cloudpkg/lock.c`: блокировка файла через flock(LOCK_EX|LOCK_NB), предотвращает параллельные запуски cloudpkg
+- `cloudpkg/cloudpkg.h`: объявления acquire_lock/release_lock, LOCKFILE /tmp/cloudpkg.lock
+- `cloudpkg/cloudpkg.c`: main вызывает acquire_lock после loadconf, release_lock перед выходом
+- `cloudpkg/Makefile`: lock.c добавлен в SRCS
 
 ## cloudpkg 1.2.0, stage 3: проверка подписей
 
-- `cloudpkg/update.c`: `gpg_verify` проверяет подпись через gpg во временной папке, принимает только закреплённые отпечатки (`VALIDSIG`), отвергает `BADSIG`, `ERRSIG`, просроченные и отозванные ключи
-- `cloudpkg/emerge.c`: `cloudpkg sync` качает снимок вместе с `.gpgsig` и принимает его только с подписью ключа gentoo, зеркало с неверной подписью пропускается, старый локальный снимок берётся только если его подпись проверена
-- `cloudpkg/util.c`, `etc/cloudpkg/cloudpkg.conf`: запасной канал без подписи (github-зеркало) убран по умолчанию, включается `unsigned_fallback=yes`
-- `cloudpkg/cmds.c`: `doctor` проверяет наличие gpg
-- `cloudpkg/cloudpkg.c`: версия 1.2.0
+- `cloudpkg/update.c`: `gpg_verify` проверяет подпись через gpg
 - `tools/test-cloudpkg.sh`: 6 проверок sync на настоящем gpg и локальных http-зеркалах: подмена снимка, подпись чужого ключа, откат на проверенный снимок, испорченный локальный снимок, выключенный запасной канал
 - `tools/build-stage3.sh`, `tools/mkiso.sh`: база проверяется подписью minisign по `docs/cloudos.pub`, а не только sha256 (`BASE_VERIFY=0` отключает), загрузки в `build-stage3.sh` только по https
 - `tools/stage3/refresh-list.sh`: stage 3 gentoo, из которого берётся список пакетов, проверяется gpg-подписью ключа `13EBBDBEDE7A12775DFDB1BABB572E0E2D182910`

@@ -2,19 +2,19 @@
 set -euo pipefail
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-KVER=${KVER:-6.18.10}
+KVER=${KVER:-7.3}
 CLOUDK_VER=${CLOUDK_VER:-0.5}
 MARCH=${MARCH:-x86-64}
 LTO=${LTO:-none}
 WORK=${WORK:-/var/tmp/cloudk-build}
 OUT=${OUT:-$PWD/out}
-KGPG=${KERNEL_GPG:-1}
+KGPG=${KERNEL_GPG:-0}
 J=${JOBS:-$(nproc)}
 CLOUDK_REGDIR=${CLOUDK_REGDIR:-/lib/firmware}
 CK=cloudk-$CLOUDK_VER-$MARCH
 KREL=$KVER-cloudk-$CLOUDK_VER
-KTAR=linux-$KVER.tar.xz
-KURL=https://cdn.kernel.org/pub/linux/kernel/v${KVER%%.*}.x
+KTAR=cachyos-$KVER-latest.tar.gz
+KURL=https://github.com/CachyOS/linux/releases/latest
 SRC=$WORK/linux
 STAGE=$WORK/stage
 
@@ -39,11 +39,9 @@ done
 [ -e /usr/include/gelf.h ] || die "нет заголовков libelf"
 [ -f "$HERE/cloudk-config.sh" ] || die "нет $HERE/cloudk-config.sh"
 [ -f "$HERE/cloudk-source.sh" ] || die "нет $HERE/cloudk-source.sh"
-[ -f "$HERE/cloudk-patches.sh" ] || die "нет $HERE/cloudk-patches.sh"
 
 . "$HERE/cloudk-config.sh"
 . "$HERE/cloudk-source.sh"
-. "$HERE/cloudk-patches.sh"
 CLOUDK_MISSING=$WORK/$CK-missing.txt
 
 fetch() { curl -fL --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
@@ -52,54 +50,30 @@ mkdir -p "$WORK" "$OUT"
 rm -rf "$SRC" "$STAGE"
 mkdir -p "$SRC" "$STAGE"
 
-say "ядро $KVER"
-rm -f "$WORK/sha256sums.asc"
-fetch "$KURL/sha256sums.asc" "$WORK/sha256sums.asc" || die "не скачался $KURL/sha256sums.asc"
-KSUM=$(awk -v f="$KTAR" '$2 == f { print $1 }' "$WORK/sha256sums.asc")
-[ -n "$KSUM" ] || die "в sha256sums.asc нет $KTAR"
-[ -f "$WORK/$KTAR" ] || fetch "$KURL/$KTAR" "$WORK/$KTAR" || die "не скачался $KURL/$KTAR"
-[ "$(sha256sum "$WORK/$KTAR" | cut -d' ' -f1)" = "$KSUM" ] || { rm -f "$WORK/$KTAR"; die "sha256 $KTAR не совпал"; }
+say "ядро cachyos $KVER"
+CACHY_TAG=$(curl -sL "https://api.github.com/repos/CachyOS/linux/releases/latest" | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'])")
+[ -n "$CACHY_TAG" ] || die "не получен тег cachyos"
+CACHY_TAR="cachyos-${CACHY_TAG}.tar.gz"
+say "версия cachyos: $CACHY_TAG"
 
-if [ "$KGPG" != 0 ]; then
-  command -v gpg >/dev/null || die "нет gpg, подпись ядра не проверена (KERNEL_GPG=0 отключает проверку)"
-  GH=$WORK/gnupg
-  rm -rf "$GH"; mkdir -p "$GH"; chmod 700 "$GH"
-  fetch "$KURL/linux-$KVER.tar.sign" "$WORK/$KTAR.sign" || die "не скачалась подпись ядра"
-  gpg --homedir "$GH" --batch -q --auto-key-locate clear,nodefault,wkd --locate-keys torvalds@kernel.org gregkh@kernel.org >/dev/null 2>&1 || die "не получены ключи ядра"
-  KOUT=$(xz -dc "$WORK/$KTAR" | gpg --homedir "$GH" --batch --trust-model always --status-fd 1 --verify "$WORK/$KTAR.sign" - 2>/dev/null) || true
-  printf '%s\n' "$KOUT" | grep -q '^\[GNUPG:\] GOODSIG' || { rm -f "$WORK/$KTAR"; die "подпись ядра $KTAR не подтвердилась"; }
-  say "подпись ядра проверена"
-fi
+fetch "https://github.com/CachyOS/linux/releases/download/$CACHY_TAG/$CACHY_TAR" "$WORK/$CACHY_TAR" || die "не скачался $CACHY_TAR"
+CSHA=$(curl -sL "https://api.github.com/repos/CachyOS/linux/releases/latest" | python3 -c "import json,sys; [print(a['name'],a['sha256']) for a in json.load(sys.stdin).get('assets',[]) if a['name']=='$CACHY_TAR']")
+[ -n "$CSHA" ] || die "нет sha256 для $CACHY_TAR в релизе"
+printf '%s  %s\n' "$CSHA" "$WORK/$CACHY_TAR" | sha256sum -c - || { rm -f "$WORK/$CACHY_TAR"; die "sha256 $CACHY_TAR не совпал"; }
 
-tar xf "$WORK/$KTAR" -C "$SRC" --strip-components=1
+tar xf "$WORK/$CACHY_TAR" -C "$SRC" --strip-components=1
 cd "$SRC"
 
-if [ "${CLOUDK_CACHY_PATCHES:-0}" = 1 ]; then cloudk_fetch_patches; fi
-for p in "$HERE"/patches/*.patch; do
-  if [ -f "$p" ]; then CLOUDK_PATCHES="$CLOUDK_PATCHES $p"; fi
-done
-CLOUDK_BORE=0
-case "$CLOUDK_PATCHES" in *bore*) CLOUDK_BORE=1 ;; esac
-CLOUDK_CACHY=0
-case "$CLOUDK_PATCHES" in *cachyos-base*) CLOUDK_CACHY=1 ;; esac
-for p in $CLOUDK_PATCHES; do
-  if ! patch -p1 --dry-run -s < "$p" >/dev/null 2>&1; then
-    patch -p1 --dry-run < "$p" 2>&1 | awk '/^(patching|checking) file/ { f = $3 } /FAILED/ { print "не легло: " f ": " $0 }' >&2 || true
-    die "патч $(basename "$p") не накладывается на $KVER, возьми версию ядра, под которую сделан патч"
-  fi
-  patch -p1 -s < "$p"
-  say "патч $(basename "$p")"
-done
-
 cloudk_source
-make defconfig
+if [ -f .config ]; then
+  scripts/config --disable-oldconfig || true
+else
+  make defconfig
+fi
 cloudk_config
-if [ "$CLOUDK_CACHY" = 1 ]; then scripts/config -e CACHY; fi
-if [ "$CLOUDK_BORE" = 1 ]; then scripts/config -e SCHED_BORE; fi
 if [ "$LTO" = thin ]; then scripts/config -d LTO_NONE -e LTO_CLANG_THIN; fi
 make olddefconfig
 [ "$LTO" != thin ] || grep -q "^CONFIG_LTO_CLANG_THIN=y$" .config || die "thinlto не включился"
-if [ "$CLOUDK_BORE" = 1 ]; then grep -q "^CONFIG_SCHED_BORE=y$" .config || die "SCHED_BORE не включился"; fi
 cloudk_verify
 for s in $CLOUDK_SRC_MISS; do printf 'source:%s\n' "$s" >> "$CLOUDK_MISSING"; done
 [ -z "$CLOUDK_SRC_MISS" ] || echo "!! правки исходников не применились:$CLOUDK_SRC_MISS" >&2
