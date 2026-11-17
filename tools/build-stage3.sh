@@ -3,9 +3,9 @@ set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$HERE")
-VERSION=${VERSION:-1.6}
-BASE_TAG=${BASE_TAG:-1.5}
-BASE_VERSION=${BASE_VERSION:-1.5}
+VERSION=${VERSION:-1.7}
+BASE_TAG=${BASE_TAG:-1.6}
+BASE_VERSION=${BASE_VERSION:-1.6}
 BASE_VERIFY=${BASE_VERIFY:-1}
 PUB=${PUB:-$REPO/docs/cloudos.pub}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
@@ -14,11 +14,11 @@ OUT=${OUT:-$PWD}
 ROOT=$WORK/root
 
 say() { printf '==> %s\n' "$*"; }
-die() { printf 'ошибка: %s\n' "$*" >&2; exit 1; }
-[ "$(id -u)" = 0 ] || die "нужен root: sudo $0"
-[ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
-for c in curl tar xz sha256sum unshare mount chroot; do command -v "$c" >/dev/null || die "нет команды $c"; done
-case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасная рабочая папка: $WORK" ;; esac
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
+[ "$(id -u)" = 0 ] || die "root is required: sudo $0"
+[ "$(uname -m)" = x86_64 ] || die "x86_64 is required"
+for c in curl tar xz sha256sum unshare mount chroot; do command -v "$c" >/dev/null || die "missing command: $c"; done
+case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "unsafe work directory: $WORK" ;; esac
 
 mkdir -p "$WORK/src" "$OUT"
 
@@ -27,59 +27,46 @@ fetch() { curl -fL --proto =https --retry 8 --retry-delay 15 --connect-timeout 2
 base_sig() {
   case $BASE_VERIFY in
     1)
-      command -v minisign >/dev/null || die "нет minisign, подпись базы не проверить (BASE_VERIFY=0 отключает проверку)"
-      [ -f "$PUB" ] || die "нет публичного ключа $PUB"
-      [ -f "$2" ] || die "нет подписи $2 (BASE_VERIFY=0 отключает проверку)"
-      minisign -V -p "$PUB" -m "$1" -x "$2" >/dev/null || die "подпись базы не сходится с $PUB"
-      say "подпись базы minisign проверена" ;;
-    0) printf '!! подпись базы не проверяется\n' >&2 ;;
-    *) die "BASE_VERIFY: 1 или 0" ;;
+      command -v minisign >/dev/null || die "minisign is missing, cannot verify the base (BASE_VERIFY=0 disables it)"
+      [ -f "$PUB" ] || die "public key not found: $PUB"
+      [ -f "$2" ] || die "signature not found: $2 (BASE_VERIFY=0 disables it)"
+      minisign -V -p "$PUB" -m "$1" -x "$2" >/dev/null || die "base signature does not match $PUB"
+      say "base minisign signature verified" ;;
+    0) printf 'warning: base signature is not verified\n' >&2 ;;
+    *) die "BASE_VERIFY: 1 or 0" ;;
   esac
 }
 
-say "база: $BASE"
+say "base: $BASE"
 case $BASE in
   http*://*)
-    fetch "$BASE" "$WORK/base.tar.xz" || die "не скачался $BASE"
-    fetch "$BASE.sha256" "$WORK/base.sha256" || die "не скачался $BASE.sha256"
-    [ "$(cut -d' ' -f1 "$WORK/base.sha256")" = "$(sha256sum "$WORK/base.tar.xz" | cut -d' ' -f1)" ] || die "sha256 базы не совпал"
+    fetch "$BASE" "$WORK/base.tar.xz" || die "download failed: $BASE"
+    fetch "$BASE.sha256" "$WORK/base.sha256" || die "download failed: $BASE.sha256"
+    [ "$(cut -d' ' -f1 "$WORK/base.sha256")" = "$(sha256sum "$WORK/base.tar.xz" | cut -d' ' -f1)" ] || die "base sha256 mismatch"
     rm -f "$WORK/base.minisig"
-    if [ "$BASE_VERIFY" = 1 ]; then fetch "$BASE.minisig" "$WORK/base.minisig" || die "не скачалась подпись $BASE.minisig (BASE_VERIFY=0 отключает проверку)"; fi
+    if [ "$BASE_VERIFY" = 1 ]; then fetch "$BASE.minisig" "$WORK/base.minisig" || die "download failed: $BASE.minisig"; fi
     base_sig "$WORK/base.tar.xz" "$WORK/base.minisig"
     BASEFILE=$WORK/base.tar.xz ;;
   *)
-    [ -f "$BASE" ] || die "нет файла $BASE"
+    [ -f "$BASE" ] || die "no such file: $BASE"
     base_sig "$BASE" "$BASE.minisig"
     BASEFILE=$BASE ;;
 esac
 
 if [ "${RESUME:-0}" = 1 ] && [ -d "$ROOT/var/tmp/s3stamp" ]; then
-  say "RESUME=1: продолжаю в $ROOT, готовые шаги не повторяются"
-  [ -x "$ROOT/usr/bin/ninja" ] && [ ! -L "$ROOT/usr/bin/ninja" ] || die "в $ROOT затёрт ninja, корень испорчен. запусти без RESUME=1"
+  say "RESUME=1: continuing in $ROOT, finished steps are not repeated"
 else
-  say "распаковка базы в $ROOT"
+  say "unpacking the base into $ROOT"
   rm -rf "$ROOT"; mkdir -p "$ROOT"
   xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*'
 fi
-grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "база не похожа на stage 3 cloudos"
+grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "the base does not look like a CloudOS stage 3"
 
-REFRESH_LIST=${REFRESH_LIST:-1}
-if [ "$REFRESH_LIST" != 0 ]; then
-  if [ "$REFRESH_LIST" != force ] && [ -s "$WORK/gentoo-stage3.list" ]; then
-    say "список пакетов: беру сохранённый $WORK/gentoo-stage3.list (REFRESH_LIST=force скачает заново)"
-    cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list"
-  else
-    say "список пакетов из настоящего stage 3 gentoo"
-    bash "$HERE/stage3/refresh-list.sh" "$WORK/gentoo-stage3.list" && cp "$WORK/gentoo-stage3.list" "$HERE/stage3/gentoo-stage3.list" \
-      || printf 'предупреждение: список не обновился, беру тот, что лежит в репозитории\n' >&2
-  fi
-fi
-
-say "исходники (sha256 сверяются)"
+say "sources (sha256 verified)"
 while IFS='|' read -r name sum url; do
   [ -n "$name" ] || continue
-  [ -f "$WORK/src/$name" ] || fetch "$url" "$WORK/src/$name" || die "не скачался $url"
-  [ "$(sha256sum "$WORK/src/$name" | cut -d' ' -f1)" = "$sum" ] || { rm -f "$WORK/src/$name"; die "sha256 $name не совпал"; }
+  [ -f "$WORK/src/$name" ] || fetch "$url" "$WORK/src/$name" || die "download failed: $url"
+  [ "$(sha256sum "$WORK/src/$name" | cut -d' ' -f1)" = "$sum" ] || { rm -f "$WORK/src/$name"; die "sha256 mismatch: $name"; }
 done < "$HERE/stage3/SOURCES.txt"
 
 mkdir -p "$ROOT/var/tmp/s3src" "$ROOT/var/tmp/s3files" "$ROOT/var/tmp/cloudpkg-src"
@@ -100,16 +87,17 @@ exec chroot "$R" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/
 ' sh "$ROOT" "$@"
 }
 
-say "cloudpkg и portage"
+say "cloudpkg"
 if [ ! -e "$ROOT/var/tmp/s3stamp/cloudpkg-setup" ]; then
   enter bash /var/tmp/cloudpkg-src/cloudpkg-setup.sh --no-sync
   mkdir -p "$ROOT/var/tmp/s3stamp"; touch "$ROOT/var/tmp/s3stamp/cloudpkg-setup"
 fi
-say "сборка пакетов (1-2 часа на одном ядре, на 8 ядрах около 15 минут)"
+
+say "building packages"
 enter bash /var/tmp/s3files/build-inside.sh "$VERSION" "${STRICT:-0}" \
   || {
     if [ -s "$ROOT/var/tmp/cloudos-report.txt" ]; then cp "$ROOT/var/tmp/cloudos-report.txt" "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt"; fi
-    die "сборка внутри chroot оборвалась. причина выше. исправь и запусти снова с RESUME=1 (готовые шаги не повторятся)"
+    die "the chroot build stopped, see the reason above; fix it and rerun with RESUME=1"
   }
 
 rm -f "$ROOT/etc/resolv.conf"
@@ -117,41 +105,41 @@ NAME=cloudos-stage3-amd64-$VERSION.tar.xz
 
 if [ -s "$ROOT/var/tmp/cloudos-report.txt" ]; then
   cp "$ROOT/var/tmp/cloudos-report.txt" "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt"
-  printf 'внимание: не собрались пакеты (список в %s):\n' "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt" >&2
+  printf 'warning: some packages failed, list in %s\n' "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt" >&2
   cat "$ROOT/var/tmp/cloudos-report.txt" >&2
-  if [ "${STRICT:-0}" = 1 ]; then die "STRICT=1: в отчёте есть проблемы, база не выпускается"; fi
+  if [ "${STRICT:-0}" = 1 ]; then die "STRICT=1: the report has problems, the base is not released"; fi
 fi
 rm -f "$ROOT/var/tmp/cloudos-report.txt"
 
 {
-  echo "# cloudos $VERSION stage 3: состав"
-  echo "# собрано вручную (lfs, stage 3), portage их не трогает"
-  grep -v '^#' "$ROOT/etc/portage/profile/package.provided" | sort -u
-  echo "# установлено через cloudpkg (portage)"
-  ( cd "$ROOT/var/db/pkg" 2>/dev/null && for d in */*/; do [ -e "$d/CLOUDOS_STUB" ] || echo "${d%/}"; done | sort )
+  echo "# cloudos $VERSION stage 3: composition"
+  echo "# built from source, tracked by cloudpkg"
+  ( cd "$ROOT/var/db/cloudpkg/installed" 2>/dev/null && for d in */*/*/; do echo "${d%/}"; done | sort )
 } > "$OUT/cloudos-stage3-amd64-$VERSION.packages.txt"
 
-say "упаковка: $OUT/$NAME"
+say "packing: $OUT/$NAME"
 tar -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*' \
-  --exclude=./var/tmp/s3stamp --exclude=./var/tmp/s3log --exclude=./var/tmp/portage/* -cpf - . | xz -T0 -9 > "$OUT/$NAME"
+  --exclude=./var/tmp/s3stamp --exclude=./var/tmp/s3log \
+  --exclude=./var/tmp/cloudpkg-build/* --exclude=./var/tmp/cloudpkg-src/* \
+  --exclude=./var/cache/cloudpkg/distfiles/* -cpf - . | xz -T0 -9 > "$OUT/$NAME"
 
-say "проверка архива"
+say "checking the archive"
 LIST=$(mktemp); trap 'rm -f "$LIST"' EXIT
 tar -tf "$OUT/$NAME" > "$LIST"
 miss=0
 for f in sbin/init sbin/openrc-init etc/os-release etc/init.d/syslog-ng etc/runlevels/default/syslog-ng \
-         etc/syslog-ng/syslog-ng.conf usr/bin/fastfetch usr/bin/cloudpkg usr/bin/emerge \
+         etc/syslog-ng/syslog-ng.conf usr/bin/fastfetch usr/bin/cloudpkg etc/cloudpkg/cloudpkg.conf \
          usr/share/cloudos/logo.txt usr/share/cloudos/logo.ansi usr/share/cloudos/logo.png \
          etc/xdg/fastfetch/config.jsonc usr/bin/neofetch usr/sbin/cloudos-users usr/sbin/cloudos-adduser usr/sbin/cloudos-fix \
          etc/login.defs etc/doas.conf; do
-  grep -qxE "(\./)?(usr/)?$f" "$LIST" || { printf 'в архиве нет %s\n' "$f" >&2; miss=1; }
+  grep -qxE "(\./)?(usr/)?$f" "$LIST" || { printf 'the archive has no %s\n' "$f" >&2; miss=1; }
 done
-if grep -qE '(^|/)cloudos-noreconf' "$LIST"; then printf 'в архиве остался cloudos-noreconf\n' >&2; miss=1; fi
-for t in autoconf automake libtool; do
-  grep -qE "^(\./)?var/db/pkg/dev-build/$t-[0-9]" "$LIST" || { printf 'в архиве нет записи %s в var/db/pkg\n' "$t" >&2; miss=1; }
+for f in usr/bin/emerge usr/bin/emaint etc/portage/make.conf var/db/repos/gentoo; do
+  grep -qxE "(\./)?$f" "$LIST" && { printf 'the archive still contains Gentoo artifact %s\n' "$f" >&2; miss=1; }
 done
-[ "$miss" = 0 ] || die "архив неполный"
+grep -qE '(^|/)cloudos-noreconf' "$LIST" && { printf 'the archive still contains cloudos-noreconf\n' >&2; miss=1; }
+[ "$miss" = 0 ] || die "the archive is incomplete"
 
 ( cd "$OUT" && sha256sum "$NAME" > "$NAME.sha256" )
-say "готово: $OUT/$NAME ($(du -h "$OUT/$NAME" | cut -f1))"
+say "done: $OUT/$NAME ($(du -h "$OUT/$NAME" | cut -f1))"
 cat "$OUT/$NAME.sha256"

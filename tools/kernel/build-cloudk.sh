@@ -1,109 +1,161 @@
 #!/bin/bash
-set -euo pipefail
+set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
-KVER=${KVER:-7.3}
-CLOUDK_VER=${CLOUDK_VER:-0.5}
-MARCH=${MARCH:-x86-64}
-LTO=${LTO:-none}
+REPO=$(dirname "$(dirname "$HERE")")
+KVER=${KVER:-6.18.10}
+CLOUDK_VER=${CLOUDK_VER:-0.6}
+MARCH=${MARCH:-x86-64-v3}
 WORK=${WORK:-/var/tmp/cloudk-build}
-OUT=${OUT:-$PWD/out}
-KGPG=${KERNEL_GPG:-0}
-J=${JOBS:-$(nproc)}
-CLOUDK_REGDIR=${CLOUDK_REGDIR:-/lib/firmware}
+OUT=${OUT:-$PWD}
+JOBS=${JOBS:-$(nproc)}
+CACHY_REQUIRED=${CACHY_REQUIRED:-1}
+CACHY_REF=${CACHY_REF:-master}
+CACHY_SRC=${CACHY_SRC:-}
+KERNEL_SRC=${KERNEL_SRC:-}
+MINISIGN_KEY=${MINISIGN_KEY:-}
+GPG_KEYS=${GPG_KEYS:-ABAF11C65A2970B130ABE3C479BE3E4300411886 647F28654894E3BD457199BE38DBBDC86092693E}
+KEYSERVER=${KEYSERVER:-hkps://keyserver.ubuntu.com}
 CK=cloudk-$CLOUDK_VER-$MARCH
-KREL=$KVER-cloudk-$CLOUDK_VER
-KTAR=cachyos-$KVER-latest.tar.gz
-KURL=https://github.com/CachyOS/linux/releases/latest
-SRC=$WORK/linux
-STAGE=$WORK/stage
 
 say() { printf '==> %s\n' "$*"; }
-die() { printf '::error::%s\n' "$*" >&2; exit 1; }
-trap 'printf "::error::упал шаг, строка %s, код %s\n" "$LINENO" "$?" >&2' ERR
+die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 
-case "$LTO" in none|thin) ;; *) die "LTO: none или thin" ;; esac
-if [ "$LTO" = thin ]; then
-  for c in clang ld.lld llvm-ar llvm-nm llvm-objcopy llvm-strip; do command -v "$c" >/dev/null || die "нет команды $c для thinlto"; done
-  export LLVM=1
-fi
-case "$MARCH" in x86-64|x86-64-v3) ;; *) die "MARCH: x86-64 или x86-64-v3" ;; esac
-case "$KVER" in ''|*[!0-9.]*) die "неверная версия ядра" ;; esac
-case "$CLOUDK_VER" in ''|*[!0-9A-Za-z._]*) die "неверная версия cloudk" ;; esac
-case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "небезопасная рабочая папка: $WORK" ;; esac
-[ "$(uname -m)" = x86_64 ] || die "нужен x86_64"
-for c in gcc make bc flex bison perl cpio zstd xz tar curl sha256sum awk openssl patch gpg; do
-  command -v "$c" >/dev/null || die "нет команды $c"
+case $MARCH in x86-64|x86-64-v2|x86-64-v3|x86-64-v4) ;; *) die "MARCH: x86-64, x86-64-v2, x86-64-v3 or x86-64-v4" ;; esac
+case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "unsafe work directory: $WORK" ;; esac
+[ "$(uname -m)" = x86_64 ] || die "x86_64 is required"
+for c in gcc make curl tar xz zstd patch git gpg flex bison bc perl awk sha256sum; do
+  command -v "$c" >/dev/null || die "missing command: $c"
 done
-[ -e /usr/include/openssl/bio.h ] || die "нет заголовков openssl"
-[ -e /usr/include/gelf.h ] || die "нет заголовков libelf"
-[ -f "$HERE/cloudk-config.sh" ] || die "нет $HERE/cloudk-config.sh"
-[ -f "$HERE/cloudk-source.sh" ] || die "нет $HERE/cloudk-source.sh"
-
-. "$HERE/cloudk-config.sh"
-. "$HERE/cloudk-source.sh"
-CLOUDK_MISSING=$WORK/$CK-missing.txt
-
-fetch() { curl -fL --retry 3 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
+[ -f "$HERE/cloudk.config" ] || die "no $HERE/cloudk.config"
 
 mkdir -p "$WORK" "$OUT"
-rm -rf "$SRC" "$STAGE"
-mkdir -p "$SRC" "$STAGE"
+SRCDIR=$WORK/linux-$KVER
+TARBALL=$WORK/linux-$KVER.tar.xz
 
-say "ядро cachyos $KVER"
-CACHY_TAG=$(curl -sL "https://api.github.com/repos/CachyOS/linux/releases/latest" | python3 -c "import json,sys; print(json.load(sys.stdin)['tag_name'])")
-[ -n "$CACHY_TAG" ] || die "не получен тег cachyos"
-CACHY_TAR="${CACHY_TAG}.tar.gz"
-say "версия cachyos: $CACHY_TAG"
+fetch() { curl -fL --proto =https --retry 5 --retry-delay 10 --connect-timeout 20 -C - -sS -o "$2" "$1"; }
 
-fetch "https://github.com/CachyOS/linux/releases/download/$CACHY_TAG/$CACHY_TAR" "$WORK/$CACHY_TAR" || die "не скачался $CACHY_TAR"
-ASC="${CACHY_TAR}.asc"
-fetch "https://github.com/CachyOS/linux/releases/download/$CACHY_TAG/$ASC" "$WORK/$ASC" || die "не скачалась $ASC"
-gpg --import "$HERE/cachyos.pubkey.asc" 2>/dev/null
-GNUPGHOME=$(mktemp -d)
-export GNUPGHOME
-gpg --import "$HERE/cachyos.pubkey.asc" >/dev/null 2>&1
-gpg --verify "$WORK/$ASC" "$WORK/$CACHY_TAR" >/dev/null 2>&1 || { rm -rf "$GNUPGHOME"; die "gpg подпись $CACHY_TAR не совпала"; }
-rm -rf "$GNUPGHOME"
-gpg --verify "$WORK/$ASC" "$WORK/$CACHY_TAR" 2>/dev/null || die "gpg подпись $CACHY_TAR не совпала"
-say "проверена подпись cachyos ключом 5CC324DC31D9D568"
-
-tar xf "$WORK/$CACHY_TAR" -C "$SRC" --strip-components=1
-cd "$SRC"
-
-cloudk_source
-if [ -f .config ]; then
-  scripts/config --disable-oldconfig || true
+if [ -n "$KERNEL_SRC" ]; then
+  say "kernel source: $KERNEL_SRC"
+  [ -e "$KERNEL_SRC" ] || die "no such source: $KERNEL_SRC"
+  case $KERNEL_SRC in
+    *.tar.xz|*.tar.gz|*.tar.zst) TARBALL=$KERNEL_SRC ;;
+    *) SRCDIR=$KERNEL_SRC ;;
+  esac
+elif [ -n "$CACHY_SRC" ]; then
+  say "pre-patched CachyOS source: $CACHY_SRC"
+  TARBALL=$WORK/cachy-linux.tar.gz
+  fetch "$CACHY_SRC" "$TARBALL" || die "download failed: $CACHY_SRC"
+  if fetch "$CACHY_SRC.sign" "$TARBALL.sign" 2>/dev/null || fetch "$CACHY_SRC.sig" "$TARBALL.sign" 2>/dev/null; then
+    [ -f "$HERE/cachyos.pubkey.asc" ] || die "signature downloaded but $HERE/cachyos.pubkey.asc is missing"
+    GNUPGHOME=$WORK/gnupg-cachy; export GNUPGHOME; mkdir -p "$GNUPGHOME"; chmod 700 "$GNUPGHOME"
+    gpg --batch --quiet --import "$HERE/cachyos.pubkey.asc"
+    gpg --batch --verify "$TARBALL.sign" "$TARBALL" || die "CachyOS source signature mismatch"
+    say "CachyOS source signature verified"
+    unset GNUPGHOME
+  else
+    [ "$CACHY_REQUIRED" = 0 ] || die "no signature for the CachyOS source, set CACHY_REQUIRED=0 to accept it"
+    printf 'warning: CachyOS source signature is not verified\n' >&2
+  fi
 else
-  make defconfig
+  say "kernel.org source: linux-$KVER"
+  MAJOR=${KVER%%.*}
+  fetch "https://cdn.kernel.org/pub/linux/kernel/v$MAJOR.x/linux-$KVER.tar.xz" "$TARBALL" || die "download failed: linux-$KVER.tar.xz"
+  fetch "https://cdn.kernel.org/pub/linux/kernel/v$MAJOR.x/linux-$KVER.tar.sign" "$TARBALL.sign" || die "download failed: linux-$KVER.tar.sign"
+  GNUPGHOME=$WORK/gnupg; export GNUPGHOME; mkdir -p "$GNUPGHOME"; chmod 700 "$GNUPGHOME"
+  for k in $GPG_KEYS; do gpg --batch --quiet --keyserver "$KEYSERVER" --recv-keys "$k" || die "cannot import key $k"; done
+  xz -dc "$TARBALL" > "$WORK/linux-$KVER.tar"
+  gpg --batch --verify "$TARBALL.sign" "$WORK/linux-$KVER.tar" || die "kernel source signature mismatch"
+  rm -f "$WORK/linux-$KVER.tar"
+  say "kernel.org signature verified"
+  unset GNUPGHOME
 fi
-cloudk_config
-if [ "$LTO" = thin ]; then scripts/config -d LTO_NONE -e LTO_CLANG_THIN; fi
-make olddefconfig
-[ "$LTO" != thin ] || grep -q "^CONFIG_LTO_CLANG_THIN=y$" .config || die "thinlto не включился"
-cloudk_verify
-for s in $CLOUDK_SRC_MISS; do printf 'source:%s\n' "$s" >> "$CLOUDK_MISSING"; done
-[ -z "$CLOUDK_SRC_MISS" ] || echo "!! правки исходников не применились:$CLOUDK_SRC_MISS" >&2
 
-KC="-O2 -pipe"
-[ "$MARCH" = x86-64 ] || KC="-O2 -pipe -march=$MARCH -mtune=generic"
-export KBUILD_BUILD_USER=cloudk KBUILD_BUILD_HOST=cloudos
-if [ -n "${SOURCE_DATE_EPOCH:-}" ]; then export KBUILD_BUILD_TIMESTAMP="$(date -u -d "@$SOURCE_DATE_EPOCH")"; fi
+if [ ! -d "$SRCDIR" ]; then
+  say "unpacking the source"
+  rm -rf "$WORK/unpack"; mkdir -p "$WORK/unpack"
+  tar -xf "$TARBALL" -C "$WORK/unpack"
+  SRCDIR=$(find "$WORK/unpack" -maxdepth 1 -mindepth 1 -type d | head -1)
+  [ -n "$SRCDIR" ] || die "the archive has no source directory"
+fi
+[ -f "$SRCDIR/Makefile" ] || die "no kernel Makefile in $SRCDIR"
 
-say "сборка cloudk $CLOUDK_VER ($MARCH) на $J ядрах"
-make -j"$J" KCFLAGS="$KC" bzImage modules || { make -j1 V=1 KCFLAGS="$KC" bzImage modules 2>&1 | tail -n 60 >&2 || true; die "сборка ядра упала"; }
-[ "$(make -s kernelrelease)" = "$KREL" ] || die "версия ядра $(make -s kernelrelease), ожидалась $KREL"
+cd "$SRCDIR"
+if [ -n "${RESET_TREE:-}" ]; then git reset --hard >/dev/null 2>&1 || true; fi
 
-make modules_install INSTALL_MOD_PATH="$STAGE" INSTALL_MOD_STRIP=1
-rm -f "$STAGE/lib/modules/$KREL/build" "$STAGE/lib/modules/$KREL/source"
-[ -s "$STAGE/lib/modules/$KREL/modules.dep" ] || die "модули не установились"
-[ -s arch/x86/boot/bzImage ] || die "нет bzImage"
+if [ -z "$CACHY_SRC" ]; then
+  say "CachyOS patch series"
+  if [ ! -d "$WORK/kernel-patches" ]; then
+    git clone --depth 1 --branch "$CACHY_REF" https://github.com/CachyOS/kernel-patches.git "$WORK/kernel-patches" \
+      || die "cannot clone CachyOS kernel-patches, set CACHY_REF to a valid branch"
+  fi
+  SERIES=${KVER%.*}
+  PDIR=""
+  for cand in "$WORK/kernel-patches/$SERIES/all" "$WORK/kernel-patches/$SERIES" "$WORK/kernel-patches/${SERIES%%.*}.x/all"; do
+    [ -d "$cand" ] && PDIR=$cand && break
+  done
+  applied=0
+  if [ -n "$PDIR" ]; then
+    for p in $(find "$PDIR" -maxdepth 1 -name '*.patch' | sort); do
+      if patch -p1 --forward --batch -N -r "$WORK/rejects.txt" < "$p" > "$WORK/patch.log" 2>&1; then
+        applied=$((applied+1))
+      else
+        tail -20 "$WORK/patch.log" >&2
+        die "CachyOS patch failed: $(basename "$p"), pin CACHY_REF to a matching commit or set CACHY_REQUIRED=0"
+      fi
+    done
+  fi
+  if [ "$applied" = 0 ]; then
+    [ "$CACHY_REQUIRED" = 0 ] || die "no CachyOS patches found for $SERIES, pin CACHY_REF or set CACHY_REQUIRED=0"
+    printf 'warning: building without CachyOS patches\n' >&2
+  else
+    say "CachyOS patches applied: $applied"
+  fi
+fi
 
-rm -f "$OUT/$CK"-* "$OUT/$CK.sha256"
-install -m644 arch/x86/boot/bzImage "$OUT/$CK-vmlinuz"
-tar --sort=name --owner=0 --group=0 --numeric-owner --mtime='2000-01-01 00:00:00' -C "$STAGE/lib" -cf - "modules/$KREL" | zstd -19 -T0 -q -f -o "$OUT/$CK-modules.tar.zst"
-install -m644 .config "$OUT/$CK-config"
-[ ! -s "$CLOUDK_MISSING" ] || install -m644 "$CLOUDK_MISSING" "$OUT/$CK-missing.txt"
-( cd "$OUT" && sha256sum "$CK-vmlinuz" "$CK-modules.tar.zst" "$CK-config" > "$CK.sha256" && sha256sum -c "$CK.sha256" >/dev/null )
+ours=0
+for p in "$HERE"/patches/*.patch; do
+  [ -f "$p" ] || continue
+  patch -p1 --forward --batch -N < "$p" > "$WORK/ours.log" 2>&1 || { tail -20 "$WORK/ours.log" >&2; die "CloudOS patch failed: $(basename "$p")"; }
+  ours=$((ours+1))
+done
+say "CloudOS patches applied: $ours"
 
-say "готово: $KREL, vmlinuz $(du -h "$OUT/$CK-vmlinuz" | cut -f1), модули $(du -h "$OUT/$CK-modules.tar.zst" | cut -f1)"
+say "config: x86_64_defconfig + cloudk.config ($MARCH)"
+make x86_64_defconfig >/dev/null
+FRAG=$WORK/cloudk-frag.config
+cat "$HERE/cloudk.config" > "$FRAG"
+case $MARCH in
+  x86-64-v2) printf 'CONFIG_GENERIC_CPU2=y\n' >> "$FRAG" ;;
+  x86-64-v3) printf 'CONFIG_GENERIC_CPU3=y\n' >> "$FRAG" ;;
+  x86-64-v4) printf 'CONFIG_GENERIC_CPU4=y\n' >> "$FRAG" ;;
+esac
+./scripts/kconfig/merge_config.sh -m .config "$FRAG" >/dev/null
+make olddefconfig >/dev/null
+KREL=$(make -s kernelrelease)
+say "kernel release: $KREL"
+
+say "building with $JOBS jobs"
+make -j"$JOBS" bzImage modules
+
+say "installing modules into a staging directory"
+rm -rf "$WORK/modules"
+make modules_install INSTALL_MOD_PATH="$WORK/modules" INSTALL_MOD_STRIP=1 >/dev/null
+[ -d "$WORK/modules/lib/modules/$KREL" ] || die "modules were not installed for $KREL"
+
+say "artifacts"
+cp arch/x86/boot/bzImage "$OUT/$CK-vmlinuz"
+tar -C "$WORK/modules/lib/modules" -cf - "$KREL" | zstd -T0 -19 -q -o "$OUT/$CK-modules.tar.zst"
+cp .config "$OUT/$CK-config"
+( cd "$OUT" && sha256sum "$CK-vmlinuz" "$CK-modules.tar.zst" "$CK-config" > "$CK.sha256" )
+
+if [ -n "$MINISIGN_KEY" ]; then
+  command -v minisign >/dev/null || die "minisign is missing, cannot sign"
+  ( cd "$OUT" && minisign -Sm "$CK.sha256" -s "$MINISIGN_KEY" -x "$CK.sha256.minisig" )
+  say "signed: $CK.sha256.minisig"
+else
+  printf 'warning: MINISIGN_KEY is not set, %s.sha256 is unsigned; mkiso needs CLOUDK_VERIFY=0 or a signature\n' "$CK" >&2
+fi
+
+say "done: $OUT/$CK-vmlinuz"
+( cd "$OUT" && cat "$CK.sha256" )

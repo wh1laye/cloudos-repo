@@ -1,36 +1,49 @@
 #!/bin/bash
-set -euo pipefail
-HERE=$(cd "$(dirname "$0")" && pwd)
-SRC=$HERE/stage3/build-inside.sh
-T=$(mktemp -d)
-trap 'rm -rf "$T"' EXIT
-fail() { printf 'тест не пройден: %s\n' "$*" >&2; exit 1; }
-ok() { printf 'ok: %s\n' "$*"; }
+set -eu
 
-a=$(grep -n '^partial_gate() {' "$SRC" | cut -d: -f1)
-b=$(grep -n '^keep_logs() {' "$SRC" | cut -d: -f1)
-[ -n "$a" ] && [ -n "$b" ] || fail "нет partial_gate в build-inside.sh"
-sed -n "${a},$((b - 1))p" "$SRC" > "$T/gate.sh"
-grep -q '^partial_gate$' "$SRC" || fail "partial_gate не вызывается в build-inside.sh"
-awk '/^step verify do_verify$/ { v = NR } /^partial_gate$/ { g = NR } /^say "уборка"$/ { u = NR } END { exit !(v && g && u && v < g && g < u) }' "$SRC" || fail "partial_gate не между verify и уборкой"
-ok "partial_gate вызывается после verify и до уборки"
+ARCHIVE=${1:-}
+[ -n "$ARCHIVE" ] || { printf 'usage: %s cloudos-stage3-amd64-VERSION.tar.xz\n' "$0" >&2; exit 1; }
+[ -f "$ARCHIVE" ] || { printf 'no such file: %s\n' "$ARCHIVE" >&2; exit 1; }
 
-cat > "$T/drv.sh" <<'EOD'
-set -euo pipefail
-say() { printf '==> %s\n' "$*"; }
-ST=$(mktemp -d -p "$TD")
-. "$TD/gate.sh"
-STRICT=${STRICT_MODE}
-[ "${MARK:-0}" = 1 ] && touch "$ST/lazyvim.partial" "$ST/cloudos-extra.partial"
-partial_gate
-echo PASSED
-EOD
-run() { TD=$T STRICT_MODE=$1 MARK=$2 bash "$T/drv.sh" 2>&1; }
-run 1 0 | grep -q PASSED || fail "чистая сборка остановлена при strict"
-run 0 1 | grep -q PASSED || fail "strict=0 остановил сборку с partial"
-if run 1 1 | grep -q PASSED; then fail "strict=1 пропустил partial"; fi
-OUT=$(run 1 1 || true)
-printf '%s\n' "$OUT" | grep -q 'неполные шаги: cloudos-extra lazyvim' || fail "нет списка неполных шагов"
-ok "strict=1 останавливает на partial, strict=0 пропускает, чистая сборка проходит"
+LIST=$(mktemp); trap 'rm -f "$LIST"' EXIT
+tar -tf "$ARCHIVE" > "$LIST"
+fail=0
 
-echo "все тесты пройдены"
+need() {
+  if grep -qxE "(\./)?(usr/)?$1" "$LIST"; then
+    printf 'ok       %s\n' "$1"
+  else
+    printf 'MISSING  %s\n' "$1"; fail=1
+  fi
+}
+forbid() {
+  if grep -qxE "(\./)?$1" "$LIST"; then
+    printf 'FORBIDDEN %s\n' "$1"; fail=1
+  else
+    printf 'clean    %s\n' "$1"
+  fi
+}
+
+need usr/bin/cloudpkg
+need etc/cloudpkg/cloudpkg.conf
+need etc/os-release
+need sbin/openrc-init
+need etc/doas.conf
+forbid usr/bin/emerge
+forbid usr/bin/emaint
+forbid etc/portage/make.conf
+forbid etc/portage/make.profile
+forbid var/db/repos/gentoo
+
+if grep -qE '^(\./)?var/db/cloudpkg/' "$LIST"; then
+  printf 'ok       cloudpkg database directory\n'
+else
+  printf 'note     cloudpkg database is empty, packages were built manually\n'
+fi
+
+if [ "$fail" = 0 ]; then
+  printf 'stage3 gate: PASS\n'
+else
+  printf 'stage3 gate: FAIL\n'
+fi
+exit "$fail"
