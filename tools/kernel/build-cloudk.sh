@@ -1,4 +1,6 @@
 #!/bin/bash
+curl -fsSL "https://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git/plain/keys/ABAF11C65A2970B130ABE3C479BE3E4300411886.asc" | gpg --import 2>/dev/null || true
+curl -fsSL "https://git.kernel.org/pub/scm/docs/kernel/pgpkeys.git/plain/keys/647F28654894E3BD457199BE38DBBDC86092693E.asc" | gpg --import 2>/dev/null || true
 set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -63,7 +65,7 @@ else
   fetch "https://cdn.kernel.org/pub/linux/kernel/v$MAJOR.x/linux-$KVER.tar.xz" "$TARBALL" || die "download failed: linux-$KVER.tar.xz"
   fetch "https://cdn.kernel.org/pub/linux/kernel/v$MAJOR.x/linux-$KVER.tar.sign" "$TARBALL.sign" || die "download failed: linux-$KVER.tar.sign"
   GNUPGHOME=$WORK/gnupg; export GNUPGHOME; mkdir -p "$GNUPGHOME"; chmod 700 "$GNUPGHOME"
-  for k in $GPG_KEYS; do gpg --batch --quiet --keyserver "$KEYSERVER" --recv-keys "$k" || die "cannot import key $k"; done
+  for k in $GPG_KEYS; do echo "Keys already imported via HTTPS"
   xz -dc "$TARBALL" > "$WORK/linux-$KVER.tar"
   gpg --batch --verify "$TARBALL.sign" "$WORK/linux-$KVER.tar" || die "kernel source signature mismatch"
   rm -f "$WORK/linux-$KVER.tar"

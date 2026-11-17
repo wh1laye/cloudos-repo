@@ -1,6 +1,6 @@
 CC ?= gcc
 CFLAGS ?= -O2
-CFLAGS += -std=gnu17 -Wall -Wextra -Wsign-conversion -Wformat=2 -Wno-format-truncation -fstack-protector-strong -fPIE -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3
+CFLAGS += -std=gnu17 -Wall -Wextra -Wsign-conversion -Wformat=2 -Wno-format-truncation -Wno-format-truncation -fstack-protector-strong -fPIE -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3
 LDFLAGS += -pie -Wl,-z,relro,-z,now
 PREFIX ?= /usr
 DESTDIR ?=

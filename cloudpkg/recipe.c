@@ -217,15 +217,15 @@ static void expand_into(const char *in, const struct recipe *r, char *out, size_
 }
 void recipe_expand(struct recipe *r)
 {
-	char tmp[2048];
-	expand_into(r->src_uri, r, tmp, sizeof tmp);
-	snprintf(r->src_uri, sizeof r->src_uri, "%s", tmp);
-	expand_into(r->build_flags, r, tmp, sizeof tmp);
-	snprintf(r->build_flags, sizeof r->build_flags, "%s", tmp);
-	expand_into(r->depend, r, tmp, sizeof tmp);
-	snprintf(r->depend, sizeof r->depend, "%s", tmp);
-	expand_into(r->rdepend, r, tmp, sizeof tmp);
-	snprintf(r->rdepend, sizeof r->rdepend, "%s", tmp);
+	char buf[2048];
+	expand_into(r->src_uri, r, buf, sizeof r->src_uri);
+	memcpy(r->src_uri, buf, sizeof r->src_uri);
+	expand_into(r->build_flags, r, buf, sizeof r->build_flags);
+	memcpy(r->build_flags, buf, sizeof r->build_flags);
+	expand_into(r->depend, r, buf, sizeof r->depend);
+	memcpy(r->depend, buf, sizeof r->depend);
+	expand_into(r->rdepend, r, buf, sizeof r->rdepend);
+	memcpy(r->rdepend, buf, sizeof r->rdepend);
 }
 int recipe_path(const char *cat, const char *name, const char *ver, char *out, size_t n)
 {
@@ -234,7 +234,7 @@ int recipe_path(const char *cat, const char *name, const char *ver, char *out, s
 }
 int recipe_best(const char *cat, const char *name, char *ver, size_t n)
 {
-	char dir[BUF], probe[BUF + 256], prefix[160];
+	char dir[BUF], probe[2048], prefix[160];
 	struct dirent **nl;
 	int i, cnt, found = 0;
 	size_t pl;
@@ -245,7 +245,10 @@ int recipe_best(const char *cat, const char *name, char *ver, size_t n)
 	pl = strlen(prefix);
 	for (i = 0; i < cnt; i++) {
 		if (nl[i]->d_name[0] != '.' && !strncmp(nl[i]->d_name, prefix, pl) && nl[i]->d_name[pl]) {
-			snprintf(probe, sizeof probe, "%s/%s/%s-%s.cpr", dir, nl[i]->d_name, name, nl[i]->d_name + pl);
+			if (snprintf(probe, sizeof probe, "%s/%s/%s-%s.cpr", dir, nl[i]->d_name, name, nl[i]->d_name + pl) >= (int)sizeof probe) {
+				free(nl[i]);
+				continue;
+			}
 			if (exists(probe) && (!found || vercmp(nl[i]->d_name + pl, ver) > 0)) {
 				snprintf(ver, n, "%s", nl[i]->d_name + pl);
 				found = 1;

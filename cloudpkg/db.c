@@ -53,7 +53,7 @@ int db_find_installed(const char *name, char *cat, size_t cn, char *ver, size_t 
 		if (nl[i]->d_name[0] == '.') continue;
 		snprintf(dir, sizeof dir, "%s/%s/%s", INSTALLED, nl[i]->d_name, name);
 		if (is_dir(dir) && best_version_dir(dir, ver, vn)) {
-			snprintf(cat, cn, "%s", nl[i]->d_name);
+			snprintf(cat, cn, "%.127s", nl[i]->d_name);
 			found = 1;
 		}
 	}
@@ -124,7 +124,10 @@ static void write_list(const char *path, char **v, int n)
 	char tmp[BUF + 64];
 	FILE *f;
 	int i;
-	snprintf(tmp, sizeof tmp, "%s.tmp", path);
+	if (snprintf(tmp, sizeof tmp, "%s.tmp", path) >= (int)sizeof tmp) {
+		fprintf(stderr, "cloudpkg: path too long: %s\n", path);
+		return;
+	}
 	f = fopen(tmp, "w");
 	if (!f) {
 		fprintf(stderr, "cloudpkg: cannot write %s: %s\n", tmp, strerror(errno));
@@ -199,7 +202,7 @@ static int rel_path_ok(const char *s)
 }
 int db_remove(const char *cat, const char *name, const char *ver, char **keep, int nkeep)
 {
-	char dir[BUF], path[BUF + 32], full[BUF];
+	char dir[BUF], path[BUF + 32], full[BUF + 256];
 	char **files, **dirs;
 	int nf, nd, i, removed = 0;
 	snprintf(dir, sizeof dir, "%s/%s/%s/%s", INSTALLED, cat, name, ver);
@@ -210,14 +213,14 @@ int db_remove(const char *cat, const char *name, const char *ver, char **keep, i
 	for (i = 0; i < nf; i++) {
 		if (keep && list_has(keep, nkeep, files[i])) continue;
 		if (!rel_path_ok(files[i])) continue;
-		snprintf(full, sizeof full, "/%s", files[i]);
+		if (snprintf(full, sizeof full, "/%s", files[i]) >= (int)sizeof full) continue;
 		if (unlink(full) == 0) removed++;
 	}
 	if (nd > 0) {
 		qsort(dirs, (size_t)nd, sizeof *dirs, depth_cmp);
 		for (i = 0; i < nd; i++) {
 			if (!rel_path_ok(dirs[i])) continue;
-			snprintf(full, sizeof full, "/%s", dirs[i]);
+			if (snprintf(full, sizeof full, "/%s", dirs[i]) >= (int)sizeof full) continue;
 			rmdir(full);
 		}
 	}
