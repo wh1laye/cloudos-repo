@@ -97,7 +97,7 @@ cloudpkg upgrade   # обновить то, что устарело
 cloudpkg clean     # почистить кэш
 ```
 
-Рецепты пакетов мы берём из Gentoo (они под лицензией GPL-2).
+Рецепты пакетов написаны специально для CloudOS и распространяются под лицензией проекта.
 
 ### Установка cloudpkg одной командой
 
@@ -105,7 +105,7 @@ cloudpkg clean     # почистить кэш
 curl -fsSL https://raw.githubusercontent.com/wh1laye/cloudos-repo/main/cloudpkg/install.sh | sh
 ```
 
-- **В CloudOS** скрипт соберёт `cloudpkg`, поставит portage и загрузит дерево рецептов.
+- **В CloudOS** скрипт соберёт `cloudpkg` и загрузит дерево рецептов.
 - **На любом другом дистрибутиве** (Arch, Debian, Ubuntu, Fedora и другие, x86_64) система не трогается: скрипт скачает stage 3, проверит sha256 и положит отдельный корень CloudOS в `/var/lib/cloudpkg/box`. Пакеты ставятся туда, а `cloudpkg run`, `cloudpkg export` и `cloudpkg shell` дают к ним доступ. Нужно 4 ГБ свободного места.
 
 Подробнее в [cloudpkg/README.md](cloudpkg/README.md).

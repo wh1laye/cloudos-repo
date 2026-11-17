@@ -335,9 +335,9 @@ install_box() {
 	chmod 755 /usr/local/bin/cloudpkg.new
 	mv /usr/local/bin/cloudpkg.new /usr/local/bin/cloudpkg
 
-	say "настройка внутри бокса: portage, cloudpkg, дерево рецептов" "setting up inside the box: portage, cloudpkg, recipe tree"
+	say "настройка внутри бокса: cloudpkg, дерево рецептов" "setting up inside the box: cloudpkg, recipe tree"
 	extra=
-	if [ "$UPDATE" = 1 ] && [ -d "$BOX/var/db/repos/gentoo/profiles" ]; then extra=--no-sync; fi
+	if [ "$UPDATE" = 1 ] && [ -d "$BOX/var/db/repos/cloudpkg-recipes/metadata" ]; then extra=--no-sync; fi
 	/usr/local/bin/cloudpkg exec bash /var/tmp/cloudpkg-src/cloudpkg-setup.sh $extra </dev/null && rc=0 || rc=$?
 	rm -rf "$BOX/var/tmp/cloudpkg-src"
 	[ "$rc" = 0 ] || [ "$rc" = 3 ] || die "настройка внутри бокса не удалась (код $rc)" "setup inside the box failed (code $rc)"

@@ -3,7 +3,7 @@ set -eu
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 REPO=${CLOUDPKG_REPO:-wh1laye/cloudos-repo}
 BRANCH=${CLOUDPKG_BRANCH:-main}
-PD=${CLOUDOS_PORTAGE:-/etc/portage}
+PD=${CLOUDOS_PKG:-/var/db/cloudpkg}
 FILES_ONLY=0
 for a in "$@"; do
   case $a in

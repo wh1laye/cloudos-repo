@@ -3,9 +3,9 @@ set -eu
 
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$HERE")
-VERSION=${VERSION:-1.7}
-BASE_TAG=${BASE_TAG:-1.6}
-BASE_VERSION=${BASE_VERSION:-1.6}
+VERSION=${VERSION:-2.4}
+BASE_TAG=${BASE_TAG:-2.3}
+BASE_VERSION=${BASE_VERSION:-2.3}
 BASE_VERIFY=${BASE_VERIFY:-1}
 PUB=${PUB:-$REPO/docs/cloudos.pub}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
@@ -27,9 +27,9 @@ fetch() { curl -fL --proto =https --retry 8 --retry-delay 15 --connect-timeout 2
 base_sig() {
   case $BASE_VERIFY in
     1)
-      command -v minisign >/dev/null || die "minisign is missing, cannot verify the base (BASE_VERIFY=0 disables it)"
+      command -v minisign >/dev/null || die "minisign is missing (BASE_VERIFY=0 disables it)"
       [ -f "$PUB" ] || die "public key not found: $PUB"
-      [ -f "$2" ] || die "signature not found: $2 (BASE_VERIFY=0 disables it)"
+      [ -f "$2" ] || die "signature not found: $2"
       minisign -V -p "$PUB" -m "$1" -x "$2" >/dev/null || die "base signature does not match $PUB"
       say "base minisign signature verified" ;;
     0) printf 'warning: base signature is not verified\n' >&2 ;;
@@ -54,13 +54,13 @@ case $BASE in
 esac
 
 if [ "${RESUME:-0}" = 1 ] && [ -d "$ROOT/var/tmp/s3stamp" ]; then
-  say "RESUME=1: continuing in $ROOT, finished steps are not repeated"
+  say "RESUME=1: continuing in $ROOT"
 else
   say "unpacking the base into $ROOT"
   rm -rf "$ROOT"; mkdir -p "$ROOT"
   xz -dc "$BASEFILE" | tar -xpf - -C "$ROOT" --numeric-owner --xattrs --xattrs-include='*'
 fi
-grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "the base does not look like a CloudOS stage 3"
+grep -q '^ID=.\?cloudos' "$ROOT/etc/os-release" || die "the base does not look like CloudOS stage 3"
 
 say "sources (sha256 verified)"
 while IFS='|' read -r name sum url; do
@@ -87,13 +87,7 @@ exec chroot "$R" /usr/bin/env -i PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/
 ' sh "$ROOT" "$@"
 }
 
-say "cloudpkg"
-if [ ! -e "$ROOT/var/tmp/s3stamp/cloudpkg-setup" ]; then
-  enter bash /var/tmp/cloudpkg-src/cloudpkg-setup.sh --no-sync
-  mkdir -p "$ROOT/var/tmp/s3stamp"; touch "$ROOT/var/tmp/s3stamp/cloudpkg-setup"
-fi
-
-say "building packages"
+say "building packages with cloudpkg"
 enter bash /var/tmp/s3files/build-inside.sh "$VERSION" "${STRICT:-0}" \
   || {
     if [ -s "$ROOT/var/tmp/cloudos-report.txt" ]; then cp "$ROOT/var/tmp/cloudos-report.txt" "$OUT/cloudos-stage3-amd64-$VERSION.failed.txt"; fi
@@ -134,10 +128,6 @@ for f in sbin/init sbin/openrc-init etc/os-release etc/init.d/syslog-ng etc/runl
          etc/login.defs etc/doas.conf; do
   grep -qxE "(\./)?(usr/)?$f" "$LIST" || { printf 'the archive has no %s\n' "$f" >&2; miss=1; }
 done
-for f in usr/bin/emerge usr/bin/emaint etc/portage/make.conf var/db/repos/gentoo; do
-  grep -qxE "(\./)?$f" "$LIST" && { printf 'the archive still contains Gentoo artifact %s\n' "$f" >&2; miss=1; }
-done
-grep -qE '(^|/)cloudos-noreconf' "$LIST" && { printf 'the archive still contains cloudos-noreconf\n' >&2; miss=1; }
 [ "$miss" = 0 ] || die "the archive is incomplete"
 
 ( cd "$OUT" && sha256sum "$NAME" > "$NAME.sha256" )

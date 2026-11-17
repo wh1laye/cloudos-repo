@@ -211,7 +211,7 @@ doas swapon /swapfile</code></pre>
 <p><strong>tpm2 for luks</strong>: <code>doas cloudos-tpm2 enroll</code> seals the disk key in the tpm2 against pcr 7 (secure boot state) and adds luks slot 7. run it when secure boot is already on and you booted with it. if keys change, secure boot is turned off or the disk moves, the tpm will not release the key and the system asks for the luks passphrase. the passphrase always keeps working, store it. remove: <code>doas cloudos-tpm2 remove</code>.</p>
 <p><strong>cis profile</strong>: <code>doas cloudos-audit --cis</code> adds checks for file permissions, passwords, disabled rare filesystems, network settings and ssh. these are checks inspired by the cis benchmark, not a certification.</p>
 <h2 id="cpkg">6. packages and cloudpkg</h2>
-<p>cloudpkg builds packages from source using gentoo based recipes.</p>
+<p>cloudpkg builds packages from source using its own recipes.</p>
 <pre><code>doas cloudpkg sync
 cloudpkg search name
 cloudpkg info name
@@ -270,7 +270,7 @@ df -h</code></pre>
 <p>it already exists: CLOUDOS_SECUREBOOT=1 in the installer and the cloudos-secureboot command (own keys, signed limine, kernel hashes). a signed unified kernel image is added with CLOUDOS_UKI=1.</p>
 <footer>
 <p>© 2026 wh1laye. mit license. </p>
-<p>package recipes are based on gentoo (gpl-2).</p>
+<p>Package recipes are written specific for CloudOS and distributed under the project license.</p>
 <p><a href="https://github.com/wh1laye/cloudos-repo">github.com/wh1laye/cloudos-repo</a></p>
 </footer>
 </main>

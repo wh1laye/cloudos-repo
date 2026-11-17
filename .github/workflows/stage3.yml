@@ -7,7 +7,7 @@ on:
         description: версия
         default: "1.6"
       refresh_list:
-        description: взять список пакетов из настоящего stage 3 gentoo
+        description: список пакетов берётся из tools/stage3/cloudos-packages.list
         type: boolean
         default: true
       strict:
