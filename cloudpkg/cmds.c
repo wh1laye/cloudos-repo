@@ -547,19 +547,21 @@ static int count_tree(const char *dir, int *ncats, int *npkgs)
 {
 	struct dirent **nl, **pl = NULL;
 	int nc, np, i, j, c = 0, p = 0;
-	char sub[BUF], probe[BUF];
+	char sub[BUF + 256], probe[BUF + 512];
 	nc = scandir(dir, &nl, NULL, alphasort);
 	if (nc < 0) return 0;
 	for (i = 0; i < nc; i++) {
 		if (nl[i]->d_name[0] != '.' && strcmp(nl[i]->d_name, "metadata") && strcmp(nl[i]->d_name, "profiles")) {
-			snprintf(sub, sizeof sub, "%s/%s", dir, nl[i]->d_name);
+			if (snprintf(sub, sizeof sub, "%s/%s", dir, nl[i]->d_name) >= (int)sizeof sub) {
+				free(nl[i]);
+				continue;
+			}
 			if (is_dir(sub)) {
 				c++;
 				np = scandir(sub, &pl, NULL, alphasort);
 				for (j = 0; j < np; j++) {
 					if (pl[j]->d_name[0] != '.') {
-						snprintf(probe, sizeof probe, "%s/%s", sub, pl[j]->d_name);
-						if (is_dir(probe)) p++;
+						if (snprintf(probe, sizeof probe, "%s/%s", sub, pl[j]->d_name) < (int)sizeof probe && is_dir(probe)) p++;
 					}
 					free(pl[j]);
 				}

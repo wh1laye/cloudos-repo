@@ -219,7 +219,7 @@ static int extract_sources(struct build_ctx *c)
 	int i, n;
 	struct dirent **nl = NULL;
 	size_t l;
-	snprintf(srcbase, sizeof srcbase, "%s/src", c->base);
+	if (snprintf(srcbase, sizeof srcbase, "%s/src", c->base) >= (int)sizeof srcbase) return 0;
 	for (i = 0; i < c->ndist; i++) {
 		snprintf(full, sizeof full, "%s/%s", distdir, c->distfiles[i]);
 		l = strlen(c->distfiles[i]);
@@ -236,8 +236,8 @@ static int extract_sources(struct build_ctx *c)
 	snprintf(c->srcdir, sizeof c->srcdir, "%s", srcbase);
 	n = scandir(srcbase, &nl, NULL, alphasort);
 	if (n == 1 && nl[0]->d_name[0] != '.') {
-		snprintf(probe, sizeof probe, "%s/%s", srcbase, nl[0]->d_name);
-		if (is_dir(probe)) snprintf(c->srcdir, sizeof c->srcdir, "%s", probe);
+		if (snprintf(probe, sizeof probe, "%s/%s", srcbase, nl[0]->d_name) < (int)sizeof probe && is_dir(probe))
+			snprintf(c->srcdir, sizeof c->srcdir, "%s", probe);
 	}
 	for (i = 0; i < n; i++) free(nl[i]);
 	if (n >= 0) free(nl);
@@ -319,13 +319,13 @@ static int scan_tree(const char *root, const char *rel, char ***files, int *nf, 
 	DIR *d;
 	struct dirent *e;
 	struct stat st;
-	snprintf(full, sizeof full, "%s%s%s", root, rel[0] ? "/" : "", rel);
+	if (snprintf(full, sizeof full, "%s%s%s", root, rel[0] ? "/" : "", rel) >= (int)sizeof full) return 0;
 	d = opendir(full);
 	if (!d) return 0;
 	while ((e = readdir(d))) {
 		if (e->d_name[0] == '.' && (!e->d_name[1] || (e->d_name[1] == '.' && !e->d_name[2]))) continue;
-		snprintf(sub, sizeof sub, "%s%s%s", rel, rel[0] ? "/" : "", e->d_name);
-		snprintf(full, sizeof full, "%s/%s", root, sub);
+		if (snprintf(sub, sizeof sub, "%s%s%s", rel, rel[0] ? "/" : "", e->d_name) >= (int)sizeof sub) continue;
+		if (snprintf(full, sizeof full, "%s/%s", root, sub) >= (int)sizeof full) continue;
 		if (lstat(full, &st) != 0) continue;
 		if (S_ISDIR(st.st_mode)) {
 			list_add(dirs, nd, sub);
@@ -349,7 +349,7 @@ static int check_conflicts(struct build_ctx *c, char **files, int nf, int force)
 	snprintf(self, sizeof self, "%s/%s", c->r.category, c->r.name);
 	ownership_build();
 	for (i = 0; i < nf; i++) {
-		snprintf(full, sizeof full, "/%s", files[i]);
+		if (snprintf(full, sizeof full, "/%s", files[i]) >= (int)sizeof full) continue;
 		if (lstat(full, &st) != 0) continue;
 		owner = find_owner(files[i]);
 		if (owner && !strcmp(owner, self)) continue;
@@ -412,15 +412,15 @@ int pkg_build_install(const char *cat, const char *name, const char *ver, int ex
 	}
 	if (was_installed) old_explicit = db_explicit(cat, name, oldver);
 	c.jobcount = resolve_jobs();
-	snprintf(c.base, sizeof c.base, "%s/%s-%s-%s", workdir, cat, name, ver);
-	snprintf(c.image, sizeof c.image, "%s/image", c.base);
-	snprintf(c.log, sizeof c.log, "%s/build.log", c.base);
+	if (snprintf(c.base, sizeof c.base, "%s/%s-%s-%s", workdir, cat, name, ver) >= (int)sizeof c.base) goto out;
+	if (snprintf(c.image, sizeof c.image, "%s/image", c.base) >= (int)sizeof c.image) goto out;
+	if (snprintf(c.log, sizeof c.log, "%s/build.log", c.base) >= (int)sizeof c.log) goto out;
 	rm_tree(c.base);
 	if (!mkdirs(c.base) || !mkdirs(c.image)) {
 		fprintf(stderr, "cloudpkg: cannot create build directory %s\n", c.base);
 		goto out;
 	}
-	snprintf(path, sizeof path, "%s/src", c.base);
+	if (snprintf(path, sizeof path, "%s/src", c.base) >= (int)sizeof path) goto out;
 	if (!mkdirs(path)) {
 		fprintf(stderr, "cloudpkg: cannot create source directory %s\n", path);
 		goto out;
