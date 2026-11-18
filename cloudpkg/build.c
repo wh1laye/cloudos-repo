@@ -236,8 +236,8 @@ static int extract_sources(struct build_ctx *c)
 	snprintf(c->srcdir, sizeof c->srcdir, "%s", srcbase);
 	n = scandir(srcbase, &nl, NULL, alphasort);
 	if (n == 1 && nl[0]->d_name[0] != '.') {
-		if (snprintf(probe, sizeof probe, "%s/%s", srcbase, nl[0]->d_name) < (int)sizeof probe && is_dir(probe))
-			snprintf(c->srcdir, sizeof c->srcdir, "%s", probe);
+		if (snprintf(probe, sizeof probe, "%s/%s", srcbase, nl[0]->d_name) < (int)sizeof probe && is_dir(probe) && strlen(probe) < sizeof c->srcdir)
+			memcpy(c->srcdir, probe, sizeof c->srcdir);
 	}
 	for (i = 0; i < n; i++) free(nl[i]);
 	if (n >= 0) free(nl);
