@@ -4,7 +4,7 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$(dirname "$HERE")")
 KVER=${KVER:-}
-CLOUDK_VER=${CLOUDK_VER:-0.5}
+CLOUDK_VER=${CLOUDK_VER:-0.6}
 MARCH=${MARCH:-x86-64-v3}
 WORK=${WORK:-/var/tmp/cloudk-build}
 OUT=${OUT:-$PWD}
@@ -149,6 +149,8 @@ case $MARCH in
   x86-64-v4) printf 'CONFIG_GENERIC_CPU4=y\n' >> "$FRAG" ;;
 esac
 ./scripts/kconfig/merge_config.sh -m .config "$FRAG"
+make olddefconfig
+scripts/config --set-str CONFIG_LOCALVERSION "-cloudk-$CLOUDK_VER"
 make olddefconfig
 grep -q '^CONFIG_MODULES=y' .config || die "CONFIG_MODULES is not enabled after olddefconfig"
 grep -E '^(CONFIG_LOCALVERSION|CONFIG_MODULES)=' .config || true

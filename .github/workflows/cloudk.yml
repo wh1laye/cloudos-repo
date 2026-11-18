@@ -11,7 +11,7 @@ on:
       ver:
         description: cloudk release version
         required: false
-        default: "0.5"
+        default: "0.6"
         type: string
 
 permissions:
