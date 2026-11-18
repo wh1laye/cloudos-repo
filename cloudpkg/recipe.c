@@ -183,16 +183,18 @@ int recipe_load(const char *path, struct recipe *r)
 }
 static void expand_into(const char *in, const struct recipe *r, char *out, size_t n)
 {
-	static const char *keys[] = { "PACKAGE", "PN", "VERSION", "PV" };
-	const char *vals[4];
+	static const char *keys[] = { "PACKAGE", "PN", "P", "VERSION", "PV", "DEPEND", "BUILD_FLAGS" };
+	const char *vals[7];
 	const char *p = in;
 	size_t o = 0, k, kl, vl;
 	int hit;
-	vals[0] = r->name; vals[1] = r->name; vals[2] = r->version; vals[3] = r->version;
+	vals[0] = r->name; vals[1] = r->name; vals[2] = r->name;
+	vals[3] = r->version; vals[4] = r->version;
+	vals[5] = r->depend; vals[6] = r->build_flags;
 	while (*p && o + 1 < n) {
 		hit = 0;
 		if (*p == '$') {
-			for (k = 0; k < 4 && !hit; k++) {
+			for (k = 0; k < 7 && !hit; k++) {
 				kl = strlen(keys[k]);
 				if (p[1] == '{' && !strncmp(p + 2, keys[k], kl) && p[2 + kl] == '}') {
 					vl = strlen(vals[k]);
@@ -218,14 +220,14 @@ static void expand_into(const char *in, const struct recipe *r, char *out, size_
 void recipe_expand(struct recipe *r)
 {
 	char buf[2048];
-	expand_into(r->src_uri, r, buf, sizeof r->src_uri);
-	memcpy(r->src_uri, buf, sizeof r->src_uri);
 	expand_into(r->build_flags, r, buf, sizeof r->build_flags);
 	memcpy(r->build_flags, buf, sizeof r->build_flags);
 	expand_into(r->depend, r, buf, sizeof r->depend);
 	memcpy(r->depend, buf, sizeof r->depend);
 	expand_into(r->rdepend, r, buf, sizeof r->rdepend);
 	memcpy(r->rdepend, buf, sizeof r->rdepend);
+	expand_into(r->src_uri, r, buf, sizeof r->src_uri);
+	memcpy(r->src_uri, buf, sizeof r->src_uri);
 }
 int recipe_path(const char *cat, const char *name, const char *ver, char *out, size_t n)
 {

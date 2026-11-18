@@ -1,9 +1,11 @@
 #include "cloudpkg.h"
+#include <sys/stat.h>
 int lock_fd = -1;
 int acquire_lock(void)
 {
 	int fd, pid;
-	fd = open(LOCKFILE, O_RDWR | O_CREAT, 0644);
+	fd = open(LOCKFILE, O_RDWR | O_CREAT, 0666);
+	if (fd >= 0) chmod(LOCKFILE, 0666);
 	if (fd < 0) {
 		fprintf(stderr, "cloudpkg: cannot open %s: %s\n", LOCKFILE, strerror(errno));
 		return 0;

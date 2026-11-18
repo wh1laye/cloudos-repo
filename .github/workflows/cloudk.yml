@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       kver:
-        description: kernel version
+        description: kernel version, empty means latest
         required: false
-        default: "6.18.10"
+        default: ""
         type: string
       ver:
         description: cloudk release version
@@ -35,25 +35,28 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential flex bison bc libelf-dev libssl-dev \
-            zstd patch git curl tar xz-utils gpg minisign
-      - name: signing key
+            zstd patch git curl tar xz-utils minisign shellcheck
+      - name: shell syntax
         run: |
-          if [ -n "$CLOUDK_SIGNING_KEY" ]; then
-            printf '%s' "$CLOUDK_SIGNING_KEY" | base64 -d > "$RUNNER_TEMP/cloudk.minisign.key"
-            chmod 600 "$RUNNER_TEMP/cloudk.minisign.key"
-            echo "SIGN_KEY=$RUNNER_TEMP/cloudk.minisign.key" >> "$GITHUB_ENV"
-          fi
+          find tools -name '*.sh' -print0 | xargs -0 -r bash -n
+          find tools -name '*.sh' -print0 | xargs -0 -r shellcheck -S error
+      - name: signing key
         env:
           CLOUDK_SIGNING_KEY: ${{ secrets.CLOUDK_SIGNING_KEY }}
+        run: |
+          if [ -n "$CLOUDK_SIGNING_KEY" ]; then
+            printf '%s' "$CLOUDK_SIGNING_KEY" | base64 -d > "$RUNNER_TEMP/cloudk.key"
+            chmod 600 "$RUNNER_TEMP/cloudk.key"
+            echo "SIGN_KEY=$RUNNER_TEMP/cloudk.key" >> "$GITHUB_ENV"
+          fi
       - name: build cloudk
         run: |
           mkdir -p "$GITHUB_WORKSPACE/out"
           JOBS=$(nproc) MARCH=${{ matrix.march }} \
-          CLOUDK_VER=${{ inputs.ver || '0.6' }} KVER=${{ inputs.kver || '6.18.10' }} \
+          CLOUDK_VER=${{ inputs.ver || '0.6' }} KVER="${{ inputs.kver }}" \
           OUT="$GITHUB_WORKSPACE/out" CACHY_REQUIRED=0 \
           MINISIGN_KEY="${SIGN_KEY:-}" bash tools/kernel/build-cloudk.sh
-      - name: upload artifacts
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: cloudk-${{ inputs.ver || '0.6' }}-${{ matrix.march }}
           path: out/
