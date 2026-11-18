@@ -53,13 +53,13 @@
 <h2 id="about">1. о cloudos</h2>
 <p> Cloudos это быстрый и усиленный linux для x86_64: openrc, ванильное ядро, limine, пакеты из исходников через cloudpkg. ставится с live iso одной командой, после установки в системе только консоль.</p>
 <div class="sc"><table><tr><th> параметр</th><th> значение</th></tr>
-<tr><td> архитектура</td><td> X86_64</td></tr>
+<tr><td> архитектура</td><td>x86_64</td></tr>
 <tr><td> Libc</td><td> Glibc</td></tr>
 <tr><td> Init</td><td> Openrc</td></tr>
 <tr><td> ядро с kernel.org, драйверы дисков встроены, initramfs не нужен</td></tr>
 <tr><td> загрузчик</td><td> Limine</td></tr>
 <tr><td> файловые системы</td><td> Ext4 и btrfs (zstd)</td></tr>
-<tr><td> пакеты</td><td> только из исходников, команда <code> Cloudpkg</code></td></tr>
+<tr><td> пакеты</td><td> только из исходников, команда <code> cloudpkg</code></td></tr>
 </table></div>
 <h3 id="s1-1">1.1 что нужно</h3>
 <div class="sc"><table><tr><th> что</th><th> ориентир</th></tr>
@@ -86,7 +86,7 @@
 <h2 id="prep">2. подготовка</h2>
 <h3 id="s2-1">2.1 запись iso на флешку</h3>
 <p> скачай iso и контрольную сумму со страницы <a href="../releases/"> релизов</a> и проверь:</p>
-<pre><code> Sha256sum -c cloudos-live-amd64-2.3.iso.sha256</code></pre>
+<pre><code> sha256sum -c cloudos-live-amd64-2.3.iso.sha256</code></pre>
 <p> запиши образ на флешку (внимание: выбери именно флешку, её данные сотрутся):</p>
 <pre><code> Sudo dd if=cloudos-live-amd64-2.3.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
 <h3 id="s2-2">2.2 вход в live</h3>
@@ -211,10 +211,10 @@ Doas swapon /swapfile</code></pre>
 <p><strong> Tpm2 для luks</strong>: <code> Doas cloudos-tpm2 enroll</code> запечатывает ключ диска в tpm2 по pcr 7 (состояние secure boot) и добавляет слот 7. запускай, когда secure boot уже включён и система с ним загружена. при смене ключей, выключении secure boot или переносе диска tpm ключ не отдаст, и система спросит пароль luks. пароль остаётся рабочим всегда, сохрани его. убрать: <code> Doas cloudos-tpm2 remove</code>.</p>
 <p><strong> профиль cis</strong>: <code> Doas cloudos-audit --cis</code> добавляет к проверке права на файлы, пароли, отключённые лишние файловые системы, сетевые параметры и ssh. это проверки по мотивам cis benchmark, а не сертификация.</p>
 <h2 id="cpkg">6. пакеты и cloudpkg</h2>
-<p> Cloudpkg ставит пакеты из исходников по рецептам, основанным на gentoo.</p>
+<p> cloudpkg ставит пакеты из исходников по своим рецептам.</p>
 <pre><code> Doas cloudpkg sync
-Cloudpkg search имя
-Cloudpkg info имя
+cloudpkg search имя
+cloudpkg info имя
 Doas cloudpkg install имя
 Doas cloudpkg remove имя
 Doas cloudpkg upgrade
@@ -253,7 +253,7 @@ Df -h</code></pre>
 <div class="sc"><table><tr><th> команда</th><th> что делает</th></tr>
 <tr><td><code> Doas cloudos-install</code></td><td> установка на диск</td></tr>
 <tr><td><code> Doas -s</code></td><td> оболочка root</td></tr>
-<tr><td><code> Cloudpkg install имя</code></td><td> поставить пакет</td></tr>
+<tr><td><code> cloudpkg install имя</code></td><td> поставить пакет</td></tr>
 <tr><td><code> Rc-update show</code></td><td> службы по уровням</td></tr>
 <tr><td><code> Rc-service имя restart</code></td><td> перезапустить службу</td></tr>
 <tr><td><code> Cloudos-firewall status</code></td><td> состояние фаервола</td></tr>
@@ -263,14 +263,14 @@ Df -h</code></pre>
 </table></div>
 <h2 id="faq">11. вопросы и ответы</h2>
 <h3 id="s11-1"> можно ли ставить на сервер</h3>
-<p> можно, но помни про честные пределы: обновления выходят вручную. Cloudpkg update проверяет подпись, но профили apparmor по умолчанию в режиме complain и их нужно включать самому. для критичных систем сам оцени риски.</p>
+<p> можно, но помни про честные пределы: обновления выходят вручную. cloudpkg update проверяет подпись, но профили apparmor по умолчанию в режиме complain и их нужно включать самому. для критичных систем сам оцени риски.</p>
 <h3 id="s11-2"> куда делся stage 3</h3>
 <p> отдельный stage 3 больше не выпускается. система ставится прямо из live iso, а справочник описывает только этот способ.</p>
 <h3 id="s11-3"> почему нет secure boot</h3>
 <p> это уже есть: CLOUDOS_SECUREBOOT=1 в установщике и команда cloudos-secureboot (свои ключи, подпись limine, хеши ядра). подписанный unified kernel image добавляется через CLOUDOS_UKI=1.</p>
 <footer>
 <p> © 2026 wh1laye. лицензия mit. </p>
-<p> рецепты пакетов основаны на gentoo (gpl-2).</p>
+<p> Рецепты пакетов написаны для CloudOs и распространяются под лицензией проекта.</p>
 <p><a href="https://github.com/wh1laye/cloudos-repo"> Github.com/wh1laye/cloudos-repo</a></p>
 </footer>
 </main>

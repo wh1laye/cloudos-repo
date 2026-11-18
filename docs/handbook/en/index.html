@@ -53,13 +53,13 @@
 <h2 id="about">1. About cloudos</h2>
 <p> Cloudos is a fast hardened x86_64 linux: openrc, vanilla kernel, limine, packages built from source with cloudpkg. It installs from the live iso with one command and boots to a plain console.</p>
 <div class="sc"><table><tr><th> Parameter</th><th> Value</th></tr>
-<tr><td> Architecture</td><td> X86_64</td></tr>
+<tr><td> Architecture</td><td>x86_64</td></tr>
 <tr><td> Libc</td><td> Glibc</td></tr>
 <tr><td> Init</td><td> Openrc</td></tr>
 <tr><td> Vanilla kernel from kernel.org, disk drivers built in, no initramfs needed</td></tr>
 <tr><td> Bootloader</td><td> Limine</td></tr>
 <tr><td> Filesystems</td><td> Ext4 and btrfs (zstd)</td></tr>
-<tr><td> Packages</td><td> From source only, the <code> Cloudpkg</code> Command</td></tr>
+<tr><td> Packages</td><td> From source only, the <code> cloudpkg</code> Command</td></tr>
 </table></div>
 <h3 id="s1-1">1.1 requirements</h3>
 <div class="sc"><table><tr><th> Item</th><th> Guideline</th></tr>
@@ -86,7 +86,7 @@
 <h2 id="prep">2. Preparation</h2>
 <h3 id="s2-1">2.1 writing the iso to a stick</h3>
 <p> Download the iso and checksum from the <a href="../../releases/"> Releases</a> Page and verify:</p>
-<pre><code> Sha256sum -c cloudos-live-amd64-2.3.iso.sha256</code></pre>
+<pre><code> sha256sum -c cloudos-live-amd64-2.3.iso.sha256</code></pre>
 <p> Write the image to the stick (careful: pick the stick, its data will be erased):</p>
 <pre><code> Sudo dd if=cloudos-live-amd64-2.3.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
 <h3 id="s2-2">2.2 logging in to the live system</h3>
@@ -211,10 +211,10 @@ Doas swapon /swapfile</code></pre>
 <p><strong> Tpm2 for luks</strong>: <code> Doas cloudos-tpm2 enroll</code> Seals the disk key in the tpm2 against pcr 7 (secure boot state) and adds luks slot 7. Run it when secure boot is already on and you booted with it. If keys change, secure boot is turned off or the disk moves, the tpm will not release the key and the system asks for the luks passphrase. The passphrase always keeps working, store it. Remove: <code> Doas cloudos-tpm2 remove</code>.</p>
 <p><strong> Cis profile</strong>: <code> Doas cloudos-audit --cis</code> Adds checks for file permissions, passwords, disabled rare filesystems, network settings and ssh. These are checks inspired by the cis benchmark, not a certification.</p>
 <h2 id="cpkg">6. Packages and cloudpkg</h2>
-<p> Cloudpkg builds packages from source using gentoo based recipes.</p>
+<p> cloudpkg builds packages from source using its own recipes.</p>
 <pre><code> Doas cloudpkg sync
-Cloudpkg search name
-Cloudpkg info name
+cloudpkg search name
+cloudpkg info name
 Doas cloudpkg install name
 Doas cloudpkg remove name
 Doas cloudpkg upgrade
@@ -253,7 +253,7 @@ Df -h</code></pre>
 <div class="sc"><table><tr><th> Command</th><th> What it does</th></tr>
 <tr><td><code> Doas cloudos-install</code></td><td> Install to disk</td></tr>
 <tr><td><code> Doas -s</code></td><td> Root shell</td></tr>
-<tr><td><code> Cloudpkg install name</code></td><td> Install a package</td></tr>
+<tr><td><code> cloudpkg install name</code></td><td> Install a package</td></tr>
 <tr><td><code> Rc-update show</code></td><td> Services by runlevel</td></tr>
 <tr><td><code> Rc-service name restart</code></td><td> Restart a service</td></tr>
 <tr><td><code> Cloudos-firewall status</code></td><td> Firewall state</td></tr>
@@ -263,7 +263,7 @@ Df -h</code></pre>
 </table></div>
 <h2 id="faq">11. Questions</h2>
 <h3 id="s11-1"> Can it run on a server</h3>
-<p> Yes, with honest limits in mind: updates are manual. Cloudpkg update verifies signatures, but apparmor profiles ship in complain mode and you must enforce them yourself. For critical systems judge the risks yourself.</p>
+<p> Yes, with honest limits in mind: updates are manual. cloudpkg update verifies signatures, but apparmor profiles ship in complain mode and you must enforce them yourself. For critical systems judge the risks yourself.</p>
 <h3 id="s11-2"> What happened to stage 3</h3>
 <p> A separate stage 3 is no longer published. The system installs straight from the live iso and the handbook covers only that way.</p>
 <h3 id="s11-3"> Why no secure boot</h3>

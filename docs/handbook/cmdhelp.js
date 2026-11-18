@@ -32,7 +32,6 @@ a('chroot','запустить оболочку с другим корнем','r
 a('source','выполнить файл в текущей оболочке','run a file in the current shell',[]);
 a('exit','выйти из оболочки (из chroot)','leave the shell (the chroot)',[]);
 a('localedef','собрать локаль','compile a locale',[['-i','файл описания','definition file'],['-f','кодировка','character set']]);
-a('dracut','собрать initramfs','build an initramfs',[['--kver','версия ядра','kernel version'],['--force','перезаписать готовый образ','overwrite an existing image']]);
 a('grep','найти строки по шаблону','find lines matching a pattern',[['-q','молча, только код возврата','quiet, only the exit code'],['-i','без учёта регистра','ignore case'],['-r','по каталогу','search a directory']]);
 a('passwd','задать пароль','set a password',[]);
 a('chmod','изменить права доступа','change permissions',[]);
