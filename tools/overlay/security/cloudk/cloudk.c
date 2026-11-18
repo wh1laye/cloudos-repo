@@ -47,8 +47,8 @@ static int __init cloudk_init(void)
 	if (!proc_create("cloudk", 0444, NULL, &cloudk_proc_ops))
 		pr_warn("cloudk: cannot create /proc/cloudk\n");
 	pr_info("cloudk: layer %s active, guard %s\n", CLOUDK_VERSION,
-	pr_info("cloudk: fork guard active\n");
 		cloudk_guard ? "on" : "off");
+	pr_info("cloudk: fork guard active\n");
 	return 0;
 }
 late_initcall(cloudk_init);
