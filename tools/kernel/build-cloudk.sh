@@ -4,7 +4,7 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$(dirname "$HERE")")
 KVER=${KVER:-}
-CLOUDK_VER=${CLOUDK_VER:-0.6}
+CLOUDK_VER=${CLOUDK_VER:-0.5}
 MARCH=${MARCH:-x86-64-v3}
 WORK=${WORK:-/var/tmp/cloudk-build}
 OUT=${OUT:-$PWD}
@@ -25,7 +25,7 @@ die() { printf 'error: %s\n' "$*" >&2; exit 1; }
 case $MARCH in x86-64|x86-64-v2|x86-64-v3|x86-64-v4) ;; *) die "MARCH: x86-64, x86-64-v2, x86-64-v3 or x86-64-v4" ;; esac
 case $WORK in /|/usr*|/etc*|/home|/root|/var|/boot) die "unsafe work directory: $WORK" ;; esac
 [ "$(uname -m)" = x86_64 ] || die "x86_64 is required"
-for c in gcc make curl tar xz zstd patch git perl awk sha256sum flex bison bc; do
+for c in gcc make curl tar xz zstd patch git perl awk sha256sum flex bison bc find; do
   command -v "$c" >/dev/null || die "missing command: $c"
 done
 [ -f "$HERE/cloudk.config" ] || die "no $HERE/cloudk.config"
@@ -71,7 +71,7 @@ else
       die "STRICT=1 requires $PIN"
     fi
     printf '%s %s\n' "$KVER" "$SUM" > "$PIN"
-    say "no pin found, recorded sha256 for $KVER, sign it with tools/kernel/pin-kernel.sh"
+    say "recorded sha256 for $KVER, sign the pin with tools/kernel/pin-kernel.sh"
   fi
   SRCDIR=$WORK/src
 fi
@@ -86,6 +86,11 @@ if [ ! -d "$SRCDIR" ]; then
 fi
 [ -f "$SRCDIR/Makefile" ] || die "no kernel Makefile in $SRCDIR"
 cd "$SRCDIR"
+(
+  HERE=$(dirname "$HERE")
+  . "$HERE/kernel/cloudk-source.sh"
+  cloudk_source
+)
 
 if [ -z "$CACHY_SRC" ]; then
   say "CachyOS patch series"
@@ -134,16 +139,19 @@ done
 say "CloudOS patches applied: $ours"
 
 say "config: x86_64_defconfig + cloudk.config ($MARCH)"
-make x86_64_defconfig >/dev/null
+make x86_64_defconfig
 FRAG=$WORK/cloudk-frag.config
 cat "$HERE/cloudk.config" > "$FRAG"
+printf 'CONFIG_MODULES=y\nCONFIG_MODULE_UNLOAD=y\n' >> "$FRAG"
 case $MARCH in
   x86-64-v2) printf 'CONFIG_GENERIC_CPU2=y\n' >> "$FRAG" ;;
   x86-64-v3) printf 'CONFIG_GENERIC_CPU3=y\n' >> "$FRAG" ;;
   x86-64-v4) printf 'CONFIG_GENERIC_CPU4=y\n' >> "$FRAG" ;;
 esac
-./scripts/kconfig/merge_config.sh -m .config "$FRAG" >/dev/null
-make olddefconfig >/dev/null
+./scripts/kconfig/merge_config.sh -m .config "$FRAG"
+make olddefconfig
+grep -q '^CONFIG_MODULES=y' .config || die "CONFIG_MODULES is not enabled after olddefconfig"
+grep -E '^(CONFIG_LOCALVERSION|CONFIG_MODULES)=' .config || true
 KREL=$(make -s kernelrelease)
 say "kernel release: $KREL"
 
@@ -152,14 +160,22 @@ make -j"$JOBS" bzImage modules
 
 say "staging modules"
 rm -rf "$WORK/modules"
-make modules_install INSTALL_MOD_PATH="$WORK/modules" INSTALL_MOD_STRIP=1 >/dev/null
-[ -d "$WORK/modules/lib/modules/$KREL" ] || die "modules were not installed for $KREL"
+mkdir -p "$WORK/modules"
+make modules_install INSTALL_MOD_PATH="$WORK/modules" INSTALL_MOD_STRIP=1
+MODDIR=$(find "$WORK/modules" -maxdepth 3 -mindepth 1 -type d -path '*/lib/modules/*' | head -1)
+if [ -z "$MODDIR" ]; then
+  find "$WORK/modules" -maxdepth 4 >&2 || true
+  die "modules_install produced no module directory"
+fi
+MODREL=$(basename "$MODDIR")
+say "modules staged: $MODREL"
 
 say "artifacts"
 cp arch/x86/boot/bzImage "$OUT/$CK-vmlinuz"
-tar -C "$WORK/modules/lib/modules" -cf - "$KREL" | zstd -T0 -19 -q -o "$OUT/$CK-modules.tar.zst"
+tar -C "$(dirname "$MODDIR")" -cf - "$MODREL" | zstd -T0 -19 -q -o "$OUT/$CK-modules.tar.zst"
 cp .config "$OUT/$CK-config"
-( cd "$OUT" && sha256sum "$CK-vmlinuz" "$CK-modules.tar.zst" "$CK-config" > "$CK.sha256" )
+printf '%s\n' "$MODREL" > "$OUT/$CK-krel.txt"
+( cd "$OUT" && sha256sum "$CK-vmlinuz" "$CK-modules.tar.zst" "$CK-config" "$CK-krel.txt" > "$CK.sha256" )
 
 if [ -n "$MINISIGN_KEY" ]; then
   command -v minisign >/dev/null 2>&1 || die "minisign is missing, cannot sign"

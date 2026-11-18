@@ -1,0 +1,9 @@
+config SECURITY_CLOUDK
+	bool "CloudOS kernel guard"
+	depends on SECURITY
+	default y
+	help
+	  CloudOS kernel guard. Exposes /proc/cloudk with the layer version
+	  and the current hardening state, and enforces restrictive boot
+	  defaults for kernel pointer exposure, dmesg access and oops
+	  handling. Disable with the cloudk.guard=0 boot parameter.
