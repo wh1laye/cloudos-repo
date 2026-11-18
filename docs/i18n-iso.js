@@ -18,7 +18,7 @@ if(window.I18N)window.I18N.add({
 "limine": "limine",
 "быстрый загрузчик с одним файлом конфига, для uefi и bios.": "a fast bootloader with one config file, for uefi and bios.",
 "cloudpkg": "cloudpkg",
-"пакеты из исходников, рецепты написаны для CloudOS.": "packages from source, own recipes.",
+"пакеты из исходников, рецепты основаны на gentoo.": "packages from source, recipes based on gentoo.",
 "установка в три шага": "install in three steps",
 "одной командой или вручную по справочнику.": "with one command or by hand following the handbook.",
 "live iso": "live iso",

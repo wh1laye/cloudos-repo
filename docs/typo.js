@@ -20,15 +20,15 @@ var CANON={
   'kspp':'KSPP','linux':'Linux','limine':'Limine','apparmor':'AppArmor',
   'selinux':'SELinux','lfs':'LFS','gpt':'GPT','efi':'EFI','api':'API','json':'JSON',
   'html':'HTML','css':'CSS','tcp':'TCP','udp':'UDP','dns':'DNS','ram':'RAM',
-  'cpu':'CPU','gpu':'GPU','python':'Python','git':'Git',
-  'github':'GitHub','supabase':'Supabase','gnupg':'GnuPG',
+  'cpu':'CPU','gpu':'GPU','python':'Python','git':'Git','gentoo':'Gentoo',
+  'github':'GitHub','supabase':'Supabase','portage':'Portage','gnupg':'GnuPG',
   'doas':'doas','sudo':'sudo','curl':'curl','nano':'nano','wget':'wget',
   'rsync':'rsync','nftables':'nftables','ext4':'ext4','btrfs':'btrfs',
   'x86_64':'x86_64','sha256':'SHA-256','sha256sum':'sha256sum','zstd':'zstd',
   'glibc':'glibc','binutils':'binutils','udev':'udev','dhcpcd':'dhcpcd','iwd':'iwd',
   'man-db':'man-db','dosfstools':'dosfstools','syslog-ng':'syslog-ng','minisign':'minisign',
   'openssh':'OpenSSH','opendoas':'OpenDoas','mit':'MIT','gpl':'GPL','arm':'ARM',
-  'sysv':'SysV','noatime':'noatime','libc':'libc','systemd':'systemd',
+  'sysv':'SysV','emerge':'emerge','noatime':'noatime','libc':'libc','systemd':'systemd',
   'fstab':'fstab','sysctl':'sysctl','wh1laye':'wh1laye'
 };
 var last=new WeakMap(), unitCache=new WeakMap(), obs=null, pending=new Set(), queued=false;
