@@ -43,6 +43,7 @@ TAG=${CACHY_TAG:-}
 [ -n "$TAG" ] || TAG=$(api "https://api.github.com/repos/CachyOS/linux/releases/latest" | pick)
 [ -n "$TAG" ] || TAG=$(api "https://api.github.com/repos/CachyOS/linux/releases?per_page=1" | pick)
 [ -n "$TAG" ] || TAG=$(api "https://api.github.com/repos/CachyOS/linux/tags?per_page=1" | pick)
+[ -n "$TAG" ] || TAG=$(cat "$SRC_HOME/cachyos-tag.txt" 2>/dev/null || true)
 [ -n "$TAG" ] || fail "не получен тег cachyos, задай CACHY_TAG вручную"
 export TAG
 say "тег cachyos: $TAG"

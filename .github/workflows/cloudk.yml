@@ -13,13 +13,13 @@ on:
         required: false
         default: "0.5"
         type: string
-  push:
-    branches: [main]
-    paths:
-      - "tools/kernel/**"
 
 permissions:
   contents: write
+
+concurrency:
+  group: cloudk
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential flex bison bc libelf-dev libssl-dev \
-            zstd patch git curl tar xz-utils minisign shellcheck
+            zstd patch git curl tar xz-utils gpg minisign shellcheck
       - name: shell syntax
         run: |
           find tools -name '*.sh' -print0 | xargs -0 -r bash -n
@@ -53,16 +53,15 @@ jobs:
         run: |
           mkdir -p "$GITHUB_WORKSPACE/out"
           JOBS=$(nproc) MARCH=${{ matrix.march }} \
-          CLOUDK_VER=${{ inputs.ver || '0.5' }} KVER="${{ inputs.kver }}" \
+          CLOUDK_VER=${{ inputs.ver }} KVER="${{ inputs.kver }}" \
           OUT="$GITHUB_WORKSPACE/out" CACHY_REQUIRED=0 \
           MINISIGN_KEY="${SIGN_KEY:-}" bash tools/kernel/build-cloudk.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: cloudk-${{ inputs.ver || '0.5' }}-${{ matrix.march }}
+          name: cloudk-${{ inputs.ver }}-${{ matrix.march }}
           path: out/
       - name: release
-        if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: cloudk-${{ inputs.ver || '0.5' }}
+          tag_name: cloudk-${{ inputs.ver }}
           files: out/*

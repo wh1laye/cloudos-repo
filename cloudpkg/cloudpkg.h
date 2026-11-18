@@ -17,7 +17,7 @@
 #define CONF "/etc/cloudpkg/cloudpkg.conf"
 #endif
 #ifndef LOCKFILE
-#define LOCKFILE "/tmp/cloudpkg.lock"
+#define LOCKFILE "/run/cloudpkg.lock"
 #endif
 #ifndef DBDIR
 #define DBDIR "/var/db/cloudpkg"
