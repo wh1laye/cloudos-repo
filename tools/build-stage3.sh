@@ -4,8 +4,8 @@ set -eu
 HERE=$(cd "$(dirname "$0")" && pwd)
 REPO=$(dirname "$HERE")
 VERSION=${VERSION:-2.4}
-BASE_TAG=${BASE_TAG:-2.3}
-BASE_VERSION=${BASE_VERSION:-2.3}
+BASE_TAG=${BASE_TAG:-1.6}
+BASE_VERSION=${BASE_VERSION:-1.6}
 BASE_VERIFY=${BASE_VERIFY:-1}
 PUB=${PUB:-$REPO/docs/cloudos.pub}
 BASE=${BASE:-https://github.com/wh1laye/cloudos-repo/releases/download/$BASE_TAG/cloudos-stage3-amd64-$BASE_VERSION.tar.xz}
