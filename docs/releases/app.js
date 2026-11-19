@@ -86,7 +86,7 @@ async function render(){
   const groups=R.groups.map(g=>({n:g.n,d:g.d})).concat([{n:'другое',d:'остальные релизы'}]).filter(g=>rels.some(r=>groupOf(r)===g.n));
 
   if(!path.length){
-    app.innerHTML='<p class="crumbs">releases</p><h1>релизы</h1><p class="mu">архивы и образы cloudos. файлы хранятся в github releases и скачиваются напрямую оттуда.</p><div class="rlist">'+
+    app.innerHTML='<p class="crumbs">releases</p><h1>релизы</h1><p class="mu">архивы и образы CloudOs. файлы хранятся в github releases и скачиваются напрямую оттуда.</p><div class="rlist">'+
       (groups.map(g=>'<a class="rrow" href="'+link([g.n])+'"><span class="nm">'+IC.d+'<span><strong>'+esc(g.n)+'</strong><em>'+esc(g.d)+'</em></span></span><span class="mu">'+rels.filter(r=>groupOf(r)===g.n).length+'</span></a>').join('')||'<p class="mu">релизов пока нет</p>')+'</div>';
     return;
   }

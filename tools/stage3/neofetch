@@ -38,7 +38,7 @@ user=${USER:-$(id -un)}; host=${HOSTNAME:-$(cat /proc/sys/kernel/hostname)}
 os="$(osr PRETTY_NAME)"; [ -n "$os" ] || os=$(osr NAME)
 arch=$(uname -m); kern=$(uname -r)
 read -r up _ < /proc/uptime; up=${up%.*}
-pk=0; for d in /var/db/pkg/*/*; do [ -d "$d" ] && pk=$((pk + 1)); done
+pk=0; for d in /var/db/cloudpkg/installed/*/*/*; do [ -d "$d" ] && pk=$((pk + 1)); done
 shn=${SHELL##*/}; shv=${BASH_VERSION%%(*}
 term=${TERM_PROGRAM:-${TERM:-tty}}
 cpu=""; cores=0

@@ -34,7 +34,7 @@ e:[['пустой экран без приглашения: служба agetty.
 ];}
 function esc(s){return s.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})}
 function render(){
-var st=S(),i,h='',x=st[cur],en=lang()==='en';
+var st=S(),h='',x=st[cur],en=lang()==='en';
 var nav=d.getElementById('flow');nav.textContent='';
 st.forEach(function(s,k){
 var b=d.createElement('button');b.type='button';b.className='fs'+(k===cur?' on':'')+(k<cur?' pass':'');
@@ -49,9 +49,8 @@ h+='<h4>'+(en?'how to check':'как проверить')+'</h4><pre>'+esc(x.c.j
 h+='<h4>'+(en?'if it breaks':'если сломалось')+'</h4><ul class="ff">'+x.e.map(function(e){return '<li>'+esc(T(e))+' <a href="'+(en?'../handbook/en/':'../handbook/')+'#'+e[2]+'">'+(en?'handbook':'справочник')+'</a></li>'}).join('')+'</ul>';
 h+='<div class="fnav"><button type="button" class="btn" id="pv"'+(cur===0?' disabled':'')+'>'+(en?'back':'назад')+'</button><button type="button" class="btn p" id="nx"'+(cur===st.length-1?' disabled':'')+'>'+(en?'next':'дальше')+'</button></div>';
 p.innerHTML=h;
-var pv=d.getElementById('pv'),nx=d.getElementById('nx');
-pv.onclick=function(){if(cur>0){cur--;render()}};
-nx.onclick=function(){if(cur<st.length-1){cur++;render()}};
+d.getElementById('pv').onclick=function(){if(cur>0){cur--;render()}};
+d.getElementById('nx').onclick=function(){if(cur<st.length-1){cur++;render()}};
 [].forEach.call(d.querySelectorAll('.bm [data-k]'),function(b){b.classList.toggle('on',M[b.getAttribute('data-k')]===b.getAttribute('data-v'))});
 try{history.replaceState(null,'',location.pathname+location.search+'#'+(cur+1)+'&m='+M.m)}catch(e){}
 }

@@ -1,6 +1,6 @@
 (function(){
 if(window.I18N)window.I18N.add({
-"cloudos live iso 1.0": "cloudos live iso 1.0",
+"CloudOs live iso 1.0": "CloudOs live iso 1.0",
 "быстрый и усиленный linux, который ставится одной командой": "a fast hardened linux that installs with one command",
 "загружаешься с live iso, запускаешь установщик, через несколько минут в /mnt/cloudos уже готовая система. openrc, ядро без initramfs, фаервол включён с первой загрузки.": "boot the live iso, run the installer, and within minutes /mnt/cloudos holds a ready system. openrc, a kernel without initramfs, firewall on from the first boot.",
 "читать справочник": "read the handbook",

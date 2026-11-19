@@ -103,7 +103,7 @@ function show(text){
   var gpu=R.gpu[0]||'-',cpu=R.cpu||'-',dk=X.s.join('+')+(R.disks[0]?' ('+R.disks[0].name+')':'');
   var title='железо: '+cpu+(R.gpu[0]?' + '+gpu:'');
   var body='процессор: '+cpu+'\nвидеокарта: '+gpu+'\nтип диска: '+dk+'\nрежим загрузки: '+(R.boot||'-')+'\nрезультат: \n\nкомментарий:\n-\n';
-  hc.appendChild(el('p','mu',tr('получилось запустить cloudos? расскажи, это поможет другим.')));
+  hc.appendChild(el('p','mu',tr('получилось запустить CloudOs? расскажи, это поможет другим.')));
   var a3=el('a','btn');a3.target='_blank';a3.rel='noopener';a3.textContent=tr('создать запись на github');
   a3.href='https://github.com/wh1laye/cloudos-repo/issues/new?title='+encodeURIComponent(title)+'&body='+encodeURIComponent(body);
   hc.appendChild(a3);out.appendChild(hc);

@@ -82,7 +82,7 @@ var X={
 };
 if(W.I18N)W.I18N.add(X);
 var NAMES={
-"предложения, вопросы и обсуждение cloudos.":"suggestions, questions and discussion of cloudos."
+"предложения, вопросы и обсуждение CloudOs.":"suggestions, questions and discussion of CloudOs."
 };
 if(W.I18N)W.I18N.add(NAMES);
 })();

@@ -85,12 +85,12 @@ function toast(s){
   var e=d.createElement('div');e.className='ftoast';e.textContent=s;d.body.appendChild(e);
   setTimeout(function(){e.remove()},3200);
 }
-var WD='cloudos',wi=0,wt=0;
+var WD='CloudOs',wi=0,wt=0;
 function secret(){
   var first=ls('sec')!=='1';
   ls('sec','1');
   if(window.CloudTheme&&window.CloudTheme.unlock)window.CloudTheme.unlock();
-  toast('root@cloudos:~# '+t('доступ root получен'));
+  toast('root@CloudOs:~# '+t('доступ root получен'));
   h.setAttribute('data-rbw','1');
   spawn(innerWidth/2,innerHeight/2,160,'c');
   setTimeout(apply,6000);
