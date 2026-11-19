@@ -32,7 +32,7 @@ if(window.I18N)window.I18N.add({
 "что внутри": "what is inside",
 "gcc, glibc, binutils, python": "gcc, glibc, binutils, python",
 "openrc, udev, dhcpcd, iwd": "openrc, udev, dhcpcd, iwd",
-"opendoas вместо sudo": "opendoas instead of sudo",
+"opendoas вместо sudo": "OpenDoas instead of sudo",
 "curl, git, nano, wget, rsync": "curl, git, nano, wget, rsync",
 "nftables, gnupg, man-db": "nftables, gnupg, man-db",
 "cloudpkg для пакетов": "cloudpkg for packages",

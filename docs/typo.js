@@ -1,6 +1,6 @@
 (function(){
 var d=document,W=window;
-var SKIP='code,pre,kbd,samp,script,style,textarea,[contenteditable="true"],.cmd,.tb,.code,.txt,.bio,.dmm,.un,.relbody,.trow strong,.trow .mu,.sxr,[data-noi]';
+var SKIP='svg,code,pre,kbd,samp,script,style,textarea,[contenteditable="true"],.cmd,.tb,.code,.txt,.bio,.dmm,.un,.relbody,.trow strong,.trow .mu,.sxr,[data-noi]';
 var LETTER=/[A-Za-zА-Яа-яЁё]/;
 var WORD=/^[A-Za-zА-Яа-яЁё0-9_](?:[A-Za-zА-Яа-яЁё0-9_.-]*[A-Za-zА-Яа-яЁё0-9_])?/;
 var ABBR={
@@ -20,15 +20,14 @@ var CANON={
   'kspp':'KSPP','linux':'Linux','limine':'Limine','apparmor':'AppArmor',
   'selinux':'SELinux','lfs':'LFS','gpt':'GPT','efi':'EFI','api':'API','json':'JSON',
   'html':'HTML','css':'CSS','tcp':'TCP','udp':'UDP','dns':'DNS','ram':'RAM',
-  'cpu':'CPU','gpu':'GPU','python':'Python','git':'Git','gentoo':'Gentoo',
-  'github':'GitHub','supabase':'Supabase','portage':'Portage','gnupg':'GnuPG',
+  'cpu':'CPU','gpu':'GPU','python':'Python','git':'Git','github':'GitHub','supabase':'Supabase','gnupg':'GnuPG',
   'doas':'doas','sudo':'sudo','curl':'curl','nano':'nano','wget':'wget',
   'rsync':'rsync','nftables':'nftables','ext4':'ext4','btrfs':'btrfs',
   'x86_64':'x86_64','sha256':'SHA-256','sha256sum':'sha256sum','zstd':'zstd',
   'glibc':'glibc','binutils':'binutils','udev':'udev','dhcpcd':'dhcpcd','iwd':'iwd',
   'man-db':'man-db','dosfstools':'dosfstools','syslog-ng':'syslog-ng','minisign':'minisign',
   'openssh':'OpenSSH','opendoas':'OpenDoas','mit':'MIT','gpl':'GPL','arm':'ARM',
-  'sysv':'SysV','emerge':'emerge','noatime':'noatime','libc':'libc','systemd':'systemd',
+  'sysv':'SysV','noatime':'noatime','libc':'libc','systemd':'systemd',
   'fstab':'fstab','sysctl':'sysctl','wh1laye':'wh1laye'
 };
 var last=new WeakMap(), unitCache=new WeakMap(), obs=null, pending=new Set(), queued=false;
@@ -44,7 +43,7 @@ function unitOf(n){
   var x=e,u=null;
   while(x&&x!==d.body){
     var s=W.getComputedStyle?W.getComputedStyle(x):null;
-    if(s&&s.display&&s.display!=='inline'&&s.display.indexOf('inline')!==0){u=x;break}
+    if(s&&s.display&&s.display!=='inline'){u=x;break}
     x=x.parentNode;
   }
   if(!u)u=d.body;

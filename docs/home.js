@@ -1,17 +1,16 @@
 (function(){
 var d=document,W=window;
 var T={
-i:[['c','# live iso, вход: cloudos / cloudos'],['p','doas cloudos-install'],['c','# auto стирает выбранный диск, manual трогает только root и boot'],['p','reboot'],['p','doas cloudos-audit'],['c','# проверка защиты установленной системы']],
-p:[['p','doas cloudpkg sync'],['p','doas cloudpkg install nano'],['p','doas cloudpkg search htop'],['p','doas cloudpkg upgrade'],['c','# на btrfs перед обновлением делается снимок'],['p','doas cloudpkg rollback']],
-s:[['p','sha256sum -c cloudos-live-amd64-*.iso.sha256'],['p','doas cloudos-firewall status'],['p','doas cloudos-firewall allow ssh'],['p','doas rc-update add sshd default'],['c','# sshd по умолчанию выключен, root по ssh закрыт']]
+i:[['p','doas cloudos-install'],['p','reboot'],['p','doas cloudos-audit']],
+p:[['p','doas cloudpkg sync'],['p','doas cloudpkg install nano'],['p','doas cloudpkg search htop'],['p','doas cloudpkg upgrade'],['p','doas cloudpkg rollback']],
+s:[['p','sha256sum -c cloudos-live-amd64-*.iso.sha256'],['p','doas cloudos-firewall status'],['p','doas cloudos-firewall allow ssh'],['p','doas rc-update add sshd default']]
 };
 var D={
-"# live iso, вход: cloudos / cloudos":"# live iso, login: cloudos / cloudos","# auto стирает выбранный диск, manual трогает только root и boot":"# auto wipes the chosen disk, manual touches only root and boot","# проверка защиты установленной системы":"# audit of the installed system protection","# на btrfs перед обновлением делается снимок":"# on btrfs a snapshot is made before the upgrade","# sshd по умолчанию выключен, root по ssh закрыт":"# sshd is off by default, root over ssh is closed",
 "быстрый и усиленный":"fast and hardened",", который ставится одной командой":", that installs with a single command",
 "загружаешься с live iso, запускаешь установщик, через несколько минут в /mnt/cloudos уже готовая система. openrc, ядро без initramfs, фаервол включён с первой загрузки.":"boot the live iso, run the installer, and in a few minutes there is a ready system in /mnt/cloudos. openrc, a kernel without initramfs, firewall on from the first boot.",
 "скачать live iso":"download live iso","читать справочник":"read the handbook","копировать":"copy","скопировано":"copied",
-"установка":"install","пакеты":"packages","защита":"protection","терминал":"terminal",
-"версия live iso":"live iso version","размер iso":"iso size","пакетов в stage 3":"packages in stage 3","uefi и bios":"uefi and bios","лицензия":"license",
+"установка":"install","пакеты":"packages","защита":"protection","терминал":"terminal","примеры команд":"command examples",
+"версия live iso":"live iso version","размер iso":"ISO size","пакетов в stage 3":"packages in stage 3","uefi и bios":"UEFI and BIOS","лицензия":"license",
 "без initramfs":"no initramfs",
 "из чего состоит":"what it is made of","каждый компонент выбран за простоту и предсказуемость, а не за количество галочек.":"every component is picked for simplicity and predictability, not for a checklist count.",
 "быстрая установка":"fast install","система распаковывается прямо из iso, без скачивания и компиляции. режим auto сам размечает выбранный диск, режим manual трогает только разделы root и boot.":"the system is unpacked straight from the iso, with no download and no compiling. auto mode partitions the chosen disk itself, manual mode touches only the root and boot partitions.",
@@ -30,13 +29,13 @@ var D={
 "фаервол с первой загрузки":"firewall from the first boot","nftables: входящие закрыты, исходящие открыты. управление через cloudos-firewall.":"nftables: incoming closed, outgoing open. managed through cloudos-firewall.",
 "подписанные релизы":"signed releases","sha256 всех файлов и подпись minisign для stage 3 и iso, публичный ключ лежит на сайте.":"sha256 of all files and a minisign signature for stage 3 and the iso, the public key is on the site.",
 "attestation в github actions":"attestation in github actions","происхождение сборки подтверждается в самом github, а не только словами.":"build provenance is confirmed by github itself, not just by words.",
-"sshd выключен":"sshd is off","openssh стоит, но не запущен. root по ssh закрыт, включается двумя командами.":"openssh is installed but not running. root over ssh is closed, it is enabled with two commands.",
-"обёртка над portage: пакеты собираются из исходников, на btrfs перед обновлением делается снимок.":"a portage wrapper: packages are built from source, on btrfs a snapshot is made before an upgrade.",
+"sshd выключен":"sshd is off","openssh стоит, но не запущен. root по ssh закрыт, включается двумя командами.":"OpenSSH is installed but not running. root over ssh is closed, it is enabled with two commands.",
+"свой пакетный менеджер: пакеты собираются из исходников, на btrfs перед обновлением делается снимок.":"its own package manager: packages are built from source, on btrfs a snapshot is made before an upgrade.",
 "снимки btrfs":"btrfs snapshots","upgrade сначала делает снимок корня, rollback загружается из него.":"upgrade makes a root snapshot first, rollback boots from it.",
-"проверка при установке":"check on install","исходники cloudpkg проверяются подписью minisign, без неё установка отменяется.":"cloudpkg sources are checked with a minisign signature, without it the install is aborted.",
-"доктор":"doctor","cloudpkg doctor проверяет настройку, cloudpkg fix чинит окружение portage.":"cloudpkg doctor checks the setup, cloudpkg fix repairs the portage environment.",
+"проверка при установке":"check on install","исходники cloudpkg проверяются подписью minisign, без неё установка отменяется.":"The cloudpkg sources are checked with a minisign signature, without it the install is aborted.",
+"доктор":"doctor","cloudpkg doctor проверяет настройку, cloudpkg fix чинит окружение сборки.":"cloudpkg doctor checks the setup, cloudpkg fix repairs the build environment.",
 "что внутри и чего нет":"what is inside and what is missing","честный список, без маркетинга.":"an honest list, without marketing.",
-"что внутри":"what is inside","чего пока нет":"what is missing for now","gcc, glibc, binutils, python":"gcc, glibc, binutils, python","openrc, udev, dhcpcd, iwd":"openrc, udev, dhcpcd, iwd","opendoas вместо sudo":"opendoas instead of sudo","curl, git, nano, wget, rsync":"curl, git, nano, wget, rsync","nftables, gnupg, man-db":"nftables, gnupg, man-db","cloudpkg для пакетов":"cloudpkg for packages","выбор рабочего стола и графики":"a choice of desktop and graphics","arm, только x86_64":"arm, only x86_64","графического установщика":"a graphical installer",
+"что внутри":"what is inside","чего пока нет":"what is missing for now","gcc, glibc, binutils, python":"gcc, glibc, binutils, python","openrc, udev, dhcpcd, iwd":"openrc, udev, dhcpcd, iwd","opendoas вместо sudo":"OpenDoas instead of sudo","curl, git, nano, wget, rsync":"curl, git, nano, wget, rsync","nftables, gnupg, man-db":"nftables, gnupg, man-db","cloudpkg для пакетов":"cloudpkg for packages","выбор рабочего стола и графики":"a choice of desktop and graphics","arm, только x86_64":"ARM, only x86_64","графического установщика":"a graphical installer",
 "новое":"news","последние изменения проекта.":"latest project changes.",
 "частые вопросы":"faq",
 "это отдельный дистрибутив или сборка чужого?":"is this a separate distribution or a rebuild of someone else's?","собственная система: база собрана по lfs с glibc, свой установщик, свой загрузочный образ и свои сборочные скрипты. рецепты пакетов в cloudpkg написаны для проекта.":"its own system: the base is built by lfs with glibc, with its own installer, boot image and build scripts. package recipes in cloudpkg are written for the project.",
@@ -46,7 +45,7 @@ var D={
 "безопасно ли в live пароль CloudOs?":"is the CloudOs password in live safe?","пароль CloudOs известен всем и нужен только для live, ssh в live закрыт. в установленной системе такого пароля нет.":"the CloudOs password is public and only for live, ssh is closed in live. the installed system has no such password.",
 "дальше":"next","справочник":"handbook","релизы":"releases","форум":"forum","железо":"hardware",
 "установка, первые шаги и ошибки":"install, first steps and errors","live iso и контрольные суммы":"live iso and checksums","что в системе и что ставится через cloudpkg":"what is in the system and what installs through cloudpkg","вопросы и обсуждение":"questions and discussion","что в работе и что в планах":"what is in progress and what is planned","на чём проверено, добавь своё":"what it was tested on, add yours",
-"проверка файлов":"file verification","sha256 и подпись прямо в браузере":"sha256 and signature right in the browser","статус сборок":"build status","состояние github actions":"github actions state","определение железа":"hardware detection","подскажет, что включить в ядре":"hints what to enable in the kernel","сравнение":"comparison","чем CloudOs отличается от других":"how CloudOs differs from others","песочница":"sandbox","попробуй команды в браузере":"try commands in the browser","карта размеров":"size map","из чего состоит stage 3":"what stage 3 consists of",
+"проверка файлов":"file verification","sha-256 и подпись прямо в браузере":"SHA-256 and signature right in the browser","статус сборок":"build status","состояние github actions":"GitHub Actions state","определение железа":"hardware detection","подскажет, что включить в ядре":"hints what to enable in the kernel","сравнение":"comparison","чем CloudOs отличается от других":"how CloudOs differs from others","песочница":"sandbox","попробуй команды в браузере":"try commands in the browser","карта размеров":"size map","из чего состоит stage 3":"what stage 3 consists of",
 "поставь CloudOs сегодня":"install CloudOs today","скачай live iso, проверь сумму и запусти установщик. хватит флешки и десяти минут.":"download the live iso, check the sum and run the installer. a usb stick and ten minutes are enough.",
 "нет новостей":"no news"
 };

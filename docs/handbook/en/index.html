@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <link rel="alternate" hreflang="ru" data-l="ru" href="../">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title> Cloudos handbook</title>
+<title>CloudOs handbook</title>
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="cloudos">
-<meta property="og:title" content="cloudos handbook">
-<meta property="og:description" content="installing cloudos from the live iso: one command or by hand, first steps, packages and fixes">
+<meta property="og:site_name" content="CloudOs">
+<meta property="og:title" content="CloudOs handbook">
+<meta property="og:description" content="Installing CloudOs from the live iso: one command or by hand, first steps, packages and fixes">
 <meta property="og:url" content="https://wh1laye.github.io/cloudos-repo/handbook/en/">
 <meta property="og:image" content="https://wh1laye.github.io/cloudos-repo/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#1a1c20">
-<link rel="alternate" type="application/rss+xml" title="cloudos: news" href="../../rss.xml">
-<link rel="alternate" type="application/atom+xml" title="cloudos: releases" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
-<meta name="description" content="installing cloudos from the live iso: one command or by hand, first steps, packages and fixes">
+<link rel="alternate" type="application/rss+xml" title="CloudOs: news" href="../../rss.xml">
+<link rel="alternate" type="application/atom+xml" title="CloudOs: releases" href="https://github.com/wh1laye/cloudos-repo/releases.atom">
+<meta name="description" content="Installing CloudOs from the live iso: one command or by hand, first steps, packages and fixes">
 <link rel="icon" href="../../icon.svg" type="image/svg+xml">
 <link rel="icon" href="../../favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="../../apple-touch-icon.png">
@@ -31,247 +31,247 @@
 <link rel="stylesheet" href="../../ui.css?v=1">
 <script>(function(){var m=null;try{m=localStorage.getItem('hbmode')}catch(e){}document.documentElement.setAttribute('data-mode',m==='bios'?'bios':'uefi')})()</script>
 <script src="../../theme.js?v=17"></script>
-<script src="../../i18n.js?v=5"></script>
-<script src="../../typo.js?v=1"></script>
+<script src="../../i18n.js?v=8"></script>
+<script src="../../typo.js?v=2"></script>
 <script src="../../gate.js?v=2"></script>
 </head>
 <body>
 <header class="top">
-<a class="brand" href="../../" aria-label="cloudos"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M29.72 1.00C29.24 1.04 28.61 1.12 28.05 1.21C27.50 1.31 26.94 1.43 26.39 1.59C25.83 1.74 25.28 1.93 24.72 2.13C24.17 2.34 23.61 2.56 23.05 2.83C22.50 3.09 21.94 3.38 21.39 3.73C20.83 4.08 20.26 4.48 19.72 4.90C19.19 5.32 18.66 5.78 18.18 6.25C17.69 6.72 17.24 7.21 16.81 7.74C16.38 8.26 15.95 8.85 15.59 9.41C15.23 9.96 15.07 10.75 14.63 11.07C14.20 11.40 13.53 11.25 12.98 11.36C12.43 11.46 11.87 11.55 11.32 11.71C10.76 11.87 10.20 12.07 9.65 12.31C9.09 12.56 8.54 12.83 7.98 13.16C7.43 13.50 6.83 13.91 6.31 14.33C5.80 14.75 5.36 15.19 4.91 15.68C4.46 16.18 4.00 16.76 3.62 17.31C3.24 17.86 2.94 18.42 2.66 18.98C2.38 19.54 2.15 20.09 1.95 20.65C1.76 21.20 1.61 21.76 1.49 22.31C1.38 22.87 1.30 23.43 1.26 23.98C1.22 24.54 1.24 25.09 1.26 25.65C1.28 26.20 1.32 26.76 1.40 27.31C1.49 27.87 1.60 28.43 1.76 28.98C1.92 29.54 2.12 30.09 2.36 30.65C2.61 31.20 2.88 31.76 3.23 32.31C3.58 32.87 4.01 33.46 4.44 33.98C4.86 34.50 5.30 34.97 5.80 35.42C6.31 35.87 6.91 36.32 7.47 36.69C8.02 37.07 8.58 37.38 9.13 37.65C9.69 37.92 10.25 38.13 10.80 38.31C11.36 38.49 11.91 38.63 12.47 38.73C13.02 38.84 13.58 38.88 14.13 38.93C14.69 38.97 15.25 38.99 15.80 39.00C16.36 39.01 16.91 39.00 17.47 39.00C18.02 39.00 18.58 39.00 19.14 39.00C19.69 39.00 20.25 39.00 20.80 39.00C21.36 39.00 21.91 39.00 22.47 39.00C23.02 39.00 23.58 39.00 24.14 39.00C24.69 39.00 25.25 39.00 25.80 39.00C26.36 39.00 26.91 39.00 27.47 39.00C28.03 39.00 28.58 39.00 29.14 39.00C29.69 39.00 30.25 39.00 30.80 39.00C31.36 39.00 31.91 39.00 32.47 39.00C33.03 39.00 33.58 39.00 34.14 39.00C34.69 39.00 35.25 39.00 35.80 39.00C36.36 39.00 36.91 39.00 37.47 39.00C38.03 39.00 38.58 39.00 39.14 39.00C39.69 39.00 40.25 39.00 40.80 39.00C41.36 39.00 41.92 39.00 42.47 39.00C43.03 39.00 43.58 39.00 44.14 39.00C44.69 39.00 45.25 39.00 45.80 39.00C46.36 39.00 46.92 39.00 47.47 39.00C48.03 39.00 48.58 39.00 49.14 39.00C49.69 39.00 50.25 39.00 50.80 39.00C51.36 39.00 51.92 39.05 52.47 39.00C53.03 38.95 53.58 38.85 54.14 38.70C54.69 38.54 55.25 38.33 55.81 38.08C56.36 37.82 56.93 37.54 57.47 37.17C58.02 36.81 58.60 36.35 59.09 35.88C59.58 35.41 60.02 34.90 60.42 34.37C60.81 33.84 61.17 33.26 61.46 32.71C61.75 32.15 61.97 31.59 62.15 31.04C62.34 30.48 62.46 29.93 62.56 29.37C62.66 28.82 62.72 28.26 62.74 27.70C62.76 27.15 62.74 26.59 62.67 26.04C62.60 25.48 62.47 24.93 62.31 24.37C62.16 23.82 61.99 23.26 61.75 22.70C61.50 22.15 61.19 21.59 60.82 21.04C60.46 20.49 60.02 19.90 59.56 19.41C59.11 18.91 58.60 18.46 58.08 18.06C57.55 17.66 56.96 17.30 56.41 17.01C55.85 16.72 55.30 16.51 54.74 16.32C54.19 16.13 53.63 16.00 53.07 15.90C52.52 15.79 51.96 15.71 51.41 15.68C50.85 15.66 50.15 15.95 49.74 15.75C49.33 15.56 49.16 15.01 48.94 14.53C48.72 14.05 48.62 13.42 48.41 12.86C48.20 12.31 47.95 11.75 47.67 11.20C47.39 10.64 47.08 10.08 46.73 9.53C46.37 8.97 45.95 8.39 45.52 7.86C45.09 7.33 44.64 6.84 44.16 6.36C43.67 5.87 43.16 5.40 42.63 4.97C42.10 4.55 41.52 4.15 40.96 3.80C40.41 3.46 39.85 3.17 39.30 2.90C38.74 2.63 38.19 2.38 37.63 2.17C37.07 1.96 36.52 1.77 35.96 1.62C35.41 1.47 34.85 1.34 34.30 1.25C33.74 1.15 33.19 1.09 32.63 1.05C32.07 1.01 31.45 1.01 30.96 1.00C30.48 0.99 30.21 0.96 29.72 1.00Z" fill="url(#g)"/></svg> Cloudos<span> Handbook</span></a>
-<nav class="hl"><a class="gh" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span> Home</span></a><a class="gh on" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span> Handbook</span></a><div class="ddw"><button type="button" class="gh" id="ob" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg><span> More</span></button><div class="ddm" id="om" hidden><div class="ddh"> Install</div><a class="ddi" href="../../detect/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg> Hardware detection</a><a class="ddi" href="../../boot/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8M6.5 6.5a8 8 0 1 0 11 0"/></svg> Boot flow</a><div class="ddh"> Verification</div><a class="ddi" href="../../verify/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg> File verification</a><a class="ddi" href="../../status/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg> Build status</a><div class="ddh"> Project</div><a class="ddi" href="../../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg> News</a><a class="ddi" href="../../hardware/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/></svg> Hardware</a><a class="ddi" href="../../packages/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg> Packages</a><a class="ddi" href="../../stage3/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z"/></svg> Size map</a><a class="ddi" href="../../compare/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 20h14M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0z"/></svg> Comparison</a><a class="ddi" href="../../security/"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg> Security</a><a class="ddi" href="../../sandbox/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M7 10l3 2-3 2M12 15h5"/></svg> Sandbox</a></div></div><a class="gh" href="../../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span> Forum</span></a><a class="gh" href="../../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span> Releases</span></a></nav>
+<a class="brand" href="../../" aria-label="CloudOs"><svg viewBox="0 0 64 40" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9cc8f2"/><stop offset="1" stop-color="#3b5fa8"/></linearGradient></defs><path d="M29.72 1.00C29.24 1.04 28.61 1.12 28.05 1.21C27.50 1.31 26.94 1.43 26.39 1.59C25.83 1.74 25.28 1.93 24.72 2.13C24.17 2.34 23.61 2.56 23.05 2.83C22.50 3.09 21.94 3.38 21.39 3.73C20.83 4.08 20.26 4.48 19.72 4.90C19.19 5.32 18.66 5.78 18.18 6.25C17.69 6.72 17.24 7.21 16.81 7.74C16.38 8.26 15.95 8.85 15.59 9.41C15.23 9.96 15.07 10.75 14.63 11.07C14.20 11.40 13.53 11.25 12.98 11.36C12.43 11.46 11.87 11.55 11.32 11.71C10.76 11.87 10.20 12.07 9.65 12.31C9.09 12.56 8.54 12.83 7.98 13.16C7.43 13.50 6.83 13.91 6.31 14.33C5.80 14.75 5.36 15.19 4.91 15.68C4.46 16.18 4.00 16.76 3.62 17.31C3.24 17.86 2.94 18.42 2.66 18.98C2.38 19.54 2.15 20.09 1.95 20.65C1.76 21.20 1.61 21.76 1.49 22.31C1.38 22.87 1.30 23.43 1.26 23.98C1.22 24.54 1.24 25.09 1.26 25.65C1.28 26.20 1.32 26.76 1.40 27.31C1.49 27.87 1.60 28.43 1.76 28.98C1.92 29.54 2.12 30.09 2.36 30.65C2.61 31.20 2.88 31.76 3.23 32.31C3.58 32.87 4.01 33.46 4.44 33.98C4.86 34.50 5.30 34.97 5.80 35.42C6.31 35.87 6.91 36.32 7.47 36.69C8.02 37.07 8.58 37.38 9.13 37.65C9.69 37.92 10.25 38.13 10.80 38.31C11.36 38.49 11.91 38.63 12.47 38.73C13.02 38.84 13.58 38.88 14.13 38.93C14.69 38.97 15.25 38.99 15.80 39.00C16.36 39.01 16.91 39.00 17.47 39.00C18.02 39.00 18.58 39.00 19.14 39.00C19.69 39.00 20.25 39.00 20.80 39.00C21.36 39.00 21.91 39.00 22.47 39.00C23.02 39.00 23.58 39.00 24.14 39.00C24.69 39.00 25.25 39.00 25.80 39.00C26.36 39.00 26.91 39.00 27.47 39.00C28.03 39.00 28.58 39.00 29.14 39.00C29.69 39.00 30.25 39.00 30.80 39.00C31.36 39.00 31.91 39.00 32.47 39.00C33.03 39.00 33.58 39.00 34.14 39.00C34.69 39.00 35.25 39.00 35.80 39.00C36.36 39.00 36.91 39.00 37.47 39.00C38.03 39.00 38.58 39.00 39.14 39.00C39.69 39.00 40.25 39.00 40.80 39.00C41.36 39.00 41.92 39.00 42.47 39.00C43.03 39.00 43.58 39.00 44.14 39.00C44.69 39.00 45.25 39.00 45.80 39.00C46.36 39.00 46.92 39.00 47.47 39.00C48.03 39.00 48.58 39.00 49.14 39.00C49.69 39.00 50.25 39.00 50.80 39.00C51.36 39.00 51.92 39.05 52.47 39.00C53.03 38.95 53.58 38.85 54.14 38.70C54.69 38.54 55.25 38.33 55.81 38.08C56.36 37.82 56.93 37.54 57.47 37.17C58.02 36.81 58.60 36.35 59.09 35.88C59.58 35.41 60.02 34.90 60.42 34.37C60.81 33.84 61.17 33.26 61.46 32.71C61.75 32.15 61.97 31.59 62.15 31.04C62.34 30.48 62.46 29.93 62.56 29.37C62.66 28.82 62.72 28.26 62.74 27.70C62.76 27.15 62.74 26.59 62.67 26.04C62.60 25.48 62.47 24.93 62.31 24.37C62.16 23.82 61.99 23.26 61.75 22.70C61.50 22.15 61.19 21.59 60.82 21.04C60.46 20.49 60.02 19.90 59.56 19.41C59.11 18.91 58.60 18.46 58.08 18.06C57.55 17.66 56.96 17.30 56.41 17.01C55.85 16.72 55.30 16.51 54.74 16.32C54.19 16.13 53.63 16.00 53.07 15.90C52.52 15.79 51.96 15.71 51.41 15.68C50.85 15.66 50.15 15.95 49.74 15.75C49.33 15.56 49.16 15.01 48.94 14.53C48.72 14.05 48.62 13.42 48.41 12.86C48.20 12.31 47.95 11.75 47.67 11.20C47.39 10.64 47.08 10.08 46.73 9.53C46.37 8.97 45.95 8.39 45.52 7.86C45.09 7.33 44.64 6.84 44.16 6.36C43.67 5.87 43.16 5.40 42.63 4.97C42.10 4.55 41.52 4.15 40.96 3.80C40.41 3.46 39.85 3.17 39.30 2.90C38.74 2.63 38.19 2.38 37.63 2.17C37.07 1.96 36.52 1.77 35.96 1.62C35.41 1.47 34.85 1.34 34.30 1.25C33.74 1.15 33.19 1.09 32.63 1.05C32.07 1.01 31.45 1.01 30.96 1.00C30.48 0.99 30.21 0.96 29.72 1.00Z" fill="url(#g)"/></svg>CloudOs<span>handbook</span></a>
+<nav class="hl"><a class="gh" href="../../"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg><span>Home</span></a><a class="gh on" aria-current="page" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>Handbook</span></a><div class="ddw"><button type="button" class="gh" id="ob" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"/></svg><span>More</span></button><div class="ddm" id="om" hidden><div class="ddh">Install</div><a class="ddi" href="../../detect/"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg>Hardware detection</a><a class="ddi" href="../../boot/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v8M6.5 6.5a8 8 0 1 0 11 0"/></svg>Boot flow</a><div class="ddh">Verification</div><a class="ddi" href="../../verify/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>File verification</a><a class="ddi" href="../../status/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Build status</a><div class="ddh">Project</div><a class="ddi" href="../../news/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.4 5.6 6 .6-4.5 4 1.4 6-5.3-3.2L6.7 19.2l1.4-6-4.5-4 6-.6z"/></svg>News</a><a class="ddi" href="../../hardware/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10v10H7zM9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4"/></svg>Hardware</a><a class="ddi" href="../../packages/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9"/></svg>Packages</a><a class="ddi" href="../../stage3/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h8v8H3zM13 3h8v5h-8zM13 10h8v11h-8zM3 13h8v8H3z"/></svg>Size map</a><a class="ddi" href="../../compare/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M5 20h14M5 7h14M5 7l-3 6a3 3 0 0 0 6 0zM19 7l-3 6a3 3 0 0 0 6 0z"/></svg>Comparison</a><a class="ddi" href="../../security/"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Security</a><a class="ddi" href="../../sandbox/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M7 10l3 2-3 2M12 15h5"/></svg>Sandbox</a></div></div><a class="gh" href="../../forum/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span>Forum</span></a><a class="gh" href="../../releases/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Releases</span></a></nav>
 </header>
 <div class="layout">
-<nav class="toc" aria-label="contents">
-<div class="tmode" role="group" aria-label="boot mode"><span class="tl"> Boot mode</span><div class="seg2"><button type="button" data-m="uefi"> Uefi</button><button type="button" data-m="bios"> Bios</button></div></div>
-<button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span> Search</span><kbd> Ctrl k</kbd></button>
-<details open><summary> Contents</summary>
-<ol><li><a href="#about">1. About cloudos</a><ol><li><a href="#s1-1">1.1 requirements</a></li><li><a href="#s1-2">1.2 what is inside</a></li><li><a href="#s1-3">1.3 what is tuned for speed and security</a></li><li><a href="#s1-4">1.4 what is not there yet</a></li></ol></li><li><a href="#prep">2. Preparation</a><ol><li><a href="#s2-1">2.1 writing the iso to a stick</a></li><li><a href="#s2-2">2.2 logging in to the live system</a></li><li><a href="#s2-3">2.3 network</a></li></ol></li><li><a href="#quick">3. One-command install</a><ol></ol></li><li><a href="#manual">4. Manual install</a><ol><li><a href="#s4-1">4.1 partitioning</a></li><li><a href="#s4-2">4.2 filesystems and mounting</a></li><li><a href="#s4-3">4.3 unpacking the system</a></li><li><a href="#s4-4">4.4 fstab</a></li><li><a href="#s4-5">4.5 limine bootloader</a></li><li><a href="#s4-6">4.6 configuration inside</a></li><li><a href="#s4-7">4.7 finishing</a></li></ol></li><li><a href="#after">5. After the install</a><ol><li><a href="#s5-1">5.1 login and rights</a></li><li><a href="#s5-2">5.2 timezone and hostname</a></li><li><a href="#s5-3">5.3 network</a></li><li><a href="#s5-4">5.4 services and firewall</a></li><li><a href="#s5-5">5.5 swap and zram</a></li><li><a href="#s5-6">5.6 hardening: apparmor, uki, tpm2, cis</a></li></ol></li><li><a href="#cpkg">6. Packages and cloudpkg</a><ol></ol></li><li><a href="#kernel">7. Your own kernel (optional)</a><ol></ol></li><li><a href="#maint">8. Maintenance</a><ol></ol></li><li><a href="#errors">9. Errors and fixes</a><ol></ol></li><li><a href="#cheat">10. Cheat sheet</a><ol></ol></li><li><a href="#faq">11. Questions</a><ol><li><a href="#s11-1"> Can it run on a server</a></li><li><a href="#s11-2"> What happened to stage 3</a></li><li><a href="#s11-3"> Why no secure boot</a></li></ol></li></ol></details>
+<nav class="toc" aria-label="Contents">
+<div class="tmode" role="group" aria-label="Boot mode"><span class="tl">Boot mode</span><div class="seg2"><button type="button" data-m="uefi">UEFI</button><button type="button" data-m="bios">BIOS</button></div></div>
+<button type="button" class="tsr" id="tsr"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>Search</span><kbd>ctrl k</kbd></button>
+<details open><summary>Contents</summary>
+<ol><li><a href="#about">1. About CloudOs</a><ol><li><a href="#s1-1">1.1 Requirements</a></li><li><a href="#s1-2">1.2 What is inside</a></li><li><a href="#s1-3">1.3 What is tuned for speed and security</a></li><li><a href="#s1-4">1.4 What is not there yet</a></li></ol></li><li><a href="#prep">2. Preparation</a><ol><li><a href="#s2-1">2.1 Writing the iso to a stick</a></li><li><a href="#s2-2">2.2 Logging in to the live system</a></li><li><a href="#s2-3">2.3 Network</a></li></ol></li><li><a href="#quick">3. One-command install</a><ol></ol></li><li><a href="#manual">4. Manual install</a><ol><li><a href="#s4-1">4.1 Partitioning</a></li><li><a href="#s4-2">4.2 Filesystems and mounting</a></li><li><a href="#s4-3">4.3 Unpacking the system</a></li><li><a href="#s4-4">4.4 fstab</a></li><li><a href="#s4-5">4.5 Limine bootloader</a></li><li><a href="#s4-6">4.6 Configuration inside</a></li><li><a href="#s4-7">4.7 Finishing</a></li></ol></li><li><a href="#after">5. After the install</a><ol><li><a href="#s5-1">5.1 Login and rights</a></li><li><a href="#s5-2">5.2 Timezone and hostname</a></li><li><a href="#s5-3">5.3 Network</a></li><li><a href="#s5-4">5.4 Services and firewall</a></li><li><a href="#s5-5">5.5 Swap and zram</a></li><li><a href="#s5-6">5.6 Hardening: apparmor, uki, tpm2, cis</a></li></ol></li><li><a href="#cpkg">6. Packages and cloudpkg</a><ol></ol></li><li><a href="#kernel">7. Your own kernel (optional)</a><ol></ol></li><li><a href="#maint">8. Maintenance</a><ol></ol></li><li><a href="#errors">9. Errors and fixes</a><ol></ol></li><li><a href="#cheat">10. Cheat sheet</a><ol></ol></li><li><a href="#faq">11. Questions</a><ol><li><a href="#s11-1">Can it run on a server</a></li><li><a href="#s11-2">What happened to stage 3</a></li><li><a href="#s11-3">Why no secure boot</a></li></ol></li></ol></details>
 </nav>
 <main id="cloud">
-<h1> Cloudos handbook</h1>
-<p class="lead"> Installing cloudos live iso 2.3 on x86_64.</p>
-<h2 id="about">1. About cloudos</h2>
-<p> Cloudos is a fast hardened x86_64 linux: openrc, vanilla kernel, limine, packages built from source with cloudpkg. It installs from the live iso with one command and boots to a plain console.</p>
-<div class="sc"><table><tr><th> Parameter</th><th> Value</th></tr>
-<tr><td> Architecture</td><td>x86_64</td></tr>
-<tr><td> Libc</td><td> Glibc</td></tr>
-<tr><td> Init</td><td> Openrc</td></tr>
-<tr><td> Vanilla kernel from kernel.org, disk drivers built in, no initramfs needed</td></tr>
-<tr><td> Bootloader</td><td> Limine</td></tr>
-<tr><td> Filesystems</td><td> Ext4 and btrfs (zstd)</td></tr>
-<tr><td> Packages</td><td> From source only, the <code> cloudpkg</code> Command</td></tr>
+<h1>CloudOs handbook</h1>
+<p class="lead">Installing CloudOs live iso 2.3 on x86_64.</p>
+<h2 id="about">1. About CloudOs</h2>
+<p>CloudOs is a fast hardened x86_64 linux: openrc, vanilla kernel, limine, packages built from source with cloudpkg. It installs from the live iso with one command and boots to a plain console.</p>
+<div class="sc"><table><tr><th>Parameter</th><th>Value</th></tr>
+<tr><td>Architecture</td><td>x86_64</td></tr>
+<tr><td>libc</td><td>glibc</td></tr>
+<tr><td>Init</td><td>OpenRC</td></tr>
+<tr><td>Vanilla kernel from kernel.org, disk drivers built in, no initramfs needed</td></tr>
+<tr><td>Bootloader</td><td>Limine</td></tr>
+<tr><td>Filesystems</td><td>ext4 and btrfs (zstd)</td></tr>
+<tr><td>Packages</td><td>From source only, the <code>cloudpkg</code> command</td></tr>
 </table></div>
-<h3 id="s1-1">1.1 requirements</h3>
-<div class="sc"><table><tr><th> Item</th><th> Guideline</th></tr>
-<tr><td> Cpu</td><td> Any x86_64, one image for all</td></tr>
-<tr><td> Ram</td><td>2 gb or more</td></tr>
-<tr><td> Disk</td><td>10 gb or more, 20 gb if you build packages</td></tr>
-<tr><td> Boot</td><td> Uefi or bios (up to 2 tb in bios)</td></tr>
-<tr><td> Network</td><td> Wired dhcp or wifi through iwctl</td></tr>
-<tr><td> Media</td><td> Usb stick or disc with the live iso</td></tr>
+<h3 id="s1-1">1.1 Requirements</h3>
+<div class="sc"><table><tr><th>Item</th><th>Guideline</th></tr>
+<tr><td>CPU</td><td>Any x86_64, one image for all</td></tr>
+<tr><td>RAM</td><td>2 Gb or more</td></tr>
+<tr><td>Disk</td><td>10 Gb or more, 20 gb if you build packages</td></tr>
+<tr><td>Boot</td><td>UEFI or bios (up to 2 tb in bios)</td></tr>
+<tr><td>Network</td><td>Wired dhcp or wifi through iwctl</td></tr>
+<tr><td>Media</td><td>Usb stick or disc with the live iso</td></tr>
 </table></div>
-<h3 id="s1-2">1.2 what is inside</h3>
-<p> Gcc, glibc, binutils, python, openrc, udev, dhcpcd, iwd for wifi, opendoas instead of sudo, curl, git, nano, wget, rsync, openssh (disabled), nftables, gnupg, man-db, dosfstools, cloudpkg. No graphics or desktop.</p>
-<h3 id="s1-3">1.3 what is tuned for speed and security</h3>
-<div class="sc"><table><tr><th> Area</th><th> What is done</th></tr>
-<tr><td> Boot speed</td><td> No initramfs, disks and ext4/btrfs built in, openrc starts services in parallel, zstd compressed kernel</td></tr>
-<tr><td> Runtime speed</td><td> Noatime, btrfs with zstd compression, tcp bbr, bfq, kyber and deadline disk schedulers, schedutil, zswap and zram with zstd, thp on request only</td></tr>
-<tr><td> Kernel</td><td> Kspp-style options: randomization, hardened usercopy, memory init, enforced module signatures, yama ptrace_scope 2, kexec, devkmem and vsyscall disabled</td></tr>
-<tr><td> Network</td><td> Nftables with a drop policy on from the first boot, ssh off, sysctl against spoofing, redirects and source routing</td></tr>
-<tr><td> Access</td><td> Root rights only through doas and the wheel group, passwords are set during install, no default passwords</td></tr>
+<h3 id="s1-2">1.2 What is inside</h3>
+<p>GCC, glibc, binutils, python, openrc, udev, dhcpcd, iwd for wifi, opendoas instead of sudo, curl, git, nano, wget, rsync, openssh (disabled), nftables, gnupg, man-db, dosfstools, cloudpkg. No graphics or desktop.</p>
+<h3 id="s1-3">1.3 What is tuned for speed and security</h3>
+<div class="sc"><table><tr><th>Area</th><th>What is done</th></tr>
+<tr><td>Boot speed</td><td>No initramfs, disks and ext4/btrfs built in, openrc starts services in parallel, zstd compressed kernel</td></tr>
+<tr><td>Runtime speed</td><td>noatime, btrfs with zstd compression, tcp bbr, bfq, kyber and deadline disk schedulers, schedutil, zswap and zram with zstd, thp on request only</td></tr>
+<tr><td>Kernel</td><td>KSPP-style options: randomization, hardened usercopy, memory init, enforced module signatures, yama ptrace_scope 2, kexec, devkmem and vsyscall disabled</td></tr>
+<tr><td>Network</td><td>nftables with a drop policy on from the first boot, ssh off, sysctl against spoofing, redirects and source routing</td></tr>
+<tr><td>Access</td><td>Root rights only through doas and the wheel group, passwords are set during install, no default passwords</td></tr>
 </table></div>
-<div class="note"><b> Note</b> The image is built without <code>-march=native</code>, so it runs on any x86_64. An x86-64-v3 build and extra userland optimizations are planned for later.</div>
-<h3 id="s1-4">1.4 what is not there yet</h3>
-<p> There is no graphics. Secure boot with your own keys, a signed uki, luks2 with tpm2, apparmor and a cis check profile exist (see 5.6), selinux does not. Honestly: no system is unhackable, cloudos gives a hardened baseline, not a guarantee.</p>
+<div class="note"><b>Note</b> the image is built without <code>-march=native</code>, so it runs on any x86_64. An x86-64-v3 build and extra userland optimizations are planned for later.</div>
+<h3 id="s1-4">1.4 What is not there yet</h3>
+<p>There is no graphics. Secure boot with your own keys, a signed uki, luks2 with tpm2, apparmor and a cis check profile exist (see 5.6), selinux does not. Honestly: no system is unhackable, CloudOs gives a hardened baseline, not a guarantee.</p>
 <h2 id="prep">2. Preparation</h2>
-<h3 id="s2-1">2.1 writing the iso to a stick</h3>
-<p> Download the iso and checksum from the <a href="../../releases/"> Releases</a> Page and verify:</p>
-<pre><code> sha256sum -c cloudos-live-amd64-2.3.iso.sha256</code></pre>
-<p> Write the image to the stick (careful: pick the stick, its data will be erased):</p>
-<pre><code> Sudo dd if=cloudos-live-amd64-2.3.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
-<h3 id="s2-2">2.2 logging in to the live system</h3>
-<p> Boot from the stick. Login is automatic: user <code> Cloudos</code>, password <code> Cloudos</code>, root through <code> Doas -s</code>. This is for the live system only, ssh is closed for these accounts and the firewall is on.</p>
-<h3 id="s2-3">2.3 network</h3>
-<p> The install itself needs no network. Wired comes up by itself. Wifi:</p>
-<pre><code> Doas iwctl station wlan0 scan
-Doas iwctl station wlan0 get-networks
-Doas iwctl station wlan0 connect network_name</code></pre>
-<pre><code> Ip addr
-Ping -c1 github.com</code></pre>
+<h3 id="s2-1">2.1 Writing the iso to a stick</h3>
+<p>Download the iso and checksum from the <a href="../../releases/">releases</a> page and verify:</p>
+<pre><code>sha256sum -c cloudos-live-amd64-2.3.iso.sha256</code></pre>
+<p>Write the image to the stick (careful: pick the stick, its data will be erased):</p>
+<pre><code>sudo dd if=cloudos-live-amd64-2.3.iso of=/dev/sdX bs=4M status=progress conv=fsync</code></pre>
+<h3 id="s2-2">2.2 Logging in to the live system</h3>
+<p>Boot from the stick. Login is automatic: user <code>cloudos</code>, password <code>cloudos</code>, root through <code>doas -s</code>. This is for the live system only, ssh is closed for these accounts and the firewall is on.</p>
+<h3 id="s2-3">2.3 Network</h3>
+<p>The install itself needs no network. Wired comes up by itself. Wifi:</p>
+<pre><code>doas iwctl station wlan0 scan
+doas iwctl station wlan0 get-networks
+doas iwctl station wlan0 connect network_name</code></pre>
+<pre><code>ip addr
+ping -c1 github.com</code></pre>
 <h2 id="quick">3. One-command install</h2>
-<p> In the live system run:</p>
-<pre><code> Doas cloudos-install</code></pre>
-<p> The installer asks for the disk, filesystem (ext4 or btrfs), hostname, username and two passwords. Then it does everything itself:</p>
-<ol class="steps"><li> Partitions the disk: gpt with a 512 mb efi partition for uefi, dos with a 512 mb boot partition for bios, the rest is root</li><li> Formats the partitions and mounts them at <code>/mnt/cloudos</code></li><li> Unpacks the system from the iso with <code> Unsquashfs</code></li><li> Writes fstab, installs limine and the kernel into <code>/boot</code></li><li> Removes live leftovers, creates the user and passwords</li><li> Checks the result and unmounts the disk</li></ol>
-<p> The installer first asks for the mode. <b> Auto</b> Wipes the whole disk you pick. <b> Manual</b> Lets you partition yourself with <code> Cfdisk</code>, <code> Fdisk</code> Or <code> Sfdisk</code>, then asks for the boot partition (efi system partition on uefi, vfat, 100 mb or more) and the root partition (4 gb or more). Only those two partitions are touched, all other partitions and their data stay intact. An existing vfat boot partition can be kept as is, the old fallback loader is saved as <code>BOOTX64.EFI.bak</code>. For scripts: <code>CLOUDOS_MODE=manual CLOUDOS_ROOT=/dev/sda3 CLOUDOS_BOOT=/dev/sda1 CLOUDOS_FORMAT_BOOT=0</code>.</p>
-<div class="warn"><b> Important</b> In auto mode the chosen disk is erased completely, in manual mode only the root partition (and the boot partition if you format it). The installer refuses the media the iso booted from and asks you to type the disk path to confirm.</div>
-<p> When you see the done message run <code> Reboot</code> And remove the stick. For scripts the installer takes variables instead of questions, see <code> Cloudos-install --help</code>.</p>
+<p>In the live system run:</p>
+<pre><code>doas cloudos-install</code></pre>
+<p>The installer asks for the disk, filesystem (ext4 or btrfs), hostname, username and two passwords. Then it does everything itself:</p>
+<ol class="steps"><li>Partitions the disk: gpt with a 512 mb efi partition for uefi, dos with a 512 mb boot partition for bios, the rest is root</li><li>Formats the partitions and mounts them at <code>/mnt/cloudos</code></li><li>Unpacks the system from the iso with <code>unsquashfs</code></li><li>Writes fstab, installs limine and the kernel into <code>/boot</code></li><li>Removes live leftovers, creates the user and passwords</li><li>Checks the result and unmounts the disk</li></ol>
+<p>The installer first asks for the mode. <b>Auto</b> wipes the whole disk you pick. <b>Manual</b> lets you partition yourself with <code>cfdisk</code>, <code>fdisk</code> or <code>sfdisk</code>, then asks for the boot partition (efi system partition on uefi, vfat, 100 mb or more) and the root partition (4 gb or more). Only those two partitions are touched, all other partitions and their data stay intact. An existing vfat boot partition can be kept as is, the old fallback loader is saved as <code>BOOTX64.EFI.bak</code>. For scripts: <code>CLOUDOS_MODE=manual CLOUDOS_ROOT=/dev/sda3 CLOUDOS_BOOT=/dev/sda1 CLOUDOS_FORMAT_BOOT=0</code>.</p>
+<div class="warn"><b>Important</b> in auto mode the chosen disk is erased completely, in manual mode only the root partition (and the boot partition if you format it). The installer refuses the media the iso booted from and asks you to type the disk path to confirm.</div>
+<p>When you see the done message run <code>reboot</code> and remove the stick. For scripts the installer takes variables instead of questions, see <code>cloudos-install --help</code>.</p>
 <h2 id="manual">4. Manual install</h2>
-<p> The same thing <code> Cloudos-install</code> Does, step by step. Use it for a custom layout or to see how it works. Run as root (<code> Doas -s</code>). <code>/dev/sda</code> Below is an example, check your disk with <code> Lsblk</code>.</p>
-<h3 id="s4-1">4.1 partitioning</h3>
-<div class="m-uefi"><pre><code> Sfdisk /dev/sda &lt;&lt;EOF
-Label: gpt
+<p>The same thing <code>cloudos-install</code> does, step by step. Use it for a custom layout or to see how it works. Run as root (<code>doas -s</code>). <code>/dev/sda</code> below is an example, check your disk with <code>lsblk</code>.</p>
+<h3 id="s4-1">4.1 Partitioning</h3>
+<div class="m-uefi"><pre><code>sfdisk /dev/sda &lt;&lt;EOF
+label: gpt
 ,512M,U
 ,,L
 EOF</code></pre>
 </div>
-<div class="m-bios"><pre><code> Sfdisk /dev/sda &lt;&lt;EOF
-Label: dos
+<div class="m-bios"><pre><code>sfdisk /dev/sda &lt;&lt;EOF
+label: dos
 ,512M,c,*
 ,,L
 EOF</code></pre>
 </div>
-<div class="warn"><b> Important</b> All data on the chosen disk is erased. On nvme the partitions are named <code> Nvme0n1p1</code> And <code> Nvme0n1p2</code>.</div>
-<h3 id="s4-2">4.2 filesystems and mounting</h3>
-<pre><code> Mkfs.vfat -F32 /dev/sda1
-Mkfs.ext4 /dev/sda2
-Mkdir -p /mnt/cloudos
-Mount -o noatime /dev/sda2 /mnt/cloudos</code></pre>
-<p> Btrfs with compression can replace ext4:</p>
-<pre><code> Mkfs.btrfs /dev/sda2
-Mount -o noatime,compress=zstd:1 /dev/sda2 /mnt/cloudos</code></pre>
-<h3 id="s4-3">4.3 unpacking the system</h3>
-<pre><code> Unsquashfs -f -d /mnt/cloudos /media/cdrom/cloudos/rootfs.squashfs
-Mkdir -p /mnt/cloudos/{proc,sys,dev,run,tmp,var/tmp,mnt,media}
-Chmod 1777 /mnt/cloudos/tmp /mnt/cloudos/var/tmp
-Mount -o umask=0077 /dev/sda1 /mnt/cloudos/boot
-Cp /media/cdrom/boot/vmlinuz /mnt/cloudos/boot/vmlinuz</code></pre>
-<p> If the iso is not mounted at <code>/media/cdrom</code>, check <code> Findmnt</code>.</p>
+<div class="warn"><b>Important</b> all data on the chosen disk is erased. On nvme the partitions are named <code>nvme0n1p1</code> and <code>nvme0n1p2</code>.</div>
+<h3 id="s4-2">4.2 Filesystems and mounting</h3>
+<pre><code>mkfs.vfat -F32 /dev/sda1
+mkfs.ext4 /dev/sda2
+mkdir -p /mnt/cloudos
+mount -o noatime /dev/sda2 /mnt/cloudos</code></pre>
+<p>btrfs with compression can replace ext4:</p>
+<pre><code>mkfs.btrfs /dev/sda2
+mount -o noatime,compress=zstd:1 /dev/sda2 /mnt/cloudos</code></pre>
+<h3 id="s4-3">4.3 Unpacking the system</h3>
+<pre><code>unsquashfs -f -d /mnt/cloudos /media/cdrom/cloudos/rootfs.squashfs
+mkdir -p /mnt/cloudos/{proc,sys,dev,run,tmp,var/tmp,mnt,media}
+chmod 1777 /mnt/cloudos/tmp /mnt/cloudos/var/tmp
+mount -o umask=0077 /dev/sda1 /mnt/cloudos/boot
+cp /media/cdrom/boot/vmlinuz /mnt/cloudos/boot/vmlinuz</code></pre>
+<p>If the iso is not mounted at <code>/media/cdrom</code>, check <code>findmnt</code>.</p>
 <h3 id="s4-4">4.4 fstab</h3>
-<pre><code> Blkid /dev/sda1 /dev/sda2</code></pre>
-<p> Take the UUID and PARTUUID values from the output. File <code>/mnt/cloudos/etc/fstab</code>:</p>
+<pre><code>blkid /dev/sda1 /dev/sda2</code></pre>
+<p>Take the UUID and PARTUUID values from the output. File <code>/mnt/cloudos/etc/fstab</code>:</p>
 <pre><code>UUID=ROOT_UUID / ext4 noatime,errors=remount-ro 0 1
 UUID=UUID_BOOT /boot vfat umask=0077,noatime 0 2
-Tmpfs /tmp tmpfs nosuid,nodev,mode=1777 0 0</code></pre>
-<h3 id="s4-5">4.5 limine bootloader</h3>
-<pre><code> Mkdir -p /mnt/cloudos/boot/limine
-Nano /mnt/cloudos/boot/limine/limine.conf</code></pre>
-<p> Content (root partition PARTUUID from <code> Blkid</code>, your filesystem type):</p>
-<pre><code> Timeout: 3
+tmpfs /tmp tmpfs nosuid,nodev,mode=1777 0 0</code></pre>
+<h3 id="s4-5">4.5 Limine bootloader</h3>
+<pre><code>mkdir -p /mnt/cloudos/boot/limine
+nano /mnt/cloudos/boot/limine/limine.conf</code></pre>
+<p>Content (root partition PARTUUID from <code>blkid</code>, your filesystem type):</p>
+<pre><code>timeout: 3
 
 /CloudOs
-    Protocol: linux
-    Path: boot():/vmlinuz
-    Cmdline: root=PARTUUID=PARTROOT_UUID rootfstype=ext4 rw quiet slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1</code></pre>
-<div class="m-uefi"><pre><code> Mkdir -p /mnt/cloudos/boot/EFI/BOOT
-Cp /usr/share/limine/BOOTX64.EFI /usr/share/limine/BOOTIA32.EFI /mnt/cloudos/boot/EFI/BOOT/</code></pre>
+    protocol: linux
+    path: boot():/vmlinuz
+    cmdline: root=PARTUUID=PARTROOT_UUID rootfstype=ext4 rw quiet slab_nomerge init_on_alloc=1 page_alloc.shuffle=1 randomize_kstack_offset=on vsyscall=none debugfs=off pti=on module.sig_enforce=1</code></pre>
+<div class="m-uefi"><pre><code>mkdir -p /mnt/cloudos/boot/EFI/BOOT
+cp /usr/share/limine/BOOTX64.EFI /usr/share/limine/BOOTIA32.EFI /mnt/cloudos/boot/EFI/BOOT/</code></pre>
 </div>
-<div class="m-bios"><pre><code> Cp /usr/share/limine/limine-bios.sys /mnt/cloudos/boot/limine/
-Limine bios-install /dev/sda</code></pre>
+<div class="m-bios"><pre><code>cp /usr/share/limine/limine-bios.sys /mnt/cloudos/boot/limine/
+limine bios-install /dev/sda</code></pre>
 </div>
-<h3 id="s4-6">4.6 configuration inside</h3>
-<pre><code> Mount --rbind /dev /mnt/cloudos/dev
-Mount -t proc proc /mnt/cloudos/proc
-Mount --rbind /sys /mnt/cloudos/sys
-Mount -t tmpfs tmpfs /mnt/cloudos/run
-Chroot /mnt/cloudos /bin/bash</code></pre>
-<p> Inside the chroot remove live leftovers, create the user and passwords:</p>
-<pre><code> Rm -f /etc/init.d/cloudos-smoke /etc/runlevels/default/cloudos-smoke /etc/conf.d/agetty.tty1 /etc/ssh/sshd_config.d/05-cloudos-live.conf
-Userdel -r cloudos
-Useradd -m -G wheel,users,video,audio,netdev -s /bin/bash name
-Passwd name
-Passwd
-Echo "permit persist :wheel" &gt; /etc/doas.conf
-Chmod 600 /etc/doas.conf
-Echo 'hostname="cloudos"' &gt; /etc/conf.d/hostname</code></pre>
-<h3 id="s4-7">4.7 finishing</h3>
-<pre><code> Exit
-Umount -R /mnt/cloudos
-Reboot</code></pre>
+<h3 id="s4-6">4.6 Configuration inside</h3>
+<pre><code>mount --rbind /dev /mnt/cloudos/dev
+mount -t proc proc /mnt/cloudos/proc
+mount --rbind /sys /mnt/cloudos/sys
+mount -t tmpfs tmpfs /mnt/cloudos/run
+chroot /mnt/cloudos /bin/bash</code></pre>
+<p>Inside the chroot remove live leftovers, create the user and passwords:</p>
+<pre><code>rm -f /etc/init.d/cloudos-smoke /etc/runlevels/default/cloudos-smoke /etc/conf.d/agetty.tty1 /etc/ssh/sshd_config.d/05-cloudos-live.conf
+userdel -r cloudos
+useradd -m -G wheel,users,video,audio,netdev -s /bin/bash name
+passwd name
+passwd
+echo "permit persist :wheel" &gt; /etc/doas.conf
+chmod 600 /etc/doas.conf
+echo 'hostname="cloudos"' &gt; /etc/conf.d/hostname</code></pre>
+<h3 id="s4-7">4.7 Finishing</h3>
+<pre><code>exit
+umount -R /mnt/cloudos
+reboot</code></pre>
 <h2 id="after">5. After the install</h2>
-<h3 id="s5-1">5.1 login and rights</h3>
-<p> Log in as the user you created. Root commands go through doas:</p>
-<pre><code> Doas cloudpkg install nano</code></pre>
-<h3 id="s5-2">5.2 timezone and hostname</h3>
-<pre><code> Ls /usr/share/zoneinfo
-Doas ln -sfv /usr/share/zoneinfo/Europe/Moscow /etc/localtime
-Date</code></pre>
-<h3 id="s5-3">5.3 network</h3>
-<p> Dhcpcd gets an address by itself. For wifi:</p>
-<pre><code> Doas iwctl station wlan0 connect network_name
-Ip addr</code></pre>
-<p> A static address goes into <code>/etc/dhcpcd.conf</code>.</p>
-<h3 id="s5-4">5.4 services and firewall</h3>
-<pre><code> Rc-update show
-Doas rc-service sshd start
-Doas rc-update add sshd default
-Doas cloudos-firewall status
-Doas cloudos-audit</code></pre>
-<p> Ssh is off by default and the nftables firewall runs with a drop policy. Open the port with <code> Cloudos-firewall</code> Before enabling sshd (run <code> Cloudos-firewall</code> With no arguments for help).</p>
-<h3 id="s5-5">5.5 swap and zram</h3>
-<p> Swap is optional. As a file:</p>
-<pre><code> Doas dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
-Doas chmod 600 /swapfile
-Doas mkswap /swapfile
-Doas swapon /swapfile</code></pre>
-<p> Plus a line in <code>/etc/fstab</code>: <code>/swapfile none swap defaults 0 0</code>. The kernel supports zswap and zram with zstd.</p>
-<h3 id="s5-6">5.6 hardening: apparmor, uki, tpm2, cis</h3>
-<p><strong> Apparmor</strong> Is built into the kernel and starts in boot. Profiles from apparmor-profiles ship in complain mode (log only). Switch one to enforce: <code> Doas aa-enforce /etc/apparmor.d/name</code>. State: <code> Doas aa-status</code>.</p>
-<p><strong> Signed uki</strong>: kernel, initramfs and kernel command line in one file signed with your db key. Enable it at install time (<code>CLOUDOS_SECUREBOOT=1 CLOUDOS_UKI=1</code>) or later: <code> Doas cloudos-uki build &amp;&amp; doas cloudos-secureboot sign</code>. The command line is baked in and cannot be changed at boot. Repeat after every kernel update.</p>
-<p><strong> Tpm2 for luks</strong>: <code> Doas cloudos-tpm2 enroll</code> Seals the disk key in the tpm2 against pcr 7 (secure boot state) and adds luks slot 7. Run it when secure boot is already on and you booted with it. If keys change, secure boot is turned off or the disk moves, the tpm will not release the key and the system asks for the luks passphrase. The passphrase always keeps working, store it. Remove: <code> Doas cloudos-tpm2 remove</code>.</p>
-<p><strong> Cis profile</strong>: <code> Doas cloudos-audit --cis</code> Adds checks for file permissions, passwords, disabled rare filesystems, network settings and ssh. These are checks inspired by the cis benchmark, not a certification.</p>
+<h3 id="s5-1">5.1 Login and rights</h3>
+<p>Log in as the user you created. Root commands go through doas:</p>
+<pre><code>doas cloudpkg install nano</code></pre>
+<h3 id="s5-2">5.2 Timezone and hostname</h3>
+<pre><code>ls /usr/share/zoneinfo
+doas ln -sfv /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+date</code></pre>
+<h3 id="s5-3">5.3 Network</h3>
+<p>dhcpcd gets an address by itself. For wifi:</p>
+<pre><code>doas iwctl station wlan0 connect network_name
+ip addr</code></pre>
+<p>A static address goes into <code>/etc/dhcpcd.conf</code>.</p>
+<h3 id="s5-4">5.4 Services and firewall</h3>
+<pre><code>rc-update show
+doas rc-service sshd start
+doas rc-update add sshd default
+doas cloudos-firewall status
+doas cloudos-audit</code></pre>
+<p>SSH is off by default and the nftables firewall runs with a drop policy. Open the port with <code>cloudos-firewall</code> before enabling sshd (run <code>cloudos-firewall</code> with no arguments for help).</p>
+<h3 id="s5-5">5.5 Swap and zram</h3>
+<p>Swap is optional. As a file:</p>
+<pre><code>doas dd if=/dev/zero of=/swapfile bs=1M count=4096 status=progress
+doas chmod 600 /swapfile
+doas mkswap /swapfile
+doas swapon /swapfile</code></pre>
+<p>Plus a line in <code>/etc/fstab</code>: <code>/swapfile none swap defaults 0 0</code>. The kernel supports zswap and zram with zstd.</p>
+<h3 id="s5-6">5.6 Hardening: apparmor, uki, tpm2, cis</h3>
+<p><strong>AppArmor</strong> is built into the kernel and starts in boot. Profiles from apparmor-profiles ship in complain mode (log only). Switch one to enforce: <code>doas aa-enforce /etc/apparmor.d/name</code>. State: <code>doas aa-status</code>.</p>
+<p><strong>Signed uki</strong>: kernel, initramfs and kernel command line in one file signed with your db key. Enable it at install time (<code>CLOUDOS_SECUREBOOT=1 CLOUDOS_UKI=1</code>) or later: <code>doas cloudos-uki build &amp;&amp; doas cloudos-secureboot sign</code>. The command line is baked in and cannot be changed at boot. Repeat after every kernel update.</p>
+<p><strong>TPM2 for luks</strong>: <code>doas cloudos-tpm2 enroll</code> seals the disk key in the tpm2 against pcr 7 (secure boot state) and adds luks slot 7. Run it when secure boot is already on and you booted with it. If keys change, secure boot is turned off or the disk moves, the tpm will not release the key and the system asks for the luks passphrase. The passphrase always keeps working, store it. Remove: <code>doas cloudos-tpm2 remove</code>.</p>
+<p><strong>CIS profile</strong>: <code>doas cloudos-audit --cis</code> adds checks for file permissions, passwords, disabled rare filesystems, network settings and ssh. These are checks inspired by the cis benchmark, not a certification.</p>
 <h2 id="cpkg">6. Packages and cloudpkg</h2>
-<p> cloudpkg builds packages from source using its own recipes.</p>
-<pre><code> Doas cloudpkg sync
+<p>cloudpkg builds packages from source using its own recipes.</p>
+<pre><code>doas cloudpkg sync
 cloudpkg search name
 cloudpkg info name
-Doas cloudpkg install name
-Doas cloudpkg remove name
-Doas cloudpkg upgrade
-Doas cloudpkg clean</code></pre>
-<p> If a package fails, read the last log lines and look in <a href="#errors"> Errors and fixes</a>. Builds need free space in <code>/var/tmp</code> And enough ram.</p>
+doas cloudpkg install name
+doas cloudpkg remove name
+doas cloudpkg upgrade
+doas cloudpkg clean</code></pre>
+<p>If a package fails, read the last log lines and look in <a href="#errors">errors and fixes</a>. Builds need free space in <code>/var/tmp</code> and enough ram.</p>
 <h2 id="kernel">7. Your own kernel (optional)</h2>
-<p> The kernel from the iso fits most machines and needs no tuning. Build your own only if you need a driver the image lacks. Gcc, make and the rest are already installed.</p>
-<pre><code> Cd /usr/src
-Curl -LO https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.10.tar.xz
-Tar xf linux-6.18.10.tar.xz
-Cd linux-6.18.10
-Zcat /proc/config.gz &gt; .config 2&gt;/dev/null || make defconfig
-Make menuconfig
-Make -j$(nproc)
-Doas make modules_install
-Doas cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
-<p> Add a second entry to <code>/boot/limine/limine.conf</code> With <code> Path: boot():/vmlinuz-6.18.10</code> And reboot. The disk driver and root filesystem must be built in (<code>=y</code>) since there is no initramfs. The cmdline has <code> Module.sig_enforce=1</code>: modules of your own kernel must be signed or the parameter removed.</p>
+<p>The kernel from the iso fits most machines and needs no tuning. Build your own only if you need a driver the image lacks. GCC, make and the rest are already installed.</p>
+<pre><code>cd /usr/src
+curl -LO https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.10.tar.xz
+tar xf linux-6.18.10.tar.xz
+cd linux-6.18.10
+zcat /proc/config.gz &gt; .config 2&gt;/dev/null || make defconfig
+make menuconfig
+make -j$(nproc)
+doas make modules_install
+doas cp arch/x86/boot/bzImage /boot/vmlinuz-6.18.10</code></pre>
+<p>Add a second entry to <code>/boot/limine/limine.conf</code> with <code>path: boot():/vmlinuz-6.18.10</code> and reboot. The disk driver and root filesystem must be built in (<code>=y</code>) since there is no initramfs. The cmdline has <code>module.sig_enforce=1</code>: modules of your own kernel must be signed or the parameter removed.</p>
 <h2 id="maint">8. Maintenance</h2>
-<pre><code> Doas cloudpkg sync
-Doas cloudpkg upgrade
-Doas cloudpkg clean
-Df -h</code></pre>
-<p> System updates ship as new live iso versions: reinstall or update packages with cloudpkg. Backup:</p>
-<pre><code> Doas tar cpf /mnt/usb/cloudos-backup.tar.xz --xattrs-include='*.*' --numeric-owner --one-file-system -I xz /</code></pre>
+<pre><code>doas cloudpkg sync
+doas cloudpkg upgrade
+doas cloudpkg clean
+df -h</code></pre>
+<p>System updates ship as new live iso versions: reinstall or update packages with cloudpkg. Backup:</p>
+<pre><code>doas tar cpf /mnt/usb/cloudos-backup.tar.xz --xattrs-include='*.*' --numeric-owner --one-file-system -I xz /</code></pre>
 <h2 id="errors">9. Errors and fixes</h2>
-<div class="sc"><table><tr><th> Problem</th><th> What to do</th></tr>
-<tr><td> Installer says mkfs.btrfs is missing</td><td> This iso has no btrfs-progs, choose ext4</td></tr>
-<tr><td> Installer sees no disk</td><td> Check <code> Lsblk</code>. The iso media is excluded on purpose</td></tr>
-<tr><td> Uefi does not boot after install</td><td> Pick the disk in the firmware boot menu. The file must be at <code>/boot/EFI/BOOT/BOOTX64.EFI</code></td></tr>
-<tr><td> Kernel panic: unable to mount root</td><td> Compare <code> Root=PARTUUID=</code> In <code> Limine.conf</code> With <code> Blkid</code>. Controllers other than sata, nvme, virtio and usb storage may need your own kernel, see 7</td></tr>
-<tr><td> No wifi</td><td><code> Doas iwctl station wlan0 scan</code>, then connect. Firmware is already in the system</td></tr>
-<tr><td> Forgot the password</td><td> Boot the live iso, mount root at <code>/mnt/cloudos</code>, <code> Chroot</code>, <code> Passwd</code></td></tr>
-<tr><td> A package failed to build</td><td><code> Doas cloudpkg sync</code> And retry. If it fails, post the last log lines on the forum</td></tr>
+<div class="sc"><table><tr><th>Problem</th><th>What to do</th></tr>
+<tr><td>Installer says mkfs.btrfs is missing</td><td>This iso has no btrfs-progs, choose ext4</td></tr>
+<tr><td>Installer sees no disk</td><td>Check <code>lsblk</code>. The iso media is excluded on purpose</td></tr>
+<tr><td>UEFI does not boot after install</td><td>Pick the disk in the firmware boot menu. The file must be at <code>/boot/EFI/BOOT/BOOTX64.EFI</code></td></tr>
+<tr><td>Kernel panic: unable to mount root</td><td>Compare <code>root=PARTUUID=</code> in <code>limine.conf</code> with <code>blkid</code>. Controllers other than sata, nvme, virtio and usb storage may need your own kernel, see 7</td></tr>
+<tr><td>No wifi</td><td><code>doas iwctl station wlan0 scan</code>, then connect. Firmware is already in the system</td></tr>
+<tr><td>Forgot the password</td><td>Boot the live iso, mount root at <code>/mnt/cloudos</code>, <code>chroot</code>, <code>passwd</code></td></tr>
+<tr><td>A package failed to build</td><td><code>doas cloudpkg sync</code> and retry. If it fails, post the last log lines on the forum</td></tr>
 </table></div>
 <h2 id="cheat">10. Cheat sheet</h2>
-<div class="sc"><table><tr><th> Command</th><th> What it does</th></tr>
-<tr><td><code> Doas cloudos-install</code></td><td> Install to disk</td></tr>
-<tr><td><code> Doas -s</code></td><td> Root shell</td></tr>
-<tr><td><code> cloudpkg install name</code></td><td> Install a package</td></tr>
-<tr><td><code> Rc-update show</code></td><td> Services by runlevel</td></tr>
-<tr><td><code> Rc-service name restart</code></td><td> Restart a service</td></tr>
-<tr><td><code> Cloudos-firewall status</code></td><td> Firewall state</td></tr>
-<tr><td><code> Cloudos-audit</code></td><td> Security settings check</td></tr>
-<tr><td><code> Iwctl</code></td><td> Wifi</td></tr>
-<tr><td><code> Lsblk -f</code></td><td> Disks and filesystems</td></tr>
+<div class="sc"><table><tr><th>Command</th><th>What it does</th></tr>
+<tr><td><code>doas cloudos-install</code></td><td>Install to disk</td></tr>
+<tr><td><code>doas -s</code></td><td>Root shell</td></tr>
+<tr><td><code>cloudpkg install name</code></td><td>Install a package</td></tr>
+<tr><td><code>rc-update show</code></td><td>Services by runlevel</td></tr>
+<tr><td><code>rc-service name restart</code></td><td>Restart a service</td></tr>
+<tr><td><code>cloudos-firewall status</code></td><td>Firewall state</td></tr>
+<tr><td><code>cloudos-audit</code></td><td>Security settings check</td></tr>
+<tr><td><code>iwctl</code></td><td>Wifi</td></tr>
+<tr><td><code>lsblk -f</code></td><td>Disks and filesystems</td></tr>
 </table></div>
 <h2 id="faq">11. Questions</h2>
-<h3 id="s11-1"> Can it run on a server</h3>
-<p> Yes, with honest limits in mind: updates are manual. cloudpkg update verifies signatures, but apparmor profiles ship in complain mode and you must enforce them yourself. For critical systems judge the risks yourself.</p>
-<h3 id="s11-2"> What happened to stage 3</h3>
-<p> A separate stage 3 is no longer published. The system installs straight from the live iso and the handbook covers only that way.</p>
-<h3 id="s11-3"> Why no secure boot</h3>
-<p> It already exists: CLOUDOS_SECUREBOOT=1 in the installer and the cloudos-secureboot command (own keys, signed limine, kernel hashes). A signed unified kernel image is added with CLOUDOS_UKI=1.</p>
+<h3 id="s11-1">Can it run on a server</h3>
+<p>Yes, with honest limits in mind: updates are manual. cloudpkg update verifies signatures, but apparmor profiles ship in complain mode and you must enforce them yourself. For critical systems judge the risks yourself.</p>
+<h3 id="s11-2">What happened to stage 3</h3>
+<p>A separate stage 3 is no longer published. The system installs straight from the live iso and the handbook covers only that way.</p>
+<h3 id="s11-3">Why no secure boot</h3>
+<p>It already exists: CLOUDOS_SECUREBOOT=1 in the installer and the cloudos-secureboot command (own keys, signed limine, kernel hashes). A signed unified kernel image is added with CLOUDOS_UKI=1.</p>
 <footer>
-<p> © 2026 wh1laye. Mit license. </p>
-<p> Package recipes are based on gentoo (gpl-2).</p>
-<p><a href="https://github.com/wh1laye/cloudos-repo"> Github.com/wh1laye/cloudos-repo</a></p>
+<p>© 2026 wh1laye. MIT license. </p>
+<p>Package recipes are written for CloudOs and distributed under the project license.</p>
+<p><a href="https://github.com/wh1laye/cloudos-repo">github.com/wh1laye/cloudos-repo</a></p>
 </footer>
 </main>
 </div>

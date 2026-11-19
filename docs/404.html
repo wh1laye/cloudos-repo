@@ -12,7 +12,8 @@
 <style>*{box-sizing:border-box}html{--bg:#1a1c20;--surf:#22252a;--line:#33373e;--ink:#e6e8ec;--mute:#98a2ae;--ac:#8fb4f0;--onac:#11151b}html[data-theme=light]{--bg:#f6f8fc;--surf:#fff;--line:#e2e8f2;--ink:#17202e;--mute:#66758a;--ac:#3563c9;--onac:#fff}body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}.box{width:min(520px,100%);text-align:center}.code{font:600 88px/1 "IBM Plex Mono",ui-monospace,monospace;color:var(--ac);letter-spacing:-.04em;margin:0 0 6px}h1{font-size:26px;margin:0 0 8px;font-weight:600}p{color:var(--mute);margin:0 0 24px}.row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}a{display:inline-block;padding:9px 18px;border:1px solid var(--line);border-radius:10px;background:var(--surf);color:var(--ink);text-decoration:none;font-weight:500;transition:border-color .12s}a:hover{border-color:var(--ac)}a.p{background:var(--ac);border-color:var(--ac);color:var(--onac)}</style>
 <script>(function(){var t='gray',v,o={light:1,night:1,nord:1,dracula:1,sepia:1};try{v=localStorage.getItem('theme');if(o[v]||((v==='matrix'||v==='amber')&&localStorage.getItem('sec')==='1'))t=v}catch(e){}document.documentElement.setAttribute('data-theme',t)})()</script>
 <script src="theme.js?v=17"></script>
-<script src="i18n.js?v=7"></script>
+<script src="i18n.js?v=8"></script>
+<script src="typo.js?v=2"></script>
 </head>
 <body>
 <div class="box">
@@ -25,13 +26,13 @@
 (function(){
 var p=location.pathname.split('/').filter(Boolean);
 var b=location.hostname.slice(-9)==='github.io'&&p.length?'/'+p[0]+'/':'/';
-var L=[['','Главная','p'],['handbook/','Справочник',''],['news/','Новое',''],['forum/','Форум',''],['releases/','Релизы','']];
+var links=[['','главная','p'],['handbook/','справочник',''],['news/','новое',''],['forum/','форум',''],['releases/','релизы','']];
 function tr(s){return window.I18N&&window.I18N.t?window.I18N.t(s):s}
 function draw(){
 var l=window.CloudTheme&&window.CloudTheme.getLang?window.CloudTheme.getLang():'ru';
 document.documentElement.lang=l;
-document.title=tr('Страница не найдена: CloudOs');
-document.getElementById('lk').innerHTML=L.map(function(x){return '<a class="'+x[2]+'" href="'+b+x[0]+'">'+tr(x[1])+'</a>'}).join('');
+document.title=tr('страница не найдена: CloudOs');
+document.getElementById('lk').innerHTML=links.map(function(x){return '<a class="'+x[2]+'" href="'+b+x[0]+'">'+tr(x[1])+'</a>'}).join('');
 }
 window.addEventListener('cloudlang',draw);
 draw();

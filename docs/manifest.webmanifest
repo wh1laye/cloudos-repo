@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "cloudos",
-  "short_name": "cloudos",
-  "description": "cloudos: справочник, форум и инструменты",
+  "name": "CloudOs",
+  "short_name": "CloudOs",
+  "description": "CloudOs: справочник, форум и инструменты",
   "lang": "ru",
   "start_url": "./",
   "scope": "./",
