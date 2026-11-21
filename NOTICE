@@ -1,50 +1,14 @@
-# CloudOS — авторские права и лицензии
+Kryonux Operating System
+Copyright (C) 2026 The Kryonux Project
 
-## Код проекта
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
 
-Скрипты сборки (tools/), пакетный менеджер cloudpkg (cloudpkg/),
-установщик cloudos-install, конфигурации, сайт и справочник (docs/)
-распространяются под лицензией MIT. При распространении сохраняй
-имя автора (wh1laye) и название проекта (CloudOS).
-
-## Рецепты пакетов
-
-Рецепты сборки в формате .cpr написаны специально для CloudOS и
-распространяются под лицензией проекта. Категории, версии и адреса
-загрузки берутся из официальных источников программ; сборочная
-логика — собственная.
-
-## Сторонние программы в сборке
-
-Программы, которые попадают в stage 3 и live iso, собираются из
-исходников их авторов и остаются под своими лицензиями:
-
-- ядро linux — GPL-2 с исключением для системных вызовов
-- glibc, glib, libxcrypt, elfutils — LGPL-2.1+
-- binutils, coreutils, findutils, grep, sed, gawk, diffutils,
-  bash, readline, ncurses, gcc, make, patch, kmod, kbd, psmisc,
-  procps, iproute2, e2fsprogs, btrfs-progs, git, man-db, man-pages,
-  dracut-ng, squashfs-tools, libburn, libisofs, syslog-ng — GPL
-  разных версий (у отдельных библиотек LGPL)
-- gmp, mpfr, mpc — LGPL-3+
-- openssl, curl, libssh2, libpsl, c-ares — Apache-2.0, MIT, ISC
-- gnupg и компоненты — LGPL-2.1+ и GPL-2+
-- openrc, dhcpcd, limine, bzip2 — BSD-2
-- doas, iwd, xz-utils, zstd, zlib, lz4, lzo — ISC, LGPL-2.1,
-  0BSD, BSD-3, zlib соответственно
-- python, perl, lua, go, rust — PSF, Artistic/GPL, MIT, BSD,
-  Apache-2.0/MIT соответственно
-- тексты лицензий лежат в исходниках пакетов и на
-  https://spdx.org/licenses/
-
-## Исходники
-
-Исходники пакетов скачиваются с официальных сайтов авторов и их
-зеркал (kernel.org, github.com, ftp.gnu.org и другие). Версии и
-контрольные суммы зафиксированы в файлах Manifest дерева рецептов.
-
-## Торговые марки
-
-Linux — торговая марка Линуса Торвальдса. Все остальные названия
-продуктов принадлежат их владельцам и упоминаются только для
-обозначения совместимости.
+TRADEMARK & BRAND NOTICE (GPLv3 Section 7):
+While the source code of Kryonux is licensed under the GNU GPL v3.0,
+the names "Kryonux", "kryonk", "kpkg", and the official Kryonux crystal
+logo are identifiers of The Kryonux Project. Any modified forks or
+unofficial builds redistributed publicly must use a different name and
+logo so as not to imply endorsement by The Kryonux Project.
