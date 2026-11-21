@@ -1,46 +1,35 @@
-# Безопасность
+# Security Policy
 
-## Цепочка доверия
+**The Kryonux Project** takes the security of the `kryonk` kernel, the `kpkg` package manager, and core system components seriously. We appreciate responsible disclosure of any vulnerabilities.
 
-- **Ядро.** Исходники берутся с kernel.org и проверяются GPG-
-  подписью мейнтейнеров ядра, отпечатки закреплены в
-  `tools/kernel/build-cloudk.sh`. Дополнительно накатывается серия
-  патчей и патчи проекта, затем собирается наш конфиг.
-- **База и образы.** Артефакты релизов подписываются minisign,
-  публичный ключ — `docs/cloudos.pub`. `cloudpkg update` и
-  `install.sh` проверяют подпись перед запуском кода.
-- **Дерево рецептов.** Скачивается по HTTPS из репозитория
-  `cloudpkg-recipes`; если опубликована отсоединённая подпись
-  `.minisig`, она проверяется тем же ключом.
-- **Исходники пакетов.** Для каждого файла в дереве рецептов есть
-  `Manifest`; при валидной записи размер и SHA512 проверяются,
-  иначе выводится предупреждение и сборка идёт без проверки.
+## 1. Supported Versions
 
-## Защита установленной системы
+Because Kryonux is under active development, security patches are only applied to the latest rolling release and the `main` branch:
 
-- Фаервол `nftables`: входящие закрыты, исходящие открыты,
-  управление `cloudos-firewall`, аудит `cloudos-audit`.
-- `sshd` не включён по умолчанию, вход по паролю для пользователя
-  отключается в конфиге; права повышает `doas`, не `sudo`.
-- AppArmor собран в ядро, профили в режиме `complain`, включаются
-  командой `aa-enforce`.
-- Secure Boot на собственных ключах через `cloudos-secureboot`,
-  подпись UKI через `cloudos-uki`, разблокировка LUKS через TPM2
-  по PCR 7 с запасным паролем через `cloudos-tpm2`.
+| Version / Branch | Supported |
+| :--- | :--- |
+| `main` (Latest) | :white_check_mark: Yes |
+| Older snapshots / tags | :x: No |
 
-## Изоляция
+## 2. Reporting a Vulnerability
 
-- Установка пакетов в корень разрешена только в CloudOS; на других
-  системах работает изолированный бокс с собственным корнем, а
-  `make install` отказывается ставить бинарник в чужую систему.
-- Сборка пакета идёт в отдельном каталоге
-  `/var/tmp/cloudpkg-build/<категория>-<имя>-<версия>`, результат
-  сначала попадает в образ, затем переносится в корень; конфликты
-  файлов без `--force` останавливают установку.
-- Удаление пакета идёт по списку файлов из базы, пути с `/` или
-  `..` отбрасываются, обратные зависимости блокируют удаление.
+**Please do NOT report security vulnerabilities through public GitHub Issues, discussions, or pull requests.** Publicly disclosing an unpatched flaw in a kernel or package manager puts users at immediate risk.
 
-## Сообщение об уязвимости
+Instead, please report vulnerabilities privately using one of the following methods:
+1. **GitHub Private Vulnerability Reporting (Preferred):** Go to the **Security** tab of this repository and click **"Report a vulnerability"**.
+2. **Email:** Send an encrypted or plain-text report to `wh1laye@gmail.com`.
 
-Пиши в личку на форуме или в issue с пометкой security. Публичное
-раскрытие — после выпуска исправления.
+### What to Include in Your Report
+To help us triage and fix the issue quickly, please include:
+* A clear description of the vulnerability and its potential impact (e.g., privilege escalation, arbitrary code execution, signature bypass in `kpkg`).
+* Affected component (`kryonk`, `kpkg`, build scripts, or specific recipe) and commit hash.
+* Step-by-step instructions or a Proof-of-Concept (PoC) to reproduce the issue.
+
+## 3. Disclosure Process
+
+* **Acknowledgment:** We will confirm receipt of your report within **48–72 hours**.
+* **Investigation & Fix:** We will work to verify the vulnerability and prepare a patch for the `main` branch.
+* **Public Disclosure:** Once a fix is released, we will publish a security advisory and credit you for the discovery (unless you prefer to remain anonymous).
+
+---
+*Copyright © 2026 The Kryonux Project. Licensed under GNU GPLv3.*
