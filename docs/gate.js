@@ -1,5 +1,5 @@
 (function(){
-var KEY="00x4AAAAAAGLC2Z7LGzUdnI3p";
+var KEY="0x4AAAAAAGLC2Z7LGzUdnI3p";
   var HOURS=6;
   if(!KEY)return;
   try{
